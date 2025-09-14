@@ -1,4 +1,4 @@
-// js/core/tab-manager.js - 탭 관리 모듈
+// js/core/tab-manager.js - 탭 관리 모듈 (수정 버전)
 
 window.TabManager = {
     // 탭 메뉴 생성
@@ -66,6 +66,18 @@ window.TabManager = {
                 if (typeof RealtimeModule !== 'undefined') {
                     RealtimeModule.load();
                 }
+                break;
+            case 'search':
+                // 검색 탭은 초기 로드 없음
+                break;
+            case 'excel':
+                // 엑셀 탭은 초기 로드 없음
+                if (typeof ExcelModule !== 'undefined' && ExcelModule.uploadedFiles) {
+                    ExcelModule.updateFileList();
+                }
+                break;
+            case 'invoice':
+                // 송장등록 탭은 초기 로드 없음
                 break;
             case 'analytics':
                 if (typeof AnalyticsModule !== 'undefined') {
@@ -149,6 +161,7 @@ window.TabManager = {
                 case 'search':
                     const startDate = document.getElementById('startDate');
                     const endDate = document.getElementById('endDate');
+                    
                     if (startDate && endDate && startDate.value && endDate.value) {
                         if (typeof SearchModule !== 'undefined') {
                             SearchModule.search();
@@ -156,6 +169,51 @@ window.TabManager = {
                         if (typeof ToastManager !== 'undefined') {
                             ToastManager.success('검색 결과가 새로고침되었습니다');
                         }
+                    } else {
+                        // 날짜가 선택되지 않은 경우
+                        const today = new Date().toISOString().split('T')[0];
+                        if (startDate) startDate.value = today;
+                        if (endDate) endDate.value = today;
+                        
+                        if (typeof SearchModule !== 'undefined') {
+                            SearchModule.search();
+                        }
+                        if (typeof ToastManager !== 'undefined') {
+                            ToastManager.info('오늘 날짜로 조회했습니다');
+                        }
+                    }
+                    break;
+                    
+                case 'excel':
+                    // 엑셀 탭 새로고침
+                    if (typeof ExcelModule !== 'undefined') {
+                        // 파일 목록만 다시 표시
+                        ExcelModule.updateFileList();
+                        
+                        // 결과 영역 초기화
+                        const resultDiv = document.getElementById('excelResult');
+                        if (resultDiv) {
+                            resultDiv.innerHTML = '';
+                        }
+                        
+                        if (typeof ToastManager !== 'undefined') {
+                            ToastManager.success('주문통합 화면이 새로고침되었습니다');
+                        }
+                    }
+                    break;
+                    
+                case 'invoice':
+                    // 송장등록 탭 새로고침 - 입력 필드 초기화
+                    const orderNo = document.getElementById('orderNo');
+                    const invoiceNo = document.getElementById('invoiceNo');
+                    const invoiceResult = document.getElementById('invoiceResult');
+                    
+                    if (orderNo) orderNo.value = '';
+                    if (invoiceNo) invoiceNo.value = '';
+                    if (invoiceResult) invoiceResult.innerHTML = '';
+                    
+                    if (typeof ToastManager !== 'undefined') {
+                        ToastManager.success('송장등록 화면이 초기화되었습니다');
                     }
                     break;
                     
@@ -169,7 +227,13 @@ window.TabManager = {
                     break;
                     
                 default:
-                    console.log(`No refresh handler for tab: ${tabId}`);
+                    // 알 수 없는 탭인 경우 페이지 자체를 새로고침
+                    console.log(`Unknown tab: ${tabId}, reloading the tab content`);
+                    this.loadTabData(tabId);
+                    
+                    if (typeof ToastManager !== 'undefined') {
+                        ToastManager.info('화면이 새로고침되었습니다');
+                    }
             }
         } catch (error) {
             console.error('Refresh error:', error);
