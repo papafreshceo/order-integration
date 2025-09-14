@@ -1,85 +1,258 @@
-/* css/components/loading.css - 로딩 상태 */
+/* css/components/loading.css */
 
+/* 로딩 텍스트 */
 .loading {
     text-align: center;
-    padding: 50px;
+    padding: var(--space-4xl) var(--space-xl);
     color: var(--text-muted);
+    font-size: var(--text-base);
+    font-weight: var(--font-light);
 }
 
-.btn-loading {
-    position: relative;
-    pointer-events: none;
-    opacity: 0.7;
-}
-
-.btn-loading::after {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    top: 50%;
-    left: 50%;
-    margin-left: -8px;
-    margin-top: -8px;
-    border: 2px solid #ffffff;
+/* 스피너 */
+.spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-light);
+    border-top-color: var(--brand-primary);
     border-radius: 50%;
-    border-top-color: transparent;
-    animation: spinner 0.6s linear infinite;
+    animation: spin 0.8s linear infinite;
 }
 
-@keyframes spinner {
-    to { transform: rotate(360deg); }
+.spinner-sm {
+    width: 20px;
+    height: 20px;
+    border-width: 2px;
 }
 
+.spinner-lg {
+    width: 60px;
+    height: 60px;
+    border-width: 6px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 로딩 오버레이 */
 .loading-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background-color: rgba(255, 255, 255, 0.9);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
+    z-index: var(--z-modal);
 }
 
-.loading-spinner {
+.loading-overlay .loading-spinner {
     width: 50px;
     height: 50px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #2563eb;
+    border: 5px solid var(--border-light);
+    border-top-color: var(--brand-primary);
     border-radius: 50%;
-    animation: spinner 1s linear infinite;
+    animation: spin 0.8s linear infinite;
 }
 
+/* 로딩 도트 */
+.loading-dots {
+    display: inline-flex;
+    gap: 4px;
+}
+
+.loading-dots span {
+    width: 8px;
+    height: 8px;
+    background-color: var(--brand-primary);
+    border-radius: 50%;
+    animation: pulse 1.4s infinite ease-in-out both;
+}
+
+.loading-dots span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.loading-dots span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes pulse {
+    0%, 80%, 100% {
+        transform: scale(0.6);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* 로딩 바 */
+.loading-bar {
+    position: relative;
+    height: 4px;
+    background-color: var(--bg-secondary);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.loading-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 30%;
+    background-color: var(--brand-primary);
+    animation: loading-bar 1.5s infinite ease-in-out;
+}
+
+@keyframes loading-bar {
+    0% {
+        left: -30%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+/* 스켈레톤 로딩 */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--bg-secondary) 25%,
+        var(--bg-light) 50%,
+        var(--bg-secondary) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+}
+
+.skeleton-text {
+    height: 16px;
+    margin-bottom: var(--space-sm);
+}
+
+.skeleton-title {
+    height: 24px;
+    width: 50%;
+    margin-bottom: var(--space-md);
+}
+
+.skeleton-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.skeleton-card {
+    height: 120px;
+    border-radius: 8px;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* 페이지 로더 */
+.page-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--bg-secondary);
+    z-index: var(--z-modal);
+}
+
+.page-loader::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background-color: var(--brand-primary);
+    animation: page-loading 2s infinite;
+}
+
+@keyframes page-loading {
+    0% {
+        width: 0;
+        left: 0;
+    }
+    50% {
+        width: 100%;
+        left: 0;
+    }
+    100% {
+        width: 0;
+        left: 100%;
+    }
+}
+
+/* 로딩 메시지 */
+.loading-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4xl);
+    text-align: center;
+}
+
+.loading-message .spinner {
+    margin-bottom: var(--space-lg);
+}
+
+.loading-message-text {
+    font-size: var(--text-base);
+    font-weight: var(--font-light);
+    color: var(--text-muted);
+}
+
+/* 토스트 메시지 */
 .toast {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    padding: 16px 24px;
-    border-radius: 8px;
+    bottom: var(--space-xl);
+    right: var(--space-xl);
+    padding: var(--space-md) var(--space-lg);
+    background-color: var(--text-primary);
     color: white;
-    font-size: 14px;
-    z-index: 10000;
+    font-size: var(--text-base);
+    font-weight: var(--font-light);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: var(--z-modal);
     animation: slideIn 0.3s ease;
-    max-width: 300px;
 }
 
 .toast.success {
-    background: #10b981;
+    background-color: var(--success);
 }
 
 .toast.error {
-    background: #ef4444;
+    background-color: var(--danger);
 }
 
 .toast.warning {
-    background: #f59e0b;
+    background-color: var(--warning);
 }
 
 .toast.info {
-    background: #2563eb;
+    background-color: var(--info);
 }
 
 @keyframes slideIn {
@@ -90,5 +263,52 @@
     to {
         transform: translateX(0);
         opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* 에러 메시지 */
+.error-message {
+    padding: var(--space-md) var(--space-lg);
+    background-color: var(--danger-bg);
+    color: var(--danger);
+    font-size: var(--text-sm);
+    font-weight: var(--font-normal);
+    border: 1px solid var(--red-200);
+    border-radius: 6px;
+    margin-bottom: var(--space-lg);
+    display: none;
+}
+
+.error-message.shake {
+    animation: shake 0.5s;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+    .toast {
+        left: var(--space-md);
+        right: var(--space-md);
+        bottom: var(--space-md);
+    }
+    
+    .loading-overlay {
+        background-color: rgba(255, 255, 255, 0.95);
     }
 }
