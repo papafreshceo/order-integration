@@ -134,14 +134,15 @@
 
     <!-- 메인 시스템 -->
     <div class="main-system" id="mainSystem" style="display: none;">
-        <div class="header">
-            <h1>📦 주문통합 시스템</h1>
-            <div class="user-info">
-                <span id="userEmail">user@example.com</span>
-                <span class="role-badge" id="userRole">직원</span>
-                <button class="btn-logout" onclick="signOut(event)">로그아웃</button>
-            </div>
-        </div>
+<!-- 메인 시스템 부분에서 헤더 수정 -->
+<div class="header">
+    <h1 style="cursor: pointer;" onclick="window.location.reload();">주문통합 시스템</h1>
+    <div class="user-info">
+        <span id="userEmail">user@example.com</span>
+        <span class="role-badge" id="userRole">직원</span>
+        <button class="btn-logout" onclick="signOut(event)">로그아웃</button>
+    </div>
+</div>
 
         <div class="tabs">
             <div class="tab-menu" id="tabMenu"></div>
