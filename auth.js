@@ -133,42 +133,49 @@ async function signOut() {
     }
 }
 
-// 사용자 역할 가져오기
+// 사용자 역할 가져오기 - 수정된 부분
 async function getUserRole(email) {
-    // 실제로는 API를 통해 Google Sheets에서 가져와야 함
+    // API를 통해 Google Sheets에서 가져오기
     try {
-        const response = await fetch('/api/getUserRole', {
+        const response = await fetch('/api/auth', {  // /api/auth로 변경
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email })
+            body: JSON.stringify({ 
+                action: 'getUserRole',  // action 추가
+                email: email
+            })
         });
         
         if (response.ok) {
             const data = await response.json();
-            return data.role;
+            console.log('User role data:', data);  // 디버깅용
+            return data.role || 'staff';
+        } else {
+            console.error('API 응답 오류:', response.status);
+            return 'staff';
         }
     } catch (error) {
         console.error('역할 조회 실패:', error);
+        // 임시로 하드코딩된 역할 반환
+        return USER_ROLES[email] || 'staff';
     }
-    
-    // 임시로 하드코딩된 역할 반환
-    return USER_ROLES[email] || 'staff';
 }
 
 // Google Sheets에 사용자 정보 저장
 async function saveUserToSheets(email, name, role) {
     try {
-        const response = await fetch('/api/saveUser', {
+        const response = await fetch('/api/auth', {  // /api/auth로 변경
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                email,
-                name,
-                role,
+                action: 'saveUser',  // action 추가
+                email: email,
+                name: name,
+                role: role,
                 createdAt: new Date().toISOString()
             })
         });
