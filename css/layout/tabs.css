@@ -1,60 +1,278 @@
-/* css/layout/tabs.css - 탭 메뉴 스타일 */
+/* css/layout/tabs.css */
 
+/* 탭 컨테이너 */
 .tabs {
-    background: var(--bg-primary);
-    padding: 0 var(--space-xl);
+    background-color: var(--bg-secondary);
     border-bottom: 1px solid var(--border-default);
+    padding: 0 var(--container-padding);
 }
 
+/* 탭 메뉴 */
 .tab-menu {
     display: flex;
-    gap: 0;
+    gap: var(--space-xs);
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
+.tab-menu::-webkit-scrollbar {
+    display: none;
+}
+
+/* 탭 버튼 */
 .tab-btn {
-    padding: 15px 30px;
+    padding: var(--space-md) var(--space-xl);
+    font-size: var(--text-base);
+    font-weight: var(--font-light);
+    color: var(--text-secondary);
     background: none;
     border: none;
-    border-bottom: 3px solid transparent;
-    font-size: 15px;
-    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
     cursor: pointer;
-    transition: var(--transition-normal);
-    font-weight: var(--font-light);
+    transition: var(--transition-fast);
+    white-space: nowrap;
+    position: relative;
 }
 
 .tab-btn:hover {
-    background: var(--bg-hover);
+    color: var(--text-primary);
+    background-color: var(--bg-hover);
 }
 
 .tab-btn.active {
     color: var(--brand-primary);
+    font-weight: var(--font-normal);
     border-bottom-color: var(--brand-primary);
-    font-weight: var(--font-semibold);
 }
 
+/* 탭 컨텐츠 */
 .tab-content {
     display: none;
-    background: var(--bg-primary);
-    padding: var(--space-3xl);
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    min-height: 500px;
+    animation: fadeIn 0.3s ease;
 }
 
 .tab-content.active {
     display: block;
 }
 
-.tab-content h2 {
-    font-size: 20px;
-    font-weight: var(--font-medium);
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 탭 헤더 */
+.tab-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: var(--space-2xl);
 }
 
+.tab-header h2 {
+    font-size: var(--text-2xl);
+    font-weight: var(--h2-weight);
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.tab-header-actions {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+/* 세로 탭 */
+.tabs-vertical {
+    display: flex;
+    gap: var(--space-2xl);
+}
+
+.tabs-vertical .tab-menu {
+    flex-direction: column;
+    width: 200px;
+    border-right: 1px solid var(--border-default);
+    padding-right: var(--space-xl);
+}
+
+.tabs-vertical .tab-btn {
+    text-align: left;
+    border-bottom: none;
+    border-left: 2px solid transparent;
+    padding: var(--space-sm) var(--space-md);
+}
+
+.tabs-vertical .tab-btn.active {
+    border-left-color: var(--brand-primary);
+    background-color: var(--bg-hover);
+}
+
+.tabs-vertical .tab-content-wrapper {
+    flex: 1;
+}
+
+/* 탭 배지 */
+.tab-btn .badge {
+    margin-left: var(--space-xs);
+}
+
+/* 탭 아이콘 */
+.tab-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.tab-btn-icon svg,
+.tab-btn-icon i {
+    width: 16px;
+    height: 16px;
+}
+
+/* 탭 그룹 */
+.tab-group {
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: var(--space-xl);
+}
+
+.tab-group .tab-menu {
+    background-color: var(--bg-light);
+    padding: var(--space-sm);
+    gap: 0;
+}
+
+.tab-group .tab-btn {
+    flex: 1;
+    text-align: center;
+    border-radius: 6px;
+    border-bottom: none;
+}
+
+.tab-group .tab-btn.active {
+    background-color: var(--bg-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* 약식 탭 */
+.tabs-pills .tab-menu {
+    background: none;
+    gap: var(--space-sm);
+    padding: var(--space-md) 0;
+}
+
+.tabs-pills .tab-btn {
+    background-color: var(--bg-light);
+    border-radius: 20px;
+    padding: var(--space-sm) var(--space-lg);
+    border: none;
+}
+
+.tabs-pills .tab-btn:hover {
+    background-color: var(--bg-hover);
+}
+
+.tabs-pills .tab-btn.active {
+    background-color: var(--brand-primary);
+    color: white;
+}
+
+/* 탭 언더라인 */
+.tabs-underline .tab-menu {
+    border-bottom: 1px solid var(--border-light);
+    gap: var(--space-xl);
+    padding: 0;
+}
+
+.tabs-underline .tab-btn {
+    padding: var(--space-md) 0;
+    margin-bottom: -1px;
+    border-bottom-width: 2px;
+}
+
+/* 새로고침 섹션 */
+.refresh-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-lg);
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    margin-bottom: var(--space-xl);
+}
+
+.refresh-info {
+    font-size: var(--text-sm);
+    font-weight: var(--font-light);
+    color: var(--text-muted);
+}
+
+.refresh-info span {
+    font-weight: var(--font-normal);
+    color: var(--text-secondary);
+}
+
+/* 탭 로딩 */
+.tab-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+}
+
+/* 모바일 반응형 */
 @media (max-width: 768px) {
+    .tabs {
+        padding: 0 var(--container-padding-mobile);
+    }
+    
+    .tab-menu {
+        gap: 0;
+    }
+    
     .tab-btn {
-        padding: 12px 20px;
-        font-size: 14px;
+        padding: var(--space-sm) var(--space-md);
+        font-size: var(--text-sm);
+    }
+    
+    .tab-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-md);
+    }
+    
+    .tab-header h2 {
+        font-size: var(--text-xl);
+    }
+    
+    .tab-header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .tabs-vertical {
+        flex-direction: column;
+    }
+    
+    .tabs-vertical .tab-menu {
+        width: 100%;
+        flex-direction: row;
+        border-right: none;
+        border-bottom: 1px solid var(--border-default);
+        padding-right: 0;
+        padding-bottom: var(--space-md);
+        overflow-x: auto;
+    }
+    
+    .refresh-section {
+        flex-direction: column;
+        gap: var(--space-md);
+        align-items: stretch;
     }
 }
