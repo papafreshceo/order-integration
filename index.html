@@ -206,18 +206,39 @@
                 </div>
             </div>
             
-            <!-- 실시간 주문현황 탭 -->
-            <div id="realtime" class="tab-content">
-                <h2>실시간 주문현황</h2>
-                <div class="stats-grid" id="statsGrid">
-                    <!-- 통계 카드 동적 생성 -->
-                </div>
-                <div class="loading" id="realtimeLoading">데이터 로딩 중...</div>
-                <table id="realtimeTable" style="display:none;">
-                    <thead id="realtimeHead"></thead>
-                    <tbody id="realtimeBody"></tbody>
-                </table>
-            </div>
+            <!-- index.html의 실시간 주문현황 탭을 이것으로 교체 -->
+
+<div id="realtime" class="tab-content">
+    <h2>실시간 주문현황</h2>
+    
+    <!-- 새로고침 섹션 추가 -->
+    <div class="refresh-section">
+        <div class="refresh-info">
+            <span>마지막 업데이트: <span id="lastUpdateTime">-</span></span>
+            <span style="margin-left: 20px;">쿠팡 동기화: <span id="coupangSyncStatus">대기</span></span>
+        </div>
+        <div>
+            <button class="btn-refresh" onclick="refreshRealtimeData()">
+                ↻ 새로고침
+            </button>
+            <button class="btn" onclick="syncCoupangNow()" style="margin-left: 10px;">
+                쿠팡 동기화
+            </button>
+        </div>
+    </div>
+    
+    <!-- 통계 카드 -->
+    <div class="stats-grid" id="statsGrid">
+        <!-- 통계 카드 동적 생성 -->
+    </div>
+    
+    <!-- 주문 테이블 -->
+    <div class="loading" id="realtimeLoading">데이터 로딩 중...</div>
+    <table id="realtimeTable" style="display:none;">
+        <thead id="realtimeHead"></thead>
+        <tbody id="realtimeBody"></tbody>
+    </table>
+</div>
             
             <!-- 주문조회 탭 -->
             <div id="search" class="tab-content">
