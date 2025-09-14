@@ -11,18 +11,71 @@
     
     <!-- 외부 CSS -->
     <link rel="stylesheet" href="styles.css">
+    
+    <style>
+        /* 초기 로딩 화면 */
+        .initial-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+        }
+        
+        .initial-loading.hide {
+            display: none;
+        }
+        
+        .initial-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .initial-text {
+            margin-top: 20px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 초기에 모든 주요 컨테이너 숨김 */
+        .login-wrapper,
+        .main-system {
+            display: none;
+        }
+    </style>
 </head>
 <body>
+    <!-- 초기 로딩 화면 -->
+    <div class="initial-loading" id="initialLoading">
+        <div class="initial-spinner"></div>
+        <div class="initial-text">시스템 로딩 중...</div>
+    </div>
+    
     <!-- 로그인 화면 -->
     <div class="login-wrapper" id="loginScreen">
-        <div class="login-card">
+        <div class="login-card" id="loginCard">
             <h1 class="login-title">주문통합 시스템</h1>
             <p class="login-subtitle">계정을 선택하여 로그인하세요</p>
             
             <div class="error-message" id="errorMsg"></div>
             
             <!-- 구글 로그인 버튼 -->
-            <button class="btn-google" onclick="signInWithGoogle()">
+            <button class="btn-google" onclick="signInWithGoogle(event)">
                 <span class="google-icon">G</span>
                 <span>Google 계정으로 로그인</span>
             </button>
@@ -42,10 +95,10 @@
                 <input type="password" class="form-input" id="password" placeholder="비밀번호를 입력하세요" onkeypress="handleEnter(event)">
             </div>
             
-            <button class="btn-login" onclick="signInWithEmail()">이메일로 로그인</button>
+            <button class="btn-login" onclick="signInWithEmail(event)">이메일로 로그인</button>
             
             <div class="auth-footer">
-                <a href="#" onclick="showSignUp()" class="auth-link">계정이 없으신가요? 회원가입</a>
+                <a href="#" onclick="showSignUp(); return false;" class="auth-link">계정이 없으신가요? 회원가입</a>
             </div>
         </div>
         
@@ -71,22 +124,22 @@
                 <input type="password" class="form-input" id="signupPassword" placeholder="비밀번호 (6자 이상)">
             </div>
             
-            <button class="btn-login" onclick="signUp()">회원가입</button>
+            <button class="btn-login" onclick="signUp(event)">회원가입</button>
             
             <div class="auth-footer">
-                <a href="#" onclick="showLogin()" class="auth-link">이미 계정이 있으신가요? 로그인</a>
+                <a href="#" onclick="showLogin(); return false;" class="auth-link">이미 계정이 있으신가요? 로그인</a>
             </div>
         </div>
     </div>
     
     <!-- 메인 시스템 -->
-    <div class="main-system" id="mainSystem" style="display: none;">
+    <div class="main-system" id="mainSystem">
         <div class="header">
             <h1>주문통합 관리 시스템</h1>
             <div class="user-info">
                 <span id="userEmail">사용자</span>
                 <span class="role-badge" id="userRole">역할</span>
-                <button class="btn-logout" onclick="signOut()">로그아웃</button>
+                <button class="btn-logout" onclick="signOut(event)">로그아웃</button>
             </div>
         </div>
         
@@ -129,8 +182,8 @@
                 <h2>주문통합 (Excel)</h2>
                 <div class="upload-area" onclick="document.getElementById('excelFile').click()">
                     <div class="upload-icon">▤</div>
-                    <p>엑셀 파일을 드래그하거나 클릭하여 업로드</p>
-                    <input type="file" id="excelFile" accept=".xlsx,.xls" style="display: none;">
+                    <p>엑셀 파일을 드래그하거나 클릭하여 선택하세요</p>
+                    <input type="file" accept=".xlsx,.xls" style="display: none;" id="excelFile">
                 </div>
                 <button class="btn" onclick="processExcel()">엑셀 처리</button>
                 <div id="excelResult"></div>
@@ -186,10 +239,45 @@
         </div>
     </div>
     
-    <!-- 외부 JavaScript -->
+    <!-- JavaScript 파일들 (순서 중요!) -->
     <script src="firebase-config.js"></script>
     <script src="utils.js"></script>
     <script src="auth.js"></script>
     <script src="app.js"></script>
+    
+    <script>
+        // 초기 로딩 처리
+        let authInitialized = false;
+        
+        // Firebase Auth 초기화 확인
+        if (typeof auth !== 'undefined') {
+            auth.onAuthStateChanged(async (user) => {
+                if (!authInitialized) {
+                    authInitialized = true;
+                    
+                    // 초기 로딩 화면 숨기기
+                    setTimeout(() => {
+                        document.getElementById('initialLoading').classList.add('hide');
+                        
+                        if (user) {
+                            // 로그인 상태 - 메인 화면 표시
+                            document.getElementById('loginScreen').style.display = 'none';
+                            document.getElementById('mainSystem').style.display = 'block';
+                        } else {
+                            // 비로그인 상태 - 로그인 화면 표시
+                            document.getElementById('loginScreen').style.display = 'flex';
+                            document.getElementById('mainSystem').style.display = 'none';
+                        }
+                    }, 500);
+                }
+            });
+        } else {
+            // Firebase 로드 실패 시
+            setTimeout(() => {
+                document.getElementById('initialLoading').classList.add('hide');
+                document.getElementById('loginScreen').style.display = 'flex';
+            }, 1000);
+        }
+    </script>
 </body>
 </html>
