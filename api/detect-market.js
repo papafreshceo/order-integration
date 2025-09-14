@@ -1,16 +1,4 @@
 // api/detect-market.js
-import { google } from 'googleapis';
-
-const auth = new google.auth.GoogleAuth({
-  credentials: {
-    client_email: process.env.GOOGLE_CLIENT_EMAIL,
-    private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-  },
-  scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
-});
-
-const sheets = google.sheets({ version: 'v4', auth });
-
 export default async function handler(req, res) {
   // CORS 헤더 설정
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -34,151 +22,104 @@ export default async function handler(req, res) {
     const { fileName, headers } = req.body;
     
     if (!fileName || !headers) {
-      return res.status(400).json({ error: '파일명과 헤더가 필요합니다.' });
+      return res.status(400).json({ error: 'fileName과 headers가 필요합니다.' });
     }
     
+    // 먼저 mapping-data를 가져옴
+    const { google } = await import('googleapis');
+    
+    const CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
+    const PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY;
+    const SPREADSHEET_ID = process.env.SPREADSHEET_ID || '1kLjYKemytOfaH6kSXD7dqdiolx3j09Ir-V9deEnNImA';
+    
+    if (!CLIENT_EMAIL || !PRIVATE_KEY) {
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+    
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        client_email: CLIENT_EMAIL,
+        private_key: PRIVATE_KEY.replace(/\\n/g, '\n'),
+      },
+      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+    });
+
+    const sheets = google.sheets({ version: 'v4', auth });
+    
     // 매핑 데이터 가져오기
-    const spreadsheetId = process.env.SPREADSHEET_ID;
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: '매핑!A1:ZZ1000',
+      spreadsheetId: SPREADSHEET_ID,
+      range: '매핑!A1:H100',
     });
     
     const data = response.data.values || [];
     
-    if (data.length < 3) {
-      return res.status(400).json({ error: '매핑 데이터가 없습니다.' });
-    }
-    
-    // 매핑 데이터 파싱
-    const mappingData = parseMappingData(data);
-    
-    // 마켓 감지
+    // 헤더 문자열 생성
+    const headerString = headers.join(' ').toLowerCase();
     const fileNameLower = fileName.toLowerCase();
-    const headerText = headers.join(' ').toLowerCase();
     
-    // 파일명으로 먼저 체크 (detectString1)
-    for (const marketName in mappingData.markets) {
-      const market = mappingData.markets[marketName];
+    // 마켓 감지 로직
+    let detectedMarket = null;
+    
+    // 3행부터 마켓 정보 확인
+    for (let i = 2; i < data.length; i++) {
+      const row = data[i];
+      if (!row || row.length === 0) continue;
       
-      if (market.detectString1 && market.detectString1.length > 0) {
-        if (fileNameLower.includes(market.detectString1.toLowerCase())) {
-          console.log(`${marketName} 감지: 파일명 매칭`);
-          return res.status(200).json({ marketName });
-        }
+      const marketName = String(row[0] || '').trim();
+      const detectString1 = String(row[3] || '').trim().toLowerCase();
+      const detectString2 = String(row[4] || '').trim().toLowerCase();
+      const detectString3 = String(row[5] || '').trim().toLowerCase();
+      
+      if (!marketName) continue;
+      
+      // 감지 문자열 확인
+      let matched = false;
+      
+      // 파일명에서 확인
+      if (detectString1 && fileNameLower.includes(detectString1)) matched = true;
+      if (detectString2 && fileNameLower.includes(detectString2)) matched = true;
+      if (detectString3 && fileNameLower.includes(detectString3)) matched = true;
+      
+      // 헤더에서 확인
+      if (detectString1 && headerString.includes(detectString1)) matched = true;
+      if (detectString2 && headerString.includes(detectString2)) matched = true;
+      if (detectString3 && headerString.includes(detectString3)) matched = true;
+      
+      if (matched) {
+        detectedMarket = marketName;
+        break;
       }
     }
     
-    // 헤더로 체크 (detectString2)
-    for (const marketName in mappingData.markets) {
-      const market = mappingData.markets[marketName];
-      
-      if (market.detectString2 && market.detectString2.length > 0) {
-        const detectStrings = market.detectString2.split(',').map(s => s.trim());
-        let matchCount = 0;
-        
-        for (const detectStr of detectStrings) {
-          if (detectStr && headerText.includes(detectStr.toLowerCase())) {
-            matchCount++;
-          }
-        }
-        
-        const requiredMatches = detectStrings.length > 1 ? 2 : 1;
-        
-        if (matchCount >= requiredMatches) {
-          console.log(`${marketName} 감지: 헤더 매칭`);
-          return res.status(200).json({ marketName });
-        }
-      }
-      
-      // detectString3 체크
-      if (market.detectString3 && market.detectString3.length > 0) {
-        const detectStrings3 = market.detectString3.split(',').map(s => s.trim());
-        let matchCount3 = 0;
-        
-        for (const detectStr of detectStrings3) {
-          if (detectStr && headerText.includes(detectStr.toLowerCase())) {
-            matchCount3++;
-          }
-        }
-        
-        if (matchCount3 >= (detectStrings3.length > 1 ? 2 : 1)) {
-          console.log(`${marketName} 감지: detectString3 매칭`);
-          return res.status(200).json({ marketName });
-        }
+    // 특수 케이스: 스마트스토어
+    if (!detectedMarket) {
+      if (fileNameLower.includes('naver') || fileNameLower.includes('스마트스토어')) {
+        detectedMarket = '스마트스토어';
+      } else if (fileNameLower.includes('coupang') || fileNameLower.includes('쿠팡')) {
+        detectedMarket = '쿠팡';
+      } else if (fileNameLower.includes('gmarket') || fileNameLower.includes('지마켓')) {
+        detectedMarket = '지마켓';
+      } else if (fileNameLower.includes('auction') || fileNameLower.includes('옥션')) {
+        detectedMarket = '옥션';
+      } else if (fileNameLower.includes('11st') || fileNameLower.includes('11번가')) {
+        detectedMarket = '11번가';
       }
     }
     
-    // 마켓을 찾지 못한 경우
-    res.status(200).json({ marketName: null });
+    console.log('마켓 감지 결과:', detectedMarket);
+    
+    res.status(200).json({ 
+      success: true,
+      marketName: detectedMarket,
+      fileName: fileName
+    });
     
   } catch (error) {
     console.error('마켓 감지 오류:', error);
-    res.status(500).json({ error: error.toString() });
+    res.status(500).json({ 
+      error: error.message || error.toString(),
+      message: '마켓 감지 중 오류가 발생했습니다.'
+    });
   }
-}
-
-// 매핑 데이터 파싱 함수
-function parseMappingData(data) {
-  const mappingData = {
-    markets: {},
-    marketOrder: [],
-    standardFields: [],
-    standardFieldsStartCol: -1
-  };
-  
-  // "표준필드시작" 마커 찾기 (2행에서)
-  const markerRow = data[1];
-  for (let i = 0; i < markerRow.length; i++) {
-    if (String(markerRow[i]).trim() === '표준필드시작') {
-      mappingData.standardFieldsStartCol = i + 1;
-      break;
-    }
-  }
-  
-  if (mappingData.standardFieldsStartCol === -1) {
-    return mappingData;
-  }
-  
-  // 표준필드 목록 생성
-  for (let i = mappingData.standardFieldsStartCol; i < markerRow.length; i++) {
-    const fieldName = String(markerRow[i] || '').trim();
-    if (fieldName === '') break;
-    mappingData.standardFields.push(fieldName);
-  }
-  
-  // 마켓별 매핑 정보 로드 (3행부터)
-  for (let i = 2; i < data.length; i++) {
-    const row = data[i];
-    const marketName = String(row[0] || '').trim();
-    
-    if (!marketName) continue;
-    
-    const marketInfo = {
-      name: marketName,
-      initial: String(row[1] || '').trim(),
-      color: String(row[2] || '200,200,200').trim(),
-      detectString1: String(row[3] || '').trim(),
-      detectString2: String(row[4] || '').trim(),
-      detectString3: String(row[5] || '').trim(),
-      settlementFormula: String(row[6] || '').trim(),
-      headerRow: parseInt(row[7]) || 1,
-      mappings: {}
-    };
-    
-    // 필드 매핑 정보
-    for (let j = 0; j < mappingData.standardFields.length; j++) {
-      const standardField = mappingData.standardFields[j];
-      const colIndex = mappingData.standardFieldsStartCol + j;
-      const mappedField = String(row[colIndex] || '').trim();
-      if (mappedField) {
-        marketInfo.mappings[standardField] = mappedField;
-      }
-    }
-    
-    mappingData.markets[marketName] = marketInfo;
-    mappingData.marketOrder.push(marketName);
-  }
-  
-  return mappingData;
 }
