@@ -1,4 +1,4 @@
-// js/modules/merge.js - 주문통합 모듈
+// js/modules/merge.js - 주문통합 모듈 (수정된 버전)
 
 window.MergeModule = {
     uploadedFiles: [],
@@ -11,7 +11,7 @@ window.MergeModule = {
         console.log('MergeModule 초기화 완료');
     },
     
-    // 매핑 데이터 로드
+    // 매핑 데이터 로드 - 에러 처리 개선
     async loadMappingData() {
         try {
             const response = await fetch('/api/merge-mapping', {
@@ -29,13 +29,126 @@ window.MergeModule = {
                     console.log('매핑 데이터 로드 완료:', this.mappingData);
                 } else {
                     console.error('매핑 데이터 로드 실패:', data.error);
+                    this.useDefaultMappingData();
                 }
+            } else {
+                console.error('API 응답 오류:', response.status, response.statusText);
+                this.useDefaultMappingData();
             }
         } catch (error) {
             console.error('매핑 데이터 로드 오류:', error);
             // 로드 실패시 기본값 사용
-            this.mappingData = null;
+            this.useDefaultMappingData();
         }
+    },
+    
+    // 기본 매핑 데이터 사용
+    useDefaultMappingData() {
+        console.log('기본 매핑 데이터 사용');
+        this.mappingData = {
+            success: true,
+            markets: {
+                '네이버': {
+                    name: '네이버',
+                    initial: 'N',
+                    color: '76,175,80',
+                    detectString1: '스마트스토어',
+                    detectString2: '상품주문번호,구매자명,구매자연락처',
+                    detectString3: '',
+                    headerRow: 2
+                },
+                '쿠팡': {
+                    name: '쿠팡',
+                    initial: 'C',
+                    color: '255,87,34',
+                    detectString1: '쿠팡',
+                    detectString2: '주문번호,수취인,수취인연락처',
+                    detectString3: '묶음배송번호,옵션id,구매수(수량)',
+                    headerRow: 1
+                },
+                '11번가': {
+                    name: '11번가',
+                    initial: 'E',
+                    color: '244,67,54',
+                    detectString1: '11번가',
+                    detectString2: '주문번호,구매자명,수취인명',
+                    detectString3: '상품주문번호,주문상태,수취인전화번호',
+                    headerRow: 2
+                },
+                '카카오': {
+                    name: '카카오',
+                    initial: 'K',
+                    color: '255,235,59',
+                    detectString1: '',
+                    detectString2: '주문 일련번호,수령인,연락처,배송메시지',
+                    detectString3: '',
+                    headerRow: 1
+                },
+                '티몬': {
+                    name: '티몬',
+                    initial: 'T',
+                    color: '103,58,183',
+                    detectString1: '티몬',
+                    detectString2: '주문번호,딜명,옵션명,구매자명',
+                    detectString3: '수령자명',
+                    headerRow: 1
+                },
+                '위메프': {
+                    name: '위메프',
+                    initial: 'W',
+                    color: '156,39,176',
+                    detectString1: '위메프',
+                    detectString2: '주문번호코드,주문자,수취인',
+                    detectString3: '수취인연락처',
+                    headerRow: 1
+                },
+                '지마켓': {
+                    name: '지마켓',
+                    initial: 'G',
+                    color: '63,81,181',
+                    detectString1: '지마켓',
+                    detectString2: '주문번호,구매자,수령자',
+                    detectString3: '수령자연락처',
+                    headerRow: 1
+                },
+                '옥션': {
+                    name: '옥션',
+                    initial: 'A',
+                    color: '33,150,243',
+                    detectString1: '옥션',
+                    detectString2: '주문번호,구매자,수령자',
+                    detectString3: '수령자연락처',
+                    headerRow: 1
+                },
+                'SSG': {
+                    name: 'SSG',
+                    initial: 'S',
+                    color: '233,30,99',
+                    detectString1: 'ssg',
+                    detectString2: '주문번호,수취인명,수취인휴대폰',
+                    detectString3: '상품명,단품명',
+                    headerRow: 1
+                },
+                '인터파크': {
+                    name: '인터파크',
+                    initial: 'I',
+                    color: '3,169,244',
+                    detectString1: '인터파크',
+                    detectString2: '주문번호,구매자명,수취인명',
+                    detectString3: '수취인연락처',
+                    headerRow: 1
+                }
+            },
+            marketOrder: ['네이버', '쿠팡', '11번가', '카카오', '티몬', '위메프', '지마켓', '옥션', 'SSG', '인터파크'],
+            standardFields: [
+                '마켓명', '연번', '마켓', '결제일', '주문번호', '상품주문번호',
+                '주문자', '주문자전화번호', '수취인', '수취인전화번호', '주소',
+                '배송메세지', '옵션명', '수량', '상품금액', '할인금액',
+                '수수료1', '수수료2', '택배비', '정산예정금액',
+                '셀러', '벤더사', '출고', '송장', '발송지', '발송지주소',
+                '발송지연락처', '출고비용', '셀러공급가', '송장번호', '택배사', '발송일'
+            ]
+        };
     },
     
     // 이벤트 리스너 설정
@@ -46,7 +159,7 @@ window.MergeModule = {
         if (uploadArea) {
             // 클릭 이벤트
             uploadArea.addEventListener('click', () => {
-                fileInput.click();
+                if (fileInput) fileInput.click();
             });
             
             // 드래그 앤 드롭
@@ -139,6 +252,12 @@ window.MergeModule = {
     // SheetJS 동적 로드
     async loadSheetJS() {
         return new Promise((resolve, reject) => {
+            // 이미 로드되어 있는지 확인
+            if (typeof XLSX !== 'undefined') {
+                resolve();
+                return;
+            }
+            
             const script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
             script.onload = resolve;
@@ -151,10 +270,10 @@ window.MergeModule = {
     detectMarket(fileName, data) {
         console.log('Detecting market for:', fileName);
         
-        // 매핑 데이터가 없으면 재로드 시도
+        // 매핑 데이터가 없으면 기본값 사용
         if (!this.mappingData || !this.mappingData.markets) {
-            console.log('매핑 데이터가 없습니다');
-            return '미감지';
+            console.log('매핑 데이터가 없어 기본값을 사용합니다');
+            this.useDefaultMappingData();
         }
         
         // 헤더 찾기 (첫 10개 행에서 찾기)
@@ -278,10 +397,15 @@ window.MergeModule = {
         const fileSummaryDiv = document.getElementById('fileSummary');
         const processBtn = document.getElementById('processMergeBtn');
         
+        if (!fileListDiv || !fileSummaryDiv) {
+            console.error('필수 DOM 요소를 찾을 수 없습니다');
+            return;
+        }
+        
         if (this.uploadedFiles.length === 0) {
             fileListDiv.style.display = 'none';
             fileSummaryDiv.style.display = 'none';
-            processBtn.style.display = 'none';
+            if (processBtn) processBtn.style.display = 'none';
             return;
         }
         
@@ -323,12 +447,16 @@ window.MergeModule = {
         
         // 요약 정보 표시
         fileSummaryDiv.style.display = 'flex';
-        document.getElementById('totalFiles').textContent = this.uploadedFiles.length;
-        document.getElementById('totalMarkets').textContent = marketSet.size;
-        document.getElementById('totalOrders').textContent = totalOrders.toLocaleString('ko-KR');
+        const totalFilesEl = document.getElementById('totalFiles');
+        const totalMarketsEl = document.getElementById('totalMarkets');
+        const totalOrdersEl = document.getElementById('totalOrders');
+        
+        if (totalFilesEl) totalFilesEl.textContent = this.uploadedFiles.length;
+        if (totalMarketsEl) totalMarketsEl.textContent = marketSet.size;
+        if (totalOrdersEl) totalOrdersEl.textContent = totalOrders.toLocaleString('ko-KR');
         
         // 처리 버튼 표시
-        processBtn.style.display = 'inline-block';
+        if (processBtn) processBtn.style.display = 'inline-block';
         
         // 경고 확인
         this.checkWarnings();
@@ -347,13 +475,15 @@ window.MergeModule = {
         
         if (oldFiles.length > 0 && warningBox) {
             const warningList = document.getElementById('warningList');
-            warningList.innerHTML = '';
-            
-            oldFiles.forEach(file => {
-                const li = document.createElement('li');
-                li.textContent = `${file.name} (${new Date(file.lastModified).toLocaleDateString('ko-KR')})`;
-                warningList.appendChild(li);
-            });
+            if (warningList) {
+                warningList.innerHTML = '';
+                
+                oldFiles.forEach(file => {
+                    const li = document.createElement('li');
+                    li.textContent = `${file.name} (${new Date(file.lastModified).toLocaleDateString('ko-KR')})`;
+                    warningList.appendChild(li);
+                });
+            }
             
             warningBox.style.display = 'block';
         } else if (warningBox) {
@@ -467,7 +597,7 @@ window.MergeModule = {
     
     // 초기화 상태 확인
     isInitialized() {
-        return this.mappingData !== null;
+        return true; // 매핑 데이터가 없어도 기본값으로 동작 가능
     }
 };
 
