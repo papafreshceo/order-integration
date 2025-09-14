@@ -1,0 +1,8 @@
+{
+  "name": "order-integration",
+  "version": "1.0.0",
+  "description": "주문통합 관리 시스템",
+  "dependencies": {
+    "googleapis": "^118.0.0"
+  }
+}
