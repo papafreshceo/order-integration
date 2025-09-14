@@ -1,0 +1,44 @@
+/* css/components/cards.css - 카드 컴포넌트 */
+
+.stat-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: var(--space-xl);
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: var(--space-sm);
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: var(--font-semibold);
+    color: var(--brand-primary);
+    margin-bottom: var(--space-sm);
+}
+
+.stat-change {
+    font-size: 12px;
+    font-weight: var(--font-normal);
+}
+
+.stat-change.positive {
+    color: var(--success);
+}
+
+.stat-change.negative {
+    color: var(--danger);
+}
+
+.login-card {
+    background: var(--bg-primary);
+    padding: var(--space-4xl);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px;
+}
