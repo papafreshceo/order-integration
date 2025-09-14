@@ -118,38 +118,142 @@ window.ExcelModule = {
         });
     },
     
-    // 마켓 감지
+    // 마켓 감지 - Google Apps Script 로직과 동일하게 구현
     detectMarket(fileName, data) {
-        const fileNameLower = fileName.toLowerCase();
+        console.log('Detecting market for:', fileName);
         
-        // 파일명으로 감지
-        if (fileNameLower.includes('네이버') || fileNameLower.includes('스마트스토어')) {
-            return '네이버';
-        } else if (fileNameLower.includes('쿠팡')) {
-            return '쿠팡';
-        } else if (fileNameLower.includes('11번가')) {
-            return '11번가';
-        } else if (fileNameLower.includes('지마켓')) {
-            return '지마켓';
-        } else if (fileNameLower.includes('옥션')) {
-            return '옥션';
-        } else if (fileNameLower.includes('위메프')) {
-            return '위메프';
-        } else if (fileNameLower.includes('티몬')) {
-            return '티몬';
-        }
-        
-        // 헤더로 감지 (첫 번째 행)
-        if (data && data.length > 0) {
-            const headers = data[0].join(' ').toLowerCase();
-            
-            if (headers.includes('상품주문번호') && headers.includes('구매자명')) {
-                return '네이버';
-            } else if (headers.includes('주문번호') && headers.includes('수취인이름')) {
-                return '쿠팡';
+        // 헤더 찾기 (첫 10개 행에서 찾기)
+        let headers = [];
+        for (let i = 0; i < Math.min(10, data.length); i++) {
+            const row = data[i];
+            if (row && row.length > 0) {
+                // 이 행이 헤더일 가능성이 있는지 확인
+                const rowText = row.map(cell => String(cell || '').trim()).join(' ').toLowerCase();
+                if (rowText.includes('주문') || rowText.includes('구매') || rowText.includes('수취') || 
+                    rowText.includes('상품') || rowText.includes('금액') || rowText.includes('번호')) {
+                    headers = row.map(cell => String(cell || '').trim());
+                    console.log('Headers found at row', i + 1, ':', headers.slice(0, 10));
+                    break;
+                }
             }
         }
         
+        // 헤더가 없으면 첫 번째 행을 헤더로 가정
+        if (headers.length === 0 && data.length > 0) {
+            headers = data[0].map(cell => String(cell || '').trim());
+        }
+        
+        const fileNameLower = fileName.toLowerCase();
+        const headerText = headers.join(' ').toLowerCase();
+        
+        console.log('Header text for detection:', headerText.substring(0, 200));
+        
+        // 마켓 감지 규칙 (매핑 시트 설정 기반)
+        const marketDetectionRules = {
+            '네이버': {
+                detectString1: '스마트스토어',
+                detectString2: '상품주문번호,구매자명,구매자연락처',
+                detectString3: ''
+            },
+            '쿠팡': {
+                detectString1: '쿠팡',
+                detectString2: '주문번호,수취인,수취인연락처',
+                detectString3: '묶음배송번호,옵션id,구매수(수량)'
+            },
+            '11번가': {
+                detectString1: '11번가',
+                detectString2: '주문번호,구매자명,수취인명',
+                detectString3: '상품주문번호,주문상태,수취인전화번호'
+            },
+            '카카오': {
+                detectString1: '',  // 카카오는 파일명 감지 없음
+                detectString2: '주문 일련번호,수령인,연락처,배송메시지',
+                detectString3: ''
+            },
+            '티몬': {
+                detectString1: '티몬',
+                detectString2: '주문번호,딜명,옵션명,구매자명',
+                detectString3: '수령자명'
+            },
+            '위메프': {
+                detectString1: '위메프',
+                detectString2: '주문번호코드,주문자,수취인',
+                detectString3: '수취인연락처'
+            },
+            '지마켓': {
+                detectString1: '지마켓',
+                detectString2: '주문번호,구매자,수령자',
+                detectString3: '수령자연락처'
+            },
+            '옥션': {
+                detectString1: '옥션',
+                detectString2: '주문번호,구매자,수령자',
+                detectString3: '수령자연락처'
+            },
+            'SSG': {
+                detectString1: 'ssg',
+                detectString2: '주문번호,수취인명,수취인휴대폰',
+                detectString3: '상품명,단품명'
+            },
+            '인터파크': {
+                detectString1: '인터파크',
+                detectString2: '주문번호,구매자명,수취인명',
+                detectString3: '수취인연락처'
+            }
+        };
+        
+        // 1. 파일명으로 먼저 체크 (detectString1)
+        for (const [marketName, rules] of Object.entries(marketDetectionRules)) {
+            if (rules.detectString1 && rules.detectString1.length > 0) {
+                if (fileNameLower.includes(rules.detectString1.toLowerCase())) {
+                    console.log(`Matched ${marketName} by filename with "${rules.detectString1}"`);
+                    return marketName;
+                }
+            }
+        }
+        
+        // 2. 헤더로 체크 (detectString2) - 쉼표로 구분된 문자열 처리
+        for (const [marketName, rules] of Object.entries(marketDetectionRules)) {
+            if (rules.detectString2 && rules.detectString2.length > 0) {
+                const detectStrings = rules.detectString2.split(',').map(s => s.trim());
+                let matchCount = 0;
+                
+                for (const detectStr of detectStrings) {
+                    if (detectStr && headerText.includes(detectStr.toLowerCase())) {
+                        matchCount++;
+                        console.log(`  Found "${detectStr}" in headers`);
+                    }
+                }
+                
+                // 여러 문자열이 있는 경우: 2개 이상 매칭
+                // 단일 문자열인 경우: 1개 매칭
+                const requiredMatches = detectStrings.length > 1 ? 2 : 1;
+                
+                if (matchCount >= requiredMatches) {
+                    console.log(`Matched ${marketName} by headers (${matchCount}/${detectStrings.length} matches)`);
+                    return marketName;
+                }
+            }
+            
+            // 3. detectString3 체크
+            if (rules.detectString3 && rules.detectString3.length > 0) {
+                const detectStrings3 = rules.detectString3.split(',').map(s => s.trim());
+                let matchCount3 = 0;
+                
+                for (const detectStr of detectStrings3) {
+                    if (detectStr && headerText.includes(detectStr.toLowerCase())) {
+                        matchCount3++;
+                    }
+                }
+                
+                if (matchCount3 >= (detectStrings3.length > 1 ? 2 : 1)) {
+                    console.log(`Matched ${marketName} with detectString3 (${matchCount3} matches)`);
+                    return marketName;
+                }
+            }
+        }
+        
+        console.log('No market matched');
         return '미감지';
     },
     
@@ -265,6 +369,7 @@ window.ExcelModule = {
             '티몬': '#ff0000',
             'SSG': '#e51937',
             '카카오': '#fee500',
+            '인터파크': '#0050ff',
             '미감지': '#999999'
         };
         return colors[marketName] || '#999999';
@@ -299,7 +404,7 @@ window.ExcelModule = {
         }
     },
     
-    // 새로고침 메서드 추가
+    // 새로고침 메서드
     refresh() {
         console.log('ExcelModule refresh called');
         
