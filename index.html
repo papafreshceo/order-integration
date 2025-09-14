@@ -2,86 +2,50 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>주문관리 시스템</title>
-    
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: sans-serif; background: #f8f9fa; }
-        
-        .initial-loading { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: white; display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        .initial-loading.hide { display: none; }
-        .initial-spinner { width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
+        body { margin: 0; font-family: sans-serif; background: #f8f9fa; }
         .login-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .login-card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 400px; }
-        .login-title { font-size: 24px; font-weight: 600; text-align: center; margin-bottom: 30px; }
-        
-        .form-group { margin-bottom: 20px; }
-        .form-label { display: block; margin-bottom: 8px; font-size: 14px; color: #666; }
-        .form-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
-        
-        .btn-login { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
-        .btn-login:hover { background: #1d4ed8; }
-        
-        .error-message { padding: 10px; background: #f8d7da; color: #721c24; border-radius: 6px; margin-bottom: 20px; display: none; }
-        
-        .main-system { display: none; min-height: 100vh; }
-        .header { background: white; padding: 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; }
-        .container { padding: 20px; }
-        
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .login-card { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 400px; }
+        h1 { text-align: center; margin-bottom: 30px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #1d4ed8; }
+        .main-system { display: none; }
+        .header { background: white; padding: 20px; border-bottom: 1px solid #ddd; }
     </style>
 </head>
 <body>
-    <div class="initial-loading" id="initialLoading">
-        <div class="initial-spinner"></div>
-    </div>
-
-    <div class="login-wrapper" id="loginScreen" style="display: none;">
+    <div class="login-wrapper" id="loginScreen">
         <div class="login-card">
-            <h1 class="login-title">주문관리 시스템</h1>
-            <div class="error-message" id="errorMsg"></div>
-            <div class="form-group">
-                <label class="form-label">이메일</label>
-                <input type="email" id="email" class="form-input">
-            </div>
-            <div class="form-group">
-                <label class="form-label">비밀번호</label>
-                <input type="password" id="password" class="form-input">
-            </div>
-            <button class="btn-login" onclick="signInWithEmail()">로그인</button>
+            <h1>주문관리 시스템</h1>
+            <input type="email" id="email" placeholder="이메일">
+            <input type="password" id="password" placeholder="비밀번호">
+            <button onclick="login()">로그인</button>
         </div>
     </div>
 
     <div class="main-system" id="mainSystem">
         <div class="header">
             <h1>주문관리 시스템</h1>
-            <button onclick="signOut()">로그아웃</button>
+            <button onclick="logout()">로그아웃</button>
         </div>
-        <div class="container">
-            <div id="dashboard" class="tab-content active">
-                <h2>대시보드</h2>
-                <p>시스템 작동 중</p>
-            </div>
+        <div style="padding: 20px;">
+            <h2>대시보드</h2>
+            <p>로그인 성공</p>
         </div>
     </div>
 
-    <script src="firebase-config.js"></script>
-    <script src="auth.js"></script>
-    
     <script>
-        // 초기 로딩 처리
-        setTimeout(() => {
-            document.getElementById('initialLoading').classList.add('hide');
+        function login() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainSystem').style.display = 'block';
+        }
+        
+        function logout() {
             document.getElementById('loginScreen').style.display = 'flex';
-        }, 1000);
+            document.getElementById('mainSystem').style.display = 'none';
+        }
     </script>
 </body>
 </html>
