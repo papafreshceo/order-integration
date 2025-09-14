@@ -11,22 +11,96 @@
             padding: 20px;
             background: #f5f5f5;
         }
-        h1 {
-            color: #333;
-        }
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background: white;
             padding: 20px;
             border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+        #loading {
+            text-align: center;
+            padding: 20px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>주문통합 관리 시스템</h1>
-        <p>시스템 구축 중...</p>
+        <div id="loading">데이터 로딩 중...</div>
+        <table id="dataTable" style="display:none;">
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
     </div>
+
+    <script>
+        // 페이지 로드 시 데이터 가져오기
+        window.onload = function() {
+            fetch('/api/orders')
+                .then(response => response.json())
+                .then(data => {
+                    displayData(data.data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('loading').innerHTML = '데이터 로드 실패';
+                });
+        };
+
+        function displayData(data) {
+            if (!data || data.length === 0) {
+                document.getElementById('loading').innerHTML = '데이터가 없습니다';
+                return;
+            }
+
+            const table = document.getElementById('dataTable');
+            const thead = document.getElementById('tableHead');
+            const tbody = document.getElementById('tableBody');
+            
+            // 헤더 생성
+            const headers = data[0];
+            const headerRow = document.createElement('tr');
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            
+            // 데이터 행 생성
+            for (let i = 1; i < data.length; i++) {
+                const row = document.createElement('tr');
+                data[i].forEach(cell => {
+                    const td = document.createElement('td');
+                    td.textContent = cell || '';
+                    row.appendChild(td);
+                });
+                tbody.appendChild(row);
+            }
+            
+            // 테이블 표시, 로딩 숨기기
+            document.getElementById('loading').style.display = 'none';
+            table.style.display = 'table';
+        }
+    </script>
 </body>
 </html>
