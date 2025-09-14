@@ -60,8 +60,220 @@
     </style>
 </head>
 <body>
-    <!-- (기존 HTML 내용 동일) -->
-    
+    <!-- 초기 로딩 화면 -->
+    <div class="initial-loading" id="initialLoading">
+        <div class="initial-spinner"></div>
+        <div class="initial-text">시스템 로딩 중...</div>
+    </div>
+
+    <!-- 로그인 화면 -->
+    <div class="login-wrapper" id="loginScreen" style="display: none;">
+        <div class="login-card">
+            <h1 class="login-title">주문통합 시스템</h1>
+            <p class="login-subtitle">로그인하여 시작하세요</p>
+            
+            <div class="error-message" id="errorMsg"></div>
+            
+            <div class="form-group">
+                <label class="form-label">이메일</label>
+                <input type="email" id="email" class="form-input" placeholder="이메일을 입력하세요" onkeypress="handleEnter(event)">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">비밀번호</label>
+                <input type="password" id="password" class="form-input" placeholder="비밀번호를 입력하세요" onkeypress="handleEnter(event)">
+            </div>
+            
+            <button class="btn-login" onclick="signInWithEmail(event)">로그인</button>
+            
+            <div class="divider">
+                <span>또는</span>
+            </div>
+            
+            <button class="btn-google" onclick="signInWithGoogle(event)">
+                <span class="google-icon">G</span>
+                Google로 로그인
+            </button>
+            
+            <div class="auth-footer">
+                <span>계정이 없으신가요? </span>
+                <a href="#" class="auth-link" onclick="showSignUp(); return false;">회원가입</a>
+            </div>
+        </div>
+        
+        <!-- 회원가입 카드 -->
+        <div class="login-card" id="signupCard" style="display: none;">
+            <h1 class="login-title">회원가입</h1>
+            <p class="login-subtitle">새 계정을 만들어보세요</p>
+            
+            <div class="error-message" id="signupErrorMsg"></div>
+            
+            <div class="form-group">
+                <label class="form-label">이름</label>
+                <input type="text" id="signupName" class="form-input" placeholder="이름을 입력하세요">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">이메일</label>
+                <input type="email" id="signupEmail" class="form-input" placeholder="이메일을 입력하세요">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">비밀번호</label>
+                <input type="password" id="signupPassword" class="form-input" placeholder="6자 이상의 비밀번호">
+            </div>
+            
+            <button class="btn-login" onclick="signUp(event)">계정 만들기</button>
+            
+            <div class="auth-footer">
+                <span>이미 계정이 있으신가요? </span>
+                <a href="#" class="auth-link" onclick="showLogin(); return false;">로그인</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 시스템 -->
+    <div class="main-system" id="mainSystem" style="display: none;">
+        <div class="header">
+            <h1>📦 주문통합 시스템</h1>
+            <div class="user-info">
+                <span id="userEmail">user@example.com</span>
+                <span class="role-badge" id="userRole">직원</span>
+                <button class="btn-logout" onclick="signOut(event)">로그아웃</button>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab-menu" id="tabMenu"></div>
+        </div>
+
+        <div class="container">
+            <!-- 대시보드 탭 -->
+            <div id="dashboard" class="tab-content">
+                <h2>대시보드</h2>
+                <div class="stats-grid" id="dashboardStats"></div>
+                
+                <div class="dashboard-section">
+                    <h3 class="section-subtitle">최근 주문 현황</h3>
+                    <p class="loading" id="dashboardLoading">데이터를 불러오는 중...</p>
+                    <table id="dashboardSummaryTable" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>날짜</th>
+                                <th>주문번호</th>
+                                <th>고객명</th>
+                                <th>상품명</th>
+                                <th>상태</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboardSummaryBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="dashboard-section">
+                    <h3 class="section-subtitle">빠른 작업</h3>
+                    <div class="quick-actions">
+                        <button class="btn" onclick="showTab('realtime')">실시간 주문 확인</button>
+                        <button class="btn" onclick="refreshCurrentTab(event)">새로고침</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 실시간 주문현황 탭 -->
+            <div id="realtime" class="tab-content">
+                <h2>실시간 주문현황</h2>
+                
+                <div class="refresh-section">
+                    <button class="btn-refresh" onclick="refreshRealtimeData(event)">↻ 새로고침</button>
+                    <div class="refresh-info">
+                        마지막 업데이트: <span id="lastUpdateTime">-</span>
+                    </div>
+                </div>
+
+                <div class="stats-grid" id="statsGrid"></div>
+                
+                <p class="loading" id="realtimeLoading">주문 데이터를 불러오는 중...</p>
+                
+                <table id="realtimeTable" style="display: none;">
+                    <thead id="realtimeHead"></thead>
+                    <tbody id="realtimeBody"></tbody>
+                </table>
+            </div>
+
+            <!-- 주문조회 탭 -->
+            <div id="search" class="tab-content">
+                <h2>주문조회</h2>
+                <div class="search-box">
+                    <input type="date" id="startDate" class="date-input">
+                    <span>~</span>
+                    <input type="date" id="endDate" class="date-input">
+                    <button class="btn" onclick="searchOrders()">조회</button>
+                </div>
+                <div id="searchResult"></div>
+            </div>
+
+            <!-- 주문통합(Excel) 탭 -->
+            <div id="excel" class="tab-content">
+                <h2>주문통합(Excel)</h2>
+                <div class="upload-area" onclick="document.getElementById('excelFile').click()">
+                    <div class="upload-icon">📁</div>
+                    <p>파일을 선택하거나 드래그해주세요</p>
+                    <input type="file" id="excelFile" style="display: none;" accept=".xlsx,.xls,.csv" multiple>
+                </div>
+                <button class="btn" onclick="processExcel()">처리하기</button>
+                <div id="excelResult"></div>
+            </div>
+
+            <!-- 송장등록 탭 -->
+            <div id="invoice" class="tab-content">
+                <h2>송장등록</h2>
+                <div class="form-container">
+                    <div class="form-row">
+                        <label>주문번호</label>
+                        <input type="text" id="orderNo" class="form-input">
+                    </div>
+                    <div class="form-row">
+                        <label>송장번호</label>
+                        <input type="text" id="invoiceNo" class="form-input">
+                    </div>
+                    <div class="form-row">
+                        <label>택배사</label>
+                        <select id="courier" class="form-select">
+                            <option>CJ대한통운</option>
+                            <option>한진택배</option>
+                            <option>롯데택배</option>
+                            <option>우체국택배</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="registerInvoice()">등록</button>
+                </div>
+                <div id="invoiceResult"></div>
+            </div>
+
+            <!-- 통계 분석 탭 -->
+            <div id="analytics" class="tab-content">
+                <h2>통계 분석</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">이번 달 매출</div>
+                        <div class="stat-value">₩12,450,000</div>
+                        <div class="stat-change positive">▲ +23%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">이번 달 주문</div>
+                        <div class="stat-value">1,234</div>
+                        <div class="stat-change positive">▲ +15%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">평균 주문금액</div>
+                        <div class="stat-value">₩45,000</div>
+                        <div class="stat-change negative">▼ -5%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript 파일들 (순서 중요!) -->
     <script src="firebase-config.js"></script>
     <script src="utils.js"></script>
@@ -91,35 +303,49 @@
         // 초기 로딩 처리
         let authInitialized = false;
         
-        // Firebase Auth 초기화 확인
-        if (typeof auth !== 'undefined') {
-            auth.onAuthStateChanged(async (user) => {
-                if (!authInitialized) {
-                    authInitialized = true;
-                    
-                    // 초기 로딩 화면 숨기기
-                    setTimeout(() => {
-                        document.getElementById('initialLoading').classList.add('hide');
+        // DOM이 로드된 후 실행
+        document.addEventListener('DOMContentLoaded', function() {
+            // 초기 로딩 화면 요소 확인
+            const initialLoading = document.getElementById('initialLoading');
+            const loginScreen = document.getElementById('loginScreen');
+            const mainSystem = document.getElementById('mainSystem');
+            
+            // Firebase Auth 초기화 확인
+            if (typeof auth !== 'undefined') {
+                auth.onAuthStateChanged(async (user) => {
+                    if (!authInitialized) {
+                        authInitialized = true;
                         
-                        if (user) {
-                            // 로그인 상태 - 메인 화면 표시
-                            document.getElementById('loginScreen').style.display = 'none';
-                            document.getElementById('mainSystem').style.display = 'block';
-                        } else {
-                            // 비로그인 상태 - 로그인 화면 표시
-                            document.getElementById('loginScreen').style.display = 'flex';
-                            document.getElementById('mainSystem').style.display = 'none';
-                        }
-                    }, 500);
-                }
-            });
-        } else {
-            // Firebase 로드 실패 시
-            setTimeout(() => {
-                document.getElementById('initialLoading').classList.add('hide');
-                document.getElementById('loginScreen').style.display = 'flex';
-            }, 1000);
-        }
+                        // 초기 로딩 화면 숨기기
+                        setTimeout(() => {
+                            if (initialLoading) {
+                                initialLoading.classList.add('hide');
+                            }
+                            
+                            if (user) {
+                                // 로그인 상태 - 메인 화면 표시
+                                if (loginScreen) loginScreen.style.display = 'none';
+                                if (mainSystem) mainSystem.style.display = 'block';
+                            } else {
+                                // 비로그인 상태 - 로그인 화면 표시
+                                if (loginScreen) loginScreen.style.display = 'flex';
+                                if (mainSystem) mainSystem.style.display = 'none';
+                            }
+                        }, 500);
+                    }
+                });
+            } else {
+                // Firebase 로드 실패 시
+                setTimeout(() => {
+                    if (initialLoading) {
+                        initialLoading.classList.add('hide');
+                    }
+                    if (loginScreen) {
+                        loginScreen.style.display = 'flex';
+                    }
+                }, 1000);
+            }
+        });
     </script>
 </body>
 </html>
