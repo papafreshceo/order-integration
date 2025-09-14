@@ -5,81 +5,265 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>주문통합 시스템</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            margin: 0;
-            padding: 20px;
             background: #f5f5f5;
         }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
+        
+        .header {
             background: white;
             padding: 20px;
-            border-radius: 8px;
+            border-bottom: 2px solid #2563eb;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        h1 {
+        
+        .header h1 {
             color: #333;
+            text-align: center;
         }
+        
+        /* 탭 메뉴 */
+        .tabs {
+            background: white;
+            padding: 0 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab-menu {
+            display: flex;
+            gap: 0;
+        }
+        
+        .tab-btn {
+            padding: 15px 30px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 15px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn:hover {
+            background: #f8f9fa;
+        }
+        
+        .tab-btn.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+            font-weight: 600;
+        }
+        
+        /* 컨텐츠 영역 */
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-height: 500px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* 테이블 스타일 */
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
+        
         th, td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 10px;
             text-align: left;
         }
+        
         th {
-            background: #f0f0f0;
-            font-weight: bold;
+            background: #f8f9fa;
+            font-weight: 600;
         }
-        #loading {
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .loading {
             text-align: center;
-            padding: 20px;
+            padding: 50px;
+            color: #666;
+        }
+        
+        /* 버튼 스타일 */
+        .btn {
+            padding: 10px 20px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn:hover {
+            background: #1d4ed8;
+        }
+        
+        /* 엑셀 업로드 영역 */
+        .upload-area {
+            border: 2px dashed #ddd;
+            padding: 40px;
+            text-align: center;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .upload-area:hover {
+            border-color: #2563eb;
+            background: #f8f9fa;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="header">
         <h1>주문통합 관리 시스템</h1>
-        <div id="loading">데이터 로딩 중...</div>
-        <table id="dataTable" style="display:none;">
-            <thead id="tableHead"></thead>
-            <tbody id="tableBody"></tbody>
-        </table>
+    </div>
+    
+    <div class="tabs">
+        <div class="tab-menu">
+            <button class="tab-btn active" onclick="showTab('realtime')">실시간 주문현황</button>
+            <button class="tab-btn" onclick="showTab('search')">주문조회</button>
+            <button class="tab-btn" onclick="showTab('excel')">주문통합(Excel)</button>
+            <button class="tab-btn" onclick="showTab('invoice')">송장등록</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- 실시간 주문현황 탭 -->
+        <div id="realtime" class="tab-content active">
+            <h2>실시간 주문현황</h2>
+            <div class="loading">데이터 로딩 중...</div>
+            <table id="realtimeTable" style="display:none;">
+                <thead id="realtimeHead"></thead>
+                <tbody id="realtimeBody"></tbody>
+            </table>
+        </div>
+        
+        <!-- 주문조회 탭 -->
+        <div id="search" class="tab-content">
+            <h2>주문조회</h2>
+            <div style="margin: 20px 0;">
+                <input type="date" id="startDate" style="padding: 8px; margin-right: 10px;">
+                <span>~</span>
+                <input type="date" id="endDate" style="padding: 8px; margin: 0 10px;">
+                <button class="btn" onclick="searchOrders()">조회</button>
+            </div>
+            <div id="searchResult">조회 결과가 여기 표시됩니다.</div>
+        </div>
+        
+        <!-- 주문통합(Excel) 탭 -->
+        <div id="excel" class="tab-content">
+            <h2>주문통합 (Excel)</h2>
+            <div class="upload-area">
+                <p>📁 엑셀 파일을 드래그하거나 클릭하여 업로드</p>
+                <input type="file" id="excelFile" accept=".xlsx,.xls" style="margin-top: 20px;">
+            </div>
+            <button class="btn" onclick="processExcel()">엑셀 처리</button>
+            <div id="excelResult"></div>
+        </div>
+        
+        <!-- 송장등록 탭 -->
+        <div id="invoice" class="tab-content">
+            <h2>송장등록</h2>
+            <div style="margin: 20px 0;">
+                <label>주문번호: <input type="text" id="orderNo" style="padding: 8px; margin: 0 10px;"></label><br><br>
+                <label>송장번호: <input type="text" id="invoiceNo" style="padding: 8px; margin: 0 10px;"></label><br><br>
+                <label>택배사: 
+                    <select id="courier" style="padding: 8px; margin: 0 10px;">
+                        <option>CJ대한통운</option>
+                        <option>한진택배</option>
+                        <option>롯데택배</option>
+                        <option>우체국택배</option>
+                    </select>
+                </label><br><br>
+                <button class="btn" onclick="registerInvoice()">송장 등록</button>
+            </div>
+            <div id="invoiceResult"></div>
+        </div>
     </div>
 
     <script>
-        // 페이지 로드 시 데이터 가져오기
+        // 페이지 로드 시 실시간 데이터 가져오기
         window.onload = function() {
+            loadRealtimeData();
+        };
+        
+        // 탭 전환
+        function showTab(tabName) {
+            // 모든 탭 숨기기
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 선택된 탭 표시
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // 탭별 데이터 로드
+            if (tabName === 'realtime') {
+                loadRealtimeData();
+            }
+        }
+        
+        // 실시간 데이터 로드
+        function loadRealtimeData() {
             fetch('/api/orders')
                 .then(response => response.json())
                 .then(data => {
-                    displayData(data.data);
+                    displayRealtimeData(data.data);
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    document.getElementById('loading').innerHTML = '데이터 로드 실패';
+                    document.querySelector('.loading').innerHTML = '데이터 로드 실패';
                 });
-        };
-
-        function displayData(data) {
+        }
+        
+        // 실시간 데이터 표시
+        function displayRealtimeData(data) {
             if (!data || data.length === 0) {
-                document.getElementById('loading').innerHTML = '데이터가 없습니다';
+                document.querySelector('.loading').innerHTML = '데이터가 없습니다';
                 return;
             }
-
-            const table = document.getElementById('dataTable');
-            const thead = document.getElementById('tableHead');
-            const tbody = document.getElementById('tableBody');
+            
+            const table = document.getElementById('realtimeTable');
+            const thead = document.getElementById('realtimeHead');
+            const tbody = document.getElementById('realtimeBody');
+            
+            // 기존 데이터 초기화
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
             
             // 헤더 생성
-            const headers = data[0];
             const headerRow = document.createElement('tr');
-            headers.forEach(header => {
+            data[0].forEach(header => {
                 const th = document.createElement('th');
                 th.textContent = header;
                 headerRow.appendChild(th);
@@ -87,7 +271,7 @@
             thead.appendChild(headerRow);
             
             // 데이터 행 생성
-            for (let i = 1; i < data.length; i++) {
+            for (let i = 1; i < Math.min(data.length, 20); i++) {
                 const row = document.createElement('tr');
                 data[i].forEach(cell => {
                     const td = document.createElement('td');
@@ -97,9 +281,42 @@
                 tbody.appendChild(row);
             }
             
-            // 테이블 표시, 로딩 숨기기
-            document.getElementById('loading').style.display = 'none';
+            document.querySelector('.loading').style.display = 'none';
             table.style.display = 'table';
+        }
+        
+        // 주문조회
+        function searchOrders() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            document.getElementById('searchResult').innerHTML = 
+                `${startDate} ~ ${endDate} 기간 조회 기능 구현 예정`;
+        }
+        
+        // 엑셀 처리
+        function processExcel() {
+            const file = document.getElementById('excelFile').files[0];
+            if (!file) {
+                alert('파일을 선택해주세요');
+                return;
+            }
+            document.getElementById('excelResult').innerHTML = 
+                `${file.name} 파일 처리 기능 구현 예정`;
+        }
+        
+        // 송장 등록
+        function registerInvoice() {
+            const orderNo = document.getElementById('orderNo').value;
+            const invoiceNo = document.getElementById('invoiceNo').value;
+            const courier = document.getElementById('courier').value;
+            
+            if (!orderNo || !invoiceNo) {
+                alert('주문번호와 송장번호를 입력해주세요');
+                return;
+            }
+            
+            document.getElementById('invoiceResult').innerHTML = 
+                `주문번호: ${orderNo}<br>송장번호: ${invoiceNo}<br>택배사: ${courier}<br>등록 기능 구현 예정`;
         }
     </script>
 </body>
