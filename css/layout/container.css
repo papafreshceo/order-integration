@@ -1,0 +1,24 @@
+/* css/layout/container.css - 컨테이너 스타일 */
+
+.container {
+    max-width: 1400px;
+    margin: var(--space-xl) auto;
+    padding: 0 var(--space-xl);
+}
+
+.main-system {
+    min-height: 100vh;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-xl);
+    margin-bottom: var(--space-3xl);
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,73 @@
+/* css/pages/dashboard.css - 대시보드 페이지 */
+
+.dashboard-section {
+    margin-bottom: 30px;
+}
+
+.section-subtitle {
+    font-size: 16px;
+    font-weight: 500;
+    color: #212529;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.quick-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.quick-actions .btn {
+    flex: 1;
+    min-width: 150px;
+}
+
+.notifications {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.notification-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.notification-item.info {
+    background: #e7f3ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+}
+
+.notification-item.warning {
+    background: #fef3c7;
+    color: #f59e0b;
+    border: 1px solid #fde68a;
+}
+
+.notification-item.error {
+    background: #fee2e2;
+    color: #ef4444;
+    border: 1px solid #fecaca;
+}
+
+.notification-icon {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .quick-actions {
+        flex-direction: column;
+    }
+    
+    .quick-actions .btn {
+        width: 100%;
+    }
+}

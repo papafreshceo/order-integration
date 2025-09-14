@@ -1,0 +1,60 @@
+/* css/layout/tabs.css - 탭 메뉴 스타일 */
+
+.tabs {
+    background: var(--bg-primary);
+    padding: 0 var(--space-xl);
+    border-bottom: 1px solid var(--border-default);
+}
+
+.tab-menu {
+    display: flex;
+    gap: 0;
+}
+
+.tab-btn {
+    padding: 15px 30px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-size: 15px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: var(--transition-normal);
+    font-weight: var(--font-light);
+}
+
+.tab-btn:hover {
+    background: var(--bg-hover);
+}
+
+.tab-btn.active {
+    color: var(--brand-primary);
+    border-bottom-color: var(--brand-primary);
+    font-weight: var(--font-semibold);
+}
+
+.tab-content {
+    display: none;
+    background: var(--bg-primary);
+    padding: var(--space-3xl);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    min-height: 500px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.tab-content h2 {
+    font-size: 20px;
+    font-weight: var(--font-medium);
+    margin-bottom: var(--space-2xl);
+}
+
+@media (max-width: 768px) {
+    .tab-btn {
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+}
