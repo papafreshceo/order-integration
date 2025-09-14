@@ -1,6 +1,6 @@
-// js/modules/excel.js - 엑셀 처리 모듈
+// js/modules/merge.js - 주문통합 모듈
 
-window.ExcelModule = {
+window.MergeModule = {
     uploadedFiles: [],
     mappingData: null, // 매핑 데이터 캐시
     
@@ -8,7 +8,7 @@ window.ExcelModule = {
     async initialize() {
         this.setupEventListeners();
         await this.loadMappingData(); // 매핑 데이터 로드
-        console.log('ExcelModule 초기화 완료');
+        console.log('MergeModule 초기화 완료');
     },
     
     // 매핑 데이터 로드
@@ -40,8 +40,8 @@ window.ExcelModule = {
     
     // 이벤트 리스너 설정
     setupEventListeners() {
-        const uploadArea = document.getElementById('excelUploadArea');
-        const fileInput = document.getElementById('excelFile');
+        const uploadArea = document.getElementById('mergeUploadArea');
+        const fileInput = document.getElementById('mergeFile');
         
         if (uploadArea) {
             // 클릭 이벤트
@@ -276,7 +276,7 @@ window.ExcelModule = {
     updateFileList() {
         const fileListDiv = document.getElementById('fileList');
         const fileSummaryDiv = document.getElementById('fileSummary');
-        const processBtn = document.getElementById('processExcelBtn');
+        const processBtn = document.getElementById('processMergeBtn');
         
         if (this.uploadedFiles.length === 0) {
             fileListDiv.style.display = 'none';
@@ -315,7 +315,7 @@ window.ExcelModule = {
                         <span class="file-date">${new Date(file.lastModified).toLocaleDateString('ko-KR')}</span>
                     </div>
                 </div>
-                <button class="file-remove" onclick="ExcelModule.removeFile(${index})">×</button>
+                <button class="file-remove" onclick="MergeModule.removeFile(${index})">×</button>
             `;
             
             fileListDiv.appendChild(fileItem);
@@ -394,7 +394,7 @@ window.ExcelModule = {
         return defaultColors[marketName] || '#999999';
     },
     
-    // 엑셀 처리
+    // 주문 통합 처리
     process() {
         if (this.uploadedFiles.length === 0) {
             alert('업로드된 파일이 없습니다');
@@ -407,7 +407,7 @@ window.ExcelModule = {
             return;
         }
         
-        const resultDiv = document.getElementById('excelResult');
+        const resultDiv = document.getElementById('mergeResult');
         if (resultDiv) {
             resultDiv.innerHTML = `
                 <div class="success-message" style="display: block;">
@@ -425,19 +425,19 @@ window.ExcelModule = {
     
     // 새로고침 메서드
     async refresh() {
-        console.log('ExcelModule refresh called');
+        console.log('MergeModule refresh called');
         
         // 매핑 데이터 다시 로드
         await this.loadMappingData();
         
         // 파일 입력 초기화
-        const fileInput = document.getElementById('excelFile');
+        const fileInput = document.getElementById('mergeFile');
         if (fileInput) {
             fileInput.value = '';
         }
         
         // 결과 영역 초기화
-        const resultDiv = document.getElementById('excelResult');
+        const resultDiv = document.getElementById('mergeResult');
         if (resultDiv) {
             resultDiv.innerHTML = '';
         }
@@ -449,7 +449,7 @@ window.ExcelModule = {
             // 파일이 없는 경우 UI 초기화
             const fileListDiv = document.getElementById('fileList');
             const fileSummaryDiv = document.getElementById('fileSummary');
-            const processBtn = document.getElementById('processExcelBtn');
+            const processBtn = document.getElementById('processMergeBtn');
             
             if (fileListDiv) fileListDiv.style.display = 'none';
             if (fileSummaryDiv) fileSummaryDiv.style.display = 'none';
@@ -457,12 +457,12 @@ window.ExcelModule = {
         }
         
         // 업로드 영역 초기화
-        const uploadArea = document.getElementById('excelUploadArea');
+        const uploadArea = document.getElementById('mergeUploadArea');
         if (uploadArea) {
             uploadArea.classList.remove('dragover');
         }
         
-        console.log('ExcelModule refreshed successfully');
+        console.log('MergeModule refreshed successfully');
     },
     
     // 초기화 상태 확인
@@ -472,11 +472,11 @@ window.ExcelModule = {
 };
 
 // 전역 함수로 등록
-window.processExcel = function() {
-    ExcelModule.process();
+window.processMerge = function() {
+    MergeModule.process();
 };
 
 // DOM 로드 시 초기화
 document.addEventListener('DOMContentLoaded', () => {
-    ExcelModule.initialize();
+    MergeModule.initialize();
 });
