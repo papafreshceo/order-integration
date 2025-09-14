@@ -1,4 +1,4 @@
-/* css/base/reset.css - 리셋 스타일 */
+/* css/base/reset.css */
 
 * {
     margin: 0;
@@ -6,10 +6,138 @@
     box-sizing: border-box;
 }
 
+html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
 body {
+    margin: 0;
+    padding: 0;
     font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg-light);
-    color: var(--text-primary);
     font-weight: var(--font-light);
-    overflow-x: hidden;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    line-height: var(--leading-normal);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    font-weight: normal;
+}
+
+h1 {
+    font-weight: var(--h1-weight);
+    font-size: var(--text-4xl);
+    line-height: var(--leading-tight);
+}
+
+h2 {
+    font-weight: var(--h2-weight);
+    font-size: var(--text-2xl);
+    line-height: var(--leading-tight);
+}
+
+h3 {
+    font-weight: var(--h3-weight);
+    font-size: var(--text-xl);
+    line-height: var(--leading-normal);
+}
+
+p {
+    margin: 0;
+    font-weight: var(--body-weight);
+}
+
+a {
+    color: var(--text-link);
+    text-decoration: none;
+    transition: var(--transition-fast);
+}
+
+a:hover {
+    color: var(--brand-primary-hover);
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-weight: var(--btn-font-weight);
+    transition: var(--transition-fast);
+}
+
+input, select, textarea {
+    font-family: inherit;
+    font-weight: var(--font-light);
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+ul, ol {
+    list-style: none;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* 스크롤바 스타일 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-default);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* 선택 영역 스타일 */
+::selection {
+    background: var(--blue-100);
+    color: var(--text-primary);
+}
+
+/* 포커스 스타일 */
+:focus {
+    outline: 2px solid var(--brand-primary);
+    outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+    html {
+        font-size: 14px;
+    }
+    
+    h1 {
+        font-size: var(--text-3xl);
+    }
+    
+    h2 {
+        font-size: var(--text-xl);
+    }
+    
+    h3 {
+        font-size: var(--text-lg);
+    }
 }
