@@ -723,3 +723,100 @@ tr:hover {
         width: 100%;
     }
 }
+
+/* ========== 채널 구분 스타일 ========== */
+/* styles.css 파일 끝에 추가 */
+
+/* 채널 배지 */
+.channel-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.channel-badge.channel-coupang {
+    background: #f5e042;
+    color: #333;
+    border: 1px solid #e5d032;
+}
+
+.channel-badge.channel-sheets {
+    background: #e7f3ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+}
+
+/* 상태 배지 추가 스타일 */
+.status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 400;
+}
+
+.status-badge.status-접수 {
+    background: #fef3c7;
+    color: #f59e0b;
+}
+
+.status-badge.status-처리중 {
+    background: #e7f3ff;
+    color: #2563eb;
+}
+
+.status-badge.status-배송중 {
+    background: #dbeafe;
+    color: #3b82f6;
+}
+
+.status-badge.status-배송완료,
+.status-badge.status-완료 {
+    background: #d1fae5;
+    color: #10b981;
+}
+
+/* 실시간 주문 테이블 개선 */
+#realtimeTable {
+    font-size: 13px;
+}
+
+#realtimeTable tbody tr:hover {
+    background: #f8f9fa;
+}
+
+#realtimeTable tbody tr td:nth-child(7) {
+    font-weight: 500;
+}
+
+/* 새로고침 버튼 */
+.refresh-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.refresh-info {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.btn-refresh {
+    padding: 8px 16px;
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    color: #495057;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-refresh:hover {
+    background: #f8f9fa;
+    border-color: #2563eb;
+    color: #2563eb;
+}
