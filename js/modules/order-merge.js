@@ -260,45 +260,70 @@ window.OrderMergeModule = {
     
     // 마켓 감지 (앱스크립트 로직과 동일)
     detectMarket(fileName, headers, rows) {
-        console.log('마켓 감지 시작:', fileName);
-        console.log('헤더:', headers.slice(0, 10));
+        console.log('=== 마켓 감지 시작 ===');
+        console.log('파일명:', fileName);
+        console.log('헤더 수:', headers.length);
+        console.log('헤더 (처음 15개):', headers.slice(0, 15));
         
         if (!this.mappingData || !this.mappingData.markets) {
             console.error('매핑 데이터가 없습니다');
+            alert('매핑 데이터가 로드되지 않았습니다. 페이지를 새로고침해주세요.');
             return null;
         }
         
+        console.log('사용 가능한 마켓:', Object.keys(this.mappingData.markets));
+        
         const fileNameLower = fileName.toLowerCase();
         const headerText = headers.join(' ').toLowerCase();
+        console.log('헤더 텍스트 (소문자):', headerText.substring(0, 200));
         
         // 마켓별로 체크
         for (const marketName in this.mappingData.markets) {
             const market = this.mappingData.markets[marketName];
+            console.log(`\n[${marketName}] 체크 시작`);
+            console.log(`  detectString1: "${market.detectString1}"`);
+            console.log(`  detectString2: "${market.detectString2}"`);
+            console.log(`  detectString3: "${market.detectString3}"`);
             
             // detectString1 체크 (파일명)
             if (market.detectString1 && market.detectString1.length > 0) {
-                if (fileNameLower.includes(market.detectString1.toLowerCase())) {
-                    console.log(`${marketName} 감지: 파일명 매칭 "${market.detectString1}"`);
+                const detectStr1Lower = market.detectString1.toLowerCase();
+                if (fileNameLower.includes(detectStr1Lower)) {
+                    console.log(`✅ ${marketName} 감지 성공: 파일명에 "${market.detectString1}" 포함`);
                     return marketName;
+                } else {
+                    console.log(`  파일명에 "${market.detectString1}" 없음`);
                 }
             }
             
             // detectString2 체크 (헤더명 - 쉼표 구분)
             if (market.detectString2 && market.detectString2.length > 0) {
                 const detectStrings = market.detectString2.split(',').map(s => s.trim());
+                console.log(`  detectString2 항목들:`, detectStrings);
                 let matchCount = 0;
+                let matchedStrings = [];
                 
                 for (const detectStr of detectStrings) {
-                    if (detectStr && headerText.includes(detectStr.toLowerCase())) {
-                        matchCount++;
-                        console.log(`  "${detectStr}" 발견`);
+                    if (detectStr) {
+                        const detectStrLower = detectStr.toLowerCase();
+                        // 개별 헤더에서도 찾기
+                        const foundInHeaders = headers.some(h => h.toLowerCase().includes(detectStrLower));
+                        
+                        if (headerText.includes(detectStrLower) || foundInHeaders) {
+                            matchCount++;
+                            matchedStrings.push(detectStr);
+                            console.log(`    ✓ "${detectStr}" 발견`);
+                        } else {
+                            console.log(`    ✗ "${detectStr}" 없음`);
+                        }
                     }
                 }
                 
-                const requiredMatches = detectStrings.length > 1 ? 2 : 1;
+                const requiredMatches = detectStrings.length > 1 ? Math.min(2, Math.ceil(detectStrings.length / 2)) : 1;
+                console.log(`  매칭 결과: ${matchCount}/${detectStrings.length} (필요: ${requiredMatches})`);
                 
                 if (matchCount >= requiredMatches) {
-                    console.log(`${marketName} 감지: 헤더 매칭 (${matchCount}/${detectStrings.length})`);
+                    console.log(`✅ ${marketName} 감지 성공: 헤더 매칭 [${matchedStrings.join(', ')}]`);
                     return marketName;
                 }
             }
@@ -306,22 +331,28 @@ window.OrderMergeModule = {
             // detectString3 체크
             if (market.detectString3 && market.detectString3.length > 0) {
                 const detectStrings3 = market.detectString3.split(',').map(s => s.trim());
+                console.log(`  detectString3 항목들:`, detectStrings3);
                 let matchCount3 = 0;
                 
                 for (const detectStr of detectStrings3) {
-                    if (detectStr && headerText.includes(detectStr.toLowerCase())) {
-                        matchCount3++;
+                    if (detectStr) {
+                        const detectStrLower = detectStr.toLowerCase();
+                        if (headerText.includes(detectStrLower)) {
+                            matchCount3++;
+                            console.log(`    ✓ "${detectStr}" 발견`);
+                        }
                     }
                 }
                 
                 if (matchCount3 >= (detectStrings3.length > 1 ? 2 : 1)) {
-                    console.log(`${marketName} 감지: detectString3 매칭`);
+                    console.log(`✅ ${marketName} 감지 성공: detectString3 매칭`);
                     return marketName;
                 }
             }
         }
         
-        console.log('마켓 감지 실패');
+        console.log('❌ 마켓 감지 실패 - 일치하는 마켓이 없습니다');
+        console.log('=== 마켓 감지 종료 ===\n');
         return null;
     },
     
