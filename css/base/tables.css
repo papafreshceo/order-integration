@@ -1,0 +1,49 @@
+/* css/components/tables.css - 테이블 스타일 */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--space-xl);
+}
+
+th, td {
+    border: 1px solid var(--border-default);
+    padding: var(--space-md);
+    text-align: left;
+    font-size: 14px;
+}
+
+th {
+    background: var(--bg-secondary);
+    font-weight: var(--font-semibold);
+}
+
+tr:hover {
+    background: var(--bg-hover);
+}
+
+#realtimeTable {
+    font-size: 13px;
+}
+
+#realtimeTable tbody tr:hover {
+    background: #f8f9fa;
+}
+
+#realtimeTable tbody tr td:nth-child(7) {
+    font-weight: 500;
+}
+
+#dashboardSummaryTable {
+    width: 100%;
+    margin-top: 0;
+}
+
+#dashboardSummaryTable th {
+    background: #f8f9fa;
+    font-weight: 500;
+}
+
+#dashboardSummaryTable td {
+    font-size: 14px;
+}
