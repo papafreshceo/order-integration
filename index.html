@@ -1,55 +1,339 @@
-<!-- 대시보드 탭 - container div 안에 추가 -->
-<div id="dashboard" class="tab-content">
-    <h2>대시보드</h2>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주문통합 시스템</title>
     
-    <!-- 오늘의 주요 지표 -->
-    <div class="dashboard-section">
-        <h3 class="section-subtitle">오늘의 주요 지표</h3>
-        <div class="stats-grid" id="dashboardStats">
-            <!-- 통계 카드가 여기에 동적으로 생성됩니다 -->
-        </div>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
+    <!-- 외부 CSS -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <style>
+        /* 초기 로딩 화면 */
+        .initial-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+        }
+        
+        .initial-loading.hide {
+            display: none;
+        }
+        
+        .initial-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .initial-text {
+            margin-top: 20px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 초기에 모든 주요 컨테이너 숨김 */
+        .login-wrapper,
+        .main-system {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 초기 로딩 화면 -->
+    <div class="initial-loading" id="initialLoading">
+        <div class="initial-spinner"></div>
+        <div class="initial-text">시스템 로딩 중...</div>
     </div>
     
-    <!-- 빠른 작업 버튼들 -->
-    <div class="dashboard-section">
-        <h3 class="section-subtitle">빠른 작업</h3>
-        <div class="quick-actions">
-            <button class="btn" onclick="showTab('search')">주문 조회</button>
-            <button class="btn" onclick="showTab('excel')">엑셀 업로드</button>
-            <button class="btn" onclick="showTab('invoice')">송장 등록</button>
-        </div>
-    </div>
-    
-    <!-- 최근 주문 요약 -->
-    <div class="dashboard-section">
-        <h3 class="section-subtitle">최근 주문 (최근 5건)</h3>
-        <table id="dashboardSummaryTable" style="display:none;">
-            <thead>
-                <tr>
-                    <th>날짜</th>
-                    <th>주문번호</th>
-                    <th>고객명</th>
-                    <th>상품</th>
-                    <th>상태</th>
-                </tr>
-            </thead>
-            <tbody id="dashboardSummaryBody"></tbody>
-        </table>
-        <div class="loading" id="dashboardLoading">데이터 로딩 중...</div>
-    </div>
-    
-    <!-- 오늘의 알림 -->
-    <div class="dashboard-section">
-        <h3 class="section-subtitle">알림</h3>
-        <div class="notifications">
-            <div class="notification-item info">
-                <span class="notification-icon">ℹ</span>
-                <span>시스템이 정상 작동 중입니다.</span>
+    <!-- 로그인 화면 -->
+    <div class="login-wrapper" id="loginScreen">
+        <div class="login-card" id="loginCard">
+            <h1 class="login-title">주문통합 시스템</h1>
+            <p class="login-subtitle">계정을 선택하여 로그인하세요</p>
+            
+            <div class="error-message" id="errorMsg"></div>
+            
+            <!-- 구글 로그인 버튼 -->
+            <button class="btn-google" onclick="signInWithGoogle(event)">
+                <span class="google-icon">G</span>
+                <span>Google 계정으로 로그인</span>
+            </button>
+            
+            <div class="divider">
+                <span>또는</span>
             </div>
-            <div class="notification-item warning">
-                <span class="notification-icon">⚠</span>
-                <span>처리 대기 주문이 8건 있습니다.</span>
+            
+            <!-- 이메일 로그인 폼 -->
+            <div class="form-group">
+                <label class="form-label">이메일</label>
+                <input type="email" class="form-input" id="email" placeholder="이메일을 입력하세요" onkeypress="handleEnter(event)">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">비밀번호</label>
+                <input type="password" class="form-input" id="password" placeholder="비밀번호를 입력하세요" onkeypress="handleEnter(event)">
+            </div>
+            
+            <button class="btn-login" onclick="signInWithEmail(event)">이메일로 로그인</button>
+            
+            <div class="auth-footer">
+                <a href="#" onclick="showSignUp(); return false;" class="auth-link">계정이 없으신가요? 회원가입</a>
+            </div>
+        </div>
+        
+        <!-- 회원가입 카드 (숨김) -->
+        <div class="login-card" id="signupCard" style="display: none;">
+            <h1 class="login-title">회원가입</h1>
+            <p class="login-subtitle">새 계정을 만들어주세요</p>
+            
+            <div class="error-message" id="signupErrorMsg"></div>
+            
+            <div class="form-group">
+                <label class="form-label">이름</label>
+                <input type="text" class="form-input" id="signupName" placeholder="이름을 입력하세요">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">이메일</label>
+                <input type="email" class="form-input" id="signupEmail" placeholder="이메일을 입력하세요">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">비밀번호</label>
+                <input type="password" class="form-input" id="signupPassword" placeholder="비밀번호 (6자 이상)">
+            </div>
+            
+            <button class="btn-login" onclick="signUp(event)">회원가입</button>
+            
+            <div class="auth-footer">
+                <a href="#" onclick="showLogin(); return false;" class="auth-link">이미 계정이 있으신가요? 로그인</a>
             </div>
         </div>
     </div>
-</div>
+    
+    <!-- 메인 시스템 -->
+    <div class="main-system" id="mainSystem">
+        <div class="header">
+            <h1>주문통합 관리 시스템</h1>
+            <div class="user-info">
+                <span id="userEmail">사용자</span>
+                <span class="role-badge" id="userRole">역할</span>
+                <button class="btn-logout" onclick="signOut(event)">로그아웃</button>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab-menu" id="tabMenu">
+                <!-- 권한에 따라 동적 생성 -->
+            </div>
+        </div>
+        
+        <div class="container">
+            <!-- 대시보드 탭 -->
+            <div id="dashboard" class="tab-content">
+                <h2>대시보드</h2>
+                
+                <!-- 오늘의 주요 지표 -->
+                <div class="dashboard-section">
+                    <h3 class="section-subtitle">오늘의 주요 지표</h3>
+                    <div class="stats-grid" id="dashboardStats">
+                        <!-- 통계 카드가 여기에 동적으로 생성됩니다 -->
+                    </div>
+                </div>
+                
+                <!-- 빠른 작업 버튼들 -->
+                <div class="dashboard-section">
+                    <h3 class="section-subtitle">빠른 작업</h3>
+                    <div class="quick-actions">
+                        <button class="btn" onclick="showTab('search')">주문 조회</button>
+                        <button class="btn" onclick="showTab('excel')">엑셀 업로드</button>
+                        <button class="btn" onclick="showTab('invoice')">송장 등록</button>
+                    </div>
+                </div>
+                
+                <!-- 최근 주문 요약 -->
+                <div class="dashboard-section">
+                    <h3 class="section-subtitle">최근 주문 (최근 5건)</h3>
+                    <table id="dashboardSummaryTable" style="display:none;">
+                        <thead>
+                            <tr>
+                                <th>날짜</th>
+                                <th>주문번호</th>
+                                <th>고객명</th>
+                                <th>상품</th>
+                                <th>상태</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboardSummaryBody"></tbody>
+                    </table>
+                    <div class="loading" id="dashboardLoading">데이터 로딩 중...</div>
+                </div>
+                
+                <!-- 오늘의 알림 -->
+                <div class="dashboard-section">
+                    <h3 class="section-subtitle">알림</h3>
+                    <div class="notifications">
+                        <div class="notification-item info">
+                            <span class="notification-icon">ℹ</span>
+                            <span>시스템이 정상 작동 중입니다.</span>
+                        </div>
+                        <div class="notification-item warning">
+                            <span class="notification-icon">⚠</span>
+                            <span>처리 대기 주문이 8건 있습니다.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 실시간 주문현황 탭 -->
+            <div id="realtime" class="tab-content">
+                <h2>실시간 주문현황</h2>
+                <div class="stats-grid" id="statsGrid">
+                    <!-- 통계 카드 동적 생성 -->
+                </div>
+                <div class="loading" id="realtimeLoading">데이터 로딩 중...</div>
+                <table id="realtimeTable" style="display:none;">
+                    <thead id="realtimeHead"></thead>
+                    <tbody id="realtimeBody"></tbody>
+                </table>
+            </div>
+            
+            <!-- 주문조회 탭 -->
+            <div id="search" class="tab-content">
+                <h2>주문조회</h2>
+                <div class="search-box">
+                    <input type="date" class="date-input" id="startDate">
+                    <span>~</span>
+                    <input type="date" class="date-input" id="endDate">
+                    <button class="btn" onclick="searchOrders()">조회</button>
+                </div>
+                <div id="searchResult">
+                    <p class="info-text">조회 결과가 여기 표시됩니다.</p>
+                </div>
+            </div>
+            
+            <!-- 주문통합(Excel) 탭 -->
+            <div id="excel" class="tab-content">
+                <h2>주문통합 (Excel)</h2>
+                <div class="upload-area" onclick="document.getElementById('excelFile').click()">
+                    <div class="upload-icon">▤</div>
+                    <p>엑셀 파일을 드래그하거나 클릭하여 선택하세요</p>
+                    <input type="file" accept=".xlsx,.xls" style="display: none;" id="excelFile">
+                </div>
+                <button class="btn" onclick="processExcel()">엑셀 처리</button>
+                <div id="excelResult"></div>
+            </div>
+            
+            <!-- 송장등록 탭 -->
+            <div id="invoice" class="tab-content">
+                <h2>송장등록</h2>
+                <div class="form-container">
+                    <div class="form-row">
+                        <label>주문번호</label>
+                        <input type="text" class="form-input" id="orderNo">
+                    </div>
+                    <div class="form-row">
+                        <label>송장번호</label>
+                        <input type="text" class="form-input" id="invoiceNo">
+                    </div>
+                    <div class="form-row">
+                        <label>택배사</label>
+                        <select class="form-select" id="courier">
+                            <option>CJ대한통운</option>
+                            <option>한진택배</option>
+                            <option>롯데택배</option>
+                            <option>우체국택배</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="registerInvoice()">송장 등록</button>
+                </div>
+                <div id="invoiceResult"></div>
+            </div>
+            
+            <!-- 통계 분석 탭 (관리자만) -->
+            <div id="analytics" class="tab-content">
+                <h2>통계 분석</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">월 매출</div>
+                        <div class="stat-value">₩2,450,000</div>
+                        <div class="stat-change positive">▲ 12.5%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">월 주문수</div>
+                        <div class="stat-value">342건</div>
+                        <div class="stat-change positive">▲ 8.2%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">평균 주문액</div>
+                        <div class="stat-value">₩71,600</div>
+                        <div class="stat-change positive">▲ 5.4%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript 파일들 (순서 중요!) -->
+    <script src="firebase-config.js"></script>
+    <script src="utils.js"></script>
+    <script src="auth.js"></script>
+    <script src="app.js"></script>
+    
+    <script>
+        // 초기 로딩 처리
+        let authInitialized = false;
+        
+        // Firebase Auth 초기화 확인
+        if (typeof auth !== 'undefined') {
+            auth.onAuthStateChanged(async (user) => {
+                if (!authInitialized) {
+                    authInitialized = true;
+                    
+                    // 초기 로딩 화면 숨기기
+                    setTimeout(() => {
+                        document.getElementById('initialLoading').classList.add('hide');
+                        
+                        if (user) {
+                            // 로그인 상태 - 메인 화면 표시
+                            document.getElementById('loginScreen').style.display = 'none';
+                            document.getElementById('mainSystem').style.display = 'block';
+                        } else {
+                            // 비로그인 상태 - 로그인 화면 표시
+                            document.getElementById('loginScreen').style.display = 'flex';
+                            document.getElementById('mainSystem').style.display = 'none';
+                        }
+                    }, 500);
+                }
+            });
+        } else {
+            // Firebase 로드 실패 시
+            setTimeout(() => {
+                document.getElementById('initialLoading').classList.add('hide');
+                document.getElementById('loginScreen').style.display = 'flex';
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
