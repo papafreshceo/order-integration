@@ -1,6 +1,6 @@
-// auth.js
+// auth.js - 로딩 상태 & 에러 처리 개선 버전
 
-// 사용자 역할 정보 (실제로는 Google Sheets에서 가져와야 함)
+// 사용자 역할 정보
 const USER_ROLES = {
     'admin@company.com': 'admin',
     'manager@company.com': 'admin',
@@ -14,12 +14,18 @@ let currentUser = null;
 // Auth 상태 변화 감지
 auth.onAuthStateChanged(async (user) => {
     if (user) {
-        // 로그인 상태
         currentUser = user;
-        const userRole = await getUserRole(user.email);
-        showMainSystem(user, userRole);
+        LoadingManager.showFullLoading();
+        try {
+            const userRole = await getUserRole(user.email);
+            showMainSystem(user, userRole);
+            ToastManager.success(`환영합니다, ${user.email}님!`);
+        } catch (error) {
+            ToastManager.error('사용자 정보를 불러올 수 없습니다.');
+        } finally {
+            LoadingManager.hideFullLoading();
+        }
     } else {
-        // 로그아웃 상태
         currentUser = null;
         showLoginScreen();
     }
@@ -32,147 +38,157 @@ function handleEnter(event) {
     }
 }
 
-// Google 로그인
+// Google 로그인 - 개선된 버전
 async function signInWithGoogle() {
+    const button = event.target;
+    LoadingManager.startButtonLoading(button, 'Google 로그인 중...');
+    
     try {
         const result = await auth.signInWithPopup(googleProvider);
-        // 로그인 성공 - onAuthStateChanged에서 처리
+        ToastManager.success('로그인 성공!');
     } catch (error) {
-        showError('Google 로그인 실패: ' + error.message);
+        console.error('Google login error:', error);
+        const errorMsg = ErrorHandler.getFirebaseErrorMessage(error.code);
+        showError(errorMsg);
+        ToastManager.error(errorMsg);
+    } finally {
+        LoadingManager.stopButtonLoading(button);
     }
 }
 
-// 이메일 로그인
+// 이메일 로그인 - 개선된 버전
 async function signInWithEmail() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    const button = event.target;
     
+    // 유효성 검사
     if (!email || !password) {
         showError('이메일과 비밀번호를 입력하세요');
+        ToastManager.warning('모든 필드를 입력해주세요');
         return;
     }
     
+    if (!ErrorHandler.validateEmail(email)) {
+        showError('올바른 이메일 형식이 아닙니다');
+        return;
+    }
+    
+    LoadingManager.startButtonLoading(button, '로그인 중...');
+    
     try {
         await auth.signInWithEmailAndPassword(email, password);
-        // 로그인 성공 - onAuthStateChanged에서 처리
+        ToastManager.success('로그인 성공!');
     } catch (error) {
-        let errorMsg = '로그인 실패: ';
-        switch(error.code) {
-            case 'auth/user-not-found':
-                errorMsg += '등록되지 않은 이메일입니다';
-                break;
-            case 'auth/wrong-password':
-                errorMsg += '비밀번호가 올바르지 않습니다';
-                break;
-            case 'auth/invalid-email':
-                errorMsg += '유효하지 않은 이메일 형식입니다';
-                break;
-            default:
-                errorMsg += error.message;
-        }
+        console.error('Email login error:', error);
+        const errorMsg = ErrorHandler.getFirebaseErrorMessage(error.code);
         showError(errorMsg);
+        ToastManager.error(errorMsg);
+    } finally {
+        LoadingManager.stopButtonLoading(button);
     }
 }
 
-// 회원가입
+// 회원가입 - 개선된 버전
 async function signUp() {
     const name = document.getElementById('signupName').value;
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
+    const button = event.target;
     
+    // 유효성 검사
     if (!name || !email || !password) {
         showSignupError('모든 필드를 입력하세요');
+        ToastManager.warning('모든 필드를 입력해주세요');
         return;
     }
     
-    if (password.length < 6) {
+    if (!ErrorHandler.validateEmail(email)) {
+        showSignupError('올바른 이메일 형식이 아닙니다');
+        return;
+    }
+    
+    if (!ErrorHandler.validatePassword(password)) {
         showSignupError('비밀번호는 6자 이상이어야 합니다');
         return;
     }
     
+    LoadingManager.startButtonLoading(button, '계정 생성 중...');
+    
     try {
+        // Firebase 계정 생성
         const result = await auth.createUserWithEmailAndPassword(email, password);
         
-        // 사용자 프로필 업데이트
+        // 프로필 업데이트
         await result.user.updateProfile({
             displayName: name
         });
         
-        // Google Sheets에 사용자 정보 저장 (API 호출)
-        await saveUserToSheets(email, name, 'staff');
+        // Google Sheets에 저장
+        const saved = await saveUserToSheets(email, name, 'staff');
         
-        showSignupError('회원가입 성공! 로그인 화면으로 이동합니다', 'success');
-        setTimeout(() => showLogin(), 2000);
+        if (saved) {
+            showSignupError('회원가입 성공! 로그인 화면으로 이동합니다', 'success');
+            ToastManager.success('회원가입이 완료되었습니다!');
+            setTimeout(() => showLogin(), 2000);
+        } else {
+            ToastManager.warning('계정은 생성되었지만 추가 정보 저장에 실패했습니다.');
+        }
         
     } catch (error) {
-        let errorMsg = '회원가입 실패: ';
-        switch(error.code) {
-            case 'auth/email-already-in-use':
-                errorMsg += '이미 사용 중인 이메일입니다';
-                break;
-            case 'auth/invalid-email':
-                errorMsg += '유효하지 않은 이메일 형식입니다';
-                break;
-            case 'auth/weak-password':
-                errorMsg += '비밀번호가 너무 약합니다';
-                break;
-            default:
-                errorMsg += error.message;
-        }
+        console.error('Signup error:', error);
+        const errorMsg = ErrorHandler.getFirebaseErrorMessage(error.code);
         showSignupError(errorMsg);
+        ToastManager.error(errorMsg);
+    } finally {
+        LoadingManager.stopButtonLoading(button);
     }
 }
 
-// 로그아웃
+// 로그아웃 - 개선된 버전
 async function signOut() {
+    const button = event.target;
+    LoadingManager.startButtonLoading(button, '로그아웃 중...');
+    
     try {
         await auth.signOut();
-        // 로그아웃 성공 - onAuthStateChanged에서 처리
+        ToastManager.info('안전하게 로그아웃되었습니다');
     } catch (error) {
         console.error('로그아웃 오류:', error);
+        ToastManager.error('로그아웃 중 오류가 발생했습니다');
+    } finally {
+        LoadingManager.stopButtonLoading(button);
     }
 }
 
-// 사용자 역할 가져오기 - 수정된 부분
+// 사용자 역할 가져오기 - 개선된 버전
 async function getUserRole(email) {
-    // API를 통해 Google Sheets에서 가져오기
     try {
-        const response = await fetch('/api/auth', {  // /api/auth로 변경
+        const data = await apiCall('/api/auth', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify({ 
-                action: 'getUserRole',  // action 추가
+                action: 'getUserRole',
                 email: email
             })
         });
         
-        if (response.ok) {
-            const data = await response.json();
-            console.log('User role data:', data);  // 디버깅용
-            return data.role || 'staff';
-        } else {
-            console.error('API 응답 오류:', response.status);
-            return 'staff';
-        }
+        console.log('User role data:', data);
+        return data.role || 'staff';
+        
     } catch (error) {
         console.error('역할 조회 실패:', error);
-        // 임시로 하드코딩된 역할 반환
+        ToastManager.warning('사용자 권한을 확인할 수 없어 기본 권한으로 설정됩니다.');
         return USER_ROLES[email] || 'staff';
     }
 }
 
-// Google Sheets에 사용자 정보 저장
+// Google Sheets에 사용자 정보 저장 - 개선된 버전
 async function saveUserToSheets(email, name, role) {
     try {
-        const response = await fetch('/api/auth', {  // /api/auth로 변경
+        const data = await apiCall('/api/auth', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify({
-                action: 'saveUser',  // action 추가
+                action: 'saveUser',
                 email: email,
                 name: name,
                 role: role,
@@ -180,25 +196,42 @@ async function saveUserToSheets(email, name, role) {
             })
         });
         
-        return response.ok;
+        return data.success;
+        
     } catch (error) {
         console.error('사용자 저장 실패:', error);
+        const errorMsg = ErrorHandler.handleApiError(error);
+        ToastManager.error(errorMsg);
         return false;
     }
 }
 
-// 에러 메시지 표시
+// 에러 메시지 표시 개선
 function showError(message) {
-    document.getElementById('errorMsg').textContent = message;
+    const errorElement = document.getElementById('errorMsg');
+    errorElement.textContent = message;
+    errorElement.style.display = 'block';
+    errorElement.classList.add('shake');
+    
+    setTimeout(() => {
+        errorElement.classList.remove('shake');
+    }, 500);
 }
 
 function showSignupError(message, type = 'error') {
     const msgElement = document.getElementById('signupErrorMsg');
     msgElement.textContent = message;
+    msgElement.style.display = 'block';
+    
     if (type === 'success') {
         msgElement.style.background = 'rgba(16, 185, 129, 0.1)';
         msgElement.style.borderColor = 'rgba(16, 185, 129, 0.2)';
         msgElement.style.color = '#10b981';
+    } else {
+        msgElement.classList.add('shake');
+        setTimeout(() => {
+            msgElement.classList.remove('shake');
+        }, 500);
     }
 }
 
@@ -227,10 +260,8 @@ function showMainSystem(user, role) {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('mainSystem').style.display = 'block';
     
-    // 사용자 정보 표시
     document.getElementById('userEmail').textContent = user.email;
     document.getElementById('userRole').textContent = role === 'admin' ? '관리자' : '직원';
     
-    // 역할에 따른 UI 초기화
     initializeUIByRole(role);
 }
