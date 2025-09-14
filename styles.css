@@ -1,24 +1,207 @@
 /* styles.css - 메인 스타일시트 (import 전용) */
 
-/* Base */
+/* ========================================
+   Base Styles
+   ======================================== */
+/* CSS 변수 정의 */
 @import url('css/base/variables.css');
+
+/* 리셋 및 기본 스타일 */
 @import url('css/base/reset.css');
+
+/* 타이포그래피 */
 @import url('css/base/typography.css');
 
-/* Components */
+/* ========================================
+   Components
+   ======================================== */
+/* 버튼 스타일 */
 @import url('css/components/buttons.css');
+
+/* 카드 스타일 */
 @import url('css/components/cards.css');
+
+/* 테이블 스타일 */
 @import url('css/components/tables.css');
+
+/* 폼 요소 스타일 */
 @import url('css/components/forms.css');
+
+/* 배지 스타일 */
 @import url('css/components/badges.css');
+
+/* 로딩 및 애니메이션 */
 @import url('css/components/loading.css');
 
-/* Layout */
+/* ========================================
+   Layout
+   ======================================== */
+/* 헤더 및 네비게이션 */
 @import url('css/layout/header.css');
+
+/* 탭 레이아웃 */
 @import url('css/layout/tabs.css');
+
+/* 컨테이너 및 유틸리티 */
 @import url('css/layout/container.css');
 
-/* Pages */
+/* ========================================
+   Pages
+   ======================================== */
+/* 로그인 페이지 */
 @import url('css/pages/login.css');
+
+/* 대시보드 페이지 */
 @import url('css/pages/dashboard.css');
+
+/* 실시간 주문현황 페이지 */
 @import url('css/pages/realtime.css');
+
+/* ========================================
+   Global Overrides
+   ======================================== */
+/* 전역 스타일 오버라이드 */
+body {
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-weight: var(--font-light);
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+    line-height: var(--leading-normal);
+}
+
+/* 메인 시스템 컨테이너 */
+.main-system {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-secondary);
+}
+
+/* 컨텐츠 영역 */
+.main-system .container {
+    flex: 1;
+    padding: var(--container-padding);
+    max-width: var(--container-max);
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* 정보 텍스트 */
+.info-text {
+    text-align: center;
+    padding: var(--space-2xl);
+    color: var(--text-muted);
+    font-size: var(--text-base);
+    font-weight: var(--font-light);
+}
+
+/* 성공 메시지 */
+.success-text {
+    color: var(--success);
+}
+
+/* 경고 메시지 */
+.warning-text {
+    color: var(--warning);
+}
+
+/* 에러 메시지 */
+.error-text {
+    color: var(--danger);
+}
+
+/* 스크롤바 커스터마이징 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-default);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* 선택 영역 스타일 */
+::selection {
+    background: var(--blue-100);
+    color: var(--text-primary);
+}
+
+::-moz-selection {
+    background: var(--blue-100);
+    color: var(--text-primary);
+}
+
+/* 포커스 스타일 통일 */
+:focus-visible {
+    outline: 2px solid var(--brand-primary);
+    outline-offset: 2px;
+}
+
+/* 애니메이션 비활성화 (접근성) */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* 다크 모드 지원 (선택적) */
+@media (prefers-color-scheme: dark) {
+    /* 다크 모드 스타일은 향후 추가 가능 */
+}
+
+/* 인쇄 스타일 */
+@media print {
+    .header,
+    .tabs,
+    .btn,
+    .btn-refresh,
+    .btn-logout {
+        display: none !important;
+    }
+    
+    body {
+        background: white;
+        color: black;
+    }
+    
+    .container {
+        max-width: 100%;
+        padding: 0;
+    }
+}
+
+/* 모바일 반응형 전역 스타일 */
+@media (max-width: 768px) {
+    .main-system .container {
+        padding: var(--container-padding-mobile);
+    }
+    
+    /* 모바일에서 숨기기 */
+    .hide-mobile {
+        display: none !important;
+    }
+    
+    /* 모바일에서만 보이기 */
+    .show-mobile {
+        display: block !important;
+    }
+    
+    /* 모바일 텍스트 크기 조정 */
+    body {
+        font-size: var(--text-sm);
+    }
+}
