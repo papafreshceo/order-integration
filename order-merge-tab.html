@@ -1,0 +1,415 @@
+<!-- 주문통합(Excel) 탭 내용 -->
+<div id="merge" class="tab-content">
+    <h2>주문통합 (Excel)</h2>
+    
+    <!-- 지원 마켓 표시 -->
+    <div class="supported-markets" id="supportedMarkets"></div>
+    
+    <!-- 파일 업로드 섹션 -->
+    <div class="upload-section" id="mergeUploadSection">
+        <input type="file" id="mergeFileInput" class="file-input" multiple accept=".xlsx,.xls,.csv" style="display: none;">
+        <button class="btn upload-btn" id="mergeUploadBtn">📁 주문 파일 선택</button>
+        <p style="margin-top: 15px; color: var(--text-muted);">엑셀/CSV 파일을 선택하거나 여기로 드래그해주세요</p>
+    </div>
+    
+    <!-- 파일 목록 -->
+    <div class="file-list" id="mergeFileList"></div>
+    
+    <!-- 파일 요약 -->
+    <div class="file-summary" id="mergeFileSummary" style="display: none;">
+        <div class="summary-item">
+            <div class="summary-label">업로드 파일</div>
+            <div class="summary-value" id="mergeTotalFiles">0</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-label">마켓 수</div>
+            <div class="summary-value" id="mergeTotalMarkets">0</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-label">총 주문 수</div>
+            <div class="summary-value orders" id="mergeTotalOrders">0</div>
+        </div>
+    </div>
+    
+    <!-- 경고 박스 -->
+    <div class="warning-box" id="mergeWarningBox">
+        <h3>⚠️ 주의: 오래된 파일이 감지되었습니다!</h3>
+        <ul class="warning-list" id="mergeWarningList"></ul>
+        <p style="margin-top: 10px;">7일 이전 파일은 통합에서 제외됩니다.</p>
+    </div>
+    
+    <!-- 처리 버튼 -->
+    <div style="text-align: center; margin: 30px 0;">
+        <button class="btn" id="mergeProcessBtn" style="display: none;">🔄 주문 통합 실행</button>
+    </div>
+    
+    <!-- 결과 섹션 -->
+    <div class="result-section" id="mergeResultSection">
+        <div class="result-header">
+            <h3>통합 결과</h3>
+            <button class="btn" id="mergeExportBtn">📊 엑셀 다운로드</button>
+        </div>
+        
+        <!-- 결과 테이블 -->
+        <div class="table-wrapper">
+            <table id="mergeResultTable">
+                <thead id="mergeResultTableHead"></thead>
+                <tbody id="mergeResultTableBody"></tbody>
+            </table>
+        </div>
+        
+        <!-- 통계 섹션 -->
+        <div class="statistics-section">
+            <!-- 전체 통계 -->
+            <div class="stat-card">
+                <h3>📊 전체 통계</h3>
+                <div class="stat-summary">
+                    <div class="stat-item">
+                        <span class="stat-label">총 주문수:</span>
+                        <span class="stat-value" id="mergeTotalStatCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">총 수량:</span>
+                        <span class="stat-value" id="mergeTotalStatQuantity">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">총 금액:</span>
+                        <span class="stat-value" id="mergeTotalStatAmount">0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 마켓별 통계 -->
+            <div class="stat-card">
+                <h3>📈 마켓별 통계</h3>
+                <table class="stat-table">
+                    <thead>
+                        <tr>
+                            <th>마켓명</th>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mergeMarketStats"></tbody>
+                </table>
+            </div>
+            
+            <!-- 옵션별 통계 (상위 20개) -->
+            <div class="stat-card">
+                <h3>📦 옵션별 통계 (상위 20개)</h3>
+                <table class="stat-table">
+                    <thead>
+                        <tr>
+                            <th>옵션명</th>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mergeOptionStats"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 주문통합 전용 스타일 */
+.supported-markets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-2xl);
+}
+
+.market-badge {
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--btn-radius);
+    text-align: center;
+    font-weight: var(--font-medium);
+    color: white;
+    transition: var(--transition-fast);
+}
+
+.market-badge:hover {
+    transform: var(--hover-lift);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.upload-section {
+    border: 2px dashed var(--border-default);
+    border-radius: var(--card-radius);
+    padding: var(--space-4xl);
+    text-align: center;
+    background: var(--bg-secondary);
+    transition: var(--transition-fast);
+}
+
+.upload-section.dragover {
+    border-color: var(--brand-primary);
+    background: var(--bg-hover);
+}
+
+.file-list {
+    margin-top: var(--space-xl);
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    padding: var(--space-lg);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--btn-radius);
+    margin-bottom: var(--space-md);
+    transition: var(--transition-fast);
+}
+
+.file-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.file-item.warning {
+    background: var(--yellow-100);
+    border-color: var(--warning);
+}
+
+.file-info {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.file-name-section {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.file-name {
+    font-weight: var(--font-normal);
+}
+
+.file-details {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+}
+
+.file-order-count {
+    color: var(--danger);
+    font-weight: var(--font-medium);
+}
+
+.file-date {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+}
+
+.market-tag {
+    padding: var(--space-xs) var(--space-md);
+    border-radius: 4px;
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    min-width: 60px;
+    text-align: center;
+}
+
+.file-summary {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--btn-radius);
+    padding: var(--space-xl);
+    margin: var(--space-xl) 0;
+    display: flex;
+    justify-content: space-around;
+}
+
+.summary-item {
+    text-align: center;
+}
+
+.summary-label {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    margin-bottom: var(--space-xs);
+}
+
+.summary-value {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+}
+
+.summary-value.orders {
+    color: var(--danger);
+}
+
+.warning-box {
+    background: var(--yellow-100);
+    border: 1px solid var(--warning);
+    border-radius: var(--btn-radius);
+    padding: var(--space-xl);
+    margin: var(--space-xl) 0;
+    display: none;
+}
+
+.warning-box.show {
+    display: block;
+}
+
+.warning-box h3 {
+    color: var(--warning);
+    margin-bottom: var(--space-md);
+    font-weight: var(--font-medium);
+}
+
+.warning-list {
+    list-style: none;
+    margin: var(--space-md) 0;
+}
+
+.warning-list li {
+    padding: var(--space-xs) 0;
+    color: var(--text-secondary);
+}
+
+.result-section {
+    margin-top: var(--space-3xl);
+    display: none;
+}
+
+.result-section.show {
+    display: block;
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-xl);
+}
+
+.result-header h3 {
+    font-size: var(--text-xl);
+    font-weight: var(--font-medium);
+}
+
+.table-wrapper {
+    max-height: 600px;
+    overflow: auto;
+    border: 1px solid var(--border-default);
+    border-radius: var(--btn-radius);
+    margin-bottom: var(--space-2xl);
+}
+
+.statistics-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: var(--space-xl);
+    margin-top: var(--space-2xl);
+}
+
+.stat-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--btn-radius);
+    padding: var(--space-xl);
+}
+
+.stat-card h3 {
+    color: var(--text-primary);
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-md);
+    border-bottom: 2px solid var(--brand-primary);
+    font-weight: var(--font-medium);
+}
+
+.stat-summary {
+    display: flex;
+    justify-content: space-around;
+    padding: var(--space-lg) 0;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    margin-bottom: var(--space-xs);
+}
+
+.stat-value {
+    font-size: var(--text-xl);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+}
+
+.stat-table {
+    width: 100%;
+    font-size: var(--text-sm);
+}
+
+.stat-table th {
+    background: var(--bg-secondary);
+    padding: var(--space-sm);
+    text-align: left;
+    font-weight: var(--font-medium);
+}
+
+.stat-table td {
+    padding: var(--space-sm);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.stat-table .amount-col {
+    text-align: right;
+}
+
+.btn-remove {
+    padding: var(--space-xs) var(--space-md);
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    border-radius: 4px;
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.btn-remove:hover {
+    background: var(--danger);
+    color: white;
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+    .supported-markets {
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    }
+    
+    .upload-section {
+        padding: var(--space-2xl);
+    }
+    
+    .file-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-md);
+    }
+    
+    .file-details {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .statistics-section {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
