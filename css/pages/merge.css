@@ -1,474 +1,305 @@
-/* css/pages/merge.css - 주문통합(Excel) 페이지 */
+/* css/pages/merge.css - 주문통합 페이지 스타일 */
 
-/* 업로드 영역 */
-.merge-upload-area {
-    border: 2px dashed var(--border-default);
-    border-radius: 10px;
-    padding: var(--space-4xl);
-    text-align: center;
-    transition: var(--transition-normal);
-    background: var(--bg-muted);
-    margin: var(--space-xl) 0;
-    cursor: pointer;
+/* 파일 목록 */
+.file-list {
+    margin-top: var(--space-xl);
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-.merge-upload-area:hover {
-    border-color: var(--brand-primary);
-    background: var(--bg-hover);
-}
-
-.merge-upload-area.dragover {
-    border-color: var(--brand-primary);
-    background: var(--blue-50);
-}
-
-.merge-upload-icon {
-    font-size: 48px;
-    color: var(--text-muted);
-    margin-bottom: var(--space-lg);
-}
-
-.merge-upload-text {
-    color: var(--text-secondary);
-    font-size: 14px;
-    font-weight: var(--font-light);
-    margin-top: var(--space-lg);
-}
-
-/* 파일 리스트 */
-.merge-file-list {
-    margin: var(--space-2xl) 0;
-}
-
-.merge-file-item {
+/* 파일 아이템 카드 */
+.file-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: var(--space-lg);
     background: var(--bg-primary);
-    border: 1px solid var(--border-light);
+    border: 1px solid var(--border-default);
     border-radius: 8px;
     margin-bottom: var(--space-md);
     transition: var(--transition-fast);
 }
 
-.merge-file-item:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+.file-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.merge-file-item.warning {
+.file-item.warning {
     background: var(--yellow-100);
     border-color: var(--warning);
 }
 
-.merge-file-info {
+/* 파일 정보 영역 */
+.file-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.file-name-section {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.file-name {
+    font-weight: var(--font-medium);
+    font-size: var(--text-base);
+    color: var(--text-primary);
+}
+
+.file-details {
     display: flex;
     align-items: center;
     gap: var(--space-lg);
-    flex: 1;
+    font-size: var(--text-md);
 }
 
-.merge-market-tag {
+.file-order-count {
+    color: var(--danger);
+    font-weight: var(--font-semibold);
+}
+
+.file-date {
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+/* 마켓 태그 */
+.market-tag {
     display: inline-block;
-    padding: 4px 10px;
+    padding: var(--space-xs) var(--space-md);
     border-radius: 4px;
-    font-size: 12px;
-    font-weight: var(--font-medium);
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
     color: white;
     min-width: 60px;
     text-align: center;
 }
 
-.merge-file-name {
-    font-weight: var(--font-normal);
-    color: var(--text-primary);
-    font-size: 14px;
-}
-
-.merge-file-rows {
-    color: var(--danger);
-    font-weight: var(--font-medium);
-    font-size: 14px;
-}
-
-.merge-file-date {
-    color: var(--text-muted);
-    font-size: 12px;
-    font-weight: var(--font-light);
-}
-
-.merge-file-remove {
-    width: 32px;
-    height: 32px;
+/* 파일 제거 버튼 */
+.file-remove {
+    width: 30px;
+    height: 30px;
     border: none;
-    background: var(--bg-hover);
-    color: var(--text-secondary);
+    background: var(--danger);
+    color: white;
     border-radius: 50%;
     cursor: pointer;
     font-size: 18px;
+    line-height: 1;
     transition: var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.merge-file-remove:hover {
-    background: var(--danger);
-    color: var(--bg-primary);
+.file-remove:hover {
+    background: var(--danger-secondary);
+    transform: scale(1.1);
 }
 
-/* 파일 요약 */
-.merge-file-summary {
+/* 파일 요약 정보 */
+.file-summary {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    padding: var(--space-xl);
+    margin: var(--space-xl) auto;
+    max-width: 600px;
     display: flex;
     justify-content: space-around;
     align-items: center;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
-    padding: var(--space-xl);
-    margin: var(--space-2xl) 0;
 }
 
-.merge-summary-item {
+.summary-item {
     text-align: center;
 }
 
-.merge-summary-label {
-    font-size: 12px;
+.summary-label {
+    font-size: var(--text-sm);
     color: var(--text-muted);
     margin-bottom: var(--space-sm);
-    font-weight: var(--font-light);
+    font-weight: var(--font-normal);
 }
 
-.merge-summary-value {
-    font-size: 24px;
+.summary-value {
+    font-size: var(--text-2xl);
     font-weight: var(--font-semibold);
     color: var(--text-primary);
 }
 
-.merge-summary-value.orders {
-    color: var(--danger);
-}
-
 /* 경고 박스 */
-.merge-warning {
+.warning-box {
     background: var(--yellow-100);
     border: 1px solid var(--warning);
     border-radius: 8px;
     padding: var(--space-xl);
     margin: var(--space-xl) 0;
-    display: none;
 }
 
-.merge-warning.show {
-    display: block;
-}
-
-.merge-warning-title {
-    color: var(--warning);
-    font-size: 16px;
-    font-weight: var(--font-medium);
+.warning-box h3 {
+    color: #856404;
     margin-bottom: var(--space-md);
-}
-
-.merge-warning-text {
-    color: var(--text-secondary);
-    font-size: 14px;
-    font-weight: var(--font-light);
-}
-
-/* 처리 버튼 */
-.merge-process-btn {
-    display: none;
-    margin: var(--space-3xl) auto;
-    padding: var(--space-md) var(--space-3xl);
-    background: var(--brand-primary);
-    color: var(--bg-primary);
-    border: none;
-    border-radius: 50px;
-    font-size: 16px;
-    font-weight: var(--font-normal);
-    cursor: pointer;
-    transition: var(--transition-normal);
-    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
-}
-
-.merge-process-btn:hover {
-    background: var(--brand-primary-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
-}
-
-.merge-process-btn:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-/* 결과 섹션 */
-.merge-result-section {
-    margin-top: var(--space-3xl);
-    display: none;
-}
-
-.merge-result-section.show {
-    display: block;
-}
-
-.merge-result-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-xl);
-}
-
-.merge-result-title {
-    font-size: 20px;
+    font-size: var(--text-lg);
     font-weight: var(--font-medium);
-    color: var(--text-primary);
-}
-
-.merge-export-buttons {
     display: flex;
+    align-items: center;
     gap: var(--space-md);
 }
 
-.merge-export-btn {
-    padding: var(--space-sm) var(--space-lg);
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 13px;
+.warning-list {
+    list-style: none;
+    margin: var(--space-md) 0;
+    padding: 0;
+}
+
+.warning-list li {
+    padding: var(--space-sm) 0;
+    color: #856404;
+    font-size: var(--text-base);
     font-weight: var(--font-light);
-    transition: var(--transition-fast);
 }
 
-.merge-export-excel {
-    background: #10b981;
-    color: white;
+/* 드래그 오버 상태 */
+.upload-area.dragover {
+    border-color: var(--brand-primary);
+    background: var(--blue-50);
 }
 
-.merge-export-excel:hover {
-    background: #059669;
+/* 성공 메시지 */
+.success-message {
+    background: var(--success-bg);
+    border: 1px solid var(--success);
+    color: #155724;
+    padding: var(--space-lg);
+    border-radius: 8px;
+    margin: var(--space-xl) 0;
+    font-size: var(--text-base);
+    font-weight: var(--font-normal);
 }
 
-.merge-export-sheets {
-    background: var(--brand-primary);
-    color: white;
+/* 에러 메시지 */
+.error-message {
+    background: var(--danger-bg);
+    border: 1px solid var(--danger);
+    color: #721c24;
+    padding: var(--space-lg);
+    border-radius: 8px;
+    margin: var(--space-xl) 0;
+    font-size: var(--text-base);
+    font-weight: var(--font-normal);
 }
 
-.merge-export-sheets:hover {
-    background: var(--brand-primary-hover);
-}
-
-/* 테이블 래퍼 */
-.merge-table-wrapper {
+/* 결과 테이블 래퍼 */
+.result-table-wrapper {
     width: 100%;
     overflow-x: auto;
-    overflow-y: auto;
     border: 1px solid var(--border-default);
     border-radius: 8px;
-    margin-bottom: var(--space-3xl);
-    max-height: 600px;
-    background: var(--bg-primary);
-}
-
-.merge-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-}
-
-.merge-table thead {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: var(--bg-secondary);
-}
-
-.merge-table th {
-    padding: var(--space-md);
-    text-align: left;
-    font-weight: var(--font-medium);
-    color: var(--text-primary);
-    border-bottom: 2px solid var(--border-default);
-    white-space: nowrap;
-}
-
-.merge-table td {
-    padding: var(--space-sm);
-    border-bottom: 1px solid var(--border-light);
-    color: var(--text-secondary);
-    font-weight: var(--font-light);
-}
-
-.merge-table tbody tr:hover {
-    background: var(--bg-hover);
-}
-
-.merge-table-notice {
-    text-align: center;
-    padding: var(--space-lg);
-    color: var(--text-muted);
-    font-size: 13px;
-    font-weight: var(--font-light);
+    margin: var(--space-xl) 0;
 }
 
 /* 통계 섹션 */
-.merge-statistics {
+.statistics-section {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
     gap: var(--space-xl);
     margin-top: var(--space-3xl);
 }
 
-.merge-stat-card {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: 8px;
-    padding: var(--space-xl);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-
-.merge-stat-card h3 {
-    color: var(--text-primary);
-    font-size: 16px;
-    font-weight: var(--font-medium);
-    margin-bottom: var(--space-lg);
-    padding-bottom: var(--space-md);
-    border-bottom: 2px solid var(--brand-primary);
-}
-
-.merge-stat-table {
+/* 통계 카드 */
+.stat-table {
     width: 100%;
-    font-size: 12px;
+    font-size: var(--text-sm);
+    border-collapse: collapse;
 }
 
-.merge-stat-table th {
+.stat-table th {
     background: var(--bg-secondary);
-    padding: var(--space-sm);
+    color: var(--text-primary);
+    padding: var(--space-md);
     text-align: center;
-    font-weight: var(--font-normal);
-    border: 1px solid var(--border-light);
+    font-weight: var(--font-medium);
+    border: 1px solid var(--border-default);
 }
 
-.merge-stat-table td {
+.stat-table td {
     padding: var(--space-sm);
-    text-align: center;
     border: 1px solid var(--border-light);
+    text-align: center;
     font-weight: var(--font-light);
 }
 
-.merge-stat-table .total-row {
-    font-weight: var(--font-medium);
-    background: var(--blue-50);
-    border-top: 2px solid var(--brand-primary);
+.stat-table .total-row {
+    font-weight: var(--font-semibold);
+    background: #e8f5e9;
+    border-top: 2px solid var(--success);
 }
 
-/* 피벗테이블 */
-.merge-pivot-section {
-    margin-top: var(--space-3xl);
+.stat-table .total-row td {
+    color: var(--success);
+    font-size: var(--text-base);
 }
 
-.merge-pivot-controls {
-    display: flex;
-    gap: var(--space-xl);
-    align-items: center;
+/* 피벗 테이블 컨트롤 */
+.pivot-controls {
     margin-bottom: var(--space-xl);
     padding: var(--space-lg);
     background: var(--bg-secondary);
     border-radius: 8px;
 }
 
-.merge-pivot-controls label {
-    font-weight: var(--font-normal);
-    color: var(--text-secondary);
-    margin-right: var(--space-sm);
-}
-
-.merge-pivot-controls select {
+.pivot-controls select {
     padding: var(--space-sm) var(--space-md);
     border: 1px solid var(--border-default);
     border-radius: 4px;
-    font-size: 13px;
+    font-size: var(--text-base);
     font-weight: var(--font-light);
 }
 
-.merge-pivot-update {
+.pivot-controls button {
     padding: var(--space-sm) var(--space-xl);
     background: var(--brand-primary);
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-weight: var(--font-normal);
+    font-weight: var(--font-medium);
     transition: var(--transition-fast);
 }
 
-.merge-pivot-update:hover {
+.pivot-controls button:hover {
     background: var(--brand-primary-hover);
-}
-
-/* 로딩 상태 */
-.merge-loading {
-    text-align: center;
-    padding: var(--space-3xl);
-    color: var(--text-muted);
-    font-weight: var(--font-light);
-    display: none;
-}
-
-.merge-loading.show {
-    display: block;
-}
-
-/* 메시지 */
-.merge-error,
-.merge-success {
-    padding: var(--space-lg);
-    border-radius: 8px;
-    margin: var(--space-xl) 0;
-    display: none;
-    font-weight: var(--font-light);
-}
-
-.merge-error {
-    background: var(--danger-bg);
-    border: 1px solid var(--danger);
-    color: var(--danger);
-}
-
-.merge-success {
-    background: var(--success-bg);
-    border: 1px solid var(--success);
-    color: var(--success);
-}
-
-.merge-error.show,
-.merge-success.show {
-    display: block;
 }
 
 /* 모바일 반응형 */
 @media (max-width: 768px) {
-    .merge-file-summary {
+    .file-info {
         flex-direction: column;
-        gap: var(--space-lg);
+        align-items: flex-start;
+        gap: var(--space-md);
     }
     
-    .merge-statistics {
+    .file-details {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .file-summary {
+        flex-direction: column;
+        gap: var(--space-xl);
+    }
+    
+    .statistics-section {
         grid-template-columns: 1fr;
     }
     
-    .merge-pivot-controls {
+    .pivot-controls {
+        display: flex;
         flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .merge-export-buttons {
-        flex-direction: column;
-        width: 100%;
-    }
-    
-    .merge-export-btn {
-        width: 100%;
+        gap: var(--space-md);
     }
 }
