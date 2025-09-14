@@ -207,4 +207,103 @@ const MergeMapper = (function() {
                 }
 
                 if (confidence > maxConfidence) {
-                    maxC
+                    maxConfidence = confidence;
+                    bestMatch = {
+                        field: header,
+                        index: index,
+                        confidence: confidence,
+                        pattern: pattern
+                    };
+                }
+            }
+        });
+
+        return bestMatch;
+    }
+
+    /**
+     * 매핑 검증
+     */
+    function validateMapping(mapping) {
+        const issues = [];
+        const requiredFields = [
+            '주문번호', '수취인', '전화번호', '주소', '옵션명', '수량'
+        ];
+
+        // 필수 필드 체크
+        for (const field of requiredFields) {
+            if (!mapping.fields[field] || mapping.fields[field].confidence < 50) {
+                issues.push({
+                    type: 'missing',
+                    field: field,
+                    message: `필수 필드 "${field}"가 매핑되지 않음`
+                });
+            }
+        }
+
+        // 중복 매핑 체크
+        const usedIndices = {};
+        for (const [stdField, mapInfo] of Object.entries(mapping.fields)) {
+            const index = mapInfo.index;
+            if (usedIndices[index]) {
+                issues.push({
+                    type: 'duplicate',
+                    field: stdField,
+                    conflictWith: usedIndices[index],
+                    message: `"${stdField}"와 "${usedIndices[index]}"가 동일한 필드에 매핑됨`
+                });
+            }
+            usedIndices[index] = stdField;
+        }
+
+        return {
+            isValid: issues.length === 0,
+            issues: issues
+        };
+    }
+
+    /**
+     * 수동 매핑 조정
+     */
+    function adjustMapping(currentMapping, adjustments) {
+        const newMapping = JSON.parse(JSON.stringify(currentMapping));
+
+        for (const [stdField, originalField] of Object.entries(adjustments)) {
+            const headerIndex = currentMapping.unmapped.findIndex(
+                u => u.field === originalField
+            );
+
+            if (headerIndex !== -1) {
+                newMapping.fields[stdField] = {
+                    originalField: originalField,
+                    index: currentMapping.unmapped[headerIndex].index,
+                    confidence: 100,
+                    manual: true
+                };
+
+                // unmapped에서 제거
+                newMapping.unmapped = newMapping.unmapped.filter(
+                    u => u.field !== originalField
+                );
+            }
+        }
+
+        return newMapping;
+    }
+
+    // Public API
+    return {
+        initialize,
+        autoMapFields,
+        validateMapping,
+        adjustMapping,
+        findSimilarField,
+        guessMapping
+    };
+
+})();
+
+// 모듈 내보내기
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = MergeMapper;
+}
