@@ -249,3 +249,9 @@ window.showTab = function(tabId) {
 };
 
 window.createTabMenu = function(role) {
+    TabManager.createMenu(role);
+};
+
+window.refreshCurrentTab = function(event) {
+    TabManager.refreshCurrent(event);
+};
