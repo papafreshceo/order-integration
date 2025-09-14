@@ -1,194 +1,85 @@
-// js/core/tab-manager.js - 탭 관리 모듈
+// app.js - 메인 애플리케이션
 
-window.TabManager = {
+// 전역 상태
+window.currentUserRole = 'staff';
+
+// UI 초기화
+function initializeUIByRole(role) {
+    window.currentUserRole = role;
+    
     // 탭 메뉴 생성
-    createMenu(role) {
-        const tabMenu = document.getElementById('tabMenu');
-        if (!tabMenu) return;
-        
-        const menus = MENU_CONFIG[role];
-        
-        tabMenu.innerHTML = '';
-        menus.forEach((menu, index) => {
-            const button = document.createElement('button');
-            button.className = 'tab-btn';
-            button.textContent = menu.name;
-            button.onclick = () => this.show(menu.id);
-            
-            if (index === 0) {
-                button.classList.add('active');
-            }
-            
-            tabMenu.appendChild(button);
-        });
-    },
+    if (typeof TabManager !== 'undefined') {
+        TabManager.createMenu(role);
+        TabManager.restoreLastTab();
+    }
+}
 
-    // 탭 전환
-    show(tabId) {
-        // 모든 탭 콘텐츠 숨기기
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        
-        // 모든 탭 버튼 비활성화
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        
-        // 선택한 탭 표시
-        const tabContent = document.getElementById(tabId);
-        if (tabContent) {
-            tabContent.classList.add('active');
-            sessionStorage.setItem('currentTab', tabId);
-        }
-        
-        // 선택한 버튼 활성화
-        const buttons = document.querySelectorAll('.tab-btn');
-        const menus = MENU_CONFIG[window.currentUserRole];
-        const menuIndex = menus.findIndex(m => m.id === tabId);
-        if (menuIndex !== -1 && buttons[menuIndex]) {
-            buttons[menuIndex].classList.add('active');
-        }
-        
-        // 탭별 데이터 로드
-        this.loadTabData(tabId);
-    },
-
-    // 탭별 데이터 로드
-    loadTabData(tabId) {
-        switch(tabId) {
-            case 'dashboard':
-                if (typeof DashboardModule !== 'undefined') {
-                    DashboardModule.load();
-                }
-                break;
-            case 'realtime':
-                if (typeof RealtimeModule !== 'undefined') {
-                    RealtimeModule.load();
-                }
-                break;
-            case 'analytics':
-                if (typeof AnalyticsModule !== 'undefined') {
-                    AnalyticsModule.load();
-                }
-                break;
-        }
-    },
-
-    // 마지막 탭 복원
-    restoreLastTab() {
-        const lastTab = sessionStorage.getItem('currentTab');
-        if (lastTab) {
-            const menus = MENU_CONFIG[window.currentUserRole];
-            const hasAccess = menus.some(menu => menu.id === lastTab);
-            if (hasAccess) {
-                this.show(lastTab);
-                return;
-            }
-        }
-        // 기본값: 첫 번째 탭
-        const firstTab = MENU_CONFIG[window.currentUserRole][0];
-        if (firstTab) {
-            this.show(firstTab.id);
-        }
-    },
-
-    // 현재 탭 새로고침
-    refreshCurrent(event) {
+// 페이지 로드 시 초기화
+window.addEventListener('DOMContentLoaded', () => {
+    console.log('App.js loaded successfully');
+    
+    // 자동 새로고침 시작 (5분)
+    if (typeof AutoRefreshModule !== 'undefined') {
+        AutoRefreshModule.start(5);
+    }
+    
+    // 브라우저 새로고침 시 현재 탭 유지
+    window.addEventListener('beforeunload', () => {
         const activeTab = document.querySelector('.tab-content.active');
-        if (!activeTab) {
-            console.log('No active tab to refresh');
-            return;
+        if (activeTab) {
+            sessionStorage.setItem('currentTab', activeTab.id);
         }
-        
-        const tabId = activeTab.id;
-        console.log('Refreshing tab:', tabId);
-        
-        // 이벤트가 버튼 클릭인 경우
-        if (event && event.target && event.target.tagName === 'BUTTON') {
-            const button = event.target;
-            button.disabled = true;
-            const originalText = button.textContent;
-            button.textContent = '새로고침 중...';
+    });
+    
+    // F5 키 이벤트 처리 (이벤트 캡처링 사용)
+    document.addEventListener('keydown', (e) => {
+        // F5 키
+        if (e.key === 'F5' || e.keyCode === 116) {
+            e.preventDefault();
+            e.stopPropagation();
             
-            this.executeRefresh(tabId).finally(() => {
-                button.disabled = false;
-                button.textContent = originalText;
-            });
-        } else {
-            // F5 키 등으로 호출된 경우
-            this.executeRefresh(tabId);
+            // 현재 탭 새로고침
+            if (typeof TabManager !== 'undefined') {
+                TabManager.refreshCurrent();
+            }
+            return false;
         }
-    },
-
-    // 탭별 새로고침 실행
-    async executeRefresh(tabId) {
-        console.log(`Executing refresh for tab: ${tabId}`);
         
-        try {
-            switch(tabId) {
-                case 'dashboard':
-                    if (typeof DashboardModule !== 'undefined') {
-                        await DashboardModule.load();
-                    }
-                    if (typeof ToastManager !== 'undefined') {
-                        ToastManager.success('대시보드가 새로고침되었습니다');
-                    }
-                    break;
-                    
-                case 'realtime':
-                    if (typeof RealtimeModule !== 'undefined') {
-                        RealtimeModule.updateLastUpdateTime();
-                        await RealtimeModule.load();
-                    }
-                    if (typeof ToastManager !== 'undefined') {
-                        ToastManager.success('실시간 주문현황이 새로고침되었습니다');
-                    }
-                    break;
-                    
-                case 'search':
-                    const startDate = document.getElementById('startDate');
-                    const endDate = document.getElementById('endDate');
-                    if (startDate && endDate && startDate.value && endDate.value) {
-                        if (typeof SearchModule !== 'undefined') {
-                            SearchModule.search();
-                        }
-                        if (typeof ToastManager !== 'undefined') {
-                            ToastManager.success('검색 결과가 새로고침되었습니다');
-                        }
-                    }
-                    break;
-                    
-                case 'analytics':
-                    if (typeof AnalyticsModule !== 'undefined') {
-                        AnalyticsModule.load();
-                    }
-                    if (typeof ToastManager !== 'undefined') {
-                        ToastManager.success('통계 분석이 새로고침되었습니다');
-                    }
-                    break;
-                    
-                default:
-                    console.log(`No refresh handler for tab: ${tabId}`);
+        // Ctrl+R 또는 Cmd+R
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // 현재 탭 새로고침
+            if (typeof TabManager !== 'undefined') {
+                TabManager.refreshCurrent();
             }
-        } catch (error) {
-            console.error('Refresh error:', error);
-            if (typeof ToastManager !== 'undefined') {
-                ToastManager.error('새로고침 중 오류가 발생했습니다');
-            }
+            return false;
+        }
+    }, true); // true를 추가하여 캡처 단계에서 이벤트 처리
+});
+
+// 전역 새로고침 함수 (디버깅용)
+window.refreshPage = function() {
+    const activeTab = document.querySelector('.tab-content.active');
+    if (activeTab) {
+        console.log('Refreshing tab:', activeTab.id);
+        if (typeof TabManager !== 'undefined') {
+            TabManager.refreshCurrent();
         }
     }
 };
 
-// 전역 함수로 등록
+// 탭 전환 헬퍼 함수
 window.showTab = function(tabId) {
-    TabManager.show(tabId);
+    if (typeof TabManager !== 'undefined') {
+        TabManager.show(tabId);
+    }
 };
 
-window.createTabMenu = function(role) {
-    TabManager.createMenu(role);
-};
-
+// 현재 탭 새로고침 헬퍼 함수
 window.refreshCurrentTab = function(event) {
-    TabManager.refreshCurrent(event);
+    if (typeof TabManager !== 'undefined') {
+        TabManager.refreshCurrent(event);
+    }
 };
