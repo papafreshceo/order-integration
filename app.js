@@ -679,3 +679,143 @@ window.addEventListener('DOMContentLoaded', () => {
     console.log('App.js loaded successfully');
 });
 
+
+// app.js에 추가할 함수들
+
+// 새로고침 함수
+function refreshRealtimeData() {
+    const button = event.target;
+    button.disabled = true;
+    button.textContent = '새로고침 중...';
+    
+    // 시간 업데이트
+    updateLastUpdateTime();
+    
+    // 데이터 다시 로드
+    loadRealtimeData().finally(() => {
+        button.disabled = false;
+        button.textContent = '↻ 새로고침';
+    });
+}
+
+// 쿠팡 즉시 동기화
+async function syncCoupangNow() {
+    const button = event.target;
+    const statusElement = document.getElementById('coupangSyncStatus');
+    
+    button.disabled = true;
+    button.textContent = '동기화 중...';
+    if (statusElement) {
+        statusElement.textContent = '동기화 중';
+        statusElement.style.color = '#f59e0b';
+    }
+    
+    try {
+        const response = await fetch('/api/coupang', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'fetch',
+                startDate: new Date().toISOString().split('T')[0],
+                endDate: new Date().toISOString().split('T')[0]
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            if (statusElement) {
+                statusElement.textContent = '동기화 완료';
+                statusElement.style.color = '#10b981';
+            }
+            
+            // 성공 메시지
+            if (typeof ToastManager !== 'undefined') {
+                ToastManager.success(`쿠팡 주문 ${data.orders ? data.orders.length : 0}건 동기화 완료`);
+            }
+            
+            // 테이블 새로고침
+            await loadRealtimeData();
+            
+        } else {
+            if (statusElement) {
+                statusElement.textContent = '동기화 실패';
+                statusElement.style.color = '#ef4444';
+            }
+            
+            if (typeof ToastManager !== 'undefined') {
+                ToastManager.error('쿠팡 동기화 실패');
+            }
+        }
+    } catch (error) {
+        console.error('쿠팡 동기화 오류:', error);
+        if (statusElement) {
+            statusElement.textContent = '오류 발생';
+            statusElement.style.color = '#ef4444';
+        }
+        
+        if (typeof ToastManager !== 'undefined') {
+            ToastManager.error('네트워크 오류가 발생했습니다');
+        }
+    } finally {
+        button.disabled = false;
+        button.textContent = '쿠팡 동기화';
+        
+        // 3초 후 상태 텍스트 원래대로
+        setTimeout(() => {
+            if (statusElement) {
+                statusElement.textContent = '대기';
+                statusElement.style.color = '#6c757d';
+            }
+        }, 3000);
+    }
+}
+
+// 마지막 업데이트 시간 갱신
+function updateLastUpdateTime() {
+    const element = document.getElementById('lastUpdateTime');
+    if (element) {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('ko-KR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        element.textContent = timeString;
+    }
+}
+
+// 자동 새로고침 설정 (옵션)
+let autoRefreshInterval = null;
+
+function startAutoRefresh(minutes = 5) {
+    // 기존 인터벌 정리
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+    }
+    
+    // 새 인터벌 설정
+    autoRefreshInterval = setInterval(() => {
+        if (document.getElementById('realtime').classList.contains('active')) {
+            refreshRealtimeData();
+        }
+    }, minutes * 60 * 1000);
+    
+    console.log(`자동 새로고침 시작: ${minutes}분 간격`);
+}
+
+function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+        console.log('자동 새로고침 중지');
+    }
+}
+
+// 페이지 로드 시 자동 새로고침 시작 (5분)
+window.addEventListener('DOMContentLoaded', () => {
+    // 5분마다 자동 새로고침
+    startAutoRefresh(5);
+});
