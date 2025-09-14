@@ -154,6 +154,122 @@
                 </table>
             </div>
 
+            <!-- 주문통합(Excel) 탭 -->
+            <div id="merge" class="tab-content">
+                <h2>주문통합 (Excel)</h2>
+                
+                <!-- 지원 마켓 표시 -->
+                <div class="supported-markets" id="supportedMarkets"></div>
+                
+                <!-- 파일 업로드 섹션 -->
+                <div class="upload-section" id="mergeUploadSection">
+                    <input type="file" id="mergeFileInput" class="file-input" multiple accept=".xlsx,.xls,.csv" style="display: none;">
+                    <button class="btn upload-btn" id="mergeUploadBtn">📁 주문 파일 선택</button>
+                    <p style="margin-top: 15px; color: var(--text-muted);">엑셀/CSV 파일을 선택하거나 여기로 드래그해주세요</p>
+                </div>
+                
+                <!-- 파일 목록 -->
+                <div class="file-list" id="mergeFileList"></div>
+                
+                <!-- 파일 요약 -->
+                <div class="file-summary" id="mergeFileSummary" style="display: none;">
+                    <div class="summary-item">
+                        <div class="summary-label">업로드 파일</div>
+                        <div class="summary-value" id="mergeTotalFiles">0</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">마켓 수</div>
+                        <div class="summary-value" id="mergeTotalMarkets">0</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">총 주문 수</div>
+                        <div class="summary-value orders" id="mergeTotalOrders">0</div>
+                    </div>
+                </div>
+                
+                <!-- 경고 박스 -->
+                <div class="warning-box" id="mergeWarningBox">
+                    <h3>⚠️ 주의: 오래된 파일이 감지되었습니다!</h3>
+                    <ul class="warning-list" id="mergeWarningList"></ul>
+                    <p style="margin-top: 10px;">7일 이전 파일은 통합에서 제외됩니다.</p>
+                </div>
+                
+                <!-- 처리 버튼 -->
+                <div style="text-align: center; margin: 30px 0;">
+                    <button class="btn" id="mergeProcessBtn" style="display: none;">🔄 주문 통합 실행</button>
+                </div>
+                
+                <!-- 결과 섹션 -->
+                <div class="result-section" id="mergeResultSection">
+                    <div class="result-header">
+                        <h3>통합 결과</h3>
+                        <button class="btn" id="mergeExportBtn">📊 엑셀 다운로드</button>
+                    </div>
+                    
+                    <!-- 결과 테이블 -->
+                    <div class="table-wrapper">
+                        <table id="mergeResultTable">
+                            <thead id="mergeResultTableHead"></thead>
+                            <tbody id="mergeResultTableBody"></tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 통계 섹션 -->
+                    <div class="statistics-section">
+                        <!-- 전체 통계 -->
+                        <div class="stat-card">
+                            <h3>📊 전체 통계</h3>
+                            <div class="stat-summary">
+                                <div class="stat-item">
+                                    <span class="stat-label">총 주문수:</span>
+                                    <span class="stat-value" id="mergeTotalStatCount">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">총 수량:</span>
+                                    <span class="stat-value" id="mergeTotalStatQuantity">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">총 금액:</span>
+                                    <span class="stat-value" id="mergeTotalStatAmount">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 마켓별 통계 -->
+                        <div class="stat-card">
+                            <h3>📈 마켓별 통계</h3>
+                            <table class="stat-table">
+                                <thead>
+                                    <tr>
+                                        <th>마켓명</th>
+                                        <th>건수</th>
+                                        <th>수량</th>
+                                        <th>금액</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mergeMarketStats"></tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- 옵션별 통계 (상위 20개) -->
+                        <div class="stat-card">
+                            <h3>📦 옵션별 통계 (상위 20개)</h3>
+                            <table class="stat-table">
+                                <thead>
+                                    <tr>
+                                        <th>옵션명</th>
+                                        <th>건수</th>
+                                        <th>수량</th>
+                                        <th>금액</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mergeOptionStats"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- 주문조회 탭 -->
             <div id="search" class="tab-content">
                 <h2>주문조회</h2>
@@ -216,6 +332,9 @@
         </div>
     </div>
 
+    <!-- XLSX 라이브러리 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
     <!-- JavaScript 파일들 (순서 중요!) -->
     <script src="firebase-config.js"></script>
     <script src="utils.js"></script>
@@ -231,6 +350,7 @@
     <script src="js/modules/invoice.js"></script>
     <script src="js/modules/analytics.js"></script>
     <script src="js/modules/coupang-sync.js"></script>
+    <script src="js/modules/order-merge.js"></script>
     
     <!-- Core -->
     <script src="js/core/tab-manager.js"></script>
@@ -267,6 +387,11 @@
                                 // 로그인 상태 - 메인 화면 표시
                                 if (loginScreen) loginScreen.style.display = 'none';
                                 if (mainSystem) mainSystem.style.display = 'block';
+                                
+                                // 주문통합 모듈 초기화
+                                if (window.OrderMergeModule) {
+                                    window.OrderMergeModule.init();
+                                }
                             } else {
                                 // 비로그인 상태 - 로그인 화면 표시
                                 if (loginScreen) loginScreen.style.display = 'flex';
