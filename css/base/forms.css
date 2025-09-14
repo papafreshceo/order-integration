@@ -1,0 +1,66 @@
+/* css/components/forms.css - 폼 요소 */
+
+.form-group {
+    margin-bottom: var(--space-xl);
+}
+
+.form-label {
+    display: block;
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-sm);
+    font-weight: var(--font-normal);
+}
+
+.form-input {
+    width: 100%;
+    padding: var(--space-md);
+    border: 1px solid var(--border-default);
+    border-radius: 4px;
+    font-size: 14px;
+    transition: var(--transition-fast);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+}
+
+.form-container {
+    max-width: 500px;
+}
+
+.form-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--space-xl);
+    gap: var(--space-xl);
+}
+
+.form-row label {
+    min-width: 100px;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.form-select {
+    flex: 1;
+    padding: var(--space-sm);
+    border: 1px solid var(--border-default);
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.date-input {
+    padding: var(--space-sm);
+    border: 1px solid var(--border-default);
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.search-box {
+    margin: var(--space-xl) 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
