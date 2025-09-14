@@ -14,6 +14,18 @@
     color: var(--text-primary);
     font-size: 24px;
     font-weight: var(--font-semibold);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    user-select: none;
+}
+
+.header h1:hover {
+    color: var(--brand-primary);
+    transform: scale(1.02);
+}
+
+.header h1:active {
+    transform: scale(0.98);
 }
 
 .user-info {
@@ -26,5 +38,9 @@
     .header {
         flex-direction: column;
         gap: var(--space-lg);
+    }
+    
+    .header h1 {
+        font-size: 20px;
     }
 }
