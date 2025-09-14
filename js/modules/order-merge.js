@@ -1,37 +1,65 @@
-// js/modules/order-merge.js - 주문통합(Excel) 모듈
+// js/modules/order-merge.js - 주문통합(Excel) 모듈 - Vercel API 버전
 
 window.OrderMergeModule = {
+    // API 설정
+    API_BASE_URL: window.location.hostname === 'localhost' 
+        ? 'http://localhost:3000/api'
+        : '/api', // Vercel 배포 시 상대 경로 사용
+    
     // 전역 변수
     uploadedFiles: [],
     mappingData: null,
-    processedData = null,
+    processedData: null,
     
     // 초기화
     init() {
+        console.log('주문통합 모듈 초기화');
         this.setupEventListeners();
         this.loadMappingData();
     },
     
     // 매핑 데이터 로드
-    loadMappingData() {
-        // Google Apps Script 환경에서 매핑 데이터 가져오기
-        if (typeof google !== 'undefined' && google.script && google.script.run) {
-            google.script.run
-                .withSuccessHandler((data) => {
-                    if (data && !data.error) {
-                        this.mappingData = data;
-                        this.displaySupportedMarkets();
-                    } else {
-                        ToastManager.error('매핑 데이터 로드 실패: ' + (data.error || '알 수 없는 오류'));
-                    }
-                })
-                .withFailureHandler((error) => {
-                    ToastManager.error('매핑 데이터 로드 실패: ' + error.message);
-                })
-                .getMappingData();
-        } else {
-            ToastManager.error('Google Apps Script 환경이 아닙니다.');
+    async loadMappingData() {
+        try {
+            const response = await fetch(`${this.API_BASE_URL}/mapping-data`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // Firebase Auth 토큰 추가 (인증이 필요한 경우)
+                    'Authorization': `Bearer ${await this.getAuthToken()}`
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            this.mappingData = data;
+            console.log('매핑 데이터 로드 완료:', this.mappingData);
+            this.displaySupportedMarkets();
+            
+        } catch (error) {
+            console.error('매핑 데이터 로드 실패:', error);
+            this.showError('매핑 데이터를 불러올 수 없습니다. 다시 시도해주세요.');
         }
+    },
+    
+    // Firebase Auth 토큰 가져오기
+    async getAuthToken() {
+        try {
+            if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+                return await firebase.auth().currentUser.getIdToken();
+            }
+        } catch (error) {
+            console.warn('Firebase 토큰 가져오기 실패:', error);
+        }
+        return '';
     },
     
     // 지원 마켓 표시
@@ -125,7 +153,7 @@ window.OrderMergeModule = {
         });
         
         if (validFiles.length === 0) {
-            ToastManager.error('유효한 파일이 없습니다. 엑셀 또는 CSV 파일을 선택해주세요.');
+            this.showError('유효한 파일이 없습니다. 엑셀 또는 CSV 파일을 선택해주세요.');
             return;
         }
         
@@ -156,7 +184,7 @@ window.OrderMergeModule = {
                 }
                 
                 if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
-                    ToastManager.error(`${file.name}: 유효한 시트가 없습니다.`);
+                    this.showError(`${file.name}: 유효한 시트가 없습니다.`);
                     return;
                 }
                 
@@ -173,7 +201,7 @@ window.OrderMergeModule = {
                 
             } catch (error) {
                 console.error('파일 처리 오류:', error);
-                ToastManager.error(`${file.name}: 파일 읽기 실패`);
+                this.showError(`${file.name}: 파일 읽기 실패`);
             }
         };
         
@@ -185,66 +213,83 @@ window.OrderMergeModule = {
     },
     
     // 엑셀 데이터 처리
-    processExcelData(rawRows, file) {
+    async processExcelData(rawRows, file) {
         const cleanRows = rawRows.filter(row => 
             row && row.some(cell => cell !== null && cell !== undefined && cell !== '')
         );
         
         if (cleanRows.length === 0) {
-            ToastManager.error(`${file.name}: 데이터가 없습니다.`);
+            this.showError(`${file.name}: 데이터가 없습니다.`);
             return;
         }
         
         // 첫 번째 유효한 행을 임시 헤더로 사용
         const headers = cleanRows[0].map(h => String(h || '').trim());
-        const firstDataRow = cleanRows[1] || [];
         
-        // Google Apps Script의 detectMarket 함수 호출
-        google.script.run
-            .withSuccessHandler((marketName) => {
-                if (!marketName) {
-                    ToastManager.error(`${file.name}: 마켓을 인식할 수 없습니다.`);
-                    return;
-                }
-                
-                const market = this.mappingData.markets[marketName];
-                const headerRowIndex = (market.headerRow || 1) - 1;
-                
-                // 실제 헤더 행 결정
-                const finalHeaders = cleanRows[headerRowIndex].map(h => String(h || '').trim());
-                const dataRows = cleanRows.slice(headerRowIndex + 1);
-                
-                // 데이터를 객체 배열로 변환
-                const processedRows = dataRows.map(row => {
-                    const obj = {};
-                    finalHeaders.forEach((header, i) => {
-                        obj[header] = row[i] !== undefined ? row[i] : '';
-                    });
-                    return obj;
+        try {
+            // Vercel API로 마켓 감지
+            const response = await fetch(`${this.API_BASE_URL}/detect-market`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${await this.getAuthToken()}`
+                },
+                body: JSON.stringify({
+                    fileName: file.name,
+                    headers: headers
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            const marketName = result.marketName;
+            
+            if (!marketName) {
+                this.showError(`${file.name}: 마켓을 인식할 수 없습니다.`);
+                return;
+            }
+            
+            const market = this.mappingData.markets[marketName];
+            const headerRowIndex = (market.headerRow || 1) - 1;
+            
+            // 실제 헤더 행 결정
+            const finalHeaders = cleanRows[headerRowIndex].map(h => String(h || '').trim());
+            const dataRows = cleanRows.slice(headerRowIndex + 1);
+            
+            // 데이터를 객체 배열로 변환
+            const processedRows = dataRows.map(row => {
+                const obj = {};
+                finalHeaders.forEach((header, i) => {
+                    obj[header] = row[i] !== undefined ? row[i] : '';
                 });
-                
-                // 파일 정보 저장
-                const fileInfo = {
-                    name: file.name,
-                    marketName,
-                    lastModified: file.lastModified,
-                    isToday: this.isToday(file.lastModified),
-                    headers: finalHeaders,
-                    data: processedRows,
-                    rowCount: processedRows.length
-                };
-                
-                this.uploadedFiles.push(fileInfo);
-                this.updateFileList();
-            })
-            .withFailureHandler((error) => {
-                ToastManager.error(`마켓 감지 실패: ${error.message}`);
-            })
-            .detectMarket(file.name, headers, firstDataRow);
+                return obj;
+            });
+            
+            // 파일 정보 저장
+            const fileInfo = {
+                name: file.name,
+                marketName,
+                lastModified: file.lastModified,
+                isToday: this.isRecent(file.lastModified),
+                headers: finalHeaders,
+                data: processedRows,
+                rowCount: processedRows.length
+            };
+            
+            this.uploadedFiles.push(fileInfo);
+            this.updateFileList();
+            
+        } catch (error) {
+            console.error('마켓 감지 오류:', error);
+            this.showError(`${file.name}: 마켓 감지 실패`);
+        }
     },
     
-    // 오늘 날짜 체크
-    isToday(timestamp) {
+    // 최근 파일 체크 (7일 이내)
+    isRecent(timestamp) {
         const fileDate = new Date(timestamp);
         const today = new Date();
         
@@ -324,6 +369,8 @@ window.OrderMergeModule = {
         const oldFiles = this.uploadedFiles.filter(f => !f.isToday);
         const warningBox = document.getElementById('mergeWarningBox');
         
+        if (!warningBox) return;
+        
         if (oldFiles.length > 0) {
             const warningList = document.getElementById('mergeWarningList');
             warningList.innerHTML = '';
@@ -334,61 +381,80 @@ window.OrderMergeModule = {
                 warningList.appendChild(li);
             });
             
-            warningBox.classList.add('show');
+            warningBox.style.display = 'block';
         } else {
-            warningBox.classList.remove('show');
+            warningBox.style.display = 'none';
         }
     },
     
     // 주문 처리
-    processOrders() {
+    async processOrders() {
         if (this.uploadedFiles.length === 0) {
-            ToastManager.error('업로드된 파일이 없습니다.');
+            this.showError('업로드된 파일이 없습니다.');
             return;
         }
         
-        const todayFiles = this.uploadedFiles.filter(f => f.isToday);
-        if (todayFiles.length === 0) {
-            ToastManager.error('최신 파일이 없습니다.');
+        const recentFiles = this.uploadedFiles.filter(f => f.isToday);
+        if (recentFiles.length === 0) {
+            this.showError('최신 파일이 없습니다. 7일 이내 파일을 업로드해주세요.');
             return;
         }
         
-        LoadingManager.showFullLoading();
+        this.showLoading(true);
         
-        // Google Apps Script의 processOrderFiles 함수 호출
-        google.script.run
-            .withSuccessHandler((result) => {
-                LoadingManager.hideFullLoading();
-                
-                if (result.success) {
-                    this.processedData = result;
-                    ToastManager.success(`${result.processedCount}개의 주문을 통합했습니다.`);
-                    this.displayResults();
-                } else {
-                    ToastManager.error(result.error || '처리 중 오류가 발생했습니다.');
-                }
-            })
-            .withFailureHandler((error) => {
-                LoadingManager.hideFullLoading();
-                ToastManager.error('서버 오류: ' + error);
-            })
-            .processOrderFiles(todayFiles);
+        try {
+            // Vercel API로 주문 처리
+            const response = await fetch(`${this.API_BASE_URL}/process-orders`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${await this.getAuthToken()}`
+                },
+                body: JSON.stringify({
+                    files: recentFiles
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.processedData = result;
+                this.showSuccess(`${result.processedCount}개의 주문을 통합했습니다.`);
+                this.displayResults();
+            } else {
+                throw new Error(result.error || '처리 중 오류가 발생했습니다.');
+            }
+            
+        } catch (error) {
+            console.error('주문 처리 오류:', error);
+            this.showError('주문 처리 중 오류가 발생했습니다: ' + error.message);
+        } finally {
+            this.showLoading(false);
+        }
     },
     
     // 결과 표시
     displayResults() {
         const resultSection = document.getElementById('mergeResultSection');
-        resultSection.classList.add('show');
+        if (resultSection) {
+            resultSection.style.display = 'block';
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
         
         this.displayResultTable();
-        
-        resultSection.scrollIntoView({ behavior: 'smooth' });
+        this.displayStatistics();
     },
     
     // 결과 테이블 표시
     displayResultTable() {
         const tbody = document.getElementById('mergeResultTableBody');
         const thead = document.getElementById('mergeResultTableHead');
+        
+        if (!tbody || !thead) return;
         
         tbody.innerHTML = '';
         thead.innerHTML = '';
@@ -410,8 +476,10 @@ window.OrderMergeModule = {
         });
         thead.appendChild(headerRow);
         
-        // 데이터 행 생성
-        data.forEach(row => {
+        // 데이터 행 생성 (최대 100개만 표시)
+        const displayData = data.slice(0, 100);
+        
+        displayData.forEach(row => {
             const tr = document.createElement('tr');
             
             headers.forEach(header => {
@@ -419,13 +487,14 @@ window.OrderMergeModule = {
                 let value = row[header] || '';
                 
                 // 마켓명 셀 스타일
-                if (header === '마켓명' && this.mappingData.markets[value]) {
+                if (header === '마켓명' && this.mappingData && this.mappingData.markets[value]) {
                     const market = this.mappingData.markets[value];
                     td.style.background = `rgb(${market.color})`;
                     const rgb = market.color.split(',').map(Number);
                     const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
                     td.style.color = brightness > 128 ? '#000' : '#fff';
                     td.style.fontWeight = 'bold';
+                    td.style.textAlign = 'center';
                 }
                 
                 // 금액 포맷
@@ -442,22 +511,129 @@ window.OrderMergeModule = {
             
             tbody.appendChild(tr);
         });
+        
+        if (data.length > 100) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = headers.length;
+            td.style.textAlign = 'center';
+            td.style.padding = '20px';
+            td.innerHTML = `<em>... 외 ${data.length - 100}개 주문 (엑셀 다운로드로 전체 확인)</em>`;
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+        }
+    },
+    
+    // 통계 표시
+    displayStatistics() {
+        if (!this.processedData || !this.processedData.statistics) return;
+        
+        const stats = this.processedData.statistics;
+        
+        // 전체 통계
+        const totalCount = document.getElementById('mergeTotalStatCount');
+        const totalQuantity = document.getElementById('mergeTotalStatQuantity');
+        const totalAmount = document.getElementById('mergeTotalStatAmount');
+        
+        if (totalCount) totalCount.textContent = stats.total.count.toLocaleString('ko-KR');
+        if (totalQuantity) totalQuantity.textContent = stats.total.quantity.toLocaleString('ko-KR');
+        if (totalAmount) totalAmount.textContent = stats.total.amount.toLocaleString('ko-KR') + '원';
+        
+        // 마켓별 통계
+        const marketStatsBody = document.getElementById('mergeMarketStats');
+        if (marketStatsBody) {
+            marketStatsBody.innerHTML = '';
+            
+            Object.entries(stats.byMarket).forEach(([market, marketStats]) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${market}</td>
+                    <td>${marketStats.count.toLocaleString('ko-KR')}</td>
+                    <td>${marketStats.quantity.toLocaleString('ko-KR')}</td>
+                    <td>${marketStats.amount.toLocaleString('ko-KR')}</td>
+                `;
+                marketStatsBody.appendChild(tr);
+            });
+        }
+        
+        // 옵션별 통계 (상위 20개)
+        const optionStatsBody = document.getElementById('mergeOptionStats');
+        if (optionStatsBody) {
+            optionStatsBody.innerHTML = '';
+            
+            const sortedOptions = Object.entries(stats.byOption)
+                .sort((a, b) => b[1].quantity - a[1].quantity)
+                .slice(0, 20);
+            
+            sortedOptions.forEach(([option, optionStats]) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${option || '(옵션 없음)'}</td>
+                    <td>${optionStats.count.toLocaleString('ko-KR')}</td>
+                    <td>${optionStats.quantity.toLocaleString('ko-KR')}</td>
+                    <td>${optionStats.amount.toLocaleString('ko-KR')}</td>
+                `;
+                optionStatsBody.appendChild(tr);
+            });
+        }
     },
     
     // 엑셀 내보내기
     exportToExcel() {
         if (!this.processedData || !this.processedData.data || this.processedData.data.length === 0) {
-            ToastManager.error('내보낼 데이터가 없습니다.');
+            this.showError('내보낼 데이터가 없습니다.');
             return;
         }
         
-        const ws = XLSX.utils.json_to_sheet(this.processedData.data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, '통합주문');
-        
-        const fileName = `주문통합_${new Date().toISOString().slice(0, 10)}.xlsx`;
-        XLSX.writeFile(wb, fileName);
-        
-        ToastManager.success('엑셀 파일이 다운로드되었습니다.');
+        try {
+            const ws = XLSX.utils.json_to_sheet(this.processedData.data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '통합주문');
+            
+            const fileName = `주문통합_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            
+            this.showSuccess('엑셀 파일이 다운로드되었습니다.');
+        } catch (error) {
+            console.error('엑셀 내보내기 오류:', error);
+            this.showError('엑셀 파일 생성 중 오류가 발생했습니다.');
+        }
+    },
+    
+    // UI 헬퍼 함수들
+    showLoading(show) {
+        // 기존 시스템의 로딩 표시 사용
+        if (typeof LoadingManager !== 'undefined') {
+            if (show) {
+                LoadingManager.showFullLoading();
+            } else {
+                LoadingManager.hideFullLoading();
+            }
+        } else {
+            // 간단한 로딩 표시
+            const btn = document.getElementById('mergeProcessBtn');
+            if (btn) {
+                btn.disabled = show;
+                btn.textContent = show ? '처리 중...' : '🔄 주문 통합 실행';
+            }
+        }
+    },
+    
+    showError(message) {
+        // 기존 시스템의 토스트 메시지 사용
+        if (typeof ToastManager !== 'undefined') {
+            ToastManager.error(message);
+        } else {
+            alert('오류: ' + message);
+        }
+    },
+    
+    showSuccess(message) {
+        // 기존 시스템의 토스트 메시지 사용
+        if (typeof ToastManager !== 'undefined') {
+            ToastManager.success(message);
+        } else {
+            alert(message);
+        }
     }
 };
