@@ -1,402 +1,344 @@
-// api/merge-process.js - 앱스크립트와 동일한 처리 로직
+// js/modules/merge.js - 주문통합 모듈 (동적 매핑)
 
-const { google } = require('googleapis');
-
-// 날짜 형식 변환
-function formatDate(value) {
-    if (!value) return '';
-    const strValue = String(value);
+window.MergeModule = {
+    uploadedFiles: [],
+    mappingData: null,
+    processedData: null,
+    initialized: false,
     
-    if (strValue.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/)) {
-        return strValue;
-    }
+    // 초기화 확인
+    isInitialized() {
+        return this.initialized;
+    },
     
-    if (strValue.match(/^\d{1,2}\/\d{1,2}\/\d{2,4}/)) {
-        const parts = strValue.split(' ');
-        const datePart = parts[0];
-        const timePart = parts[1] || '00:00:00';
-        const dateParts = datePart.split('/');
-        const month = dateParts[0].padStart(2, '0');
-        const day = dateParts[1].padStart(2, '0');
-        let year = dateParts[2];
-        if (year.length === 2) year = '20' + year;
-        return `${year}-${month}-${day} ${timePart}`;
-    }
-    
-    if (typeof value === 'number' && value > 25569 && value < 50000) {
-        const date = new Date((value - 25569) * 86400 * 1000);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day} 00:00:00`;
-    }
-    
-    return strValue;
-}
-
-// 숫자 파싱
-function parseNumber(value) {
-    if (value === null || value === undefined || value === '') return 0;
-    if (typeof value === 'number') return value;
-    
-    let strValue = String(value).trim();
-    strValue = strValue.replace(/[,₩￦$]/g, '');
-    const num = parseFloat(strValue);
-    return isNaN(num) ? 0 : num;
-}
-
-// 정산금액 계산
-function calculateSettlementAmount(row, formula) {
-    if (!formula || formula.trim() === '') return 0;
-    
-    try {
-        let calculation = formula;
+    // 초기화
+    async initialize() {
+        console.log('MergeModule 초기화 시작');
         
-        // 엑셀 함수 변환
-        calculation = calculation.replace(/ROUND\(/gi, 'Math.round(');
-        calculation = calculation.replace(/ABS\(/gi, 'Math.abs(');
-        calculation = calculation.replace(/MIN\(/gi, 'Math.min(');
-        calculation = calculation.replace(/MAX\(/gi, 'Math.max(');
-        
-        // 필드명을 값으로 치환
-        for (const [fieldName, fieldValue] of Object.entries(row)) {
-            if (calculation.includes(fieldName)) {
-                const numValue = typeof fieldValue === 'number' ? fieldValue : parseNumber(fieldValue);
-                calculation = calculation.replace(new RegExp(fieldName, 'g'), numValue);
+        try {
+            // 매핑 데이터 로드
+            await this.loadMappingData();
+            
+            // SheetJS 로드
+            await this.ensureSheetJS();
+            
+            // 이벤트 리스너 설정
+            this.setupEventListeners();
+            
+            this.initialized = true;
+            console.log('MergeModule 초기화 완료');
+            
+        } catch (error) {
+            console.error('MergeModule 초기화 실패:', error);
+            if (typeof ToastManager !== 'undefined') {
+                ToastManager.error('시스템 초기화에 실패했습니다');
             }
         }
+    },
+    
+    // 매핑 데이터 로드 (동적)
+    async loadMappingData() {
+        try {
+            console.log('매핑 데이터 로드 시작');
+            
+            const response = await fetch('/api/merge-mapping', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'getMappings' })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.success) {
+                throw new Error(data.error || '매핑 데이터 로드 실패');
+            }
+            
+            this.mappingData = data;
+            console.log('매핑 데이터 로드 완료:', {
+                markets: Object.keys(data.markets || {}).length,
+                fields: (data.standardFields || []).length
+            });
+            
+        } catch (error) {
+            console.error('매핑 데이터 로드 오류:', error);
+            
+            // 사용자에게 알림
+            if (typeof ToastManager !== 'undefined') {
+                ToastManager.error('매핑 데이터를 불러올 수 없습니다. 관리자에게 문의하세요.');
+            } else {
+                alert('매핑 데이터를 로드할 수 없습니다: ' + error.message);
+            }
+            
+            // 매핑 데이터 없이는 진행 불가
+            this.mappingData = null;
+            throw error;
+        }
+    },
+    
+    // 새로고침
+    async refresh() {
+        console.log('MergeModule 새로고침');
         
-        // 계산 실행
-        const result = Function('"use strict"; return (' + calculation + ')')();
-        return isNaN(result) ? 0 : Math.round(result);
+        // 매핑 데이터 다시 로드
+        await this.loadMappingData();
         
-    } catch (error) {
-        console.error('정산금액 계산 오류:', error);
-        return 0;
-    }
-}
-
-// 옵션상품통합관리 데이터 가져오기
-async function getOptionProductInfo(sheets, spreadsheetId) {
-    try {
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId: spreadsheetId,
-            range: '옵션상품통합관리!A:Z'
+        // 업로드된 파일 초기화
+        this.uploadedFiles = [];
+        this.processedData = null;
+        
+        // UI 초기화
+        const fileList = document.getElementById('fileList');
+        const fileSummary = document.getElementById('fileSummary');
+        const processBtn = document.getElementById('processMergeBtn');
+        const mergeResult = document.getElementById('mergeResult');
+        
+        if (fileList) {
+            fileList.innerHTML = '';
+            fileList.style.display = 'none';
+        }
+        if (fileSummary) {
+            fileSummary.style.display = 'none';
+        }
+        if (processBtn) {
+            processBtn.style.display = 'none';
+        }
+        if (mergeResult) {
+            mergeResult.innerHTML = '';
+        }
+        
+        console.log('MergeModule 새로고침 완료');
+    },
+    
+    // SheetJS 로드
+    async ensureSheetJS() {
+        if (typeof XLSX !== 'undefined') return;
+        
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
         });
-        
-        const data = response.data.values;
-        if (!data || data.length < 2) return {};
-        
-        const headers = data[0];
-        const optionNameIdx = headers.indexOf('옵션명');
-        const shipmentIdx = headers.indexOf('출고');
-        const invoiceIdx = headers.indexOf('송장');
-        const shippingLocationIdx = headers.indexOf('발송지');
-        const shippingAddressIdx = headers.indexOf('발송지주소');
-        const shippingContactIdx = headers.indexOf('발송지연락처');
-        const totalCostIdx = headers.indexOf('총원가');
-        const vendorIdx = headers.indexOf('벤더사');
-        
-        if (optionNameIdx === -1) return {};
-        
-        const optionInfo = {};
-        
-        for (let i = 1; i < data.length; i++) {
-            const optionName = String(data[i][optionNameIdx] || '').trim();
-            if (!optionName) continue;
-            
-            optionInfo[optionName] = {
-                shipment: shipmentIdx !== -1 ? String(data[i][shipmentIdx] || '').trim() : '',
-                invoice: invoiceIdx !== -1 ? String(data[i][invoiceIdx] || '').trim() : '',
-                shippingLocation: shippingLocationIdx !== -1 ? String(data[i][shippingLocationIdx] || '').trim() : '',
-                shippingAddress: shippingAddressIdx !== -1 ? String(data[i][shippingAddressIdx] || '').trim() : '',
-                shippingContact: shippingContactIdx !== -1 ? String(data[i][shippingContactIdx] || '').trim() : '',
-                totalCost: totalCostIdx !== -1 ? parseNumber(data[i][totalCostIdx]) : 0,
-                vendor: vendorIdx !== -1 ? String(data[i][vendorIdx] || '').trim() : ''
-            };
-        }
-        
-        return optionInfo;
-        
-    } catch (error) {
-        console.error('옵션상품통합관리 로드 오류:', error);
-        return {};
-    }
-}
-
-// 가격계산 데이터 가져오기
-async function getPriceCalculationInfo(sheets, spreadsheetId) {
-    try {
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId: spreadsheetId,
-            range: '가격계산!A:Z'
-        });
-        
-        const data = response.data.values;
-        if (!data || data.length < 2) return {};
-        
-        const headers = data[0];
-        const optionNameIdx = headers.indexOf('옵션명');
-        const sellerSupplyPriceIdx = headers.indexOf('셀러공급가');
-        
-        if (optionNameIdx === -1) return {};
-        
-        const priceInfo = {};
-        
-        for (let i = 1; i < data.length; i++) {
-            const optionName = String(data[i][optionNameIdx] || '').trim();
-            if (!optionName) continue;
-            
-            const supplyPrice = sellerSupplyPriceIdx !== -1 ? parseNumber(data[i][sellerSupplyPriceIdx]) : 0;
-            
-            priceInfo[optionName] = {
-                sellerSupplyPrice: supplyPrice
-            };
-        }
-        
-        return priceInfo;
-        
-    } catch (error) {
-        console.error('가격계산 로드 오류:', error);
-        return {};
-    }
-}
-
-module.exports = async (req, res) => {
-    // CORS 설정
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    },
     
-    if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
-    }
-    
-    if (req.method !== 'POST') {
-        res.status(405).json({ error: 'Method not allowed' });
-        return;
-    }
-    
-    try {
-        const { filesData, mappingData } = req.body;
+    // 이벤트 리스너 설정
+    setupEventListeners() {
+        const uploadArea = document.getElementById('mergeUploadArea');
+        const fileInput = document.getElementById('mergeFile');
         
-        if (!filesData || filesData.length === 0) {
-            res.status(400).json({ error: '처리할 파일이 없습니다' });
-            return;
-        }
-        
-        // Google Sheets API 초기화
-        const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
-        const auth = new google.auth.JWT(
-            credentials.client_email,
-            null,
-            credentials.private_key,
-            ['https://www.googleapis.com/auth/spreadsheets']
-        );
-        
-        const sheets = google.sheets({ version: 'v4', auth });
-        const spreadsheetId = process.env.SHEET_ID_WRITE;
-        
-        // 옵션상품통합관리, 가격계산 데이터 로드
-        const optionProductInfo = await getOptionProductInfo(sheets, spreadsheetId);
-        const priceCalculationInfo = await getPriceCalculationInfo(sheets, spreadsheetId);
-        
-        const mergedData = [];
-        const marketCounters = {};
-        let globalCounter = 0;
-        
-        const statistics = {
-            byMarket: {},
-            byOption: {},
-            total: { count: 0, quantity: 0, amount: 0 }
-        };
-        
-        // 파일별 처리
-        for (const fileData of filesData) {
-            if (!fileData.isToday) continue;
-            
-            const marketName = fileData.marketName;
-            if (!marketName || !mappingData.markets[marketName]) continue;
-            
-            const market = mappingData.markets[marketName];
-            
-            if (!marketCounters[marketName]) {
-                marketCounters[marketName] = 0;
-            }
-            
-            if (!statistics.byMarket[marketName]) {
-                statistics.byMarket[marketName] = {
-                    count: 0,
-                    quantity: 0,
-                    amount: 0
-                };
-            }
-            
-            // 데이터 처리
-            for (const row of fileData.data) {
-                marketCounters[marketName]++;
-                globalCounter++;
-                
-                const mergedRow = {};
-                
-                // 표준필드 매핑
-                for (const standardField of mappingData.standardFields) {
-                    if (standardField === '마켓명') {
-                        mergedRow['마켓명'] = marketName;
-                    } else if (standardField === '연번') {
-                        mergedRow['연번'] = globalCounter;
-                    } else if (standardField === '마켓') {
-                        const marketInitial = market.initial || marketName.charAt(0);
-                        mergedRow['마켓'] = marketInitial + String(marketCounters[marketName]).padStart(3, '0');
-                    } else {
-                        const mappedField = market.mappings[standardField];
-                        
-                        if (mappedField) {
-                            let fieldValue = row[mappedField];
-                            
-                            // 날짜 필드 처리
-                            if (standardField.includes('결제일') || standardField.includes('발송일')) {
-                                fieldValue = formatDate(fieldValue);
-                            }
-                            // 금액 필드 처리
-                            else if (standardField.includes('금액') || standardField.includes('수수료')) {
-                                fieldValue = parseNumber(fieldValue);
-                            }
-                            
-                            mergedRow[standardField] = fieldValue !== undefined ? fieldValue : '';
-                        } else {
-                            mergedRow[standardField] = '';
-                        }
-                    }
-                }
-                
-                // 옵션상품통합관리 데이터 적용
-                const optionName = String(mergedRow['옵션명'] || '').trim();
-                const quantity = parseInt(mergedRow['수량']) || 1;
-                
-                if (optionName && optionProductInfo[optionName]) {
-                    const optionData = optionProductInfo[optionName];
-                    
-                    mergedRow['출고'] = optionData.shipment || mergedRow['출고'] || '';
-                    mergedRow['송장'] = optionData.invoice || mergedRow['송장'] || '';
-                    mergedRow['발송지'] = optionData.shippingLocation || mergedRow['발송지'] || '';
-                    mergedRow['발송지주소'] = optionData.shippingAddress || mergedRow['발송지주소'] || '';
-                    mergedRow['발송지연락처'] = optionData.shippingContact || mergedRow['발송지연락처'] || '';
-                    mergedRow['벤더사'] = optionData.vendor || mergedRow['벤더사'] || '';
-                    
-                    if (optionData.shipment === '위탁') {
-                        mergedRow['출고비용'] = optionData.totalCost * quantity;
-                    } else {
-                        mergedRow['출고비용'] = 0;
-                    }
-                }
-                
-                // 셀러공급가 계산
-                const seller = String(mergedRow['셀러'] || '').trim();
-                
-                if (seller) {
-                    if (optionName && priceCalculationInfo[optionName]) {
-                        const unitPrice = priceCalculationInfo[optionName].sellerSupplyPrice || 0;
-                        mergedRow['셀러공급가'] = unitPrice * quantity;
-                    } else {
-                        mergedRow['셀러공급가'] = '';
-                    }
-                } else {
-                    mergedRow['셀러공급가'] = '';
-                }
-                
-                // 정산예정금액 계산
-                let settlementAmount = 0;
-                if (market.settlementFormula) {
-                    settlementAmount = calculateSettlementAmount(mergedRow, market.settlementFormula);
-                }
-                if (settlementAmount === 0 && mergedRow['상품금액']) {
-                    settlementAmount = parseNumber(mergedRow['상품금액']);
-                }
-                mergedRow['정산예정금액'] = settlementAmount;
-                
-                mergedData.push(mergedRow);
-                
-                // 통계 업데이트
-                statistics.byMarket[marketName].count++;
-                statistics.byMarket[marketName].quantity += quantity;
-                statistics.byMarket[marketName].amount += settlementAmount;
-                
-                if (!statistics.byOption[optionName]) {
-                    statistics.byOption[optionName] = {
-                        count: 0,
-                        quantity: 0,
-                        amount: 0
-                    };
-                }
-                statistics.byOption[optionName].count++;
-                statistics.byOption[optionName].quantity += quantity;
-                statistics.byOption[optionName].amount += settlementAmount;
-                
-                statistics.total.count++;
-                statistics.total.quantity += quantity;
-                statistics.total.amount += settlementAmount;
-            }
-        }
-        
-        // 시트에 저장
-        const sheetName = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-        
-        if (mergedData.length > 0) {
-            // 새 시트 생성 및 데이터 저장
-            try {
-                await sheets.spreadsheets.batchUpdate({
-                    spreadsheetId,
-                    requestBody: {
-                        requests: [{
-                            addSheet: {
-                                properties: {
-                                    title: sheetName
-                                }
-                            }
-                        }]
-                    }
-                });
-            } catch (e) {
-                // 시트가 이미 존재하는 경우
-                console.log('시트가 이미 존재함:', sheetName);
-            }
-            
-            // 헤더와 데이터 준비
-            const values = [mappingData.standardFields];
-            for (const row of mergedData) {
-                const rowValues = mappingData.standardFields.map(field => {
-                    const value = row[field];
-                    return value !== undefined && value !== null ? String(value) : '';
-                });
-                values.push(rowValues);
-            }
-            
-            // 데이터 쓰기
-            await sheets.spreadsheets.values.update({
-                spreadsheetId,
-                range: `${sheetName}!A1`,
-                valueInputOption: 'USER_ENTERED',
-                requestBody: {
-                    values: values
-                }
+        if (uploadArea) {
+            uploadArea.addEventListener('click', () => fileInput?.click());
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                this.handleFiles(e.dataTransfer.files);
             });
         }
         
-        res.status(200).json({
-            success: true,
-            data: mergedData,
-            statistics: statistics,
-            processedCount: mergedData.length,
-            standardFields: mappingData.standardFields,
-            sheetName: sheetName
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => {
+                this.handleFiles(e.target.files);
+            });
+        }
+    },
+    
+    // 파일 처리
+    async handleFiles(files) {
+        if (!this.mappingData) {
+            alert('매핑 데이터가 로드되지 않았습니다. 잠시 후 다시 시도해주세요.');
+            
+            // 매핑 데이터 재로드 시도
+            try {
+                await this.loadMappingData();
+            } catch (error) {
+                return;
+            }
+        }
+        
+        const validFiles = Array.from(files).filter(file => {
+            const ext = file.name.split('.').pop().toLowerCase();
+            return ['xlsx', 'xls', 'csv'].includes(ext);
         });
         
-    } catch (error) {
-        console.error('처리 오류:', error);
-        res.status(500).json({
-            error: error.message
+        for (const file of validFiles) {
+            await this.readFile(file);
+        }
+    },
+    
+    // 파일 읽기
+    async readFile(file) {
+        const reader = new FileReader();
+        
+        return new Promise((resolve, reject) => {
+            reader.onload = (e) => {
+                try {
+                    const data = e.target.result;
+                    const workbook = XLSX.read(data, { 
+                        type: 'binary',
+                        cellDates: true,
+                        cellNF: true,
+                        cellText: false,
+                        dateNF: 'YYYY-MM-DD HH:mm:ss'
+                    });
+                    
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rawRows = XLSX.utils.sheet_to_json(firstSheet, { 
+                        header: 1, 
+                        defval: '', 
+                        blankrows: false,
+                        raw: false,
+                        dateNF: 'YYYY-MM-DD HH:mm:ss'
+                    });
+                    
+                    this.processExcelData(rawRows, file);
+                    resolve();
+                    
+                } catch (error) {
+                    console.error('파일 파싱 오류:', error);
+                    reject(error);
+                }
+            };
+            
+            reader.readAsBinaryString(file);
         });
-    }
-};
+    },
+    
+    // 엑셀 데이터 처리
+    processExcelData(jsonData, file) {
+        const rawRows = jsonData.filter(row => 
+            row && row.some(cell => cell !== null && cell !== undefined && cell !== '')
+        );
+        
+        if (rawRows.length === 0) {
+            alert(`${file.name}: 데이터가 없습니다.`);
+            return;
+        }
+        
+        // 헤더 행 찾기
+        let headerRowIndex = this.findHeaderRow(rawRows);
+        const headers = rawRows[headerRowIndex].map(h => String(h || '').trim());
+        const firstDataRow = rawRows[headerRowIndex + 1] || [];
+        
+        // 마켓 감지
+        const marketName = this.detectMarket(file.name, headers, firstDataRow);
+        
+        if (!marketName) {
+            alert(`${file.name}: 마켓을 인식할 수 없습니다.`);
+            return;
+        }
+        
+        // 마켓별 헤더 행 위치 적용
+        const market = this.mappingData.markets[marketName];
+        if (market && market.headerRow) {
+            const marketHeaderRow = market.headerRow - 1;
+            if (rawRows[marketHeaderRow]) {
+                headerRowIndex = marketHeaderRow;
+            }
+        }
+        
+        const finalHeaders = rawRows[headerRowIndex].map(h => String(h || '').trim());
+        const dataRows = rawRows.slice(headerRowIndex + 1);
+        
+        // 데이터를 객체 배열로 변환
+        const processedRows = dataRows.map(row => {
+            const obj = {};
+            finalHeaders.forEach((header, i) => {
+                obj[header] = row[i] !== undefined ? row[i] : '';
+            });
+            return obj;
+        });
+        
+        // 날짜 확인
+        const fileDate = new Date(file.lastModified);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        fileDate.setHours(0, 0, 0, 0);
+        const daysDiff = Math.floor((today - fileDate) / (1000 * 60 * 60 * 24));
+        
+        const fileInfo = {
+            name: file.name,
+            marketName: marketName,
+            lastModified: file.lastModified,
+            isToday: daysDiff <= 7 && daysDiff >= 0,
+            headers: finalHeaders,
+            data: processedRows,
+            rowCount: processedRows.length
+        };
+        
+        this.uploadedFiles.push(fileInfo);
+        this.updateFileList();
+    },
+    
+    // 헤더 행 찾기
+    findHeaderRow(rawRows) {
+        const commonHeaders = [
+            '주문번호', '상품주문번호', '구매자명', '주문자',
+            '수취인', '수취인명', '수취인전화번호', '옵션명',
+            '수량', '정산', '결제', '주소', '배송메'
+        ];
+        
+        let bestRow = 0;
+        let maxScore = 0;
+        const limit = Math.min(rawRows.length, 10);
+        
+        for (let i = 0; i < limit; i++) {
+            const row = rawRows[i];
+            if (!Array.isArray(row)) continue;
+            
+            let score = 0;
+            
+            for (const cell of row) {
+                const text = String(cell || '').trim();
+                if (!text) continue;
+                
+                if (commonHeaders.some(h => text.includes(h))) {
+                    score += 3;
+                }
+                
+                if (/[전화|연락|금액|메시지|주소|정산|결제|수수료]/.test(text)) {
+                    score += 1;
+                }
+                
+                if (/^\d{1,4}([\/\-.]\d{1,2})?/.test(text)) {
+                    score -= 1;
+                }
+            }
+            
+            if (score > maxScore) {
+                maxScore = score;
+                bestRow = i;
+            }
+        }
+        
+        return bestRow;
+    },
+    
+    // 마켓 감지 (동적)
+    detectMarket(fileName, headers, firstDataRow) {
+        if (!this.mappingData || !this.mappingData.markets) {
+            return null;
+        }
+        
+        console.log('Detecting market for:', fileName);
+        
+        const fileNameLower = fileName.toLowerCase();
+        const headerText = headers.join(' ').toLowerCase();
+        
+        // detectString1로 체크 (파일명)
+        for (const marketName in this.mappingData.markets) {
+            const market = this.mappingData.markets[marketName];
+            
+            if (market.detectString1 && market.detectString1.length > 0) {
+                if (fileNameLower.includes(market.detectString1.toLower
