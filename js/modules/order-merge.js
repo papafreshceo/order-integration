@@ -1,11 +1,10 @@
-// js/modules/order-merge.js - 주문통합(Excel) 모듈
+// js/modules/order-merge.js - 주문통합(Excel) 모듈 - 동적 매핑 버전
 
 window.OrderMergeModule = {
     // 전역 변수
     uploadedFiles: [],
     mappingData: null,
     processedData: null,
-    standardFields: [],
     
     // 초기화
     init() {
@@ -13,75 +12,29 @@ window.OrderMergeModule = {
         this.loadMappingData();
     },
     
-    // 매핑 데이터 로드
-    loadMappingData() {
-        // 임시 매핑 데이터 (실제로는 Google Sheets나 API에서 로드)
-        this.mappingData = {
-            markets: {
-                '네이버': { 
-                    name: '네이버', 
-                    initial: 'N', 
-                    color: '76,175,80', 
-                    detectString1: '스마트스토어',
-                    detectString2: '상품주문번호,구매자명',
-                    headerRow: 2,
-                    mappings: {
-                        '주문번호': '주문번호',
-                        '주문자': '구매자명',
-                        '수취인': '수취인명',
-                        '수취인전화번호': '수취인연락처1',
-                        '주소': '배송지',
-                        '옵션명': '옵션정보',
-                        '수량': '수량',
-                        '상품금액': '상품별 총 주문금액'
-                    }
-                },
-                '쿠팡': { 
-                    name: '쿠팡', 
-                    initial: 'C', 
-                    color: '255,87,34', 
-                    detectString1: '쿠팡',
-                    detectString2: '주문번호,구매수(수량)',
-                    headerRow: 1,
-                    mappings: {
-                        '주문번호': '주문번호',
-                        '주문자': '구매자',
-                        '수취인': '수취인이름',
-                        '수취인전화번호': '수취인전화번호',
-                        '주소': '배송지',
-                        '옵션명': '옵션',
-                        '수량': '구매수(수량)',
-                        '상품금액': '판매액'
-                    }
-                },
-                '11번가': { 
-                    name: '11번가', 
-                    initial: 'E', 
-                    color: '244,67,54', 
-                    detectString1: '11번가',
-                    detectString2: '주문번호,수취인명',
-                    headerRow: 2,
-                    mappings: {
-                        '주문번호': '주문번호',
-                        '주문자': '구매자',
-                        '수취인': '수취인명',
-                        '수취인전화번호': '수취인 연락처',
-                        '주소': '배송지 주소',
-                        '옵션명': '옵션',
-                        '수량': '수량',
-                        '상품금액': '결제금액'
-                    }
-                }
-            },
-            standardFields: [
-                '마켓명', '연번', '마켓', '결제일', '주문번호', '주문자', '수취인', 
-                '수취인전화번호', '주소', '배송메세지', '옵션명', '수량', 
-                '상품금액', '정산예정금액', '출고', '송장', '벤더사', '셀러'
-            ],
-            marketOrder: ['네이버', '쿠팡', '11번가']
-        };
-        
-        this.displaySupportedMarkets();
+    // 매핑 데이터 로드 (Google Sheets에서 동적으로 가져옴)
+    async loadMappingData() {
+        try {
+            // 실제로는 Google Apps Script를 통해 가져옴
+            const response = await google.script.run.withSuccessHandler(data => {
+                this.mappingData = data;
+                this.displaySupportedMarkets();
+                return data;
+            }).getMappingData();
+            
+        } catch (error) {
+            console.error('매핑 데이터 로드 실패:', error);
+            
+            // 개발용 임시 데이터
+            this.mappingData = {
+                markets: {},
+                marketOrder: [],
+                standardFields: [],
+                standardFieldsStartCol: -1
+            };
+            
+            ToastManager.error('매핑 데이터를 불러올 수 없습니다.');
+        }
     },
     
     // 지원 마켓 표시
@@ -91,7 +44,7 @@ window.OrderMergeModule = {
         
         container.innerHTML = '<h3 style="width: 100%; margin-bottom: 10px;">지원 마켓</h3>';
         
-        const marketNames = this.mappingData.marketOrder || Object.keys(this.mappingData.markets);
+        const marketNames = this.mappingData.marketOrder || [];
         
         marketNames.forEach(marketName => {
             const market = this.mappingData.markets[marketName];
@@ -250,17 +203,35 @@ window.OrderMergeModule = {
             return;
         }
         
-        // 마켓 감지
-        const marketName = this.detectMarket(file.name, cleanRows);
+        // 헤더 찾기 (처음 5행 내에서)
+        let headerRowIndex = 0;
+        let headers = [];
+        
+        for (let i = 0; i < Math.min(5, cleanRows.length); i++) {
+            const row = cleanRows[i];
+            if (row && row.length > 5) {
+                headers = row.map(h => String(h || '').trim());
+                headerRowIndex = i;
+                break;
+            }
+        }
+        
+        // 마켓 감지 (앱스크립트와 동일한 로직)
+        const marketName = this.detectMarket(file.name, headers, cleanRows);
+        
         if (!marketName) {
             ToastManager.error(`${file.name}: 마켓을 인식할 수 없습니다.`);
             return;
         }
         
         const market = this.mappingData.markets[marketName];
-        const headerRowIndex = (market.headerRow || 1) - 1;
         
-        const headers = cleanRows[headerRowIndex].map(h => String(h || '').trim());
+        // 헤더 행 위치 조정
+        if (market.headerRow && market.headerRow > 0) {
+            headerRowIndex = market.headerRow - 1;
+            headers = cleanRows[headerRowIndex].map(h => String(h || '').trim());
+        }
+        
         const dataRows = cleanRows.slice(headerRowIndex + 1);
         
         // 데이터를 객체 배열로 변환
@@ -287,28 +258,70 @@ window.OrderMergeModule = {
         this.updateFileList();
     },
     
-    // 마켓 감지
-    detectMarket(fileName, rows) {
-        const fileNameLower = fileName.toLowerCase();
-        const headerText = rows.slice(0, 3).flat().join(' ').toLowerCase();
+    // 마켓 감지 (앱스크립트 로직과 동일)
+    detectMarket(fileName, headers, rows) {
+        console.log('마켓 감지 시작:', fileName);
+        console.log('헤더:', headers.slice(0, 10));
         
-        for (const [marketName, market] of Object.entries(this.mappingData.markets)) {
-            // 파일명으로 감지
-            if (market.detectString1 && fileNameLower.includes(market.detectString1.toLowerCase())) {
-                return marketName;
+        if (!this.mappingData || !this.mappingData.markets) {
+            console.error('매핑 데이터가 없습니다');
+            return null;
+        }
+        
+        const fileNameLower = fileName.toLowerCase();
+        const headerText = headers.join(' ').toLowerCase();
+        
+        // 마켓별로 체크
+        for (const marketName in this.mappingData.markets) {
+            const market = this.mappingData.markets[marketName];
+            
+            // detectString1 체크 (파일명)
+            if (market.detectString1 && market.detectString1.length > 0) {
+                if (fileNameLower.includes(market.detectString1.toLowerCase())) {
+                    console.log(`${marketName} 감지: 파일명 매칭 "${market.detectString1}"`);
+                    return marketName;
+                }
             }
             
-            // 헤더로 감지
-            if (market.detectString2) {
-                const detectStrings = market.detectString2.split(',').map(s => s.trim().toLowerCase());
-                const matchCount = detectStrings.filter(str => headerText.includes(str)).length;
+            // detectString2 체크 (헤더명 - 쉼표 구분)
+            if (market.detectString2 && market.detectString2.length > 0) {
+                const detectStrings = market.detectString2.split(',').map(s => s.trim());
+                let matchCount = 0;
                 
-                if (matchCount >= Math.ceil(detectStrings.length / 2)) {
+                for (const detectStr of detectStrings) {
+                    if (detectStr && headerText.includes(detectStr.toLowerCase())) {
+                        matchCount++;
+                        console.log(`  "${detectStr}" 발견`);
+                    }
+                }
+                
+                const requiredMatches = detectStrings.length > 1 ? 2 : 1;
+                
+                if (matchCount >= requiredMatches) {
+                    console.log(`${marketName} 감지: 헤더 매칭 (${matchCount}/${detectStrings.length})`);
+                    return marketName;
+                }
+            }
+            
+            // detectString3 체크
+            if (market.detectString3 && market.detectString3.length > 0) {
+                const detectStrings3 = market.detectString3.split(',').map(s => s.trim());
+                let matchCount3 = 0;
+                
+                for (const detectStr of detectStrings3) {
+                    if (detectStr && headerText.includes(detectStr.toLowerCase())) {
+                        matchCount3++;
+                    }
+                }
+                
+                if (matchCount3 >= (detectStrings3.length > 1 ? 2 : 1)) {
+                    console.log(`${marketName} 감지: detectString3 매칭`);
                     return marketName;
                 }
             }
         }
         
+        console.log('마켓 감지 실패');
         return null;
     },
     
@@ -351,10 +364,13 @@ window.OrderMergeModule = {
             fileItem.className = 'file-item';
             if (!file.isToday) fileItem.classList.add('warning');
             
+            const market = this.mappingData.markets[file.marketName];
+            const marketColor = market ? market.color : '200,200,200';
+            
             fileItem.innerHTML = `
                 <div class="file-info">
                     <div class="file-name-section">
-                        <span class="market-tag" style="background: rgb(${this.mappingData.markets[file.marketName].color})">
+                        <span class="market-tag" style="background: rgb(${marketColor})">
                             ${file.marketName}
                         </span>
                         <div class="file-name">${file.name}</div>
@@ -407,7 +423,7 @@ window.OrderMergeModule = {
     },
     
     // 주문 처리
-    processOrders() {
+    async processOrders() {
         if (this.uploadedFiles.length === 0) {
             ToastManager.error('업로드된 파일이 없습니다.');
             return;
@@ -422,99 +438,38 @@ window.OrderMergeModule = {
         LoadingManager.showFullLoading();
         
         try {
-            const mergedData = [];
-            const statistics = {
-                byMarket: {},
-                byOption: {},
-                total: { count: 0, quantity: 0, amount: 0 }
-            };
-            
-            let globalCounter = 0;
-            const marketCounters = {};
-            
-            // 파일별 처리
-            todayFiles.forEach(fileData => {
-                const marketName = fileData.marketName;
-                const market = this.mappingData.markets[marketName];
+            // Google Apps Script로 처리 요청
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                const filesData = todayFiles.map(file => ({
+                    name: file.name,
+                    marketName: file.marketName,
+                    headers: file.headers,
+                    data: file.data,
+                    isToday: file.isToday
+                }));
                 
-                if (!marketCounters[marketName]) {
-                    marketCounters[marketName] = 0;
-                }
-                
-                if (!statistics.byMarket[marketName]) {
-                    statistics.byMarket[marketName] = {
-                        count: 0,
-                        quantity: 0,
-                        amount: 0
-                    };
-                }
-                
-                // 데이터 처리
-                fileData.data.forEach(row => {
-                    globalCounter++;
-                    marketCounters[marketName]++;
-                    
-                    const mergedRow = {};
-                    
-                    // 표준 필드 매핑
-                    this.mappingData.standardFields.forEach(standardField => {
-                        if (standardField === '마켓명') {
-                            mergedRow['마켓명'] = marketName;
-                        } else if (standardField === '연번') {
-                            mergedRow['연번'] = globalCounter;
-                        } else if (standardField === '마켓') {
-                            const initial = market.initial || marketName.charAt(0);
-                            mergedRow['마켓'] = initial + String(marketCounters[marketName]).padStart(3, '0');
+                google.script.run
+                    .withSuccessHandler(result => {
+                        LoadingManager.hideFullLoading();
+                        
+                        if (result.success) {
+                            this.processedData = result;
+                            ToastManager.success(`${result.processedCount}개의 주문을 통합했습니다.`);
+                            this.displayResults();
                         } else {
-                            const mappedField = market.mappings[standardField];
-                            if (mappedField && row[mappedField] !== undefined) {
-                                mergedRow[standardField] = row[mappedField];
-                            } else {
-                                mergedRow[standardField] = '';
-                            }
+                            ToastManager.error(result.error || '처리 중 오류가 발생했습니다.');
                         }
-                    });
+                    })
+                    .withFailureHandler(error => {
+                        LoadingManager.hideFullLoading();
+                        ToastManager.error('서버 오류: ' + error);
+                    })
+                    .processOrderFiles(filesData);
                     
-                    // 통계 업데이트
-                    const quantity = parseInt(mergedRow['수량']) || 1;
-                    const amount = parseFloat(mergedRow['상품금액']) || 0;
-                    const optionName = mergedRow['옵션명'] || '';
-                    
-                    statistics.byMarket[marketName].count++;
-                    statistics.byMarket[marketName].quantity += quantity;
-                    statistics.byMarket[marketName].amount += amount;
-                    
-                    if (!statistics.byOption[optionName]) {
-                        statistics.byOption[optionName] = {
-                            count: 0,
-                            quantity: 0,
-                            amount: 0
-                        };
-                    }
-                    
-                    statistics.byOption[optionName].count++;
-                    statistics.byOption[optionName].quantity += quantity;
-                    statistics.byOption[optionName].amount += amount;
-                    
-                    statistics.total.count++;
-                    statistics.total.quantity += quantity;
-                    statistics.total.amount += amount;
-                    
-                    mergedData.push(mergedRow);
-                });
-            });
-            
-            this.processedData = {
-                success: true,
-                data: mergedData,
-                statistics: statistics,
-                standardFields: this.mappingData.standardFields
-            };
-            
-            LoadingManager.hideFullLoading();
-            ToastManager.success(`${mergedData.length}개의 주문을 통합했습니다.`);
-            
-            this.displayResults();
+            } else {
+                // 로컬 처리 (개발용)
+                this.processOrdersLocally(todayFiles);
+            }
             
         } catch (error) {
             LoadingManager.hideFullLoading();
@@ -523,13 +478,69 @@ window.OrderMergeModule = {
         }
     },
     
+    // 로컬 처리 (개발/테스트용)
+    processOrdersLocally(todayFiles) {
+        const mergedData = [];
+        const marketCounters = {};
+        let globalCounter = 0;
+        
+        todayFiles.forEach(fileData => {
+            const marketName = fileData.marketName;
+            const market = this.mappingData.markets[marketName];
+            
+            if (!market) return;
+            
+            if (!marketCounters[marketName]) {
+                marketCounters[marketName] = 0;
+            }
+            
+            fileData.data.forEach(row => {
+                globalCounter++;
+                marketCounters[marketName]++;
+                
+                const mergedRow = {};
+                
+                // 표준 필드 매핑
+                this.mappingData.standardFields.forEach(standardField => {
+                    if (standardField === '마켓명') {
+                        mergedRow['마켓명'] = marketName;
+                    } else if (standardField === '연번') {
+                        mergedRow['연번'] = globalCounter;
+                    } else if (standardField === '마켓') {
+                        const initial = market.initial || marketName.charAt(0);
+                        mergedRow['마켓'] = initial + String(marketCounters[marketName]).padStart(3, '0');
+                    } else {
+                        const mappedField = market.mappings[standardField];
+                        if (mappedField && row[mappedField] !== undefined) {
+                            mergedRow[standardField] = row[mappedField];
+                        } else {
+                            mergedRow[standardField] = '';
+                        }
+                    }
+                });
+                
+                mergedData.push(mergedRow);
+            });
+        });
+        
+        this.processedData = {
+            success: true,
+            data: mergedData,
+            processedCount: mergedData.length,
+            standardFields: this.mappingData.standardFields
+        };
+        
+        LoadingManager.hideFullLoading();
+        ToastManager.success(`${mergedData.length}개의 주문을 통합했습니다.`);
+        this.displayResults();
+    },
+    
     // 결과 표시
     displayResults() {
         const resultSection = document.getElementById('mergeResultSection');
         resultSection.classList.add('show');
         
         this.displayResultTable();
-        this.displayStatistics();
         
         resultSection.scrollIntoView({ behavior: 'smooth' });
     },
@@ -537,7 +548,10 @@ window.OrderMergeModule = {
     // 결과 테이블 표시
     displayResultTable() {
         const tbody = document.getElementById('mergeResultTableBody');
+        const thead = document.getElementById('mergeResultTableHead');
+        
         tbody.innerHTML = '';
+        thead.innerHTML = '';
         
         if (!this.processedData || this.processedData.data.length === 0) {
             tbody.innerHTML = '<tr><td colspan="100%" style="text-align:center;">데이터가 없습니다</td></tr>';
@@ -547,16 +561,12 @@ window.OrderMergeModule = {
         const headers = this.processedData.standardFields;
         
         // 헤더 생성
-        const thead = document.getElementById('mergeResultTableHead');
-        thead.innerHTML = '';
         const headerRow = document.createElement('tr');
-        
         headers.forEach(header => {
             const th = document.createElement('th');
             th.textContent = header;
             headerRow.appendChild(th);
         });
-        
         thead.appendChild(headerRow);
         
         // 데이터 행 생성
@@ -568,15 +578,13 @@ window.OrderMergeModule = {
                 let value = row[header] || '';
                 
                 // 마켓명 셀 스타일
-                if (header === '마켓명') {
+                if (header === '마켓명' && this.mappingData.markets[value]) {
                     const market = this.mappingData.markets[value];
-                    if (market) {
-                        td.style.background = `rgb(${market.color})`;
-                        const rgb = market.color.split(',').map(Number);
-                        const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
-                        td.style.color = brightness > 128 ? '#000' : '#fff';
-                        td.style.fontWeight = 'bold';
-                    }
+                    td.style.background = `rgb(${market.color})`;
+                    const rgb = market.color.split(',').map(Number);
+                    const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+                    td.style.color = brightness > 128 ? '#000' : '#fff';
+                    td.style.fontWeight = 'bold';
                 }
                 
                 // 금액 포맷
@@ -593,49 +601,6 @@ window.OrderMergeModule = {
             
             tbody.appendChild(tr);
         });
-    },
-    
-    // 통계 표시
-    displayStatistics() {
-        const statistics = this.processedData.statistics;
-        
-        // 마켓별 통계
-        const marketStatsBody = document.getElementById('mergeMarketStats');
-        marketStatsBody.innerHTML = '';
-        
-        Object.entries(statistics.byMarket).forEach(([market, stats]) => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${market}</td>
-                <td>${stats.count}</td>
-                <td>${stats.quantity}</td>
-                <td class="amount-col">${stats.amount.toLocaleString('ko-KR')}</td>
-            `;
-            marketStatsBody.appendChild(tr);
-        });
-        
-        // 옵션별 통계
-        const optionStatsBody = document.getElementById('mergeOptionStats');
-        optionStatsBody.innerHTML = '';
-        
-        Object.entries(statistics.byOption)
-            .sort((a, b) => b[1].quantity - a[1].quantity)
-            .slice(0, 20)
-            .forEach(([option, stats]) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${option || '(옵션 없음)'}</td>
-                    <td>${stats.count}</td>
-                    <td>${stats.quantity}</td>
-                    <td class="amount-col">${stats.amount.toLocaleString('ko-KR')}</td>
-                `;
-                optionStatsBody.appendChild(tr);
-            });
-        
-        // 전체 통계
-        document.getElementById('mergeTotalStatCount').textContent = statistics.total.count;
-        document.getElementById('mergeTotalStatQuantity').textContent = statistics.total.quantity;
-        document.getElementById('mergeTotalStatAmount').textContent = statistics.total.amount.toLocaleString('ko-KR');
     },
     
     // 엑셀 내보내기
