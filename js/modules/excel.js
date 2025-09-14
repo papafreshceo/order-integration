@@ -297,6 +297,50 @@ window.ExcelModule = {
         if (typeof ToastManager !== 'undefined') {
             ToastManager.success('주문 통합이 완료되었습니다');
         }
+    },
+    
+    // 새로고침 메서드 추가
+    refresh() {
+        console.log('ExcelModule refresh called');
+        
+        // 파일 입력 초기화
+        const fileInput = document.getElementById('excelFile');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        
+        // 결과 영역 초기화
+        const resultDiv = document.getElementById('excelResult');
+        if (resultDiv) {
+            resultDiv.innerHTML = '';
+        }
+        
+        // 파일 목록 재표시
+        if (this.uploadedFiles.length > 0) {
+            this.updateFileList();
+        } else {
+            // 파일이 없는 경우 UI 초기화
+            const fileListDiv = document.getElementById('fileList');
+            const fileSummaryDiv = document.getElementById('fileSummary');
+            const processBtn = document.getElementById('processExcelBtn');
+            
+            if (fileListDiv) fileListDiv.style.display = 'none';
+            if (fileSummaryDiv) fileSummaryDiv.style.display = 'none';
+            if (processBtn) processBtn.style.display = 'none';
+        }
+        
+        // 업로드 영역 초기화
+        const uploadArea = document.getElementById('excelUploadArea');
+        if (uploadArea) {
+            uploadArea.classList.remove('dragover');
+        }
+        
+        console.log('ExcelModule refreshed successfully');
+    },
+    
+    // 초기화 상태 확인
+    isInitialized() {
+        return true;
     }
 };
 
