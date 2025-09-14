@@ -1,4 +1,4 @@
-// js/core/tab-manager.js - 탭 관리 모듈 (수정 버전)
+// js/core/tab-manager.js - 탭 관리 모듈
 
 window.TabManager = {
     // 탭 메뉴 생성
@@ -71,9 +71,15 @@ window.TabManager = {
                 // 검색 탭은 초기 로드 없음
                 break;
             case 'excel':
-                // 엑셀 탭은 초기 로드 없음
-                if (typeof ExcelModule !== 'undefined' && ExcelModule.uploadedFiles) {
-                    ExcelModule.updateFileList();
+                // 엑셀 탭 초기화 확인
+                if (typeof ExcelModule !== 'undefined') {
+                    if (!ExcelModule.isInitialized()) {
+                        ExcelModule.initialize();
+                    }
+                    // 파일 목록이 있으면 재표시
+                    if (ExcelModule.uploadedFiles && ExcelModule.uploadedFiles.length > 0) {
+                        ExcelModule.updateFileList();
+                    }
                 }
                 break;
             case 'invoice':
@@ -185,16 +191,9 @@ window.TabManager = {
                     break;
                     
                 case 'excel':
-                    // 엑셀 탭 새로고침
+                    // 엑셀 탭 새로고침 - refresh 메서드 호출
                     if (typeof ExcelModule !== 'undefined') {
-                        // 파일 목록만 다시 표시
-                        ExcelModule.updateFileList();
-                        
-                        // 결과 영역 초기화
-                        const resultDiv = document.getElementById('excelResult');
-                        if (resultDiv) {
-                            resultDiv.innerHTML = '';
-                        }
+                        ExcelModule.refresh();
                         
                         if (typeof ToastManager !== 'undefined') {
                             ToastManager.success('주문통합 화면이 새로고침되었습니다');
@@ -250,9 +249,3 @@ window.showTab = function(tabId) {
 };
 
 window.createTabMenu = function(role) {
-    TabManager.createMenu(role);
-};
-
-window.refreshCurrentTab = function(event) {
-    TabManager.refreshCurrent(event);
-};
