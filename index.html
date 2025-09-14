@@ -213,50 +213,95 @@
                 <div id="searchResult"></div>
             </div>
 
-            <!-- 주문통합 탭 -->
-            <div id="merge" class="tab-content">
-                <h2>주문통합</h2>
+           <!-- 주문통합 탭 -->
+<div id="merge" class="tab-content">
+    <h2>주문통합</h2>
+    
+    <!-- 지원 마켓 표시 -->
+    <div id="supportedMarkets" class="supported-markets"></div>
+    
+    <!-- 파일 업로드 영역 -->
+    <div class="upload-area" id="mergeUploadArea">
+        <div class="upload-icon">📁</div>
+        <p>엑셀/CSV 파일을 선택하거나 드래그해주세요</p>
+        <input type="file" id="mergeFile" style="display: none;" accept=".xlsx,.xls,.csv" multiple>
+    </div>
+    
+    <!-- 파일 목록 -->
+    <div class="file-list" id="fileList" style="display: none;"></div>
+    
+    <!-- 파일 요약 -->
+    <div class="file-summary" id="fileSummary" style="display: none;">
+        <div class="summary-item">
+            <div class="summary-label">업로드 파일</div>
+            <div class="summary-value" id="totalFiles">0</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-label">마켓 수</div>
+            <div class="summary-value" id="totalMarkets">0</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-label">총 주문 수</div>
+            <div class="summary-value" id="totalOrders">0</div>
+        </div>
+    </div>
+    
+    <!-- 경고 박스 -->
+    <div class="warning-box" id="warningBox" style="display: none;">
+        <h3>⚠️ 주의: 오래된 파일이 감지되었습니다!</h3>
+        <ul class="warning-list" id="warningList"></ul>
+        <p>오늘 날짜가 아닌 파일은 통합에서 제외됩니다</p>
+    </div>
+    
+    <!-- 처리 버튼 -->
+    <div style="text-align: center; margin: 30px 0;">
+        <button class="btn" id="processMergeBtn" style="display: none;" onclick="processMerge()">주문 통합 실행</button>
+    </div>
+    
+    <!-- 결과 영역 -->
+    <div id="mergeResult" style="display: none;">
+        <h3>통합 결과</h3>
+        
+        <!-- 결과 테이블 -->
+        <div id="mergeResultTable" class="table-wrapper"></div>
+        
+        <!-- 통계 섹션 -->
+        <div class="statistics-section">
+            <div id="marketStatsContainer" class="stat-card"></div>
+            <div id="optionStatsContainer" class="stat-card"></div>
+        </div>
+        
+        <!-- 피벗테이블 -->
+        <div class="pivot-section">
+            <h3>피벗테이블 분석</h3>
+            <div class="pivot-controls">
+                <label>행 기준:</label>
+                <select id="pivotRowField">
+                    <option value="마켓명">마켓별</option>
+                    <option value="옵션명">옵션별</option>
+                    <option value="셀러">셀러별</option>
+                    <option value="벤더사">벤더사별</option>
+                </select>
                 
-                <!-- 파일 업로드 영역 -->
-                <div class="upload-area" id="mergeUploadArea">
-                    <div class="upload-icon">📁</div>
-                    <p>엑셀/CSV 파일을 선택하거나 드래그해주세요</p>
-                    <input type="file" id="mergeFile" style="display: none;" accept=".xlsx,.xls,.csv" multiple>
-                </div>
+                <label>열 기준:</label>
+                <select id="pivotColField">
+                    <option value="none">없음</option>
+                    <option value="마켓명">마켓별</option>
+                    <option value="셀러">셀러별</option>
+                    <option value="벤더사">벤더사별</option>
+                </select>
                 
-                <!-- 파일 목록 -->
-                <div class="file-list" id="fileList" style="display: none;"></div>
-                
-                <!-- 파일 요약 -->
-                <div class="file-summary" id="fileSummary" style="display: none;">
-                    <div class="summary-item">
-                        <div class="summary-label">업로드 파일</div>
-                        <div class="summary-value" id="totalFiles">0</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-label">마켓 수</div>
-                        <div class="summary-value" id="totalMarkets">0</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-label">총 주문 수</div>
-                        <div class="summary-value" id="totalOrders">0</div>
-                    </div>
-                </div>
-                
-                <!-- 경고 박스 -->
-                <div class="warning-box" id="warningBox" style="display: none;">
-                    <h3>⚠️ 주의: 오래된 파일이 감지되었습니다!</h3>
-                    <ul class="warning-list" id="warningList"></ul>
-                </div>
-                
-                <!-- 처리 버튼 -->
-                <div style="text-align: center; margin: 30px 0;">
-                    <button class="btn" id="processMergeBtn" style="display: none;" onclick="processMerge()">주문 통합 실행</button>
-                </div>
-                
-                <!-- 결과 영역 -->
-                <div id="mergeResult"></div>
+                <label>값:</label>
+                <select id="pivotValueField">
+                    <option value="count">건수</option>
+                    <option value="수량">수량 합계</option>
+                    <option value="정산예정금액">금액 합계</option>
+                </select>
             </div>
+            <div id="pivotTableContainer"></div>
+        </div>
+    </div>
+</div>
 
             <!-- 송장등록 탭 -->
             <div id="invoice" class="tab-content">
