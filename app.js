@@ -1,8 +1,9 @@
 // app.js
 
-// 권한별 메뉴 설정
+// 권한별 메뉴 설정 - 대시보드 추가
 const MENU_CONFIG = {
     'admin': [
+        { id: 'dashboard', name: '대시보드' },      // 맨 앞에 추가
         { id: 'realtime', name: '실시간 주문현황' },
         { id: 'search', name: '주문조회' },
         { id: 'excel', name: '주문통합(Excel)' },
@@ -10,6 +11,7 @@ const MENU_CONFIG = {
         { id: 'analytics', name: '통계 분석' }
     ],
     'staff': [
+        { id: 'dashboard', name: '대시보드' },      // 맨 앞에 추가
         { id: 'realtime', name: '실시간 주문현황' },
         { id: 'search', name: '주문조회' }
     ]
@@ -39,10 +41,7 @@ function initializeUIByRole(role) {
     // 탭 메뉴 생성
     createTabMenu(role);
     
-    // 통계 카드 생성
-    createStatsCards(role);
-    
-    // 첫 번째 탭 활성화
+    // 첫 번째 탭 활성화 (대시보드)
     const firstTab = MENU_CONFIG[role][0];
     showTab(firstTab.id);
 }
@@ -64,28 +63,6 @@ function createTabMenu(role) {
         }
         
         tabMenu.appendChild(button);
-    });
-}
-
-// 통계 카드 생성
-function createStatsCards(role) {
-    const statsGrid = document.getElementById('statsGrid');
-    const stats = STATS_CONFIG[role];
-    
-    if (!statsGrid) return;
-    
-    statsGrid.innerHTML = '';
-    stats.forEach(stat => {
-        const card = document.createElement('div');
-        card.className = 'stat-card';
-        card.innerHTML = `
-            <div class="stat-label">${stat.label}</div>
-            <div class="stat-value">${stat.value}</div>
-            <div class="stat-change ${stat.positive ? 'positive' : 'negative'}">
-                ${stat.positive ? '▲' : '▼'} ${stat.change}
-            </div>
-        `;
-        statsGrid.appendChild(card);
     });
 }
 
@@ -116,8 +93,76 @@ function showTab(tabId) {
     }
     
     // 탭별 데이터 로드
-    if (tabId === 'realtime') {
+    if (tabId === 'dashboard') {
+        loadDashboard();
+    } else if (tabId === 'realtime') {
         loadRealtimeData();
+    }
+}
+
+// 대시보드 데이터 로드
+function loadDashboard() {
+    const stats = STATS_CONFIG[currentUserRole];
+    
+    // 대시보드 통계 카드 표시
+    const dashboardStats = document.getElementById('dashboardStats');
+    if (dashboardStats) {
+        dashboardStats.innerHTML = '';
+        stats.forEach(stat => {
+            const card = document.createElement('div');
+            card.className = 'stat-card';
+            card.innerHTML = `
+                <div class="stat-label">${stat.label}</div>
+                <div class="stat-value">${stat.value}</div>
+                <div class="stat-change ${stat.positive ? 'positive' : 'negative'}">
+                    ${stat.positive ? '▲' : '▼'} ${stat.change}
+                </div>
+            `;
+            dashboardStats.appendChild(card);
+        });
+    }
+    
+    // 대시보드 요약 테이블 로드
+    loadDashboardSummary();
+}
+
+// 대시보드 요약 데이터 로드
+async function loadDashboardSummary() {
+    try {
+        const response = await fetch('/api/orders');
+        const data = await response.json();
+        
+        const summaryTable = document.getElementById('dashboardSummaryTable');
+        const summaryBody = document.getElementById('dashboardSummaryBody');
+        
+        if (summaryBody && data.data && data.data.length > 1) {
+            summaryBody.innerHTML = '';
+            
+            // 최근 5개 주문만 표시
+            for (let i = 1; i < Math.min(6, data.data.length); i++) {
+                const row = data.data[i];
+                const tr = document.createElement('tr');
+                
+                // 고객명 마스킹 처리
+                const customerName = currentUserRole === 'admin' ? 
+                    (row[2] || `고객${i}`) : '***';
+                
+                tr.innerHTML = `
+                    <td>${row[0] || '-'}</td>
+                    <td>ORD${1000 + i}</td>
+                    <td>${customerName}</td>
+                    <td>${row[3] || '-'}</td>
+                    <td>처리중</td>
+                `;
+                summaryBody.appendChild(tr);
+            }
+            
+            if (summaryTable) {
+                summaryTable.style.display = 'table';
+            }
+        }
+    } catch (error) {
+        console.error('대시보드 데이터 로드 실패:', error);
     }
 }
 
