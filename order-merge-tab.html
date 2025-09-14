@@ -1,21 +1,28 @@
-<!-- 주문통합(Excel) 탭 내용 -->
-<div id="merge" class="tab-content">
-    <h2>주문통합 (Excel)</h2>
-    
+<!-- 주문통합 모듈 HTML -->
+<div id="order-merge-module" class="module-container">
+    <!-- 헤더 -->
+    <div class="module-header">
+        <h2>📦 주문통합</h2>
+        <p>모든 오픈마켓 주문을 통합 관리</p>
+    </div>
+
     <!-- 지원 마켓 표시 -->
     <div class="supported-markets" id="supportedMarkets"></div>
-    
+
     <!-- 파일 업로드 섹션 -->
     <div class="upload-section" id="mergeUploadSection">
         <input type="file" id="mergeFileInput" class="file-input" multiple accept=".xlsx,.xls,.csv" style="display: none;">
-        <button class="btn upload-btn" id="mergeUploadBtn">📁 주문 파일 선택</button>
-        <p style="margin-top: 15px; color: var(--text-muted);">엑셀/CSV 파일을 선택하거나 여기로 드래그해주세요</p>
+        <button class="upload-btn" id="mergeUploadBtn">
+            <span class="btn-icon">📁</span>
+            <span class="btn-text">주문 파일 선택</span>
+        </button>
+        <p class="upload-hint">엑셀/CSV 파일을 선택하거나 여기로 드래그해주세요</p>
     </div>
-    
+
     <!-- 파일 목록 -->
     <div class="file-list" id="mergeFileList"></div>
-    
-    <!-- 파일 요약 -->
+
+    <!-- 파일 요약 정보 -->
     <div class="file-summary" id="mergeFileSummary" style="display: none;">
         <div class="summary-item">
             <div class="summary-label">업로드 파일</div>
@@ -30,140 +37,155 @@
             <div class="summary-value orders" id="mergeTotalOrders">0</div>
         </div>
     </div>
-    
+
     <!-- 경고 박스 -->
     <div class="warning-box" id="mergeWarningBox">
         <h3>⚠️ 주의: 오래된 파일이 감지되었습니다!</h3>
         <ul class="warning-list" id="mergeWarningList"></ul>
-        <p style="margin-top: 10px;">7일 이전 파일은 통합에서 제외됩니다.</p>
+        <div class="info-text">
+            <p>오늘 날짜가 아닌 파일은 통합에서 제외됩니다</p>
+        </div>
     </div>
-    
+
     <!-- 처리 버튼 -->
-    <div style="text-align: center; margin: 30px 0;">
-        <button class="btn" id="mergeProcessBtn" style="display: none;">🔄 주문 통합 실행</button>
+    <div class="action-buttons">
+        <button class="process-btn" id="mergeProcessBtn" style="display: none;">
+            <span class="btn-icon">🔄</span>
+            <span class="btn-text">주문 통합 실행</span>
+        </button>
     </div>
-    
+
     <!-- 결과 섹션 -->
     <div class="result-section" id="mergeResultSection">
         <div class="result-header">
             <h3>통합 결과</h3>
-            <button class="btn" id="mergeExportBtn">📊 엑셀 다운로드</button>
+            <div class="export-buttons">
+                <button class="export-btn export-excel" id="mergeExportBtn">
+                    <span class="btn-icon">📊</span>
+                    <span class="btn-text">엑셀 다운로드</span>
+                </button>
+            </div>
         </div>
-        
+
         <!-- 결과 테이블 -->
         <div class="table-wrapper">
-            <table id="mergeResultTable">
+            <table class="result-table">
                 <thead id="mergeResultTableHead"></thead>
                 <tbody id="mergeResultTableBody"></tbody>
             </table>
-        </div>
-        
-        <!-- 통계 섹션 -->
-        <div class="statistics-section">
-            <!-- 전체 통계 -->
-            <div class="stat-card">
-                <h3>📊 전체 통계</h3>
-                <div class="stat-summary">
-                    <div class="stat-item">
-                        <span class="stat-label">총 주문수:</span>
-                        <span class="stat-value" id="mergeTotalStatCount">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">총 수량:</span>
-                        <span class="stat-value" id="mergeTotalStatQuantity">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">총 금액:</span>
-                        <span class="stat-value" id="mergeTotalStatAmount">0</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 마켓별 통계 -->
-            <div class="stat-card">
-                <h3>📈 마켓별 통계</h3>
-                <table class="stat-table">
-                    <thead>
-                        <tr>
-                            <th>마켓명</th>
-                            <th>건수</th>
-                            <th>수량</th>
-                            <th>금액</th>
-                        </tr>
-                    </thead>
-                    <tbody id="mergeMarketStats"></tbody>
-                </table>
-            </div>
-            
-            <!-- 옵션별 통계 (상위 20개) -->
-            <div class="stat-card">
-                <h3>📦 옵션별 통계 (상위 20개)</h3>
-                <table class="stat-table">
-                    <thead>
-                        <tr>
-                            <th>옵션명</th>
-                            <th>건수</th>
-                            <th>수량</th>
-                            <th>금액</th>
-                        </tr>
-                    </thead>
-                    <tbody id="mergeOptionStats"></tbody>
-                </table>
-            </div>
         </div>
     </div>
 </div>
 
 <style>
-/* 주문통합 전용 스타일 */
+/* 주문통합 모듈 스타일 */
+#order-merge-module {
+    padding: 20px;
+}
+
+.module-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.module-header h2 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.module-header p {
+    font-size: var(--text-base);
+    color: var(--text-muted);
+}
+
+/* 지원 마켓 */
 .supported-markets {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: var(--space-md);
-    margin-bottom: var(--space-2xl);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.supported-markets h3 {
+    width: 100%;
+    font-size: var(--text-lg);
+    font-weight: var(--font-medium);
+    color: var(--text-primary);
+    margin-bottom: 10px;
 }
 
 .market-badge {
-    padding: var(--space-sm) var(--space-lg);
-    border-radius: var(--btn-radius);
-    text-align: center;
+    padding: 8px 16px;
+    border-radius: var(--card-radius);
+    font-size: var(--text-sm);
     font-weight: var(--font-medium);
-    color: white;
-    transition: var(--transition-fast);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
 }
 
 .market-badge:hover {
-    transform: var(--hover-lift);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transform: translateY(-2px);
 }
 
+/* 업로드 섹션 */
 .upload-section {
     border: 2px dashed var(--border-default);
     border-radius: var(--card-radius);
-    padding: var(--space-4xl);
+    padding: 40px;
     text-align: center;
-    background: var(--bg-secondary);
-    transition: var(--transition-fast);
+    background: var(--bg-muted);
+    transition: all 0.3s;
+    margin-bottom: 20px;
 }
 
 .upload-section.dragover {
     border-color: var(--brand-primary);
-    background: var(--bg-hover);
+    background: var(--blue-50);
 }
 
+.upload-btn {
+    background: var(--brand-primary);
+    color: white;
+    border: none;
+    padding: var(--btn-padding);
+    border-radius: var(--btn-radius);
+    font-size: var(--btn-font-size);
+    font-weight: var(--btn-font-weight);
+    cursor: pointer;
+    transition: var(--btn-transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.upload-btn:hover {
+    background: var(--brand-primary-hover);
+    transform: var(--hover-lift);
+}
+
+.upload-hint {
+    margin-top: 15px;
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+}
+
+/* 파일 목록 */
 .file-list {
-    margin-top: var(--space-xl);
+    margin: 20px 0;
 }
 
 .file-item {
     display: flex;
     align-items: center;
-    padding: var(--space-lg);
+    justify-content: space-between;
+    padding: 15px;
     background: var(--bg-primary);
     border: 1px solid var(--border-default);
-    border-radius: var(--btn-radius);
-    margin-bottom: var(--space-md);
-    transition: var(--transition-fast);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    transition: all 0.2s;
 }
 
 .file-item:hover {
@@ -178,29 +200,31 @@
 .file-info {
     flex: 1;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
 }
 
 .file-name-section {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
+    gap: 10px;
 }
 
 .file-name {
-    font-weight: var(--font-normal);
+    font-size: var(--text-sm);
+    color: var(--text-primary);
 }
 
 .file-details {
     display: flex;
     align-items: center;
-    gap: var(--space-lg);
+    gap: 15px;
 }
 
 .file-order-count {
     color: var(--danger);
     font-weight: var(--font-medium);
+    font-size: var(--text-sm);
 }
 
 .file-date {
@@ -209,22 +233,40 @@
 }
 
 .market-tag {
-    padding: var(--space-xs) var(--space-md);
+    display: inline-block;
+    padding: 4px 10px;
     border-radius: 4px;
-    font-size: var(--text-sm);
+    font-size: var(--text-xs);
     font-weight: var(--font-medium);
     min-width: 60px;
     text-align: center;
 }
 
+.btn-remove {
+    padding: 4px 8px;
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: var(--text-xs);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-remove:hover {
+    background: var(--danger-secondary);
+}
+
+/* 파일 요약 */
 .file-summary {
     background: var(--bg-secondary);
     border: 1px solid var(--border-default);
-    border-radius: var(--btn-radius);
-    padding: var(--space-xl);
-    margin: var(--space-xl) 0;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
     display: flex;
     justify-content: space-around;
+    align-items: center;
 }
 
 .summary-item {
@@ -234,11 +276,11 @@
 .summary-label {
     font-size: var(--text-sm);
     color: var(--text-muted);
-    margin-bottom: var(--space-xs);
+    margin-bottom: 5px;
 }
 
 .summary-value {
-    font-size: var(--text-2xl);
+    font-size: var(--text-xl);
     font-weight: var(--font-semibold);
     color: var(--text-primary);
 }
@@ -247,12 +289,13 @@
     color: var(--danger);
 }
 
+/* 경고 박스 */
 .warning-box {
     background: var(--yellow-100);
     border: 1px solid var(--warning);
-    border-radius: var(--btn-radius);
-    padding: var(--space-xl);
-    margin: var(--space-xl) 0;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
     display: none;
 }
 
@@ -262,22 +305,61 @@
 
 .warning-box h3 {
     color: var(--warning);
-    margin-bottom: var(--space-md);
-    font-weight: var(--font-medium);
+    margin-bottom: 10px;
+    font-size: var(--text-base);
 }
 
 .warning-list {
     list-style: none;
-    margin: var(--space-md) 0;
+    margin: 15px 0;
 }
 
 .warning-list li {
-    padding: var(--space-xs) 0;
+    padding: 5px 0;
     color: var(--text-secondary);
+    font-size: var(--text-sm);
 }
 
+.info-text {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--warning);
+}
+
+.info-text p {
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+}
+
+/* 액션 버튼 */
+.action-buttons {
+    text-align: center;
+    margin: 30px 0;
+}
+
+.process-btn {
+    background: var(--success);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: var(--btn-radius);
+    font-size: var(--text-base);
+    font-weight: var(--font-medium);
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.process-btn:hover {
+    transform: var(--hover-lift);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* 결과 섹션 */
 .result-section {
-    margin-top: var(--space-3xl);
+    margin-top: 30px;
     display: none;
 }
 
@@ -289,127 +371,100 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--space-xl);
+    margin-bottom: 20px;
 }
 
 .result-header h3 {
     font-size: var(--text-xl);
     font-weight: var(--font-medium);
-}
-
-.table-wrapper {
-    max-height: 600px;
-    overflow: auto;
-    border: 1px solid var(--border-default);
-    border-radius: var(--btn-radius);
-    margin-bottom: var(--space-2xl);
-}
-
-.statistics-section {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: var(--space-xl);
-    margin-top: var(--space-2xl);
-}
-
-.stat-card {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-default);
-    border-radius: var(--btn-radius);
-    padding: var(--space-xl);
-}
-
-.stat-card h3 {
     color: var(--text-primary);
-    margin-bottom: var(--space-lg);
-    padding-bottom: var(--space-md);
-    border-bottom: 2px solid var(--brand-primary);
-    font-weight: var(--font-medium);
 }
 
-.stat-summary {
+.export-buttons {
     display: flex;
-    justify-content: space-around;
-    padding: var(--space-lg) 0;
+    gap: 10px;
 }
 
-.stat-item {
-    text-align: center;
-}
-
-.stat-label {
-    display: block;
-    font-size: var(--text-sm);
-    color: var(--text-muted);
-    margin-bottom: var(--space-xs);
-}
-
-.stat-value {
-    font-size: var(--text-xl);
-    font-weight: var(--font-semibold);
-    color: var(--text-primary);
-}
-
-.stat-table {
-    width: 100%;
-    font-size: var(--text-sm);
-}
-
-.stat-table th {
-    background: var(--bg-secondary);
-    padding: var(--space-sm);
-    text-align: left;
-    font-weight: var(--font-medium);
-}
-
-.stat-table td {
-    padding: var(--space-sm);
-    border-bottom: 1px solid var(--border-light);
-}
-
-.stat-table .amount-col {
-    text-align: right;
-}
-
-.btn-remove {
-    padding: var(--space-xs) var(--space-md);
-    background: var(--danger-bg);
-    color: var(--danger);
-    border: 1px solid var(--danger);
-    border-radius: 4px;
+.export-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: var(--btn-radius);
     font-size: var(--text-sm);
     cursor: pointer;
-    transition: var(--transition-fast);
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
-.btn-remove:hover {
-    background: var(--danger);
+.export-excel {
+    background: var(--success);
     color: white;
 }
 
-/* 모바일 대응 */
+.export-excel:hover {
+    background: #0ea860;
+}
+
+/* 테이블 */
+.table-wrapper {
+    width: 100%;
+    overflow: auto;
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    max-height: 600px;
+    background: white;
+}
+
+.result-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+}
+
+.result-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg-secondary);
+}
+
+.result-table th {
+    padding: 10px 8px;
+    text-align: left;
+    font-weight: var(--font-medium);
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--border-default);
+    white-space: nowrap;
+}
+
+.result-table td {
+    padding: 8px;
+    border-bottom: 1px solid var(--border-light);
+    white-space: nowrap;
+}
+
+.result-table tbody tr:hover {
+    background: var(--bg-hover);
+}
+
+/* 반응형 */
 @media (max-width: 768px) {
-    .supported-markets {
-        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-    }
-    
-    .upload-section {
-        padding: var(--space-2xl);
-    }
-    
     .file-info {
         flex-direction: column;
         align-items: flex-start;
-        gap: var(--space-md);
+        gap: 10px;
     }
     
-    .file-details {
-        width: 100%;
-        justify-content: space-between;
+    .file-summary {
+        flex-direction: column;
+        gap: 20px;
     }
     
-    .statistics-section {
-        grid-template-columns: 1fr;
+    .result-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
     }
 }
 </style>
