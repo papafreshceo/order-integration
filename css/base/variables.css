@@ -1,63 +1,102 @@
-/* css/base/variables.css - CSS 변수 정의 (완전판) */
+/* css/base/variables.css */
 
 :root {
+    /* ========== COLOR SYSTEM ========== */
     /* Background Colors */
     --bg-primary: #ffffff;
     --bg-secondary: #f8f9fa;
     --bg-muted: #fafafa;
     --bg-hover: #f8f9fa;
+    --bg-today: #e7f3ff;
     --bg-light: #f5f6fa;
     --bg-lighter: #fefefe;
-    
+
     /* Text Colors */
     --text-primary: #212529;
     --text-secondary: #495057;
     --text-muted: #6c757d;
-    
+    --text-link: #2563eb;
+    --text-sunday: #dc3545;
+    --text-saturday: #2563eb;
+
     /* Brand Colors */
     --brand-primary: #2563eb;
     --brand-primary-hover: #1d4ed8;
-    
+
     /* Border Colors */
     --border-default: #dee2e6;
     --border-light: #f1f3f5;
-    
+    --border-heavy: #e5e7eb;
+
     /* Status Colors */
-    --danger: #ef4444;
-    --danger-secondary: #dc3545;
     --success: #10b981;
     --success-bg: rgba(16, 185, 129, 0.1);
-    --warning: #f59e0b;
+    --danger: #ef4444;
+    --danger-secondary: #dc3545;
     --danger-bg: rgba(239, 68, 68, 0.1);
+    --warning: #f59e0b;
+    --info: #2563eb;
     --info-bg: rgba(37, 99, 235, 0.1);
-    
+
     /* Blue Scale */
     --blue-50: #e7f3ff;
     --blue-100: #dbeafe;
-    
+    --blue-200: #bfdbfe;
+    --blue-300: #93c5fd;
+
     /* Yellow Scale */
     --yellow-100: #fef3c7;
     --yellow-200: #fde68a;
-    
+
+    /* Purple Scale */
+    --purple-100: #ede9fe;
+    --purple-200: #ddd6fe;
+
+    /* Red Scale */
+    --red-100: #fee2e2;
+    --red-200: #fecaca;
+
+    /* ========== TYPOGRAPHY ========== */
     /* Font Sizes */
     --text-xs: 10px;
     --text-sm: 12px;
-    --text-md: 13px;
     --text-base: 14px;
+    --text-md: 13px;
     --text-lg: 18px;
     --text-xl: 20px;
     --text-2xl: 24px;
     --text-3xl: 28px;
     --text-4xl: 36px;
-    
+
     /* Font Weights */
+    --font-extralight: 200;
     --font-light: 300;
     --font-normal: 400;
     --font-medium: 500;
     --font-semibold: 600;
     --font-bold: 700;
-    
-    /* Spacing */
+
+    /* Heading Weights */
+    --h1-weight: 600;
+    --h2-weight: 500;
+    --h3-weight: 400;
+    --body-weight: 300;
+    --caption-weight: 200;
+    --eyebrow-weight: 700;
+
+    /* Line Heights */
+    --leading-tight: 1.25;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.6;
+
+    /* Letter Spacing */
+    --tracking-tight: -0.02em;
+    --tracking-normal: 0;
+    --tracking-wide: 0.06em;
+    --tracking-wider: 0.5px;
+
+    /* ========== SPACING SYSTEM ========== */
+    /* Padding */
     --space-xs: 4px;
     --space-sm: 8px;
     --space-md: 12px;
@@ -66,8 +105,51 @@
     --space-2xl: 24px;
     --space-3xl: 32px;
     --space-4xl: 40px;
-    
+
+    /* Container */
+    --container-max: 1400px;
+    --container-padding: 40px;
+    --container-padding-mobile: 20px;
+
+    /* Card */
+    --card-padding: 40px;
+    --card-padding-mobile: 25px 20px;
+    --card-radius: 16px;
+
+    /* ========== COMPONENT STYLES ========== */
+    /* Buttons */
+    --btn-padding: 10px 24px;
+    --btn-radius: 6px;
+    --btn-font-size: 14px;
+    --btn-font-weight: 300;
+    --btn-transition: all 0.2s;
+
+    /* Cards */
+    --card-bg: #ffffff;
+    --card-border: 1px solid #dee2e6;
+    --card-shadow: 0 10px 30px rgba(0,0,0,0.1);
+
+    /* Badges */
+    --badge-padding: 2px 6px;
+    --badge-radius: 4px;
+    --badge-font-size: 10px;
+    --badge-font-size-mobile: 9px;
+    --badge-font-weight: 300;
+
+    /* ========== EFFECTS ========== */
     /* Transitions */
     --transition-fast: all 0.2s;
     --transition-normal: all 0.3s;
+
+    /* Transforms */
+    --hover-lift: translateY(-2px);
+    --hover-scale: scale(1.1);
+
+    /* Z-index */
+    --z-hover: 10;
+    --z-sticky: 30;
+    --z-modal: 100;
+
+    /* ========== BREAKPOINTS ========== */
+    --breakpoint-mobile: 768px;
 }
