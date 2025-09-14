@@ -13,6 +13,11 @@ window.MergeModule = {
         await this.ensureSheetJS();
     },
     
+    // 초기화 여부 확인
+    isInitialized() {
+        return this.mappingData !== null;
+    },
+    
     // 매핑 데이터 로드 - 앱스크립트의 getMappingData()와 동일
     async loadMappingData() {
         try {
@@ -30,11 +35,43 @@ window.MergeModule = {
             
             this.mappingData = data;
             console.log('매핑 데이터 로드 완료');
+            this.displaySupportedMarkets();
             
         } catch (error) {
             console.error('매핑 데이터 로드 오류:', error);
             alert('매핑 데이터를 로드할 수 없습니다: ' + error.message);
             this.mappingData = null;
+        }
+    },
+    
+    // 지원 마켓 표시
+    displaySupportedMarkets() {
+        const container = document.getElementById('supportedMarkets');
+        if (!container || !this.mappingData) return;
+        
+        container.innerHTML = '<h3 style="width: 100%; margin-bottom: 10px;">지원 마켓</h3>';
+        
+        let marketNames = [];
+        if (this.mappingData.marketOrder && this.mappingData.marketOrder.length > 0) {
+            marketNames = this.mappingData.marketOrder;
+        } else {
+            marketNames = Object.keys(this.mappingData.markets);
+        }
+        
+        for (const marketName of marketNames) {
+            const market = this.mappingData.markets[marketName];
+            if (!market) continue;
+            
+            const badge = document.createElement('div');
+            badge.className = 'market-badge';
+            badge.textContent = marketName;
+            badge.style.background = `rgb(${market.color})`;
+            
+            const rgb = market.color.split(',').map(Number);
+            const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+            badge.style.color = brightness > 128 ? '#000' : '#fff';
+            
+            container.appendChild(badge);
         }
     },
     
@@ -134,7 +171,7 @@ window.MergeModule = {
         });
     },
     
-    // 엑셀 데이터 처리 - 앱스크립트 HTML과 동일
+    // 엑셀 데이터 처리 - 앱스크립트와 동일
     processExcelData(jsonData, file) {
         const rawRows = jsonData.filter(row => 
             row && row.some(cell => cell !== null && cell !== undefined && cell !== '')
@@ -300,6 +337,7 @@ window.MergeModule = {
         const fileListDiv = document.getElementById('fileList');
         const fileSummaryDiv = document.getElementById('fileSummary');
         const processBtn = document.getElementById('processMergeBtn');
+        const warningBox = document.getElementById('warningBox');
         
         if (!fileListDiv) return;
         
@@ -316,6 +354,7 @@ window.MergeModule = {
         
         let totalOrders = 0;
         const marketSet = new Set();
+        const oldFiles = [];
         
         // 마켓 순서대로 정렬
         let sortedFiles = [...this.uploadedFiles];
@@ -333,6 +372,10 @@ window.MergeModule = {
         sortedFiles.forEach((file, index) => {
             totalOrders += file.rowCount;
             marketSet.add(file.marketName);
+            
+            if (!file.isToday) {
+                oldFiles.push(file);
+            }
             
             const fileItem = document.createElement('div');
             fileItem.className = 'file-item';
@@ -365,6 +408,22 @@ window.MergeModule = {
             document.getElementById('totalFiles').textContent = this.uploadedFiles.length;
             document.getElementById('totalMarkets').textContent = marketSet.size;
             document.getElementById('totalOrders').textContent = totalOrders.toLocaleString('ko-KR');
+        }
+        
+        // 경고 박스 표시
+        if (warningBox && oldFiles.length > 0) {
+            const warningList = document.getElementById('warningList');
+            if (warningList) {
+                warningList.innerHTML = '';
+                oldFiles.forEach(file => {
+                    const li = document.createElement('li');
+                    li.textContent = `${file.name} (${new Date(file.lastModified).toLocaleDateString('ko-KR')})`;
+                    warningList.appendChild(li);
+                });
+            }
+            warningBox.style.display = 'block';
+        } else if (warningBox) {
+            warningBox.style.display = 'none';
         }
         
         if (processBtn) processBtn.style.display = 'inline-block';
@@ -404,6 +463,7 @@ window.MergeModule = {
             if (result.success) {
                 this.processedData = result;
                 alert(`${result.processedCount}개 주문 통합 완료`);
+                this.displayResults(result);
             } else {
                 alert('처리 실패: ' + result.error);
             }
@@ -412,15 +472,286 @@ window.MergeModule = {
             console.error('처리 오류:', error);
             alert('처리 중 오류 발생: ' + error.message);
         }
+    },
+    
+    // 결과 표시
+    displayResults(result) {
+        // 결과 섹션 표시
+        const resultSection = document.getElementById('mergeResult');
+        if (resultSection) {
+            resultSection.style.display = 'block';
+        }
+        
+        // 테이블 표시
+        this.displayResultTable(result.data, result.standardFields);
+        
+        // 통계 표시
+        this.displayStatistics(result.statistics);
+        
+        // 피벗테이블 초기화
+        this.initPivotTable();
+    },
+    
+    // 결과 테이블 표시
+    displayResultTable(data, standardFields) {
+        const tableWrapper = document.getElementById('mergeResultTable');
+        if (!tableWrapper || !data || data.length === 0) return;
+        
+        // 테이블 HTML 생성
+        let html = '<table><thead><tr>';
+        
+        // 헤더
+        standardFields.forEach(field => {
+            html += `<th>${field}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+        
+        // 데이터 (최대 100개)
+        const displayData = data.slice(0, 100);
+        displayData.forEach(row => {
+            html += '<tr>';
+            standardFields.forEach(field => {
+                const value = row[field] || '';
+                if (field === '마켓명') {
+                    const market = this.mappingData.markets[value];
+                    const color = market ? `rgb(${market.color})` : '#999';
+                    html += `<td style="background: ${color}; color: white; font-weight: bold;">${value}</td>`;
+                } else {
+                    html += `<td>${value}</td>`;
+                }
+            });
+            html += '</tr>';
+        });
+        
+        html += '</tbody></table>';
+        
+        if (data.length > 100) {
+            html += `<p>... 외 ${data.length - 100}개 주문</p>`;
+        }
+        
+        tableWrapper.innerHTML = html;
+    },
+    
+    // 통계 표시
+    displayStatistics(statistics) {
+        // 마켓별 통계
+        this.displayMarketStats(statistics.byMarket);
+        
+        // 옵션별 통계
+        this.displayOptionStats(statistics.byOption);
+    },
+    
+    // 마켓별 통계 표시
+    displayMarketStats(marketStats) {
+        const container = document.getElementById('marketStatsContainer');
+        if (!container) return;
+        
+        let html = '<h3>마켓별 통계</h3><table class="stat-table"><thead><tr>';
+        html += '<th>마켓명</th><th>건수</th><th>수량</th><th>금액</th>';
+        html += '</tr></thead><tbody>';
+        
+        let totalCount = 0, totalQuantity = 0, totalAmount = 0;
+        
+        Object.keys(marketStats).forEach(market => {
+            const stat = marketStats[market];
+            html += `<tr>
+                <td>${market}</td>
+                <td>${stat.count}</td>
+                <td>${stat.quantity}</td>
+                <td>${stat.amount.toLocaleString()}</td>
+            </tr>`;
+            
+            totalCount += stat.count;
+            totalQuantity += stat.quantity;
+            totalAmount += stat.amount;
+        });
+        
+        html += `<tr class="total-row">
+            <td>합계</td>
+            <td>${totalCount}</td>
+            <td>${totalQuantity}</td>
+            <td>${totalAmount.toLocaleString()}</td>
+        </tr>`;
+        
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    },
+    
+    // 옵션별 통계 표시
+    displayOptionStats(optionStats) {
+        const container = document.getElementById('optionStatsContainer');
+        if (!container) return;
+        
+        let html = '<h3>옵션별 통계</h3><table class="stat-table"><thead><tr>';
+        html += '<th>옵션명</th><th>건수</th><th>수량</th><th>금액</th>';
+        html += '</tr></thead><tbody>';
+        
+        let totalCount = 0, totalQuantity = 0, totalAmount = 0;
+        
+        // 상위 20개만 표시
+        const sortedOptions = Object.entries(optionStats)
+            .sort((a, b) => b[1].quantity - a[1].quantity)
+            .slice(0, 20);
+        
+        sortedOptions.forEach(([option, stat]) => {
+            html += `<tr>
+                <td>${option}</td>
+                <td>${stat.count}</td>
+                <td>${stat.quantity}</td>
+                <td>${stat.amount.toLocaleString()}</td>
+            </tr>`;
+            
+            totalCount += stat.count;
+            totalQuantity += stat.quantity;
+            totalAmount += stat.amount;
+        });
+        
+        html += `<tr class="total-row">
+            <td>합계</td>
+            <td>${totalCount}</td>
+            <td>${totalQuantity}</td>
+            <td>${totalAmount.toLocaleString()}</td>
+        </tr>`;
+        
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    },
+    
+    // 피벗테이블 초기화
+    initPivotTable() {
+        const pivotRowField = document.getElementById('pivotRowField');
+        const pivotColField = document.getElementById('pivotColField');
+        const pivotValueField = document.getElementById('pivotValueField');
+        
+        if (pivotRowField) {
+            pivotRowField.addEventListener('change', () => this.updatePivotTable());
+        }
+        if (pivotColField) {
+            pivotColField.addEventListener('change', () => this.updatePivotTable());
+        }
+        if (pivotValueField) {
+            pivotValueField.addEventListener('change', () => this.updatePivotTable());
+        }
+        
+        // 초기 피벗테이블 생성
+        this.updatePivotTable();
+    },
+    
+    // 피벗테이블 업데이트
+    updatePivotTable() {
+        if (!this.processedData || !this.processedData.data) return;
+        
+        const rowField = document.getElementById('pivotRowField')?.value || '마켓명';
+        const colField = document.getElementById('pivotColField')?.value || 'none';
+        const valueField = document.getElementById('pivotValueField')?.value || 'count';
+        
+        const pivotData = this.createPivotData(this.processedData.data, rowField, colField, valueField);
+        this.displayPivotTable(pivotData, rowField, colField, valueField);
+    },
+    
+    // 피벗 데이터 생성
+    createPivotData(data, rowField, colField, valueField) {
+        const pivot = {};
+        const colValues = new Set();
+        
+        data.forEach(row => {
+            const rowKey = row[rowField] || '(빈값)';
+            if (!pivot[rowKey]) pivot[rowKey] = {};
+            
+            if (colField === 'none') {
+                if (!pivot[rowKey]['전체']) pivot[rowKey]['전체'] = [];
+                pivot[rowKey]['전체'].push(row);
+            } else {
+                const colKey = row[colField] || '(빈값)';
+                colValues.add(colKey);
+                if (!pivot[rowKey][colKey]) pivot[rowKey][colKey] = [];
+                pivot[rowKey][colKey].push(row);
+            }
+        });
+        
+        return {
+            data: pivot,
+            columns: colField === 'none' ? ['전체'] : Array.from(colValues).sort()
+        };
+    },
+    
+    // 피벗테이블 표시
+    displayPivotTable(pivotData, rowField, colField, valueField) {
+        const container = document.getElementById('pivotTableContainer');
+        if (!container) return;
+        
+        let html = '<table class="pivot-table"><thead><tr>';
+        html += `<th>${rowField}</th>`;
+        
+        pivotData.columns.forEach(col => {
+            html += `<th>${col}</th>`;
+        });
+        html += '<th>합계</th></tr></thead><tbody>';
+        
+        const colTotals = {};
+        let grandTotal = 0;
+        
+        Object.keys(pivotData.data).sort().forEach(rowKey => {
+            html += '<tr>';
+            html += `<td>${rowKey}</td>`;
+            
+            let rowTotal = 0;
+            
+            pivotData.columns.forEach(col => {
+                const cellData = pivotData.data[rowKey][col] || [];
+                const value = this.calculateValue(cellData, valueField);
+                html += `<td>${value.toLocaleString()}</td>`;
+                
+                rowTotal += value;
+                if (!colTotals[col]) colTotals[col] = 0;
+                colTotals[col] += value;
+            });
+            
+            html += `<td class="row-total">${rowTotal.toLocaleString()}</td>`;
+            html += '</tr>';
+            
+            grandTotal += rowTotal;
+        });
+        
+        // 합계 행
+        html += '<tr class="total-row"><td>합계</td>';
+        pivotData.columns.forEach(col => {
+            html += `<td>${(colTotals[col] || 0).toLocaleString()}</td>`;
+        });
+        html += `<td>${grandTotal.toLocaleString()}</td>`;
+        html += '</tr></tbody></table>';
+        
+        container.innerHTML = html;
+    },
+    
+    // 값 계산
+    calculateValue(data, valueField) {
+        if (valueField === 'count') {
+            return data.length;
+        }
+        
+        return data.reduce((sum, row) => {
+            const val = parseFloat(row[valueField]) || 0;
+            return sum + val;
+        }, 0);
+    },
+    
+    // 새로고침
+    async refresh() {
+        this.uploadedFiles = [];
+        this.processedData = null;
+        
+        const fileListDiv = document.getElementById('fileList');
+        if (fileListDiv) fileListDiv.innerHTML = '';
+        
+        const resultSection = document.getElementById('mergeResult');
+        if (resultSection) resultSection.style.display = 'none';
+        
+        await this.loadMappingData();
     }
 };
 
-// 전역 함수
+// 전역 함수로 등록
 window.processMerge = function() {
     MergeModule.processFiles();
 };
-
-// DOM 로드 시 초기화
-document.addEventListener('DOMContentLoaded', () => {
-    MergeModule.initialize();
-});
