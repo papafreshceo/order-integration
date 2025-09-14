@@ -212,8 +212,8 @@
                 <div id="searchResult"></div>
             </div>
 
-<!-- 주문통합(Excel) 탭 -->
-<div id="excel" class="tab-content">
+<!-- 주문통합(merge) 탭 -->
+<div id="merge" class="tab-content">
     <h2>주문통합(Excel)</h2>
     
     <!-- 파일 업로드 영역 -->
@@ -250,11 +250,11 @@
     
     <!-- 처리 버튼 -->
     <div style="text-align: center; margin: 30px 0;">
-        <button class="btn" id="processExcelBtn" style="display: none;" onclick="processExcel()">주문 통합 실행</button>
+        <button class="btn" id="processmergeBtn" style="display: none;" onclick="processmerge()">주문 통합 실행</button>
     </div>
     
     <!-- 결과 영역 -->
-    <div id="excelResult"></div>
+    <div id="mergeResult"></div>
 </div>
 
             <!-- 송장등록 탭 -->
@@ -319,7 +319,7 @@
     <script src="js/modules/dashboard.js"></script>
     <script src="js/modules/realtime.js"></script>
     <script src="js/modules/search.js"></script>
-    <script src="js/modules/excel.js"></script>
+    <script src="js/modules/merge.js"></script>
     <script src="js/modules/invoice.js"></script>
     <script src="js/modules/analytics.js"></script>
     <script src="js/modules/coupang-sync.js"></script>
