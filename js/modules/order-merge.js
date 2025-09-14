@@ -1,10 +1,10 @@
-// js/modules/order-merge.js - 주문통합(Excel) 모듈 - 동적 매핑 버전
+// js/modules/order-merge.js - 주문통합(Excel) 모듈
 
 window.OrderMergeModule = {
     // 전역 변수
     uploadedFiles: [],
     mappingData: null,
-    processedData: null,
+    processedData = null,
     
     // 초기화
     init() {
@@ -12,35 +12,32 @@ window.OrderMergeModule = {
         this.loadMappingData();
     },
     
-    // 매핑 데이터 로드 (Google Sheets에서 동적으로 가져옴)
-    async loadMappingData() {
-        try {
-            // 실제로는 Google Apps Script를 통해 가져옴
-            const response = await google.script.run.withSuccessHandler(data => {
-                this.mappingData = data;
-                this.displaySupportedMarkets();
-                return data;
-            }).getMappingData();
-            
-        } catch (error) {
-            console.error('매핑 데이터 로드 실패:', error);
-            
-            // 개발용 임시 데이터
-            this.mappingData = {
-                markets: {},
-                marketOrder: [],
-                standardFields: [],
-                standardFieldsStartCol: -1
-            };
-            
-            ToastManager.error('매핑 데이터를 불러올 수 없습니다.');
+    // 매핑 데이터 로드
+    loadMappingData() {
+        // Google Apps Script 환경에서 매핑 데이터 가져오기
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+            google.script.run
+                .withSuccessHandler((data) => {
+                    if (data && !data.error) {
+                        this.mappingData = data;
+                        this.displaySupportedMarkets();
+                    } else {
+                        ToastManager.error('매핑 데이터 로드 실패: ' + (data.error || '알 수 없는 오류'));
+                    }
+                })
+                .withFailureHandler((error) => {
+                    ToastManager.error('매핑 데이터 로드 실패: ' + error.message);
+                })
+                .getMappingData();
+        } else {
+            ToastManager.error('Google Apps Script 환경이 아닙니다.');
         }
     },
     
     // 지원 마켓 표시
     displaySupportedMarkets() {
         const container = document.getElementById('supportedMarkets');
-        if (!container) return;
+        if (!container || !this.mappingData) return;
         
         container.innerHTML = '<h3 style="width: 100%; margin-bottom: 10px;">지원 마켓</h3>';
         
@@ -65,7 +62,6 @@ window.OrderMergeModule = {
     
     // 이벤트 리스너 설정
     setupEventListeners() {
-        // 파일 선택 버튼
         const uploadBtn = document.getElementById('mergeUploadBtn');
         if (uploadBtn) {
             uploadBtn.addEventListener('click', () => {
@@ -73,13 +69,11 @@ window.OrderMergeModule = {
             });
         }
         
-        // 파일 입력
         const fileInput = document.getElementById('mergeFileInput');
         if (fileInput) {
             fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
         }
         
-        // 드래그 앤 드롭
         const uploadSection = document.getElementById('mergeUploadSection');
         if (uploadSection) {
             uploadSection.addEventListener('dragover', (e) => this.handleDragOver(e));
@@ -87,13 +81,11 @@ window.OrderMergeModule = {
             uploadSection.addEventListener('drop', (e) => this.handleDrop(e));
         }
         
-        // 처리 버튼
         const processBtn = document.getElementById('mergeProcessBtn');
         if (processBtn) {
             processBtn.addEventListener('click', () => this.processOrders());
         }
         
-        // 내보내기 버튼
         const exportBtn = document.getElementById('mergeExportBtn');
         if (exportBtn) {
             exportBtn.addEventListener('click', () => this.exportToExcel());
@@ -203,157 +195,52 @@ window.OrderMergeModule = {
             return;
         }
         
-        // 헤더 찾기 (처음 5행 내에서)
-        let headerRowIndex = 0;
-        let headers = [];
+        // 첫 번째 유효한 행을 임시 헤더로 사용
+        const headers = cleanRows[0].map(h => String(h || '').trim());
+        const firstDataRow = cleanRows[1] || [];
         
-        for (let i = 0; i < Math.min(5, cleanRows.length); i++) {
-            const row = cleanRows[i];
-            if (row && row.length > 5) {
-                headers = row.map(h => String(h || '').trim());
-                headerRowIndex = i;
-                break;
-            }
-        }
-        
-        // 마켓 감지 (앱스크립트와 동일한 로직)
-        const marketName = this.detectMarket(file.name, headers, cleanRows);
-        
-        if (!marketName) {
-            ToastManager.error(`${file.name}: 마켓을 인식할 수 없습니다.`);
-            return;
-        }
-        
-        const market = this.mappingData.markets[marketName];
-        
-        // 헤더 행 위치 조정
-        if (market.headerRow && market.headerRow > 0) {
-            headerRowIndex = market.headerRow - 1;
-            headers = cleanRows[headerRowIndex].map(h => String(h || '').trim());
-        }
-        
-        const dataRows = cleanRows.slice(headerRowIndex + 1);
-        
-        // 데이터를 객체 배열로 변환
-        const processedRows = dataRows.map(row => {
-            const obj = {};
-            headers.forEach((header, i) => {
-                obj[header] = row[i] !== undefined ? row[i] : '';
-            });
-            return obj;
-        });
-        
-        // 파일 정보 저장
-        const fileInfo = {
-            name: file.name,
-            marketName,
-            lastModified: file.lastModified,
-            isToday: this.isToday(file.lastModified),
-            headers,
-            data: processedRows,
-            rowCount: processedRows.length
-        };
-        
-        this.uploadedFiles.push(fileInfo);
-        this.updateFileList();
-    },
-    
-    // 마켓 감지 (앱스크립트 로직과 동일)
-    detectMarket(fileName, headers, rows) {
-        console.log('=== 마켓 감지 시작 ===');
-        console.log('파일명:', fileName);
-        console.log('헤더 수:', headers.length);
-        console.log('헤더 (처음 15개):', headers.slice(0, 15));
-        
-        if (!this.mappingData || !this.mappingData.markets) {
-            console.error('매핑 데이터가 없습니다');
-            alert('매핑 데이터가 로드되지 않았습니다. 페이지를 새로고침해주세요.');
-            return null;
-        }
-        
-        console.log('사용 가능한 마켓:', Object.keys(this.mappingData.markets));
-        
-        const fileNameLower = fileName.toLowerCase();
-        const headerText = headers.join(' ').toLowerCase();
-        console.log('헤더 텍스트 (소문자):', headerText.substring(0, 200));
-        
-        // 마켓별로 체크
-        for (const marketName in this.mappingData.markets) {
-            const market = this.mappingData.markets[marketName];
-            console.log(`\n[${marketName}] 체크 시작`);
-            console.log(`  detectString1: "${market.detectString1}"`);
-            console.log(`  detectString2: "${market.detectString2}"`);
-            console.log(`  detectString3: "${market.detectString3}"`);
-            
-            // detectString1 체크 (파일명)
-            if (market.detectString1 && market.detectString1.length > 0) {
-                const detectStr1Lower = market.detectString1.toLowerCase();
-                if (fileNameLower.includes(detectStr1Lower)) {
-                    console.log(`✅ ${marketName} 감지 성공: 파일명에 "${market.detectString1}" 포함`);
-                    return marketName;
-                } else {
-                    console.log(`  파일명에 "${market.detectString1}" 없음`);
-                }
-            }
-            
-            // detectString2 체크 (헤더명 - 쉼표 구분)
-            if (market.detectString2 && market.detectString2.length > 0) {
-                const detectStrings = market.detectString2.split(',').map(s => s.trim());
-                console.log(`  detectString2 항목들:`, detectStrings);
-                let matchCount = 0;
-                let matchedStrings = [];
-                
-                for (const detectStr of detectStrings) {
-                    if (detectStr) {
-                        const detectStrLower = detectStr.toLowerCase();
-                        // 개별 헤더에서도 찾기
-                        const foundInHeaders = headers.some(h => h.toLowerCase().includes(detectStrLower));
-                        
-                        if (headerText.includes(detectStrLower) || foundInHeaders) {
-                            matchCount++;
-                            matchedStrings.push(detectStr);
-                            console.log(`    ✓ "${detectStr}" 발견`);
-                        } else {
-                            console.log(`    ✗ "${detectStr}" 없음`);
-                        }
-                    }
+        // Google Apps Script의 detectMarket 함수 호출
+        google.script.run
+            .withSuccessHandler((marketName) => {
+                if (!marketName) {
+                    ToastManager.error(`${file.name}: 마켓을 인식할 수 없습니다.`);
+                    return;
                 }
                 
-                const requiredMatches = detectStrings.length > 1 ? Math.min(2, Math.ceil(detectStrings.length / 2)) : 1;
-                console.log(`  매칭 결과: ${matchCount}/${detectStrings.length} (필요: ${requiredMatches})`);
+                const market = this.mappingData.markets[marketName];
+                const headerRowIndex = (market.headerRow || 1) - 1;
                 
-                if (matchCount >= requiredMatches) {
-                    console.log(`✅ ${marketName} 감지 성공: 헤더 매칭 [${matchedStrings.join(', ')}]`);
-                    return marketName;
-                }
-            }
-            
-            // detectString3 체크
-            if (market.detectString3 && market.detectString3.length > 0) {
-                const detectStrings3 = market.detectString3.split(',').map(s => s.trim());
-                console.log(`  detectString3 항목들:`, detectStrings3);
-                let matchCount3 = 0;
+                // 실제 헤더 행 결정
+                const finalHeaders = cleanRows[headerRowIndex].map(h => String(h || '').trim());
+                const dataRows = cleanRows.slice(headerRowIndex + 1);
                 
-                for (const detectStr of detectStrings3) {
-                    if (detectStr) {
-                        const detectStrLower = detectStr.toLowerCase();
-                        if (headerText.includes(detectStrLower)) {
-                            matchCount3++;
-                            console.log(`    ✓ "${detectStr}" 발견`);
-                        }
-                    }
-                }
+                // 데이터를 객체 배열로 변환
+                const processedRows = dataRows.map(row => {
+                    const obj = {};
+                    finalHeaders.forEach((header, i) => {
+                        obj[header] = row[i] !== undefined ? row[i] : '';
+                    });
+                    return obj;
+                });
                 
-                if (matchCount3 >= (detectStrings3.length > 1 ? 2 : 1)) {
-                    console.log(`✅ ${marketName} 감지 성공: detectString3 매칭`);
-                    return marketName;
-                }
-            }
-        }
-        
-        console.log('❌ 마켓 감지 실패 - 일치하는 마켓이 없습니다');
-        console.log('=== 마켓 감지 종료 ===\n');
-        return null;
+                // 파일 정보 저장
+                const fileInfo = {
+                    name: file.name,
+                    marketName,
+                    lastModified: file.lastModified,
+                    isToday: this.isToday(file.lastModified),
+                    headers: finalHeaders,
+                    data: processedRows,
+                    rowCount: processedRows.length
+                };
+                
+                this.uploadedFiles.push(fileInfo);
+                this.updateFileList();
+            })
+            .withFailureHandler((error) => {
+                ToastManager.error(`마켓 감지 실패: ${error.message}`);
+            })
+            .detectMarket(file.name, headers, firstDataRow);
     },
     
     // 오늘 날짜 체크
@@ -454,7 +341,7 @@ window.OrderMergeModule = {
     },
     
     // 주문 처리
-    async processOrders() {
+    processOrders() {
         if (this.uploadedFiles.length === 0) {
             ToastManager.error('업로드된 파일이 없습니다.');
             return;
@@ -468,102 +355,24 @@ window.OrderMergeModule = {
         
         LoadingManager.showFullLoading();
         
-        try {
-            // Google Apps Script로 처리 요청
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                const filesData = todayFiles.map(file => ({
-                    name: file.name,
-                    marketName: file.marketName,
-                    headers: file.headers,
-                    data: file.data,
-                    isToday: file.isToday
-                }));
+        // Google Apps Script의 processOrderFiles 함수 호출
+        google.script.run
+            .withSuccessHandler((result) => {
+                LoadingManager.hideFullLoading();
                 
-                google.script.run
-                    .withSuccessHandler(result => {
-                        LoadingManager.hideFullLoading();
-                        
-                        if (result.success) {
-                            this.processedData = result;
-                            ToastManager.success(`${result.processedCount}개의 주문을 통합했습니다.`);
-                            this.displayResults();
-                        } else {
-                            ToastManager.error(result.error || '처리 중 오류가 발생했습니다.');
-                        }
-                    })
-                    .withFailureHandler(error => {
-                        LoadingManager.hideFullLoading();
-                        ToastManager.error('서버 오류: ' + error);
-                    })
-                    .processOrderFiles(filesData);
-                    
-            } else {
-                // 로컬 처리 (개발용)
-                this.processOrdersLocally(todayFiles);
-            }
-            
-        } catch (error) {
-            LoadingManager.hideFullLoading();
-            ToastManager.error('처리 중 오류가 발생했습니다.');
-            console.error('처리 오류:', error);
-        }
-    },
-    
-    // 로컬 처리 (개발/테스트용)
-    processOrdersLocally(todayFiles) {
-        const mergedData = [];
-        const marketCounters = {};
-        let globalCounter = 0;
-        
-        todayFiles.forEach(fileData => {
-            const marketName = fileData.marketName;
-            const market = this.mappingData.markets[marketName];
-            
-            if (!market) return;
-            
-            if (!marketCounters[marketName]) {
-                marketCounters[marketName] = 0;
-            }
-            
-            fileData.data.forEach(row => {
-                globalCounter++;
-                marketCounters[marketName]++;
-                
-                const mergedRow = {};
-                
-                // 표준 필드 매핑
-                this.mappingData.standardFields.forEach(standardField => {
-                    if (standardField === '마켓명') {
-                        mergedRow['마켓명'] = marketName;
-                    } else if (standardField === '연번') {
-                        mergedRow['연번'] = globalCounter;
-                    } else if (standardField === '마켓') {
-                        const initial = market.initial || marketName.charAt(0);
-                        mergedRow['마켓'] = initial + String(marketCounters[marketName]).padStart(3, '0');
-                    } else {
-                        const mappedField = market.mappings[standardField];
-                        if (mappedField && row[mappedField] !== undefined) {
-                            mergedRow[standardField] = row[mappedField];
-                        } else {
-                            mergedRow[standardField] = '';
-                        }
-                    }
-                });
-                
-                mergedData.push(mergedRow);
-            });
-        });
-        
-        this.processedData = {
-            success: true,
-            data: mergedData,
-            processedCount: mergedData.length,
-            standardFields: this.mappingData.standardFields
-        };
-        
-        LoadingManager.hideFullLoading();
-        ToastManager.success(`${mergedData.length}개의 주문을 통합했습니다.`);
-        this.displayResults();
+                if (result.success) {
+                    this.processedData = result;
+                    ToastManager.success(`${result.processedCount}개의 주문을 통합했습니다.`);
+                    this.displayResults();
+                } else {
+                    ToastManager.error(result.error || '처리 중 오류가 발생했습니다.');
+                }
+            })
+            .withFailureHandler((error) => {
+                LoadingManager.hideFullLoading();
+                ToastManager.error('서버 오류: ' + error);
+            })
+            .processOrderFiles(todayFiles);
     },
     
     // 결과 표시
@@ -584,12 +393,13 @@ window.OrderMergeModule = {
         tbody.innerHTML = '';
         thead.innerHTML = '';
         
-        if (!this.processedData || this.processedData.data.length === 0) {
+        if (!this.processedData || !this.processedData.data || this.processedData.data.length === 0) {
             tbody.innerHTML = '<tr><td colspan="100%" style="text-align:center;">데이터가 없습니다</td></tr>';
             return;
         }
         
         const headers = this.processedData.standardFields;
+        const data = this.processedData.data;
         
         // 헤더 생성
         const headerRow = document.createElement('tr');
@@ -601,7 +411,7 @@ window.OrderMergeModule = {
         thead.appendChild(headerRow);
         
         // 데이터 행 생성
-        this.processedData.data.forEach(row => {
+        data.forEach(row => {
             const tr = document.createElement('tr');
             
             headers.forEach(header => {
@@ -619,7 +429,7 @@ window.OrderMergeModule = {
                 }
                 
                 // 금액 포맷
-                if (header.includes('금액')) {
+                if (header.includes('금액') || header.includes('수수료')) {
                     const numValue = parseFloat(String(value).replace(/[^\d.-]/g, ''));
                     if (!isNaN(numValue)) {
                         value = numValue.toLocaleString('ko-KR');
