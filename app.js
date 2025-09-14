@@ -1,9 +1,9 @@
-// app.js
+// app.js - 주문통합 시스템 메인 애플리케이션
 
-// 권한별 메뉴 설정 - 대시보드 추가
+// 권한별 메뉴 설정
 const MENU_CONFIG = {
     'admin': [
-        { id: 'dashboard', name: '대시보드' },      // 맨 앞에 추가
+        { id: 'dashboard', name: '대시보드' },
         { id: 'realtime', name: '실시간 주문현황' },
         { id: 'search', name: '주문조회' },
         { id: 'excel', name: '주문통합(Excel)' },
@@ -11,7 +11,7 @@ const MENU_CONFIG = {
         { id: 'analytics', name: '통계 분석' }
     ],
     'staff': [
-        { id: 'dashboard', name: '대시보드' },      // 맨 앞에 추가
+        { id: 'dashboard', name: '대시보드' },
         { id: 'realtime', name: '실시간 주문현황' },
         { id: 'search', name: '주문조회' }
     ]
@@ -128,12 +128,20 @@ function loadDashboard() {
 
 // 대시보드 요약 데이터 로드
 async function loadDashboardSummary() {
+    const loadingElement = document.getElementById('dashboardLoading');
+    const summaryTable = document.getElementById('dashboardSummaryTable');
+    const summaryBody = document.getElementById('dashboardSummaryBody');
+    
     try {
+        if (loadingElement) {
+            loadingElement.style.display = 'block';
+        }
+        if (summaryTable) {
+            summaryTable.style.display = 'none';
+        }
+        
         const response = await fetch('/api/orders');
         const data = await response.json();
-        
-        const summaryTable = document.getElementById('dashboardSummaryTable');
-        const summaryBody = document.getElementById('dashboardSummaryBody');
         
         if (summaryBody && data.data && data.data.length > 1) {
             summaryBody.innerHTML = '';
@@ -157,12 +165,22 @@ async function loadDashboardSummary() {
                 summaryBody.appendChild(tr);
             }
             
+            if (loadingElement) {
+                loadingElement.style.display = 'none';
+            }
             if (summaryTable) {
                 summaryTable.style.display = 'table';
+            }
+        } else {
+            if (loadingElement) {
+                loadingElement.textContent = '데이터가 없습니다';
             }
         }
     } catch (error) {
         console.error('대시보드 데이터 로드 실패:', error);
+        if (loadingElement) {
+            loadingElement.textContent = '데이터를 불러올 수 없습니다';
+        }
     }
 }
 
@@ -172,8 +190,12 @@ async function loadRealtimeData() {
     const table = document.getElementById('realtimeTable');
     
     try {
-        loadingElement.style.display = 'block';
-        table.style.display = 'none';
+        if (loadingElement) {
+            loadingElement.style.display = 'block';
+        }
+        if (table) {
+            table.style.display = 'none';
+        }
         
         const response = await fetch('/api/orders');
         const data = await response.json();
@@ -181,7 +203,9 @@ async function loadRealtimeData() {
         displayRealtimeData(data.data);
     } catch (error) {
         console.error('데이터 로드 실패:', error);
-        loadingElement.textContent = '데이터를 불러올 수 없습니다';
+        if (loadingElement) {
+            loadingElement.textContent = '데이터를 불러올 수 없습니다';
+        }
     }
 }
 
@@ -193,41 +217,51 @@ function displayRealtimeData(data) {
     const tbody = document.getElementById('realtimeBody');
     
     if (!data || data.length === 0) {
-        loadingElement.textContent = '데이터가 없습니다';
+        if (loadingElement) {
+            loadingElement.textContent = '데이터가 없습니다';
+        }
         return;
     }
     
-    // 헤더 생성
-    thead.innerHTML = '';
-    const headerRow = document.createElement('tr');
-    data[0].forEach(header => {
-        const th = document.createElement('th');
-        th.textContent = header;
-        headerRow.appendChild(th);
-    });
-    thead.appendChild(headerRow);
-    
-    // 데이터 행 생성
-    tbody.innerHTML = '';
-    for (let i = 1; i < Math.min(data.length, 20); i++) {
-        const row = document.createElement('tr');
-        data[i].forEach((cell, index) => {
-            const td = document.createElement('td');
-            
-            // 고객명 마스킹 (staff 권한일 때 3번째 컬럼)
-            if (currentUserRole === 'staff' && index === 2) {
-                td.textContent = '***';
-            } else {
-                td.textContent = cell || '';
-            }
-            
-            row.appendChild(td);
+    if (thead) {
+        // 헤더 생성
+        thead.innerHTML = '';
+        const headerRow = document.createElement('tr');
+        data[0].forEach(header => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            headerRow.appendChild(th);
         });
-        tbody.appendChild(row);
+        thead.appendChild(headerRow);
     }
     
-    loadingElement.style.display = 'none';
-    table.style.display = 'table';
+    if (tbody) {
+        // 데이터 행 생성
+        tbody.innerHTML = '';
+        for (let i = 1; i < Math.min(data.length, 20); i++) {
+            const row = document.createElement('tr');
+            data[i].forEach((cell, index) => {
+                const td = document.createElement('td');
+                
+                // 고객명 마스킹 (staff 권한일 때 3번째 컬럼)
+                if (currentUserRole === 'staff' && index === 2) {
+                    td.textContent = '***';
+                } else {
+                    td.textContent = cell || '';
+                }
+                
+                row.appendChild(td);
+            });
+            tbody.appendChild(row);
+        }
+    }
+    
+    if (loadingElement) {
+        loadingElement.style.display = 'none';
+    }
+    if (table) {
+        table.style.display = 'table';
+    }
 }
 
 // 주문 조회
@@ -237,7 +271,9 @@ function searchOrders() {
     const resultDiv = document.getElementById('searchResult');
     
     if (!startDate || !endDate) {
-        resultDiv.innerHTML = '<p class="info-text">날짜를 선택하세요</p>';
+        if (resultDiv) {
+            resultDiv.innerHTML = '<p class="info-text">날짜를 선택하세요</p>';
+        }
         return;
     }
     
@@ -245,42 +281,46 @@ function searchOrders() {
     if (currentUserRole === 'staff') {
         const today = new Date().toISOString().split('T')[0];
         if (startDate !== today || endDate !== today) {
-            resultDiv.innerHTML = '<p class="info-text" style="color: #f59e0b;">직원 권한은 당일 조회만 가능합니다</p>';
+            if (resultDiv) {
+                resultDiv.innerHTML = '<p class="info-text" style="color: #f59e0b;">직원 권한은 당일 조회만 가능합니다</p>';
+            }
             document.getElementById('startDate').value = today;
             document.getElementById('endDate').value = today;
             return;
         }
     }
     
-    resultDiv.innerHTML = `<p class="info-text">조회 중...</p>`;
-    
-    // API 호출 시뮬레이션
-    setTimeout(() => {
-        resultDiv.innerHTML = `
-            <table>
-                <thead>
-                    <tr>
-                        <th>주문번호</th>
-                        <th>주문일시</th>
-                        <th>고객명</th>
-                        <th>상품</th>
-                        <th>금액</th>
-                        <th>상태</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>ORD-2024-001</td>
-                        <td>${startDate} 10:30</td>
-                        <td>${currentUserRole === 'admin' ? '김철수' : '***'}</td>
-                        <td>노트북</td>
-                        <td>₩1,250,000</td>
-                        <td>완료</td>
-                    </tr>
-                </tbody>
-            </table>
-        `;
-    }, 1000);
+    if (resultDiv) {
+        resultDiv.innerHTML = `<p class="info-text">조회 중...</p>`;
+        
+        // API 호출 시뮬레이션
+        setTimeout(() => {
+            resultDiv.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>주문번호</th>
+                            <th>주문일시</th>
+                            <th>고객명</th>
+                            <th>상품</th>
+                            <th>금액</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>ORD-2024-001</td>
+                            <td>${startDate} 10:30</td>
+                            <td>${currentUserRole === 'admin' ? '김철수' : '***'}</td>
+                            <td>노트북</td>
+                            <td>₩1,250,000</td>
+                            <td>완료</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+        }, 1000);
+    }
 }
 
 // 엑셀 처리
@@ -292,18 +332,20 @@ function processExcel() {
     }
     
     const resultDiv = document.getElementById('excelResult');
-    resultDiv.innerHTML = `<p class="info-text">파일 처리 중...</p>`;
-    
-    // 파일 업로드 시뮬레이션
-    setTimeout(() => {
-        resultDiv.innerHTML = `
-            <p class="info-text" style="color: #10b981;">
-                ✓ ${file.name} 파일 처리 완료<br>
-                - 총 100개 주문 처리<br>
-                - 성공: 98개, 실패: 2개
-            </p>
-        `;
-    }, 1500);
+    if (resultDiv) {
+        resultDiv.innerHTML = `<p class="info-text">파일 처리 중...</p>`;
+        
+        // 파일 업로드 시뮬레이션
+        setTimeout(() => {
+            resultDiv.innerHTML = `
+                <p class="info-text" style="color: #10b981;">
+                    ✓ ${file.name} 파일 처리 완료<br>
+                    - 총 100개 주문 처리<br>
+                    - 성공: 98개, 실패: 2개
+                </p>
+            `;
+        }, 1500);
+    }
 }
 
 // 송장 등록
@@ -318,38 +360,35 @@ function registerInvoice() {
     }
     
     const resultDiv = document.getElementById('invoiceResult');
-    resultDiv.innerHTML = `<p class="info-text">등록 중...</p>`;
-    
-    // API 호출 시뮬레이션
-    setTimeout(() => {
-        resultDiv.innerHTML = `
-            <p class="info-text" style="color: #10b981;">
-                ✓ 송장 등록 완료<br>
-                주문번호: ${orderNo}<br>
-                송장번호: ${invoiceNo}<br>
-                택배사: ${courier}
-            </p>
-        `;
+    if (resultDiv) {
+        resultDiv.innerHTML = `<p class="info-text">등록 중...</p>`;
         
-        // 입력 필드 초기화
-        document.getElementById('orderNo').value = '';
-        document.getElementById('invoiceNo').value = '';
-    }, 1000);
+        // API 호출 시뮬레이션
+        setTimeout(() => {
+            resultDiv.innerHTML = `
+                <p class="info-text" style="color: #10b981;">
+                    ✓ 송장 등록 완료<br>
+                    주문번호: ${orderNo}<br>
+                    송장번호: ${invoiceNo}<br>
+                    택배사: ${courier}
+                </p>
+            `;
+            
+            // 입력 필드 초기화
+            document.getElementById('orderNo').value = '';
+            document.getElementById('invoiceNo').value = '';
+        }, 1000);
+    }
 }
 
-// 페이지 로드 시 초기화
-window.addEventListener('DOMContentLoaded', () => {
-    // Firebase Auth가 초기화될 때까지 대기
-    // auth.js의 onAuthStateChanged에서 처리됨
-});
-
-
-// 쿠팡 주문 동기화 기능 - app.js에 추가
-
-// 쿠팡 주문 가져오기
+// 쿠팡 주문 가져오기 (쿠팡 API 연동 시 사용)
 async function fetchCoupangOrders() {
     const button = event.target;
-    LoadingManager.startButtonLoading(button, '쿠팡 주문 가져오는 중...');
+    
+    // LoadingManager가 있는 경우에만 사용
+    if (typeof LoadingManager !== 'undefined') {
+        LoadingManager.startButtonLoading(button, '쿠팡 주문 가져오는 중...');
+    }
     
     try {
         const response = await fetch('/api/coupang', {
@@ -367,7 +406,11 @@ async function fetchCoupangOrders() {
         const data = await response.json();
         
         if (data.success) {
-            ToastManager.success(data.message);
+            if (typeof ToastManager !== 'undefined') {
+                ToastManager.success(data.message);
+            } else {
+                alert(data.message);
+            }
             
             // 대시보드 새로고침
             if (document.getElementById('dashboard').classList.contains('active')) {
@@ -378,78 +421,24 @@ async function fetchCoupangOrders() {
             if (document.getElementById('realtime').classList.contains('active')) {
                 loadRealtimeData();
             }
-            
-            // 동기화 결과 표시
-            displayCoupangSyncResult(data.orders);
         } else {
-            ToastManager.error('쿠팡 주문 동기화 실패');
+            if (typeof ToastManager !== 'undefined') {
+                ToastManager.error('쿠팡 주문 동기화 실패');
+            } else {
+                alert('쿠팡 주문 동기화 실패');
+            }
         }
     } catch (error) {
         console.error('쿠팡 동기화 오류:', error);
-        ToastManager.error('네트워크 오류가 발생했습니다');
-    } finally {
-        LoadingManager.stopButtonLoading(button);
-    }
-}
-
-// 쿠팡 동기화 결과 표시
-function displayCoupangSyncResult(orders) {
-    const resultDiv = document.getElementById('coupangSyncResult');
-    if (!resultDiv) return;
-    
-    if (orders && orders.length > 0) {
-        let html = `
-            <div class="sync-result success">
-                <h4>동기화 완료</h4>
-                <p>총 ${orders.length}건의 주문이 동기화되었습니다.</p>
-                <table class="sync-table">
-                    <thead>
-                        <tr>
-                            <th>주문번호</th>
-                            <th>주문자</th>
-                            <th>상품명</th>
-                            <th>금액</th>
-                            <th>상태</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
-        
-        orders.slice(0, 5).forEach(order => {
-            html += `
-                <tr>
-                    <td>${order.orderId}</td>
-                    <td>${order.orderer.name}</td>
-                    <td>${order.orderItems[0]?.sellerProductName || '-'}</td>
-                    <td>₩${(order.orderItems[0]?.orderPrice || 0).toLocaleString()}</td>
-                    <td><span class="status-badge">접수</span></td>
-                </tr>
-            `;
-        });
-        
-        if (orders.length > 5) {
-            html += `
-                <tr>
-                    <td colspan="5" style="text-align: center;">
-                        ... 외 ${orders.length - 5}건
-                    </td>
-                </tr>
-            `;
+        if (typeof ToastManager !== 'undefined') {
+            ToastManager.error('네트워크 오류가 발생했습니다');
+        } else {
+            alert('네트워크 오류가 발생했습니다');
         }
-        
-        html += `
-                    </tbody>
-                </table>
-            </div>
-        `;
-        
-        resultDiv.innerHTML = html;
-    } else {
-        resultDiv.innerHTML = `
-            <div class="sync-result empty">
-                <p>조회된 주문이 없습니다.</p>
-            </div>
-        `;
+    } finally {
+        if (typeof LoadingManager !== 'undefined') {
+            LoadingManager.stopButtonLoading(button);
+        }
     }
 }
 
@@ -472,3 +461,44 @@ function stopCoupangAutoSync() {
         coupangSyncInterval = null;
     }
 }
+
+// 자동 동기화 토글
+function toggleCoupangAutoSync(checkbox) {
+    if (checkbox.checked) {
+        startCoupangAutoSync();
+        if (typeof ToastManager !== 'undefined') {
+            ToastManager.info('쿠팡 자동 동기화가 시작되었습니다 (5분 간격)');
+        }
+        const statusElement = document.getElementById('coupangStatus');
+        if (statusElement) {
+            statusElement.textContent = '자동 동기화 중';
+            statusElement.classList.add('active');
+        }
+    } else {
+        stopCoupangAutoSync();
+        if (typeof ToastManager !== 'undefined') {
+            ToastManager.info('쿠팡 자동 동기화가 중지되었습니다');
+        }
+        const statusElement = document.getElementById('coupangStatus');
+        if (statusElement) {
+            statusElement.textContent = '대기 중';
+            statusElement.classList.remove('active');
+        }
+    }
+    
+    // 마지막 동기화 시간 업데이트
+    const now = new Date();
+    const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
+                      now.getMinutes().toString().padStart(2, '0');
+    const lastSyncElement = document.getElementById('coupangLastSync');
+    if (lastSyncElement) {
+        lastSyncElement.textContent = timeString;
+    }
+}
+
+// 페이지 로드 시 초기화
+window.addEventListener('DOMContentLoaded', () => {
+    // Firebase Auth가 초기화될 때까지 대기
+    // auth.js의 onAuthStateChanged에서 처리됨
+    console.log('App.js loaded successfully');
+});
