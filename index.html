@@ -212,17 +212,50 @@
                 <div id="searchResult"></div>
             </div>
 
-            <!-- 주문통합(Excel) 탭 -->
-            <div id="excel" class="tab-content">
-                <h2>주문통합(Excel)</h2>
-                <div class="upload-area" onclick="document.getElementById('excelFile').click()">
-                    <div class="upload-icon">📁</div>
-                    <p>파일을 선택하거나 드래그해주세요</p>
-                    <input type="file" id="excelFile" style="display: none;" accept=".xlsx,.xls,.csv" multiple>
-                </div>
-                <button class="btn" onclick="processExcel()">처리하기</button>
-                <div id="excelResult"></div>
-            </div>
+<!-- 주문통합(Excel) 탭 -->
+<div id="excel" class="tab-content">
+    <h2>주문통합(Excel)</h2>
+    
+    <!-- 파일 업로드 영역 -->
+    <div class="upload-area" id="excelUploadArea">
+        <div class="upload-icon">📁</div>
+        <p>엑셀/CSV 파일을 선택하거나 드래그해주세요</p>
+        <input type="file" id="excelFile" style="display: none;" accept=".xlsx,.xls,.csv" multiple>
+    </div>
+    
+    <!-- 파일 목록 -->
+    <div class="file-list" id="fileList" style="display: none;"></div>
+    
+    <!-- 파일 요약 -->
+    <div class="file-summary" id="fileSummary" style="display: none;">
+        <div class="summary-item">
+            <div class="summary-label">업로드 파일</div>
+            <div class="summary-value" id="totalFiles">0</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-label">마켓 수</div>
+            <div class="summary-value" id="totalMarkets">0</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-label">총 주문 수</div>
+            <div class="summary-value" id="totalOrders">0</div>
+        </div>
+    </div>
+    
+    <!-- 경고 박스 -->
+    <div class="warning-box" id="warningBox" style="display: none;">
+        <h3>⚠️ 주의: 오래된 파일이 감지되었습니다!</h3>
+        <ul class="warning-list" id="warningList"></ul>
+    </div>
+    
+    <!-- 처리 버튼 -->
+    <div style="text-align: center; margin: 30px 0;">
+        <button class="btn" id="processExcelBtn" style="display: none;" onclick="processExcel()">주문 통합 실행</button>
+    </div>
+    
+    <!-- 결과 영역 -->
+    <div id="excelResult"></div>
+</div>
 
             <!-- 송장등록 탭 -->
             <div id="invoice" class="tab-content">
