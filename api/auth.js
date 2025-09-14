@@ -1,14 +1,6 @@
 // api/auth.js
 
 const { google } = require('googleapis');
-const admin = require('firebase-admin');
-
-// Firebase Admin 초기화 (환경변수에서 서비스 계정 키 가져오기)
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT))
-    });
-}
 
 module.exports = async (req, res) => {
     // CORS 설정
@@ -18,6 +10,11 @@ module.exports = async (req, res) => {
     
     if (req.method === 'OPTIONS') {
         res.status(200).end();
+        return;
+    }
+    
+    if (req.method !== 'POST') {
+        res.status(405).json({ error: 'Method not allowed' });
         return;
     }
     
@@ -33,89 +30,115 @@ module.exports = async (req, res) => {
         
         const sheets = google.sheets({ version: 'v4', auth });
         
+        // 요청 본문에서 action 확인
+        const { action, email, name, role, createdAt } = req.body;
+        
+        console.log('Received request:', { action, email });  // 디버깅용
+        
         // 사용자 역할 조회
-        if (req.method === 'POST' && req.url === '/api/getUserRole') {
-            const { email } = req.body;
+        if (action === 'getUserRole') {
+            if (!email) {
+                res.status(400).json({ error: 'Email is required' });
+                return;
+            }
             
-            // Google Sheets에서 사용자 정보 조회
-            const response = await sheets.spreadsheets.values.get({
-                spreadsheetId: process.env.USERS_SHEET_ID, // 사용자 정보 시트 ID
-                range: 'Users!A:D', // 이메일, 이름, 역할, 상태
-            });
-            
-            const users = response.data.values;
-            const userRow = users.find(row => row[0] === email);
-            
-            if (userRow && userRow[3] === 'active') {
-                res.status(200).json({ 
-                    role: userRow[2], // 역할
-                    name: userRow[1]  // 이름
+            try {
+                // Google Sheets에서 사용자 정보 조회
+                const response = await sheets.spreadsheets.values.get({
+                    spreadsheetId: process.env.USERS_SHEET_ID,
+                    range: 'A:E',  // 전체 시트 읽기
                 });
-            } else {
-                // 기본값으로 staff 권한 부여
+                
+                const rows = response.data.values;
+                console.log('Sheet data rows:', rows?.length);  // 디버깅용
+                
+                if (!rows || rows.length === 0) {
+                    console.log('No data found in sheet');
+                    res.status(200).json({ 
+                        role: 'staff',
+                        message: 'No users found in sheet'
+                    });
+                    return;
+                }
+                
+                // 헤더 행 제외하고 사용자 찾기
+                // A열: 이메일, B열: 이름, C열: 역할, D열: 상태
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (row && row[0] && row[0].toLowerCase() === email.toLowerCase()) {
+                        console.log('User found:', { email: row[0], role: row[2], status: row[3] });
+                        
+                        // 상태가 active인 경우만
+                        if (row[3] === 'active') {
+                            res.status(200).json({ 
+                                role: row[2] || 'staff',
+                                name: row[1] || email.split('@')[0]
+                            });
+                            return;
+                        }
+                    }
+                }
+                
+                console.log('User not found in sheet:', email);
+                // 사용자를 찾지 못한 경우 기본값
                 res.status(200).json({ 
                     role: 'staff',
-                    name: email.split('@')[0]
+                    name: email.split('@')[0],
+                    message: 'User not found in sheet'
+                });
+            } catch (error) {
+                console.error('Error reading sheet:', error);
+                res.status(200).json({ 
+                    role: 'staff',
+                    error: error.message 
                 });
             }
         }
         
         // 새 사용자 저장
-        else if (req.method === 'POST' && req.url === '/api/saveUser') {
-            const { email, name, role, createdAt } = req.body;
-            
-            // Google Sheets에 새 사용자 추가
-            await sheets.spreadsheets.values.append({
-                spreadsheetId: process.env.USERS_SHEET_ID,
-                range: 'Users!A:E',
-                valueInputOption: 'USER_ENTERED',
-                requestBody: {
-                    values: [[email, name, role, 'active', createdAt]]
-                }
-            });
-            
-            res.status(200).json({ success: true });
-        }
-        
-        // Firebase 토큰 검증
-        else if (req.method === 'POST' && req.url === '/api/verifyToken') {
-            const authHeader = req.headers.authorization;
-            
-            if (!authHeader || !authHeader.startsWith('Bearer ')) {
-                res.status(401).json({ error: '인증 토큰이 없습니다' });
+        else if (action === 'saveUser') {
+            if (!email || !name) {
+                res.status(400).json({ error: 'Email and name are required' });
                 return;
             }
             
-            const token = authHeader.split('Bearer ')[1];
-            
             try {
-                const decodedToken = await admin.auth().verifyIdToken(token);
-                
-                // Google Sheets에서 사용자 역할 조회
-                const response = await sheets.spreadsheets.values.get({
+                // Google Sheets에 새 사용자 추가
+                await sheets.spreadsheets.values.append({
                     spreadsheetId: process.env.USERS_SHEET_ID,
-                    range: 'Users!A:D',
+                    range: 'A:E',
+                    valueInputOption: 'USER_ENTERED',
+                    requestBody: {
+                        values: [[
+                            email,
+                            name,
+                            role || 'staff',
+                            'active',
+                            createdAt || new Date().toISOString()
+                        ]]
+                    }
                 });
                 
-                const users = response.data.values;
-                const userRow = users.find(row => row[0] === decodedToken.email);
-                
-                res.status(200).json({
-                    uid: decodedToken.uid,
-                    email: decodedToken.email,
-                    role: userRow ? userRow[2] : 'staff'
-                });
+                console.log('User saved:', email);
+                res.status(200).json({ success: true });
             } catch (error) {
-                res.status(401).json({ error: '유효하지 않은 토큰입니다' });
+                console.error('Error saving user:', error);
+                res.status(500).json({ 
+                    error: 'Failed to save user',
+                    details: error.message 
+                });
             }
         }
         
         else {
-            res.status(404).json({ error: 'Not found' });
+            res.status(400).json({ error: 'Invalid action' });
         }
         
     } catch (error) {
         console.error('API 오류:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ 
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 };
