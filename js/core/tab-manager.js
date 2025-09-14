@@ -4,6 +4,8 @@ window.TabManager = {
     // 탭 메뉴 생성
     createMenu(role) {
         const tabMenu = document.getElementById('tabMenu');
+        if (!tabMenu) return;
+        
         const menus = MENU_CONFIG[role];
         
         tabMenu.innerHTML = '';
@@ -56,13 +58,19 @@ window.TabManager = {
     loadTabData(tabId) {
         switch(tabId) {
             case 'dashboard':
-                DashboardModule.load();
+                if (typeof DashboardModule !== 'undefined') {
+                    DashboardModule.load();
+                }
                 break;
             case 'realtime':
-                RealtimeModule.load();
+                if (typeof RealtimeModule !== 'undefined') {
+                    RealtimeModule.load();
+                }
                 break;
             case 'analytics':
-                AnalyticsModule.load();
+                if (typeof AnalyticsModule !== 'undefined') {
+                    AnalyticsModule.load();
+                }
                 break;
         }
     },
@@ -80,70 +88,94 @@ window.TabManager = {
         }
         // 기본값: 첫 번째 탭
         const firstTab = MENU_CONFIG[window.currentUserRole][0];
-        this.show(firstTab.id);
+        if (firstTab) {
+            this.show(firstTab.id);
+        }
     },
 
     // 현재 탭 새로고침
     refreshCurrent(event) {
         const activeTab = document.querySelector('.tab-content.active');
-        if (!activeTab) return;
+        if (!activeTab) {
+            console.log('No active tab to refresh');
+            return;
+        }
         
         const tabId = activeTab.id;
-        const button = event?.target;
+        console.log('Refreshing tab:', tabId);
         
-        if (button) {
+        // 이벤트가 버튼 클릭인 경우
+        if (event && event.target && event.target.tagName === 'BUTTON') {
+            const button = event.target;
             button.disabled = true;
             const originalText = button.textContent;
             button.textContent = '새로고침 중...';
             
-            const restoreButton = () => {
+            this.executeRefresh(tabId).finally(() => {
                 button.disabled = false;
                 button.textContent = originalText;
-            };
-            
-            this.executeRefresh(tabId).finally(restoreButton);
+            });
         } else {
+            // F5 키 등으로 호출된 경우
             this.executeRefresh(tabId);
         }
     },
 
     // 탭별 새로고침 실행
     async executeRefresh(tabId) {
-        console.log(`Refreshing tab: ${tabId}`);
+        console.log(`Executing refresh for tab: ${tabId}`);
         
-        switch(tabId) {
-            case 'dashboard':
-                await DashboardModule.load();
-                if (typeof ToastManager !== 'undefined') {
-                    ToastManager.success('대시보드가 새로고침되었습니다');
-                }
-                break;
-                
-            case 'realtime':
-                RealtimeModule.updateLastUpdateTime();
-                await RealtimeModule.load();
-                if (typeof ToastManager !== 'undefined') {
-                    ToastManager.success('실시간 주문현황이 새로고침되었습니다');
-                }
-                break;
-                
-            case 'search':
-                const startDate = document.getElementById('startDate').value;
-                const endDate = document.getElementById('endDate').value;
-                if (startDate && endDate) {
-                    SearchModule.search();
-                    if (typeof ToastManager !== 'undefined') {
-                        ToastManager.success('검색 결과가 새로고침되었습니다');
+        try {
+            switch(tabId) {
+                case 'dashboard':
+                    if (typeof DashboardModule !== 'undefined') {
+                        await DashboardModule.load();
                     }
-                }
-                break;
-                
-            case 'analytics':
-                AnalyticsModule.load();
-                if (typeof ToastManager !== 'undefined') {
-                    ToastManager.success('통계 분석이 새로고침되었습니다');
-                }
-                break;
+                    if (typeof ToastManager !== 'undefined') {
+                        ToastManager.success('대시보드가 새로고침되었습니다');
+                    }
+                    break;
+                    
+                case 'realtime':
+                    if (typeof RealtimeModule !== 'undefined') {
+                        RealtimeModule.updateLastUpdateTime();
+                        await RealtimeModule.load();
+                    }
+                    if (typeof ToastManager !== 'undefined') {
+                        ToastManager.success('실시간 주문현황이 새로고침되었습니다');
+                    }
+                    break;
+                    
+                case 'search':
+                    const startDate = document.getElementById('startDate');
+                    const endDate = document.getElementById('endDate');
+                    if (startDate && endDate && startDate.value && endDate.value) {
+                        if (typeof SearchModule !== 'undefined') {
+                            SearchModule.search();
+                        }
+                        if (typeof ToastManager !== 'undefined') {
+                            ToastManager.success('검색 결과가 새로고침되었습니다');
+                        }
+                    }
+                    break;
+                    
+                case 'analytics':
+                    if (typeof AnalyticsModule !== 'undefined') {
+                        AnalyticsModule.load();
+                    }
+                    if (typeof ToastManager !== 'undefined') {
+                        ToastManager.success('통계 분석이 새로고침되었습니다');
+                    }
+                    break;
+                    
+                default:
+                    console.log(`No refresh handler for tab: ${tabId}`);
+            }
+        } catch (error) {
+            console.error('Refresh error:', error);
+            if (typeof ToastManager !== 'undefined') {
+                ToastManager.error('새로고침 중 오류가 발생했습니다');
+            }
         }
     }
 };
