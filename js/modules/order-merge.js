@@ -1,10 +1,8 @@
 // js/modules/order-merge.js - 주문통합(Excel) 모듈 - Vercel API 버전
 
 window.OrderMergeModule = {
-    // API 설정
-    API_BASE_URL: window.location.hostname === 'localhost' 
-        ? 'http://localhost:3000/api'
-        : '/api', // Vercel 배포 시 상대 경로 사용
+    // API 설정 - Vercel 배포된 API 절대 경로 사용
+    API_BASE_URL: 'https://order-integration.vercel.app/api',
     
     // 전역 변수
     uploadedFiles: [],
@@ -14,6 +12,7 @@ window.OrderMergeModule = {
     // 초기화
     init() {
         console.log('주문통합 모듈 초기화');
+        console.log('API URL:', this.API_BASE_URL);
         this.setupEventListeners();
         this.loadMappingData();
     },
@@ -21,16 +20,18 @@ window.OrderMergeModule = {
     // 매핑 데이터 로드
     async loadMappingData() {
         try {
+            console.log('매핑 데이터 로드 시작:', `${this.API_BASE_URL}/mapping-data`);
+            
             const response = await fetch(`${this.API_BASE_URL}/mapping-data`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
-                    // Firebase Auth 토큰 추가 (인증이 필요한 경우)
-                    'Authorization': `Bearer ${await this.getAuthToken()}`
+                    'Content-Type': 'application/json'
                 }
             });
             
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API 응답 에러:', errorText);
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
@@ -48,18 +49,6 @@ window.OrderMergeModule = {
             console.error('매핑 데이터 로드 실패:', error);
             this.showError('매핑 데이터를 불러올 수 없습니다. 다시 시도해주세요.');
         }
-    },
-    
-    // Firebase Auth 토큰 가져오기
-    async getAuthToken() {
-        try {
-            if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
-                return await firebase.auth().currentUser.getIdToken();
-            }
-        } catch (error) {
-            console.warn('Firebase 토큰 가져오기 실패:', error);
-        }
-        return '';
     },
     
     // 지원 마켓 표시
@@ -231,8 +220,7 @@ window.OrderMergeModule = {
             const response = await fetch(`${this.API_BASE_URL}/detect-market`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${await this.getAuthToken()}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     fileName: file.name,
@@ -407,8 +395,7 @@ window.OrderMergeModule = {
             const response = await fetch(`${this.API_BASE_URL}/process-orders`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${await this.getAuthToken()}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     files: recentFiles
