@@ -342,3 +342,133 @@ window.addEventListener('DOMContentLoaded', () => {
     // Firebase Auth가 초기화될 때까지 대기
     // auth.js의 onAuthStateChanged에서 처리됨
 });
+
+
+// 쿠팡 주문 동기화 기능 - app.js에 추가
+
+// 쿠팡 주문 가져오기
+async function fetchCoupangOrders() {
+    const button = event.target;
+    LoadingManager.startButtonLoading(button, '쿠팡 주문 가져오는 중...');
+    
+    try {
+        const response = await fetch('/api/coupang', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'fetch',
+                startDate: new Date().toISOString().split('T')[0],
+                endDate: new Date().toISOString().split('T')[0]
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            ToastManager.success(data.message);
+            
+            // 대시보드 새로고침
+            if (document.getElementById('dashboard').classList.contains('active')) {
+                loadDashboard();
+            }
+            
+            // 실시간 주문 탭 새로고침
+            if (document.getElementById('realtime').classList.contains('active')) {
+                loadRealtimeData();
+            }
+            
+            // 동기화 결과 표시
+            displayCoupangSyncResult(data.orders);
+        } else {
+            ToastManager.error('쿠팡 주문 동기화 실패');
+        }
+    } catch (error) {
+        console.error('쿠팡 동기화 오류:', error);
+        ToastManager.error('네트워크 오류가 발생했습니다');
+    } finally {
+        LoadingManager.stopButtonLoading(button);
+    }
+}
+
+// 쿠팡 동기화 결과 표시
+function displayCoupangSyncResult(orders) {
+    const resultDiv = document.getElementById('coupangSyncResult');
+    if (!resultDiv) return;
+    
+    if (orders && orders.length > 0) {
+        let html = `
+            <div class="sync-result success">
+                <h4>동기화 완료</h4>
+                <p>총 ${orders.length}건의 주문이 동기화되었습니다.</p>
+                <table class="sync-table">
+                    <thead>
+                        <tr>
+                            <th>주문번호</th>
+                            <th>주문자</th>
+                            <th>상품명</th>
+                            <th>금액</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        orders.slice(0, 5).forEach(order => {
+            html += `
+                <tr>
+                    <td>${order.orderId}</td>
+                    <td>${order.orderer.name}</td>
+                    <td>${order.orderItems[0]?.sellerProductName || '-'}</td>
+                    <td>₩${(order.orderItems[0]?.orderPrice || 0).toLocaleString()}</td>
+                    <td><span class="status-badge">접수</span></td>
+                </tr>
+            `;
+        });
+        
+        if (orders.length > 5) {
+            html += `
+                <tr>
+                    <td colspan="5" style="text-align: center;">
+                        ... 외 ${orders.length - 5}건
+                    </td>
+                </tr>
+            `;
+        }
+        
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        resultDiv.innerHTML = html;
+    } else {
+        resultDiv.innerHTML = `
+            <div class="sync-result empty">
+                <p>조회된 주문이 없습니다.</p>
+            </div>
+        `;
+    }
+}
+
+// 자동 동기화 설정
+let coupangSyncInterval = null;
+
+function startCoupangAutoSync() {
+    // 5분마다 자동 동기화
+    coupangSyncInterval = setInterval(() => {
+        fetchCoupangOrders();
+    }, 5 * 60 * 1000); // 5분
+    
+    // 즉시 한 번 실행
+    fetchCoupangOrders();
+}
+
+function stopCoupangAutoSync() {
+    if (coupangSyncInterval) {
+        clearInterval(coupangSyncInterval);
+        coupangSyncInterval = null;
+    }
+}
