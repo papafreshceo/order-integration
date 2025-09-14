@@ -70,15 +70,15 @@ window.TabManager = {
             case 'search':
                 // 검색 탭은 초기 로드 없음
                 break;
-            case 'excel':
+            case 'merge':
                 // 엑셀 탭 초기화 확인
-                if (typeof ExcelModule !== 'undefined') {
-                    if (!ExcelModule.isInitialized()) {
-                        ExcelModule.initialize();
+                if (typeof mergeModule !== 'undefined') {
+                    if (!mergeModule.isInitialized()) {
+                        mergeModule.initialize();
                     }
                     // 파일 목록이 있으면 재표시
-                    if (ExcelModule.uploadedFiles && ExcelModule.uploadedFiles.length > 0) {
-                        ExcelModule.updateFileList();
+                    if (mergeModule.uploadedFiles && mergeModule.uploadedFiles.length > 0) {
+                        mergeModule.updateFileList();
                     }
                 }
                 break;
@@ -190,10 +190,10 @@ window.TabManager = {
                     }
                     break;
                     
-                case 'excel':
+                case 'merge':
                     // 엑셀 탭 새로고침 - refresh 메서드 호출
-                    if (typeof ExcelModule !== 'undefined') {
-                        ExcelModule.refresh();
+                    if (typeof mergeModule !== 'undefined') {
+                        mergeModule.refresh();
                         
                         if (typeof ToastManager !== 'undefined') {
                             ToastManager.success('주문통합 화면이 새로고침되었습니다');
@@ -255,3 +255,4 @@ window.createTabMenu = function(role) {
 window.refreshCurrentTab = function(event) {
     TabManager.refreshCurrent(event);
 };
+
