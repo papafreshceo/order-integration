@@ -2,11 +2,40 @@
 
 window.ExcelModule = {
     uploadedFiles: [],
+    mappingData: null, // 매핑 데이터 캐시
     
     // 초기화
-    initialize() {
+    async initialize() {
         this.setupEventListeners();
+        await this.loadMappingData(); // 매핑 데이터 로드
         console.log('ExcelModule 초기화 완료');
+    },
+    
+    // 매핑 데이터 로드
+    async loadMappingData() {
+        try {
+            const response = await fetch('/api/merge-mapping', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ action: 'getMappings' })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    this.mappingData = data;
+                    console.log('매핑 데이터 로드 완료:', this.mappingData);
+                } else {
+                    console.error('매핑 데이터 로드 실패:', data.error);
+                }
+            }
+        } catch (error) {
+            console.error('매핑 데이터 로드 오류:', error);
+            // 로드 실패시 기본값 사용
+            this.mappingData = null;
+        }
     },
     
     // 이벤트 리스너 설정
@@ -118,9 +147,15 @@ window.ExcelModule = {
         });
     },
     
-    // 마켓 감지 - Google Apps Script 로직과 동일하게 구현
+    // 마켓 감지 - 매핑 데이터 기반
     detectMarket(fileName, data) {
         console.log('Detecting market for:', fileName);
+        
+        // 매핑 데이터가 없으면 재로드 시도
+        if (!this.mappingData || !this.mappingData.markets) {
+            console.log('매핑 데이터가 없습니다');
+            return '미감지';
+        }
         
         // 헤더 찾기 (첫 10개 행에서 찾기)
         let headers = [];
@@ -148,74 +183,26 @@ window.ExcelModule = {
         
         console.log('Header text for detection:', headerText.substring(0, 200));
         
-        // 마켓 감지 규칙 (매핑 시트 설정 기반)
-        const marketDetectionRules = {
-            '네이버': {
-                detectString1: '스마트스토어',
-                detectString2: '상품주문번호,구매자명,구매자연락처',
-                detectString3: ''
-            },
-            '쿠팡': {
-                detectString1: '쿠팡',
-                detectString2: '주문번호,수취인,수취인연락처',
-                detectString3: '묶음배송번호,옵션id,구매수(수량)'
-            },
-            '11번가': {
-                detectString1: '11번가',
-                detectString2: '주문번호,구매자명,수취인명',
-                detectString3: '상품주문번호,주문상태,수취인전화번호'
-            },
-            '카카오': {
-                detectString1: '',  // 카카오는 파일명 감지 없음
-                detectString2: '주문 일련번호,수령인,연락처,배송메시지',
-                detectString3: ''
-            },
-            '티몬': {
-                detectString1: '티몬',
-                detectString2: '주문번호,딜명,옵션명,구매자명',
-                detectString3: '수령자명'
-            },
-            '위메프': {
-                detectString1: '위메프',
-                detectString2: '주문번호코드,주문자,수취인',
-                detectString3: '수취인연락처'
-            },
-            '지마켓': {
-                detectString1: '지마켓',
-                detectString2: '주문번호,구매자,수령자',
-                detectString3: '수령자연락처'
-            },
-            '옥션': {
-                detectString1: '옥션',
-                detectString2: '주문번호,구매자,수령자',
-                detectString3: '수령자연락처'
-            },
-            'SSG': {
-                detectString1: 'ssg',
-                detectString2: '주문번호,수취인명,수취인휴대폰',
-                detectString3: '상품명,단품명'
-            },
-            '인터파크': {
-                detectString1: '인터파크',
-                detectString2: '주문번호,구매자명,수취인명',
-                detectString3: '수취인연락처'
-            }
-        };
-        
         // 1. 파일명으로 먼저 체크 (detectString1)
-        for (const [marketName, rules] of Object.entries(marketDetectionRules)) {
-            if (rules.detectString1 && rules.detectString1.length > 0) {
-                if (fileNameLower.includes(rules.detectString1.toLowerCase())) {
-                    console.log(`Matched ${marketName} by filename with "${rules.detectString1}"`);
+        for (const marketName in this.mappingData.markets) {
+            const market = this.mappingData.markets[marketName];
+            
+            // 카카오는 detectString1이 비어있으므로 건너뛰기
+            if (market.detectString1 && market.detectString1.length > 0) {
+                if (fileNameLower.includes(market.detectString1.toLowerCase())) {
+                    console.log(`Matched ${marketName} by filename with "${market.detectString1}"`);
                     return marketName;
                 }
             }
         }
         
         // 2. 헤더로 체크 (detectString2) - 쉼표로 구분된 문자열 처리
-        for (const [marketName, rules] of Object.entries(marketDetectionRules)) {
-            if (rules.detectString2 && rules.detectString2.length > 0) {
-                const detectStrings = rules.detectString2.split(',').map(s => s.trim());
+        for (const marketName in this.mappingData.markets) {
+            const market = this.mappingData.markets[marketName];
+            
+            if (market.detectString2 && market.detectString2.length > 0) {
+                // 쉼표로 구분된 경우 각각 체크
+                const detectStrings = market.detectString2.split(',').map(s => s.trim());
                 let matchCount = 0;
                 
                 for (const detectStr of detectStrings) {
@@ -225,7 +212,7 @@ window.ExcelModule = {
                     }
                 }
                 
-                // 여러 문자열이 있는 경우: 2개 이상 매칭
+                // 카카오처럼 여러 문자열이 있는 경우: 2개 이상 매칭
                 // 단일 문자열인 경우: 1개 매칭
                 const requiredMatches = detectStrings.length > 1 ? 2 : 1;
                 
@@ -235,9 +222,9 @@ window.ExcelModule = {
                 }
             }
             
-            // 3. detectString3 체크
-            if (rules.detectString3 && rules.detectString3.length > 0) {
-                const detectStrings3 = rules.detectString3.split(',').map(s => s.trim());
+            // 3. detectString3 체크 (쉼표 구분 처리)
+            if (market.detectString3 && market.detectString3.length > 0) {
+                const detectStrings3 = market.detectString3.split(',').map(s => s.trim());
                 let matchCount3 = 0;
                 
                 for (const detectStr of detectStrings3) {
@@ -248,6 +235,23 @@ window.ExcelModule = {
                 
                 if (matchCount3 >= (detectStrings3.length > 1 ? 2 : 1)) {
                     console.log(`Matched ${marketName} with detectString3 (${matchCount3} matches)`);
+                    return marketName;
+                }
+            }
+            
+            // 4. detectString4 체크 (있다면)
+            if (market.detectString4 && market.detectString4.length > 0) {
+                const detectStrings4 = market.detectString4.split(',').map(s => s.trim());
+                let matchCount4 = 0;
+                
+                for (const detectStr of detectStrings4) {
+                    if (detectStr && headerText.includes(detectStr.toLowerCase())) {
+                        matchCount4++;
+                    }
+                }
+                
+                if (matchCount4 >= (detectStrings4.length > 1 ? 2 : 1)) {
+                    console.log(`Matched ${marketName} with detectString4 (${matchCount4} matches)`);
                     return marketName;
                 }
             }
@@ -357,9 +361,24 @@ window.ExcelModule = {
         }
     },
     
-    // 마켓 색상
+    // 마켓 색상 - 매핑 데이터에서 가져오거나 기본값 사용
     getMarketColor(marketName) {
-        const colors = {
+        if (this.mappingData && this.mappingData.markets && this.mappingData.markets[marketName]) {
+            const market = this.mappingData.markets[marketName];
+            if (market.color) {
+                // RGB 문자열을 hex로 변환
+                const colorParts = market.color.split(',');
+                if (colorParts.length === 3) {
+                    const r = parseInt(colorParts[0]).toString(16).padStart(2, '0');
+                    const g = parseInt(colorParts[1]).toString(16).padStart(2, '0');
+                    const b = parseInt(colorParts[2]).toString(16).padStart(2, '0');
+                    return `#${r}${g}${b}`;
+                }
+            }
+        }
+        
+        // 기본 색상 (매핑 데이터가 없을 경우)
+        const defaultColors = {
             '네이버': '#03c75a',
             '쿠팡': '#e21f3f',
             '11번가': '#ea002c',
@@ -372,7 +391,7 @@ window.ExcelModule = {
             '인터파크': '#0050ff',
             '미감지': '#999999'
         };
-        return colors[marketName] || '#999999';
+        return defaultColors[marketName] || '#999999';
     },
     
     // 엑셀 처리
@@ -405,8 +424,11 @@ window.ExcelModule = {
     },
     
     // 새로고침 메서드
-    refresh() {
+    async refresh() {
         console.log('ExcelModule refresh called');
+        
+        // 매핑 데이터 다시 로드
+        await this.loadMappingData();
         
         // 파일 입력 초기화
         const fileInput = document.getElementById('excelFile');
@@ -445,7 +467,7 @@ window.ExcelModule = {
     
     // 초기화 상태 확인
     isInitialized() {
-        return true;
+        return this.mappingData !== null;
     }
 };
 
