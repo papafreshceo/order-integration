@@ -70,18 +70,6 @@ window.TabManager = {
             case 'search':
                 // 검색 탭은 초기 로드 없음
                 break;
-            case 'merge':
-                // 주문통합 탭 초기화 확인
-                if (typeof MergeModule !== 'undefined') {
-                    if (!MergeModule.isInitialized()) {
-                        MergeModule.initialize();
-                    }
-                    // 파일 목록이 있으면 재표시
-                    if (MergeModule.uploadedFiles && MergeModule.uploadedFiles.length > 0) {
-                        MergeModule.updateFileList();
-                    }
-                }
-                break;
             case 'invoice':
                 // 송장등록 탭은 초기 로드 없음
                 break;
@@ -186,17 +174,6 @@ window.TabManager = {
                         }
                         if (typeof ToastManager !== 'undefined') {
                             ToastManager.info('오늘 날짜로 조회했습니다');
-                        }
-                    }
-                    break;
-                    
-                case 'merge':
-                    // 주문통합 탭 새로고침 - refresh 메서드 호출
-                    if (typeof MergeModule !== 'undefined') {
-                        await MergeModule.refresh();
-                        
-                        if (typeof ToastManager !== 'undefined') {
-                            ToastManager.success('주문통합 화면이 새로고침되었습니다');
                         }
                     }
                     break;
