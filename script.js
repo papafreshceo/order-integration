@@ -1,3 +1,5 @@
+// script.js - 주문통합 시스템 메인 스크립트
+
 // ===========================
 // 전역 변수
 // ===========================
@@ -16,13 +18,22 @@ const API_BASE = '';
 // 초기화
 // ===========================
 document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
+    console.log('DOM loaded - waiting for auth');
+    // auth.js에서 호출하도록 대기
 });
 
 async function initializeApp() {
-    await loadMappingData();
-    setupEventListeners();
-    await loadDashboard();
+    console.log('Initializing main app...');
+    
+    try {
+        await loadMappingData();
+        setupEventListeners();
+        await loadDashboard();
+        console.log('App initialized successfully');
+    } catch (error) {
+        console.error('App initialization error:', error);
+        showError('시스템 초기화 중 오류가 발생했습니다.');
+    }
 }
 
 // ===========================
@@ -91,6 +102,8 @@ async function loadDashboard() {
         if (!data.values) return;
         
         const tbody = document.getElementById('dashboardBody');
+        if (!tbody) return;
+        
         tbody.innerHTML = '';
         
         data.values.forEach(row => {
@@ -140,6 +153,8 @@ async function detectMarket(fileName, headers, firstDataRow) {
 // ===========================
 function displaySupportedMarkets(markets) {
     const container = document.getElementById('supportedMarkets');
+    if (!container) return;
+    
     container.innerHTML = '<h3 style="width: 100%; margin-bottom: 10px;">지원 마켓</h3>';
     
     let marketNames = [];
@@ -166,6 +181,215 @@ function displaySupportedMarkets(markets) {
     }
 }
 
+function displayResults(result) {
+    const resultSection = document.getElementById('resultSection');
+    if (!resultSection) return;
+    
+    resultSection.innerHTML = '';
+    resultSection.classList.add('show');
+    
+    // 결과 헤더
+    const resultHeader = document.createElement('div');
+    resultHeader.className = 'result-header';
+    
+    const resultTitle = document.createElement('h2');
+    resultTitle.className = 'result-title';
+    resultTitle.textContent = '통합 완료';
+    
+    const exportButtons = document.createElement('div');
+    exportButtons.className = 'export-buttons';
+    
+    const exportExcelBtn = document.createElement('button');
+    exportExcelBtn.id = 'exportExcel';
+    exportExcelBtn.className = 'export-btn export-excel';
+    exportExcelBtn.textContent = '엑셀 내보내기';
+    exportExcelBtn.onclick = exportToExcel;
+    
+    const saveToSheetsBtn = document.createElement('button');
+    saveToSheetsBtn.id = 'saveToSheets';
+    saveToSheetsBtn.className = 'export-btn export-sheets';
+    saveToSheetsBtn.textContent = '구글 시트 저장';
+    saveToSheetsBtn.onclick = saveToGoogleSheets;
+    
+    exportButtons.appendChild(exportExcelBtn);
+    exportButtons.appendChild(saveToSheetsBtn);
+    
+    resultHeader.appendChild(resultTitle);
+    resultHeader.appendChild(exportButtons);
+    
+    resultSection.appendChild(resultHeader);
+    
+    // 통계 섹션
+    if (result.statistics) {
+        const statsSection = document.createElement('div');
+        statsSection.className = 'statistics-section';
+        
+        // 마켓별 통계
+        const marketCard = createStatCard('마켓별 주문 현황', result.statistics.byMarket, 'market');
+        statsSection.appendChild(marketCard);
+        
+        // 전체 요약
+        const summaryCard = createSummaryCard(result.statistics.total);
+        statsSection.appendChild(summaryCard);
+        
+        resultSection.appendChild(statsSection);
+    }
+    
+    // 데이터 테이블
+    if (result.data && result.data.length > 0) {
+        const tableWrapper = createDataTable(result.data, result.standardFields || mappingData.standardFields);
+        resultSection.appendChild(tableWrapper);
+    }
+}
+
+function createStatCard(title, data, type) {
+    const card = document.createElement('div');
+    card.className = 'stat-card';
+    
+    const cardTitle = document.createElement('h3');
+    cardTitle.textContent = title;
+    card.appendChild(cardTitle);
+    
+    const table = document.createElement('table');
+    table.className = 'stat-table';
+    
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    
+    if (type === 'market') {
+        ['마켓', '주문수', '수량', '금액'].forEach(text => {
+            const th = document.createElement('th');
+            th.textContent = text;
+            headerRow.appendChild(th);
+        });
+    }
+    
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+    
+    const tbody = document.createElement('tbody');
+    let totalCount = 0;
+    let totalQuantity = 0;
+    let totalAmount = 0;
+    
+    for (const [key, value] of Object.entries(data)) {
+        const row = document.createElement('tr');
+        
+        const nameCell = document.createElement('td');
+        nameCell.textContent = key;
+        row.appendChild(nameCell);
+        
+        const countCell = document.createElement('td');
+        countCell.textContent = value.count.toLocaleString('ko-KR');
+        row.appendChild(countCell);
+        
+        const quantityCell = document.createElement('td');
+        quantityCell.textContent = value.quantity.toLocaleString('ko-KR');
+        row.appendChild(quantityCell);
+        
+        const amountCell = document.createElement('td');
+        amountCell.className = 'amount-col';
+        amountCell.textContent = value.amount.toLocaleString('ko-KR') + '원';
+        row.appendChild(amountCell);
+        
+        tbody.appendChild(row);
+        
+        totalCount += value.count;
+        totalQuantity += value.quantity;
+        totalAmount += value.amount;
+    }
+    
+    // 합계 행
+    const totalRow = document.createElement('tr');
+    totalRow.className = 'total-row';
+    
+    const totalLabel = document.createElement('td');
+    totalLabel.textContent = '합계';
+    totalRow.appendChild(totalLabel);
+    
+    const totalCountCell = document.createElement('td');
+    totalCountCell.textContent = totalCount.toLocaleString('ko-KR');
+    totalRow.appendChild(totalCountCell);
+    
+    const totalQuantityCell = document.createElement('td');
+    totalQuantityCell.textContent = totalQuantity.toLocaleString('ko-KR');
+    totalRow.appendChild(totalQuantityCell);
+    
+    const totalAmountCell = document.createElement('td');
+    totalAmountCell.className = 'amount-col';
+    totalAmountCell.textContent = totalAmount.toLocaleString('ko-KR') + '원';
+    totalRow.appendChild(totalAmountCell);
+    
+    tbody.appendChild(totalRow);
+    table.appendChild(tbody);
+    card.appendChild(table);
+    
+    return card;
+}
+
+function createSummaryCard(totalData) {
+    const card = document.createElement('div');
+    card.className = 'stat-card';
+    
+    const cardTitle = document.createElement('h3');
+    cardTitle.textContent = '전체 요약';
+    card.appendChild(cardTitle);
+    
+    const summaryContent = document.createElement('div');
+    summaryContent.style.padding = '20px';
+    summaryContent.style.fontSize = '18px';
+    summaryContent.style.lineHeight = '1.8';
+    
+    summaryContent.innerHTML = `
+        <div>총 주문 수: <strong>${totalData.count.toLocaleString('ko-KR')}</strong>건</div>
+        <div>총 수량: <strong>${totalData.quantity.toLocaleString('ko-KR')}</strong>개</div>
+        <div>총 금액: <strong>${totalData.amount.toLocaleString('ko-KR')}</strong>원</div>
+    `;
+    
+    card.appendChild(summaryContent);
+    return card;
+}
+
+function createDataTable(data, fields) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'table-wrapper';
+    
+    const table = document.createElement('table');
+    
+    // 헤더 생성
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    
+    fields.forEach(field => {
+        const th = document.createElement('th');
+        th.textContent = field;
+        headerRow.appendChild(th);
+    });
+    
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+    
+    // 바디 생성
+    const tbody = document.createElement('tbody');
+    
+    data.forEach(row => {
+        const tr = document.createElement('tr');
+        
+        fields.forEach(field => {
+            const td = document.createElement('td');
+            td.textContent = row[field] || '';
+            tr.appendChild(td);
+        });
+        
+        tbody.appendChild(tr);
+    });
+    
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+    
+    return wrapper;
+}
+
 // ===========================
 // 이벤트 리스너 설정
 // ===========================
@@ -177,34 +401,46 @@ function setupEventListeners() {
         });
     });
     
-    // 파일 업로드
-    document.getElementById('uploadFileBtn').addEventListener('click', function() {
-        document.getElementById('fileInput').click();
-    });
+    // 파일 업로드 버튼
+    const uploadFileBtn = document.getElementById('uploadFileBtn');
+    if (uploadFileBtn) {
+        uploadFileBtn.addEventListener('click', function() {
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput) fileInput.click();
+        });
+    }
     
-    document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+    // 파일 입력
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput) {
+        fileInput.addEventListener('change', handleFileSelect);
+    }
     
     // 드래그 앤 드롭
     const uploadSection = document.getElementById('uploadSection');
-    uploadSection.addEventListener('dragover', handleDragOver);
-    uploadSection.addEventListener('dragleave', handleDragLeave);
-    uploadSection.addEventListener('drop', handleDrop);
+    if (uploadSection) {
+        uploadSection.addEventListener('dragover', handleDragOver);
+        uploadSection.addEventListener('dragleave', handleDragLeave);
+        uploadSection.addEventListener('drop', handleDrop);
+    }
     
     // 처리 버튼
-    document.getElementById('processBtn').addEventListener('click', processOrders);
-    
-    // 내보내기 버튼
-    document.getElementById('exportExcel').addEventListener('click', exportToExcel);
-    document.getElementById('saveToSheets').addEventListener('click', saveToGoogleSheets);
+    const processBtn = document.getElementById('processBtn');
+    if (processBtn) {
+        processBtn.addEventListener('click', processOrders);
+    }
     
     // 매핑 시트 열기
-    document.getElementById('openMappingSheet').addEventListener('click', function(e) {
-        e.preventDefault();
-        const spreadsheetId = prompt('스프레드시트 ID를 입력하세요:');
-        if (spreadsheetId) {
-            window.open(`https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit#gid=0`, '_blank');
-        }
-    });
+    const openMappingSheet = document.getElementById('openMappingSheet');
+    if (openMappingSheet) {
+        openMappingSheet.addEventListener('click', function(e) {
+            e.preventDefault();
+            const spreadsheetId = prompt('스프레드시트 ID를 입력하세요:');
+            if (spreadsheetId) {
+                window.open(`https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit#gid=0`, '_blank');
+            }
+        });
+    }
 }
 
 function switchTab(tabName) {
@@ -214,7 +450,10 @@ function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(c => {
         c.classList.remove('active');
     });
-    document.getElementById(tabName + '-tab').classList.add('active');
+    const targetTab = document.getElementById(tabName + '-tab');
+    if (targetTab) {
+        targetTab.classList.add('active');
+    }
 }
 
 // ===========================
@@ -384,14 +623,6 @@ async function processExcelData(jsonData, file, isSmartStore) {
     
     await detectMarketAndAdd(file, headers, dataRows, rawRows, headerRowIndex);
 }
-
-
-
-
-
-
-
-
 
 // ===========================
 // 마켓 감지 및 파일 추가
@@ -773,13 +1004,6 @@ async function processOrderFiles(filesData) {
     }
 }
 
-
-
-
-
-
-
-
 // ===========================
 // 정산금액 계산
 // ===========================
@@ -971,16 +1195,21 @@ function numberFormat(num) {
 // ===========================
 function updateFileList() {
     const fileList = document.getElementById('fileList');
+    if (!fileList) return;
+    
     fileList.innerHTML = '';
     
+    const processBtn = document.getElementById('processBtn');
+    const fileSummary = document.getElementById('fileSummary');
+    
     if (uploadedFiles.length === 0) {
-        document.getElementById('processBtn').style.display = 'none';
-        document.getElementById('fileSummary').style.display = 'none';
+        if (processBtn) processBtn.style.display = 'none';
+        if (fileSummary) fileSummary.style.display = 'none';
         return;
     }
     
-    document.getElementById('processBtn').style.display = 'inline-block';
-    document.getElementById('fileSummary').style.display = 'flex';
+    if (processBtn) processBtn.style.display = 'inline-block';
+    if (fileSummary) fileSummary.style.display = 'flex';
     
     let sortedFiles = [...uploadedFiles];
     if (mappingData && mappingData.marketOrder && mappingData.marketOrder.length > 0) {
@@ -1017,7 +1246,7 @@ function updateFileList() {
         marketTag.className = 'market-tag';
         marketTag.textContent = file.marketName;
         
-        const market = mappingData.markets[file.marketName];
+        const market = mappingData ? mappingData.markets[file.marketName] : null;
         if (market) {
             marketTag.style.background = `rgb(${market.color})`;
             const rgb = market.color.split(',').map(Number);
@@ -1027,7 +1256,7 @@ function updateFileList() {
         
         const fileName = document.createElement('div');
         fileName.className = 'file-name';
-        fileName.innerHTML = `<span style="color: #666;">파일명:</span> ${file.name}`;
+        fileName.innerHTML = `<span style="color: #6c757d;">파일명:</span> ${file.name}`;
         
         fileNameSection.appendChild(marketTag);
         fileNameSection.appendChild(fileName);
@@ -1037,7 +1266,7 @@ function updateFileList() {
         
         const orderCount = document.createElement('span');
         orderCount.className = 'file-order-count';
-        orderCount.innerHTML = `<span style="color: #333; font-weight: bold;">${file.marketName}</span> ${file.rowCount}개 주문`;
+        orderCount.innerHTML = `<span style="color: #212529; font-weight: 400;">${file.marketName}</span> ${file.rowCount}개 주문`;
         
         const fileDate = document.createElement('span');
         fileDate.className = 'file-date';
@@ -1047,7 +1276,7 @@ function updateFileList() {
         // 삭제 버튼 추가
         const removeBtn = document.createElement('button');
         removeBtn.textContent = '삭제';
-        removeBtn.style.cssText = 'padding: 4px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;';
+        removeBtn.style.cssText = 'padding: 4px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 300;';
         removeBtn.onclick = () => removeFile(index);
         
         fileDetails.appendChild(orderCount);
@@ -1060,9 +1289,13 @@ function updateFileList() {
         fileList.appendChild(fileItem);
     });
     
-    document.getElementById('totalFiles').textContent = uploadedFiles.length;
-    document.getElementById('totalMarkets').textContent = marketSet.size;
-    document.getElementById('totalOrders').textContent = totalOrders.toLocaleString('ko-KR');
+    const totalFilesElement = document.getElementById('totalFiles');
+    const totalMarketsElement = document.getElementById('totalMarkets');
+    const totalOrdersElement = document.getElementById('totalOrders');
+    
+    if (totalFilesElement) totalFilesElement.textContent = uploadedFiles.length;
+    if (totalMarketsElement) totalMarketsElement.textContent = marketSet.size;
+    if (totalOrdersElement) totalOrdersElement.textContent = totalOrders.toLocaleString('ko-KR');
 }
 
 function removeFile(index) {
@@ -1075,19 +1308,27 @@ function checkWarnings() {
     const oldFiles = uploadedFiles.filter(f => !f.isToday);
     const warningBox = document.getElementById('warningBox');
     
+    if (!warningBox) return;
+    
     if (oldFiles.length > 0) {
         const warningList = document.getElementById('warningList');
-        warningList.innerHTML = '';
-        
-        oldFiles.forEach(file => {
-            const li = document.createElement('li');
-            const fileDate = new Date(file.lastModified);
-            li.textContent = `${file.name} (${fileDate.toLocaleDateString('ko-KR')})`;
-            warningList.appendChild(li);
-        });
+        if (warningList) {
+            warningList.innerHTML = '';
+            
+            oldFiles.forEach(file => {
+                const li = document.createElement('li');
+                const fileDate = new Date(file.lastModified);
+                li.textContent = `${file.name} (${fileDate.toLocaleDateString('ko-KR')})`;
+                warningList.appendChild(li);
+            });
+        }
         
         warningBox.classList.add('show');
-        document.getElementById('confirmOldFiles').checked = true;
+        
+        const confirmCheckbox = document.getElementById('confirmOldFiles');
+        if (confirmCheckbox) {
+            confirmCheckbox.checked = true;
+        }
     } else {
         warningBox.classList.remove('show');
     }
@@ -1125,63 +1366,61 @@ async function saveToGoogleSheets() {
 // UI 헬퍼 함수들
 // ===========================
 function showLoading() {
-    document.getElementById('loadingOverlay').classList.add('show');
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.classList.add('show');
+    }
 }
 
 function hideLoading() {
-    document.getElementById('loadingOverlay').classList.remove('show');
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.classList.remove('show');
+    }
 }
 
 function showError(message) {
-    const d = document.getElementById('errorMessage');
-    d.textContent = message;
-    d.classList.add('show');
-    setTimeout(() => d.classList.remove('show'), 5000);
+    const errorElement = document.getElementById('errorMessage');
+    if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.classList.add('show');
+        setTimeout(() => errorElement.classList.remove('show'), 5000);
+    }
 }
 
 function showErrorPersistent(message) {
-    const d = document.getElementById('errorMessage');
-    const ex = d.textContent;
-    d.textContent = ex ? ex + '\n\n' + message : message;
-    d.classList.add('show');
+    const errorElement = document.getElementById('errorMessage');
+    if (errorElement) {
+        const existingText = errorElement.textContent;
+        errorElement.textContent = existingText ? existingText + '\n\n' + message : message;
+        errorElement.classList.add('show');
+    }
 }
 
 function hideError() {
-    document.getElementById('errorMessage').classList.remove('show');
+    const errorElement = document.getElementById('errorMessage');
+    if (errorElement) {
+        errorElement.classList.remove('show');
+        errorElement.textContent = '';
+    }
 }
 
 function showSuccess(message) {
-    const d = document.getElementById('successMessage');
-    d.textContent = message;
-    d.classList.add('show');
-    setTimeout(() => d.classList.remove('show'), 5000);
+    const successElement = document.getElementById('successMessage');
+    if (successElement) {
+        successElement.textContent = message;
+        successElement.classList.add('show');
+        setTimeout(() => successElement.classList.remove('show'), 5000);
+    }
 }
 
 function hideSuccess() {
-    document.getElementById('successMessage').classList.remove('show');
+    const successElement = document.getElementById('successMessage');
+    if (successElement) {
+        successElement.classList.remove('show');
+        successElement.textContent = '';
+    }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// 전역 함수로 내보내기 (auth.js에서 호출용)
+window.initializeApp = initializeApp;
