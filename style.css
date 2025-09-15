@@ -74,50 +74,25 @@ body {
 }
 
 /* ========================================
-   초기 로딩 화면
+   초기 로딩 화면 - 비활성화
    ======================================== */
-/* 초기 로딩 화면 수정 */
-.initial-loading {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;  /* 100에서 10000으로 변경 */
-    transition: opacity 0.5s ease;  /* 0.3s에서 0.5s로 변경 */
+.initial-loading,
+#initialLoading {
+    display: none !important;
 }
 
-.initial-loading.hide {
-    opacity: 0;
-    pointer-events: none;
+/* 로그인 화면 숨기기 */
+.login-wrapper,
+#loginScreen,
+#signupCard {
+    display: none !important;
 }
 
-.initial-spinner {
-    width: 60px;
-    height: 60px;
-    border: 4px solid rgba(255, 255, 255, 0.3);
-    border-top: 4px solid var(--bg-primary);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+/* 메인 시스템 바로 표시 */
+.main-system,
+#mainSystem {
+    display: block !important;
 }
-
-.initial-text {
-    color: var(--bg-primary);
-    font-size: 18px;
-    margin-top: 20px;
-    font-weight: 300;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
 /* ========================================
    Typography
    ======================================== */
