@@ -745,11 +745,6 @@ tbody tr:nth-child(even) {
    Responsive
    ======================================== */
 @media (max-width: 768px) {
-    .container {
-        border-radius: 0;
-        margin: -20px;
-    }
-    
     .header {
         padding: 25px 20px;
     }
@@ -760,6 +755,7 @@ tbody tr:nth-child(even) {
     
     .main-content {
         padding: 25px 20px;
+        height: calc(100vh - 100px);
     }
     
     .supported-markets {
