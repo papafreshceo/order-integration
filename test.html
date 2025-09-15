@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 테스트</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        #login {
+            display: none;
+            padding: 50px;
+            text-align: center;
+        }
+        
+        #main {
+            display: none;
+            padding: 50px;
+            text-align: center;
+        }
+        
+        input {
+            display: block;
+            width: 300px;
+            margin: 10px auto;
+            padding: 10px;
+            font-size: 16px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .error {
+            color: red;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 로딩 화면 -->
+    <div id="loading">
+        <h2>로딩 중...</h2>
+    </div>
+    
+    <!-- 로그인 화면 -->
+    <div id="login">
+        <h1>로그인</h1>
+        <div class="error" id="error"></div>
+        <input type="email" id="email" placeholder="이메일">
+        <input type="password" id="password" placeholder="비밀번호">
+        <button onclick="login()">로그인</button>
+        <button onclick="googleLogin()">구글 로그인</button>
+    </div>
+    
+    <!-- 메인 화면 -->
+    <div id="main">
+        <h1>환영합니다!</h1>
+        <p id="userInfo"></p>
+        <button onclick="logout()">로그아웃</button>
+    </div>
+
+    <script>
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTpN0YHRZ0NrhQoLMAHNEglEhzwlBFoDA",
+            authDomain: "order-integration-4c379.firebaseapp.com",
+            projectId: "order-integration-4c379",
+            storageBucket: "order-integration-4c379.firebasestorage.app",
+            messagingSenderId: "695731576846",
+            appId: "1:695731576846:web:624c6b9844ea6d33559c5f"
+        };
+
+        // Firebase 초기화
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // 인증 상태 감지
+        auth.onAuthStateChanged((user) => {
+            console.log('Auth state:', user ? 'Logged in' : 'Not logged in');
+            
+            document.getElementById('loading').style.display = 'none';
+            
+            if (user) {
+                // 로그인됨
+                document.getElementById('login').style.display = 'none';
+                document.getElementById('main').style.display = 'block';
+                document.getElementById('userInfo').textContent = '이메일: ' + user.email;
+            } else {
+                // 로그인 안됨
+                document.getElementById('login').style.display = 'block';
+                document.getElementById('main').style.display = 'none';
+            }
+        });
+
+        // 이메일 로그인
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                document.getElementById('error').textContent = '';
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+            }
+        }
+
+        // 구글 로그인
+        async function googleLogin() {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                await auth.signInWithPopup(provider);
+                document.getElementById('error').textContent = '';
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+            }
+        }
+
+        // 로그아웃
+        async function logout() {
+            try {
+                await auth.signOut();
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        // 3초 후에도 Firebase가 응답없으면 강제로 로그인 화면 표시
+        setTimeout(() => {
+            if (document.getElementById('loading').style.display !== 'none') {
+                console.log('Timeout - showing login screen');
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('login').style.display = 'block';
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
