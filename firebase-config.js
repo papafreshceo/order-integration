@@ -1,5 +1,6 @@
-// firebase-config.js
+// firebase-config.js - Firebase 설정 및 초기화
 
+// Firebase 설정 객체
 const firebaseConfig = {
     apiKey: "AIzaSyCTpN0YHRZ0NrhQoLMAHNEglEhzwlBFoDA",
     authDomain: "order-integration-4c379.firebaseapp.com",
@@ -13,11 +14,13 @@ const firebaseConfig = {
 // Firebase 초기화
 firebase.initializeApp(firebaseConfig);
 
-// Auth 인스턴스 생성
-const auth = firebase.auth();
+// Auth 인스턴스 생성 및 전역 변수로 설정
+window.auth = firebase.auth();
 
 // Google Provider 설정
-const googleProvider = new firebase.auth.GoogleAuthProvider();
+window.googleProvider = new firebase.auth.GoogleAuthProvider();
 
 // 한국어 설정
-auth.languageCode = 'ko';
+window.auth.languageCode = 'ko';
+
+console.log('Firebase initialized successfully');

@@ -32,7 +32,7 @@
             width: 50px;
             height: 50px;
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #4CAF50;
+            border-top: 4px solid #2563eb;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -54,7 +54,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
             display: none;
             align-items: center;
             justify-content: center;
@@ -64,7 +64,7 @@
         .login-card {
             background: white;
             padding: 40px;
-            border-radius: 12px;
+            border-radius: 16px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             width: 100%;
             max-width: 400px;
@@ -75,13 +75,14 @@
             font-weight: 600;
             margin-bottom: 10px;
             text-align: center;
-            color: #333;
+            color: #212529;
         }
         
         .login-subtitle {
-            color: #666;
+            color: #6c757d;
             text-align: center;
             margin-bottom: 30px;
+            font-weight: 300;
         }
         
         .form-group {
@@ -91,49 +92,50 @@
         .form-label {
             display: block;
             margin-bottom: 5px;
-            font-weight: 500;
-            color: #555;
+            font-weight: 400;
+            color: #495057;
             font-size: 14px;
         }
         
         .form-input {
             width: 100%;
             padding: 10px 12px;
-            border: 1px solid #ddd;
+            border: 1px solid #dee2e6;
             border-radius: 6px;
             font-size: 14px;
             transition: border 0.3s;
             box-sizing: border-box;
+            font-weight: 300;
         }
         
         .form-input:focus {
             outline: none;
-            border-color: #4CAF50;
+            border-color: #2563eb;
         }
         
         .btn-login {
             width: 100%;
             padding: 12px;
-            background: #4CAF50;
+            background: #2563eb;
             color: white;
             border: none;
             border-radius: 6px;
             font-size: 16px;
-            font-weight: 500;
+            font-weight: 400;
             cursor: pointer;
             transition: all 0.3s;
         }
         
         .btn-login:hover {
-            background: #45a049;
+            background: #1d4ed8;
         }
         
         .btn-google {
             width: 100%;
             padding: 12px;
             background: white;
-            color: #333;
-            border: 1px solid #ddd;
+            color: #212529;
+            border: 1px solid #dee2e6;
             border-radius: 6px;
             font-size: 16px;
             cursor: pointer;
@@ -142,11 +144,12 @@
             justify-content: center;
             gap: 10px;
             transition: all 0.3s;
+            font-weight: 300;
         }
         
         .btn-google:hover {
-            background: #f8f8f8;
-            border-color: #4285F4;
+            background: #f8f9fa;
+            border-color: #2563eb;
         }
         
         .google-icon {
@@ -160,8 +163,9 @@
         .divider {
             text-align: center;
             margin: 20px 0;
-            color: #999;
+            color: #6c757d;
             position: relative;
+            font-weight: 300;
         }
         
         .divider::before,
@@ -171,7 +175,7 @@
             top: 50%;
             width: 42%;
             height: 1px;
-            background: #e0e0e0;
+            background: #dee2e6;
         }
         
         .divider::before {
@@ -185,14 +189,15 @@
         .auth-footer {
             text-align: center;
             margin-top: 20px;
-            color: #666;
+            color: #6c757d;
             font-size: 14px;
+            font-weight: 300;
         }
         
         .auth-link {
-            color: #4CAF50;
+            color: #2563eb;
             text-decoration: none;
-            font-weight: 500;
+            font-weight: 400;
         }
         
         .auth-link:hover {
@@ -200,14 +205,15 @@
         }
         
         .error-message {
-            background: #fee;
-            color: #c33;
+            background: #fee2e2;
+            color: #dc3545;
             padding: 10px;
             border-radius: 4px;
             margin-bottom: 15px;
             display: none;
             font-size: 14px;
-            border: 1px solid #fcc;
+            border: 1px solid #fecaca;
+            font-weight: 300;
         }
         
         .user-info {
@@ -219,6 +225,7 @@
             gap: 10px;
             color: white;
             font-size: 14px;
+            font-weight: 300;
         }
         
         .btn-logout {
@@ -230,6 +237,7 @@
             cursor: pointer;
             font-size: 14px;
             transition: background 0.3s;
+            font-weight: 300;
         }
         
         .btn-logout:hover {
@@ -252,7 +260,7 @@
     <div class="login-wrapper" id="loginScreen">
         <!-- 로그인 카드 -->
         <div class="login-card" id="loginCard">
-            <h1 class="login-title">📦 주문통합 프로그램</h1>
+            <h1 class="login-title">주문통합 프로그램</h1>
             <p class="login-subtitle">로그인하여 시작하세요</p>
             
             <div class="error-message" id="errorMsg"></div>
@@ -286,7 +294,7 @@
         
         <!-- 회원가입 카드 -->
         <div class="login-card" id="signupCard" style="display: none;">
-            <h1 class="login-title">📦 회원가입</h1>
+            <h1 class="login-title">회원가입</h1>
             <p class="login-subtitle">새 계정을 만들어보세요</p>
             
             <div class="error-message" id="signupErrorMsg"></div>
@@ -319,7 +327,7 @@
     <div id="mainSystem">
         <div class="container">
             <div class="header">
-                <h1>📦 주문통합 프로그램</h1>
+                <h1>주문통합 프로그램</h1>
                 <p>모든 오픈마켓 주문을 스마트하게 통합하고 관리하세요</p>
                 <div class="user-info">
                     <span id="userEmail"></span>
@@ -339,8 +347,8 @@
 
                     <div class="upload-section" id="uploadSection">
                         <input type="file" id="fileInput" class="file-input" multiple accept=".xlsx,.xls,.csv">
-                        <button class="upload-btn" id="uploadFileBtn">📁 주문 파일 선택</button>
-                        <p style="margin-top: 15px; color: #666;">엑셀/CSV 파일을 선택하거나 여기로 드래그해주세요</p>
+                        <button class="upload-btn" id="uploadFileBtn">주문 파일 선택</button>
+                        <p style="margin-top: 15px; color: #6c757d;">엑셀/CSV 파일을 선택하거나 여기로 드래그해주세요</p>
                     </div>
 
                     <div class="file-list" id="fileList"></div>
@@ -361,7 +369,7 @@
                     </div>
 
                     <div class="warning-box" id="warningBox">
-                        <h3>⚠️ 주의: 오래된 파일이 감지되었습니다!</h3>
+                        <h3>주의: 오래된 파일이 감지되었습니다!</h3>
                         <ul class="warning-list" id="warningList"></ul>
                         <div class="confirmation-checkbox">
                             <label>
@@ -375,7 +383,7 @@
                     <div class="success-message" id="successMessage"></div>
 
                     <div style="text-align: center; margin: 30px 0;">
-                        <button class="upload-btn" id="processBtn" style="display: none;">🔄 주문 통합 실행</button>
+                        <button class="upload-btn" id="processBtn" style="display: none;">주문 통합 실행</button>
                     </div>
 
                     <div class="result-section" id="resultSection"></div>
@@ -391,7 +399,7 @@
 
                 <div id="settings-tab" class="tab-content">
                     <div class="stat-card">
-                        <h3>⚙️ 매핑 설정</h3>
+                        <h3>매핑 설정</h3>
                         <p>매핑 시트에서 마켓별 필드 매핑을 설정할 수 있습니다.</p>
                         <button class="upload-btn" id="openMappingSheet">매핑 시트 열기</button>
                     </div>
@@ -409,24 +417,14 @@
 
     <!-- 라이브러리 및 스크립트 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Firebase 설정 먼저 로드 -->
     <script src="firebase-config.js"></script>
+    
+    <!-- 인증 모듈 로드 -->
     <script src="auth.js"></script>
+    
+    <!-- 메인 스크립트 로드 -->
     <script src="script.js"></script>
-    <script>
-    // 페이지 로드 후 강제 실행
-    window.addEventListener('load', function() {
-        setTimeout(function() {
-            const loading = document.getElementById('initialLoading');
-            const login = document.getElementById('loginScreen');
-            
-            if (loading && loading.style.display !== 'none') {
-                loading.style.display = 'none';
-                if (login) {
-                    login.style.display = 'flex';
-                }
-            }
-        }, 1000);
-    });
-</script>
 </body>
-</htm
+</html>
