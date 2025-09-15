@@ -29,10 +29,14 @@ if (typeof auth !== 'undefined') {
                     userEmailElement.textContent = user.email;
                 }
                 
-                // 주문통합 앱 초기화
-                if (typeof initializeApp === 'function') {
-                    initializeApp();
-                }
+                // auth.js에서 initializeApp 호출 부분 수정
+if (typeof initializeApp === 'function') {
+    try {
+        initializeApp();
+    } catch (error) {
+        console.error('App initialization error:', error);
+    }
+}
             } else {
                 // 비로그인 상태 - 로그인 화면 표시
                 currentUser = null;
