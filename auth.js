@@ -276,3 +276,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Firebase 로드 실패 대비 - 3초 후 강제로 로딩 화면 제거
+setTimeout(() => {
+    if (!authInitialized) {
+        const initialLoading = document.getElementById('initialLoading');
+        const loginScreen = document.getElementById('loginScreen');
+        
+        if (initialLoading) {
+            initialLoading.classList.add('hide');
+            setTimeout(() => {
+                initialLoading.style.display = 'none';
+            }, 300);
+        }
+        
+        if (loginScreen) {
+            loginScreen.style.display = 'flex';
+        }
+        
+        console.warn('Firebase 초기화 타임아웃 - 로그인 화면 표시');
+    }
+}, 3000);
