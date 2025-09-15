@@ -1,9 +1,9 @@
 // ===========================
 // 전역 변수
 // ===========================
-let uploadedFiles = [];
+window uploadedFiles = [];
 let mappingData = null;
-let processedData = null;
+window processedData = null;
 let standardFields = [];
 let salesInfo = {};
 let optionProductInfo = {};
@@ -1715,4 +1715,5 @@ function createStatCell(value, isAmount = false) {
     td.textContent = (value || value === 0) ? numberFormat(value) : '';
     return td;
 }
+
 
