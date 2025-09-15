@@ -76,6 +76,7 @@ body {
 /* ========================================
    초기 로딩 화면
    ======================================== */
+/* 초기 로딩 화면 수정 */
 .initial-loading {
     position: fixed;
     top: 0;
@@ -87,8 +88,8 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    z-index: 100;
-    transition: opacity 0.3s ease;
+    z-index: 10000;  /* 100에서 10000으로 변경 */
+    transition: opacity 0.5s ease;  /* 0.3s에서 0.5s로 변경 */
 }
 
 .initial-loading.hide {

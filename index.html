@@ -266,5 +266,34 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="script.js"></script>
+    <script>
+    // 초기 로딩 처리
+    let authInitialized = false;
+    
+    // DOM이 로드된 후 실행
+    document.addEventListener('DOMContentLoaded', function() {
+        // 초기 로딩 화면 요소 확인
+        const initialLoading = document.getElementById('initialLoading');
+        const loginScreen = document.getElementById('loginScreen');
+        const mainSystem = document.getElementById('mainSystem');
+        
+        // 2초 후 무조건 로딩 화면 숨기기 (추가)
+        setTimeout(() => {
+            if (initialLoading) {
+                initialLoading.style.display = 'none';  // 직접 display:none 처리
+            }
+            
+            // 로그인 화면 표시
+            if (loginScreen) {
+                loginScreen.style.display = 'flex';
+            }
+        }, 2000);
+        
+        // Firebase Auth 초기화 확인 (기존 코드 유지)
+        if (typeof auth !== 'undefined') {
+            // ... 나머지 기존 코드 유지 ...
+        }
+    });
+</script>
 </body>
 </html>
