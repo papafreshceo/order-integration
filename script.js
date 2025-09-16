@@ -1555,6 +1555,7 @@ function displayCategorizedStats(tableId, stats, firstColumnName) {
     });
     
     // 합계 행
+// 합계 행
     const totalRow = document.createElement('tr');
     totalRow.className = 'total-row';
     
@@ -1582,7 +1583,8 @@ function displayCategorizedStats(tableId, stats, firstColumnName) {
     totalRow.appendChild(createStatCell(totals.sellerSales.quantity));
     totalRow.appendChild(createStatCell(totals.sellerSales.amount, true));
     
-totalRow.appendChild(createStatCell(totals.sentCompany.count, false, 'sent-col'));
+    // 발송 - 검정색
+    totalRow.appendChild(createStatCell(totals.sentCompany.count, false, 'sent-col'));
     totalRow.appendChild(createStatCell(totals.sentCompany.quantity, false, 'sent-col'));
     totalRow.appendChild(createStatCell(totals.sentCompany.amount, true, 'sent-col'));
     
@@ -1590,6 +1592,7 @@ totalRow.appendChild(createStatCell(totals.sentCompany.count, false, 'sent-col')
     totalRow.appendChild(createStatCell(totals.sentVendor.quantity, false, 'sent-col'));
     totalRow.appendChild(createStatCell(totals.sentVendor.amount, true, 'sent-col'));
     
+    // 미발송 - 빨강색
     totalRow.appendChild(createStatCell(totals.unsentCompany.count, false, 'unsent-col'));
     totalRow.appendChild(createStatCell(totals.unsentCompany.quantity, false, 'unsent-col'));
     totalRow.appendChild(createStatCell(totals.unsentCompany.amount, true, 'unsent-col'));
@@ -1961,6 +1964,7 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
 
