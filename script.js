@@ -525,7 +525,11 @@ async function processOrderFiles(filesData) {
             };
         }
         
-        const sheetName = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const today = new Date();
+const year = today.getFullYear();
+const month = String(today.getMonth() + 1).padStart(2, '0');
+const day = String(today.getDate()).padStart(2, '0');
+const sheetName = `${year}${month}${day}`;
         
         // 결과 데이터
         const mergedData = [];
@@ -1964,6 +1968,7 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
 
