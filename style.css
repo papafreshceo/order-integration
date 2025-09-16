@@ -637,7 +637,85 @@ tbody tr:nth-child(even) {
     padding: 10px 8px;
     font-weight: 400;
 }
+/* 통계 테이블 컨테이너 스크롤 설정 */
+.stat-card {
+    overflow-x: auto;  /* 가로 스크롤 활성화 */
+    overflow-y: hidden;
+}
 
+/* 통계 테이블 고정 너비 설정 */
+#marketStats,
+#optionStats {
+    width: 1500px;  /* 테이블 전체 너비 고정 */
+    min-width: 1500px;
+    table-layout: fixed;  /* 열 너비 고정 */
+}
+
+/* 마켓별 통계 열 너비 */
+#marketStats th:nth-child(1),
+#marketStats td:nth-child(1) { 
+    width: 120px; 
+    min-width: 120px;
+}
+
+#marketStats th,
+#marketStats td {
+    width: 50px;
+    min-width: 50px;
+}
+
+/* 전체 열은 조금 더 넓게 */
+#marketStats th:nth-child(2),
+#marketStats th:nth-child(3),
+#marketStats th:nth-child(4),
+#marketStats td:nth-child(2),
+#marketStats td:nth-child(3),
+#marketStats td:nth-child(4) {
+    width: 60px;
+    min-width: 60px;
+}
+
+/* 옵션별 통계 열 너비 */
+#optionStats th:nth-child(1),
+#optionStats td:nth-child(1) { 
+    width: 200px;  /* 옵션명은 더 넓게 */
+    min-width: 200px;
+}
+
+#optionStats th,
+#optionStats td {
+    width: 50px;
+    min-width: 50px;
+}
+
+/* 전체 열은 조금 더 넓게 */
+#optionStats th:nth-child(2),
+#optionStats th:nth-child(3),
+#optionStats th:nth-child(4),
+#optionStats td:nth-child(2),
+#optionStats td:nth-child(3),
+#optionStats td:nth-child(4) {
+    width: 60px;
+    min-width: 60px;
+}
+
+/* 스크롤바 스타일 (선택사항) */
+.stat-card::-webkit-scrollbar {
+    height: 8px;
+}
+
+.stat-card::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.stat-card::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.stat-card::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
 /* ========================================
    Pivot Controls
    ======================================== */
