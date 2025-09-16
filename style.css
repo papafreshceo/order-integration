@@ -570,23 +570,75 @@ tbody tr:nth-child(even) {
     background: var(--bg-muted);
 }
 
+/* 통합 결과 테이블 배경색 수정 */
+#resultTable {
+    background: #f0f9ff;
+    border-spacing: 0;
+    border-collapse: collapse;
+}
+
+#resultTable thead {
+    background: #e0f2fe;
+}
+
+#resultTable thead th {
+    background: #e0f2fe;
+    border-color: #bae6fd;
+}
+
+#resultTable tbody td {
+    background: #f0f9ff;
+    border-color: #e0f2fe;
+}
+
+#resultTable tbody tr:nth-child(even) td {
+    background: #f7fcff;
+}
+
+#resultTable tbody tr:hover td {
+    background: #dbeafe;
+}
+
+/* 고정 컬럼 간격 문제 해결 */
+#resultTable .fixed-col {
+    background: #f0f9ff !important;
+    border-right: 1px solid #e0f2fe;
+}
+
+#resultTable thead .fixed-col {
+    background: #e0f2fe !important;
+}
+
+#resultTable tbody tr:nth-child(even) .fixed-col {
+    background: #f7fcff !important;
+}
+
+#resultTable tbody tr:hover .fixed-col {
+    background: #dbeafe !important;
+}
+
+/* 마지막 고정 컬럼의 그림자 강화 */
+#resultTable .last-fixed-col {
+    box-shadow: 3px 0 8px rgba(0,0,0,0.1);
+    border-right: 2px solid #bae6fd;
+}
+
 /* ========================================
    Statistics Section
    ======================================== */
 .statistics-section {
-    display: grid;
-    grid-template-columns: 1fr;  /* 한 열만 사용 */
-    gap: 20px;
+    display: block;
     margin-top: 32px;
 }
 
 .stat-card {
     background: var(--bg-primary);
     border: 1px solid var(--border-default);
-
     border-radius: 16px;
     padding: 40px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    width: 100%;
 }
 
 .stat-card h3 {
@@ -598,31 +650,48 @@ tbody tr:nth-child(even) {
     font-weight: 400;
 }
 
+/* 통계 테이블 고정 너비 설정 */
 .stat-table {
-    width: 100%;
+    width: 1530px;  /* 총 너비 고정 */
+    min-width: 1530px;
     font-size: 12px;
     table-layout: fixed;
+    border-collapse: collapse;
 }
 
 .stat-table thead tr th {
     background: var(--bg-secondary);
     color: var(--text-primary);
-    padding: 8px;
+    padding: 8px 4px;
     text-align: center;
     font-weight: 400;
     border: 1px solid var(--border-default);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .stat-table td {
-    padding: 8px;
+    padding: 8px 4px;
     border: 1px solid var(--border-light);
     text-align: center;
     font-weight: 300;
     color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stat-table td:first-child {
+    text-align: left;
+    padding-left: 12px;
+    font-weight: bold;
+    color: var(--text-primary);
 }
 
 .stat-table td.amount-col {
     text-align: right;
+    padding-right: 8px;
 }
 
 .stat-table .total-row {
@@ -648,6 +717,10 @@ tbody tr:nth-child(even) {
     border-radius: 8px;
 }
 
+.pivot-controls label {
+    margin-right: 15px;
+}
+
 .pivot-controls select {
     padding: 8px 12px;
     border-radius: 4px;
@@ -656,6 +729,7 @@ tbody tr:nth-child(even) {
     font-weight: 300;
     color: var(--text-primary);
     background: var(--bg-primary);
+    margin-left: 5px;
 }
 
 .pivot-controls button {
@@ -668,6 +742,7 @@ tbody tr:nth-child(even) {
     font-weight: 300;
     font-size: 14px;
     transition: all 0.2s;
+    margin-left: 15px;
 }
 
 .pivot-controls button:hover {
@@ -773,12 +848,9 @@ tbody tr:nth-child(even) {
         grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     }
     
-    .statistics-section {
-        grid-template-columns: 1fr;
-    }
-    
     .stat-card {
         padding: 25px 20px;
+        overflow-x: auto;
     }
     
     .tab-navigation {
