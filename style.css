@@ -583,10 +583,10 @@ tbody tr:nth-child(even) {
 .stat-card {
     background: var(--bg-primary);
     border: 1px solid var(--border-default);
-
     border-radius: 16px;
     padding: 40px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    overflow-x: auto;  /* 가로 스크롤 추가 */
 }
 
 .stat-card h3 {
@@ -599,9 +599,23 @@ tbody tr:nth-child(even) {
 }
 
 .stat-table {
-    width: 100%;
+    width: 1530px;  /* 고정 너비 */
+    min-width: 1530px;  /* 최소 너비도 고정 */
     font-size: 12px;
     table-layout: fixed;
+}
+
+/* 마켓별, 옵션별 테이블 고정 너비 */
+#marketStats,
+#optionStats {
+    table-layout: fixed;
+    width: 1530px;
+    min-width: 1530px;
+}
+
+#marketStats col,
+#optionStats col {
+    min-width: initial !important;
 }
 
 .stat-table thead tr th {
@@ -611,6 +625,9 @@ tbody tr:nth-child(even) {
     text-align: center;
     font-weight: 400;
     border: 1px solid var(--border-default);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .stat-table td {
