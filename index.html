@@ -250,27 +250,6 @@
             height: 100vh;
         }
         
-        /* 통계 테이블 열 너비 고정 */
-        #marketStats,
-        #optionStats {
-            table-layout: fixed;
-            width: 100%;
-        }
-        
-        /* 마켓별 통계 열 너비 */
-        #marketStats colgroup col:nth-child(1) { width: 100px; }  /* 마켓명 */
-        #marketStats colgroup col:nth-child(2),
-        #marketStats colgroup col:nth-child(3),
-        #marketStats colgroup col:nth-child(4) { width: 60px; }   /* 전체 */
-        #marketStats colgroup col:nth-child(n+5):nth-child(-n+28) { width: 50px; }  /* 나머지 컬럼들 */
-        
-        /* 옵션별 통계 열 너비 */
-        #optionStats colgroup col:nth-child(1) { width: 100px; }  /* 옵션명 */
-        #optionStats colgroup col:nth-child(2),
-        #optionStats colgroup col:nth-child(3),
-        #optionStats colgroup col:nth-child(4) { width: 60px; }   /* 전체 */
-        #optionStats colgroup col:nth-child(n+5):nth-child(-n+28) { width: 50px; }  /* 나머지 컬럼들 */
-        
         /* 첫 번째 컬럼 스타일 */
         #marketStats td:first-child,
         #optionStats td:first-child {
@@ -434,7 +413,7 @@
                         </div>
                         
                         <div class="statistics-section" style="display: block !important;">
-                            <div class="stat-card" style="width: 100% !important; margin-bottom: 20px; overflow-x: auto;">
+                            <div class="stat-card" style="width: 100% !important; margin-bottom: 20px;">
                                 <h3>마켓별 통계</h3>
                                 <table class="stat-table" id="marketStats">
                                     <colgroup>
@@ -520,7 +499,7 @@
                                 </table>
                             </div>
                             
-                            <div class="stat-card" style="width: 100% !important; overflow-x: auto;">
+                            <div class="stat-card" style="width: 100% !important;">
                                 <h3>옵션별 통계</h3>
                                 <table class="stat-table" id="optionStats">
                                     <colgroup>
