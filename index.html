@@ -1,167 +1,594 @@
-// ===========================
-// 인증 관련 함수들
-// ===========================
-
-// 로그인 상태 확인
-auth.onAuthStateChanged((user) => {
-    // 초기 로딩 숨기기
-    document.getElementById('initialLoading').style.display = 'none';
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주문통합 프로그램</title>
     
-    if (user) {
-        // 로그인된 상태
-        document.getElementById('loginScreen').style.display = 'none';
-        const mainSystem = document.getElementById('mainSystem');
-        mainSystem.style.display = 'block';
-        mainSystem.style.width = '100%';
-        mainSystem.style.height = '100vh';
-        document.getElementById('userEmail').textContent = user.email;
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
+    <!-- 기존 스타일시트 -->
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        /* 로그인 관련 스타일 */
+        .initial-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
         
-        // 메인 시스템 초기화는 script.js에서 처리
-    } else {
-        // 로그아웃 상태
-        document.getElementById('loginScreen').style.display = 'flex';
-        document.getElementById('mainSystem').style.display = 'none';
-    }
-});
+        .initial-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .initial-text {
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .login-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .login-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-align: center;
+            color: #212529;
+        }
+        
+        .login-subtitle {
+            color: #6c757d;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 400;
+            color: #495057;
+            font-size: 14px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border 0.3s;
+            box-sizing: border-box;
+            font-weight: 300;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-login:hover {
+            background: #1d4ed8;
+        }
+        
+        .btn-google {
+            width: 100%;
+            padding: 12px;
+            background: white;
+            color: #212529;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+            font-weight: 300;
+        }
+        
+        .btn-google:hover {
+            background: #f8f9fa;
+            border-color: #2563eb;
+        }
+        
+        .google-icon {
+            font-weight: bold;
+            font-size: 18px;
+            background: linear-gradient(to right, #4285F4, #EA4335, #FBBC05, #34A853);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            color: #6c757d;
+            position: relative;
+            font-weight: 300;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 42%;
+            height: 1px;
+            background: #dee2e6;
+        }
+        
+        .divider::before {
+            left: 0;
+        }
+        
+        .divider::after {
+            right: 0;
+        }
+        
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #6c757d;
+            font-size: 14px;
+            font-weight: 300;
+        }
+        
+        .auth-link {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 400;
+        }
+        
+        .auth-link:hover {
+            text-decoration: underline;
+        }
+        
+        .error-message {
+            background: #fee2e2;
+            color: #dc3545;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+            font-size: 14px;
+            border: 1px solid #fecaca;
+            font-weight: 300;
+        }
+        
+        .user-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            font-size: 14px;
+            font-weight: 300;
+        }
+        
+        .btn-logout {
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+            font-weight: 300;
+        }
+        
+        .btn-logout:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        #mainSystem {
+            display: none;
+            width: 100%;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <!-- 초기 로딩 화면 -->
+    <div class="initial-loading" id="initialLoading">
+        <div class="initial-spinner"></div>
+        <div class="initial-text">시스템 로딩 중...</div>
+    </div>
 
-// 이메일 로그인
-function signInWithEmail() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    <!-- 로그인 화면 -->
+    <div class="login-wrapper" id="loginScreen">
+        <!-- 로그인 카드 -->
+        <div class="login-card" id="loginCard">
+            <h1 class="login-title">주문통합 프로그램</h1>
+            <p class="login-subtitle">로그인하여 시작하세요</p>
+            
+            <div class="error-message" id="errorMsg"></div>
+            
+            <div class="form-group">
+                <label class="form-label">이메일</label>
+                <input type="email" id="email" class="form-input" placeholder="이메일을 입력하세요" onkeypress="handleEnter(event)">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">비밀번호</label>
+                <input type="password" id="password" class="form-input" placeholder="비밀번호를 입력하세요" onkeypress="handleEnter(event)">
+            </div>
+            
+            <button class="btn-login" onclick="signInWithEmail()">로그인</button>
+            
+            <div class="divider">
+                <span>또는</span>
+            </div>
+            
+            <button class="btn-google" onclick="signInWithGoogle()">
+                <span class="google-icon">G</span>
+                Google로 로그인
+            </button>
+            
+            <div class="auth-footer">
+                <span>계정이 없으신가요? </span>
+                <a href="#" class="auth-link" onclick="showSignUp(); return false;">회원가입</a>
+            </div>
+        </div>
+        
+        <!-- 회원가입 카드 -->
+        <div class="login-card" id="signupCard" style="display: none;">
+            <h1 class="login-title">회원가입</h1>
+            <p class="login-subtitle">새 계정을 만들어보세요</p>
+            
+            <div class="error-message" id="signupErrorMsg"></div>
+            
+            <div class="form-group">
+                <label class="form-label">이름</label>
+                <input type="text" id="signupName" class="form-input" placeholder="이름을 입력하세요">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">이메일</label>
+                <input type="email" id="signupEmail" class="form-input" placeholder="이메일을 입력하세요">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">비밀번호</label>
+                <input type="password" id="signupPassword" class="form-input" placeholder="6자 이상의 비밀번호">
+            </div>
+            
+            <button class="btn-login" onclick="signUp()">계정 만들기</button>
+            
+            <div class="auth-footer">
+                <span>이미 계정이 있으신가요? </span>
+                <a href="#" class="auth-link" onclick="showLogin(); return false;">로그인</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 시스템 -->
+    <div id="mainSystem">
+        <div class="container">
+            <div class="header">
+                <h1>주문통합 프로그램</h1>
+                <p>모든 오픈마켓 주문을 스마트하게 통합하고 관리하세요</p>
+                <div class="user-info">
+                    <span id="userEmail"></span>
+                    <button class="btn-logout" onclick="signOut()">로그아웃</button>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="tab-navigation">
+                    <button class="tab-button active" data-tab="upload">주문 통합</button>
+                    <button class="tab-button" data-tab="dashboard">대시보드</button>
+                    <button class="tab-button" data-tab="settings">설정</button>
+                </div>
+
+                <div id="upload-tab" class="tab-content active">
+                    <div class="supported-markets" id="supportedMarkets"></div>
+
+                    <div class="upload-section" id="uploadSection">
+                        <input type="file" id="fileInput" class="file-input" multiple accept=".xlsx,.xls,.csv">
+                        <button class="upload-btn" id="uploadFileBtn">주문 파일 선택</button>
+                        <p style="margin-top: 15px; color: #6c757d;">엑셀/CSV 파일을 선택하거나 여기로 드래그해주세요</p>
+                    </div>
+
+                    <div class="file-list" id="fileList"></div>
+
+                    <div class="file-summary" id="fileSummary" style="display: none;">
+                        <div class="summary-item">
+                            <div class="summary-label">업로드 파일</div>
+                            <div class="summary-value" id="totalFiles">0</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">마켓 수</div>
+                            <div class="summary-value" id="totalMarkets">0</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">총 주문 수</div>
+                            <div class="summary-value orders" id="totalOrders">0</div>
+                        </div>
+                    </div>
+
+                    <div class="warning-box" id="warningBox">
+                        <h3>주의: 오래된 파일이 감지되었습니다!</h3>
+                        <ul class="warning-list" id="warningList"></ul>
+                        <div class="confirmation-checkbox">
+                            <label>
+                                <input type="checkbox" id="confirmOldFiles">
+                                오늘 날짜가 아닌 파일은 통합에서 제외됩니다
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="error-message" id="errorMessage"></div>
+                    <div class="success-message" id="successMessage"></div>
+
+                    <div style="text-align: center; margin: 30px 0;">
+                        <button class="upload-btn" id="processBtn" style="display: none;">주문 통합 실행</button>
+                    </div>
+
+                    <div class="result-section" id="resultSection">
+                        <div class="result-header">
+                            <h2 class="result-title">통합 결과</h2>
+                            <div class="export-buttons">
+                                <button class="export-btn export-excel" id="exportExcel">엑셀 다운로드</button>
+                                <button class="export-btn export-sheets" id="saveToSheets">구글 시트 저장</button>
+                            </div>
+                        </div>
+                        
+                        <div class="table-wrapper">
+                            <table id="resultTable">
+                                <thead id="resultTableHead"></thead>
+                                <tbody id="resultTableBody"></tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="statistics-section">
+                            <div class="stat-card">
+                                <h3>마켓별 통계</h3>
+                                <table class="stat-table" id="marketStats">
+                                    <thead>
+                                        <tr>
+                                            <th rowspan="2">마켓명</th>
+                                            <th colspan="3">전체</th>
+                                            <th colspan="6">공급처</th>
+                                            <th colspan="6">판매처</th>
+                                            <th colspan="6">발송</th>
+                                            <th colspan="6">미발송</th>
+                                        </tr>
+                                        <tr>
+                                            <th>건수</th>
+                                            <th>수량</th>
+                                            <th>금액</th>
+                                            <th>자사 건</th>
+                                            <th>자사 수</th>
+                                            <th>자사 금</th>
+                                            <th>벤더 건</th>
+                                            <th>벤더 수</th>
+                                            <th>벤더 금</th>
+                                            <th>자체 건</th>
+                                            <th>자체 수</th>
+                                            <th>자체 금</th>
+                                            <th>셀러 건</th>
+                                            <th>셀러 수</th>
+                                            <th>셀러 금</th>
+                                            <th>자사 건</th>
+                                            <th>자사 수</th>
+                                            <th>자사 금</th>
+                                            <th>벤더 건</th>
+                                            <th>벤더 수</th>
+                                            <th>벤더 금</th>
+                                            <th>자사 건</th>
+                                            <th>자사 수</th>
+                                            <th>자사 금</th>
+                                            <th>벤더 건</th>
+                                            <th>벤더 수</th>
+                                            <th>벤더 금</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <h3>옵션별 통계</h3>
+                                <table class="stat-table" id="optionStats">
+                                    <thead>
+                                        <tr>
+                                            <th rowspan="2">옵션명</th>
+                                            <th colspan="3">전체</th>
+                                            <th colspan="6">공급처</th>
+                                            <th colspan="6">판매처</th>
+                                            <th colspan="6">발송</th>
+                                            <th colspan="6">미발송</th>
+                                        </tr>
+                                        <tr>
+                                            <th>건수</th>
+                                            <th>수량</th>
+                                            <th>금액</th>
+                                            <th>자사 건</th>
+                                            <th>자사 수</th>
+                                            <th>자사 금</th>
+                                            <th>벤더 건</th>
+                                            <th>벤더 수</th>
+                                            <th>벤더 금</th>
+                                            <th>자체 건</th>
+                                            <th>자체 수</th>
+                                            <th>자체 금</th>
+                                            <th>셀러 건</th>
+                                            <th>셀러 수</th>
+                                            <th>셀러 금</th>
+                                            <th>자사 건</th>
+                                            <th>자사 수</th>
+                                            <th>자사 금</th>
+                                            <th>벤더 건</th>
+                                            <th>벤더 수</th>
+                                            <th>벤더 금</th>
+                                            <th>자사 건</th>
+                                            <th>자사 수</th>
+                                            <th>자사 금</th>
+                                            <th>벤더 건</th>
+                                            <th>벤더 수</th>
+                                            <th>벤더 금</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <h3>피벗테이블</h3>
+                            <div class="pivot-controls">
+                                <label>
+                                    행:
+                                    <select id="pivotRowField">
+                                        <option value="마켓명">마켓명</option>
+                                        <option value="옵션명">옵션명</option>
+                                        <option value="셀러">셀러</option>
+                                        <option value="벤더사">벤더사</option>
+                                        <option value="송장번호유무">송장유무</option>
+                                    </select>
+                                </label>
+                                <label>
+                                    열:
+                                    <select id="pivotColField">
+                                        <option value="none">없음</option>
+                                        <option value="마켓명">마켓명</option>
+                                        <option value="옵션명">옵션명</option>
+                                        <option value="셀러">셀러</option>
+                                        <option value="벤더사">벤더사</option>
+                                        <option value="송장번호유무">송장유무</option>
+                                    </select>
+                                </label>
+                                <label>
+                                    열2:
+                                    <select id="pivotColField2">
+                                        <option value="none">없음</option>
+                                        <option value="마켓명">마켓명</option>
+                                        <option value="옵션명">옵션명</option>
+                                        <option value="셀러">셀러</option>
+                                        <option value="벤더사">벤더사</option>
+                                        <option value="송장번호유무">송장유무</option>
+                                    </select>
+                                </label>
+                                <label>
+                                    값:
+                                    <select id="pivotValueField">
+                                        <option value="count">건수</option>
+                                        <option value="수량">수량</option>
+                                        <option value="정산예정금액">금액</option>
+                                    </select>
+                                </label>
+                                <button onclick="updatePivotTable()">피벗 업데이트</button>
+                            </div>
+                            <div class="table-wrapper">
+                                <table id="pivotTable">
+                                    <thead></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="dashboard-tab" class="tab-content">
+                    <div class="table-wrapper">
+                        <table id="dashboardTable">
+                            <tbody id="dashboardBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="settings-tab" class="tab-content">
+                    <div class="stat-card">
+                        <h3>매핑 설정</h3>
+                        <p>매핑 시트에서 마켓별 필드 매핑을 설정할 수 있습니다.</p>
+                        <button class="upload-btn" id="openMappingSheet">매핑 시트 열기</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div style="text-align: center;">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">처리 중...</div>
+        </div>
+    </div>
+
+    <!-- 라이브러리 및 스크립트 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
-    if (!email || !password) {
-        showAuthError('이메일과 비밀번호를 입력해주세요.');
-        return;
-    }
+    <!-- Firebase 설정 먼저 로드 -->
+    <script src="firebase-config.js"></script>
     
-    auth.signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-            console.log('로그인 성공:', userCredential.user.email);
-            hideAuthError();
-        })
-        .catch((error) => {
-            console.error('로그인 오류:', error);
-            showAuthError(getErrorMessage(error.code));
-        });
-}
-
-// Google 로그인
-function signInWithGoogle() {
-    auth.signInWithPopup(googleProvider)
-        .then((result) => {
-            console.log('Google 로그인 성공:', result.user.email);
-            hideAuthError();
-        })
-        .catch((error) => {
-            console.error('Google 로그인 오류:', error);
-            showAuthError(getErrorMessage(error.code));
-        });
-}
-
-// 회원가입
-function signUp() {
-    const name = document.getElementById('signupName').value;
-    const email = document.getElementById('signupEmail').value;
-    const password = document.getElementById('signupPassword').value;
+    <!-- 인증 모듈 로드 -->
+    <script src="auth.js"></script>
     
-    if (!name || !email || !password) {
-        showSignupError('모든 필드를 입력해주세요.');
-        return;
-    }
-    
-    if (password.length < 6) {
-        showSignupError('비밀번호는 6자 이상이어야 합니다.');
-        return;
-    }
-    
-    auth.createUserWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-            // 사용자 프로필 업데이트
-            return userCredential.user.updateProfile({
-                displayName: name
-            });
-        })
-        .then(() => {
-            console.log('회원가입 성공');
-            hideSignupError();
-            showLogin();
-        })
-        .catch((error) => {
-            console.error('회원가입 오류:', error);
-            showSignupError(getErrorMessage(error.code));
-        });
-}
-
-// 로그아웃
-function signOut() {
-    auth.signOut()
-        .then(() => {
-            console.log('로그아웃 성공');
-        })
-        .catch((error) => {
-            console.error('로그아웃 오류:', error);
-        });
-}
-
-// 엔터키 처리
-function handleEnter(event) {
-    if (event.key === 'Enter') {
-        signInWithEmail();
-    }
-}
-
-// 로그인/회원가입 전환
-function showLogin() {
-    document.getElementById('loginCard').style.display = 'block';
-    document.getElementById('signupCard').style.display = 'none';
-    hideAuthError();
-    hideSignupError();
-}
-
-function showSignUp() {
-    document.getElementById('loginCard').style.display = 'none';
-    document.getElementById('signupCard').style.display = 'block';
-    hideAuthError();
-    hideSignupError();
-}
-
-// 에러 메시지 표시
-function showAuthError(message) {
-    const errorElement = document.getElementById('errorMsg');
-    errorElement.textContent = message;
-    errorElement.style.display = 'block';
-}
-
-function hideAuthError() {
-    document.getElementById('errorMsg').style.display = 'none';
-}
-
-function showSignupError(message) {
-    const errorElement = document.getElementById('signupErrorMsg');
-    errorElement.textContent = message;
-    errorElement.style.display = 'block';
-}
-
-function hideSignupError() {
-    document.getElementById('signupErrorMsg').style.display = 'none';
-}
-
-// Firebase 에러 메시지 변환
-function getErrorMessage(errorCode) {
-    const errorMessages = {
-        'auth/invalid-email': '유효하지 않은 이메일 형식입니다.',
-        'auth/user-disabled': '비활성화된 계정입니다.',
-        'auth/user-not-found': '존재하지 않는 계정입니다.',
-        'auth/wrong-password': '잘못된 비밀번호입니다.',
-        'auth/email-already-in-use': '이미 사용 중인 이메일입니다.',
-        'auth/weak-password': '비밀번호가 너무 약합니다.',
-        'auth/operation-not-allowed': '이 작업은 허용되지 않습니다.',
-        'auth/popup-closed-by-user': '로그인 창이 닫혔습니다.',
-        'auth/network-request-failed': '네트워크 오류가 발생했습니다.',
-        'auth/too-many-requests': '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.',
-        'auth/invalid-credential': '이메일 또는 비밀번호가 잘못되었습니다.',
-        'auth/account-exists-with-different-credential': '다른 로그인 방법으로 이미 가입된 이메일입니다.'
-    };
-    
-    return errorMessages[errorCode] || '로그인 중 오류가 발생했습니다.';
-}
+    <!-- 메인 스크립트 로드 -->
+    <script src="script.js"></script>
+</body>
+</html>
