@@ -982,68 +982,69 @@ function updateFileList() {
     let totalOrders = 0;
     const marketSet = new Set();
     
-    sortedFiles.forEach((file, index) => {
-        totalOrders += file.rowCount;
-        marketSet.add(file.marketName);
-        
-        const fileItem = document.createElement('div');
-        fileItem.className = 'file-item';
-        if (!file.isToday) {
-            fileItem.classList.add('warning');
-        }
-        
-        const fileInfo = document.createElement('div');
-        fileInfo.className = 'file-info';
-        
-        const fileNameSection = document.createElement('div');
-        fileNameSection.className = 'file-name-section';
-        
-        const marketTag = document.createElement('span');
-        marketTag.className = 'market-tag';
-        marketTag.textContent = file.marketName;
-        
-        const market = mappingData.markets[file.marketName];
-        if (market) {
-            marketTag.style.background = `rgb(${market.color})`;
-            const rgb = market.color.split(',').map(Number);
-            const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
-            marketTag.style.color = brightness > 128 ? '#000' : '#fff';
-        }
-        
-        const fileName = document.createElement('div');
-        fileName.className = 'file-name';
-        fileName.innerHTML = `<span style="color: #666;">파일명:</span> ${file.name}`;
-        
-        fileNameSection.appendChild(marketTag);
-        fileNameSection.appendChild(fileName);
-        
-        const fileDetails = document.createElement('div');
-        fileDetails.className = 'file-details';
-        
-        const orderCount = document.createElement('span');
-        orderCount.className = 'file-order-count';
-        orderCount.innerHTML = `<span style="color: #333; font-weight: bold;">${file.marketName}</span> ${file.rowCount}개 주문`;
-        
-        const fileDate = document.createElement('span');
-        fileDate.className = 'file-date';
-        const fileDateObj = new Date(file.lastModified);
-        fileDate.textContent = fileDateObj.toLocaleDateString('ko-KR');
-        
-        // 삭제 버튼 추가
-        const removeBtn = document.createElement('button');
-        removeBtn.textContent = '삭제';
-        removeBtn.style.cssText = 'padding: 4px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;';
-        removeBtn.onclick = () => removeFile(index);
-        
-        fileDetails.appendChild(orderCount);
-        fileDetails.appendChild(fileDate);
-        fileDetails.appendChild(removeBtn);
-        
-        fileInfo.appendChild(fileNameSection);
-        fileInfo.appendChild(fileDetails);
-        fileItem.appendChild(fileInfo);
-        fileList.appendChild(fileItem);
-    });
+sortedFiles.forEach((file) => {
+    const originalIndex = uploadedFiles.indexOf(file);  // 원본 배열에서의 실제 인덱스 찾기
+    totalOrders += file.rowCount;
+    marketSet.add(file.marketName);
+    
+    const fileItem = document.createElement('div');
+    fileItem.className = 'file-item';
+    if (!file.isToday) {
+        fileItem.classList.add('warning');
+    }
+    
+    const fileInfo = document.createElement('div');
+    fileInfo.className = 'file-info';
+    
+    const fileNameSection = document.createElement('div');
+    fileNameSection.className = 'file-name-section';
+    
+    const marketTag = document.createElement('span');
+    marketTag.className = 'market-tag';
+    marketTag.textContent = file.marketName;
+    
+    const market = mappingData.markets[file.marketName];
+    if (market) {
+        marketTag.style.background = `rgb(${market.color})`;
+        const rgb = market.color.split(',').map(Number);
+        const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+        marketTag.style.color = brightness > 128 ? '#000' : '#fff';
+    }
+    
+    const fileName = document.createElement('div');
+    fileName.className = 'file-name';
+    fileName.innerHTML = `<span style="color: #666;">파일명:</span> ${file.name}`;
+    
+    fileNameSection.appendChild(marketTag);
+    fileNameSection.appendChild(fileName);
+    
+    const fileDetails = document.createElement('div');
+    fileDetails.className = 'file-details';
+    
+    const orderCount = document.createElement('span');
+    orderCount.className = 'file-order-count';
+    orderCount.innerHTML = `<span style="color: #333; font-weight: bold;">${file.marketName}</span> ${file.rowCount}개 주문`;
+    
+    const fileDate = document.createElement('span');
+    fileDate.className = 'file-date';
+    const fileDateObj = new Date(file.lastModified);
+    fileDate.textContent = fileDateObj.toLocaleDateString('ko-KR');
+    
+    // 삭제 버튼 추가
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = '삭제';
+    removeBtn.style.cssText = 'padding: 4px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;';
+    removeBtn.onclick = () => removeFile(originalIndex);  // 원본 인덱스 사용
+    
+    fileDetails.appendChild(orderCount);
+    fileDetails.appendChild(fileDate);
+    fileDetails.appendChild(removeBtn);
+    
+    fileInfo.appendChild(fileNameSection);
+    fileInfo.appendChild(fileDetails);
+    fileItem.appendChild(fileInfo);
+    fileList.appendChild(fileItem);
+});
     
     document.getElementById('totalFiles').textContent = uploadedFiles.length;
     document.getElementById('totalMarkets').textContent = marketSet.size;
@@ -1949,4 +1950,5 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
