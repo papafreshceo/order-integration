@@ -582,48 +582,6 @@ tbody tr:nth-child(even) {
     background: var(--bg-muted);
 }
 
-/* 여기에 추가 - 통합 결과 테이블 배경색 수정 */
-#resultTable {
-    background: #f0f9ff;
-}
-
-#resultTable thead {
-    background: #e0f2fe;
-}
-
-#resultTable thead th {
-    background: #e0f2fe;
-    border-color: #bae6fd;
-}
-
-#resultTable tbody td {
-    background: #f0f9ff;
-    border-color: #e0f2fe;
-}
-
-#resultTable tbody tr:nth-child(even) td {
-    background: #f7fcff;
-}
-
-#resultTable tbody tr:hover td {
-    background: #dbeafe;
-}
-
-#resultTable .fixed-col {
-    background: #f0f9ff;
-}
-
-#resultTable thead .fixed-col {
-    background: #e0f2fe;
-}
-
-#resultTable tbody tr:nth-child(even) .fixed-col {
-    background: #f7fcff;
-}
-
-#resultTable tbody tr:hover .fixed-col {
-    background: #dbeafe;
-}
 
 /* 고정 컬럼 간격 문제 해결 */
 #resultTable .fixed-col {
