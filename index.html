@@ -249,43 +249,6 @@
             width: 100%;
             height: 100vh;
         }
-        
-        /* 통계 테이블 첫 번째 컬럼 너비 조정 */
-        #marketStats th:first-child,
-        #marketStats td:first-child {
-            width: 15%;
-            min-width: 150px;
-            font-weight: bold;
-        }
-        
-        #marketStats th:not(:first-child),
-        #marketStats td:not(:first-child) {
-            width: auto;
-            min-width: 45px;
-            text-align: center;
-        }
-        
-        #optionStats th:first-child,
-        #optionStats td:first-child {
-            width: 20%;
-            min-width: 200px;
-            font-weight: bold;
-            text-align: left;
-            padding-left: 12px;
-        }
-        
-        #optionStats th:not(:first-child),
-        #optionStats td:not(:first-child) {
-            width: auto;
-            min-width: 45px;
-            text-align: center;
-        }
-        
-        #marketStats td.amount-col,
-        #optionStats td.amount-col {
-            text-align: right;
-            padding-right: 8px;
-        }
     </style>
 </head>
 <body>
@@ -446,54 +409,55 @@
                                 <h3>마켓별 통계</h3>
                                 <table class="stat-table" id="marketStats">
                                     <thead>
-                                        <tr>
-                                            <th rowspan="3">마켓명</th>
-                                            <th colspan="3" rowspan="2">전체</th>
-                                            <th colspan="6">공급처</th>
-                                            <th colspan="6">판매처</th>
-                                            <th colspan="6">발송</th>
-                                            <th colspan="6">미발송</th>
-                                        </tr>
-                                        <tr>
-                                            <th colspan="3">자사</th>
-                                            <th colspan="3">벤더사</th>
-                                            <th colspan="3">자사</th>
-                                            <th colspan="3">셀러</th>
-                                            <th colspan="3">자사</th>
-                                            <th colspan="3">벤더사</th>
-                                            <th colspan="3">자사</th>
-                                            <th colspan="3">벤더사</th>
-                                        </tr>
-                                        <tr>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                        </tr>
-                                    </thead>
+    <tr>
+        <th rowspan="3">마켓명</th>
+        <th colspan="3" rowspan="2">전체</th>
+        <th colspan="6">공급처</th>
+        <th colspan="6">판매처</th>
+        <th colspan="6">발송</th>
+        <th colspan="6">미발송</th>
+    </tr>
+    <tr>
+        <th colspan="3">자사</th>
+        <th colspan="3">벤더사</th>
+        <th colspan="3">자사</th>
+        <th colspan="3">셀러</th>
+        <th colspan="3">자사</th>
+        <th colspan="3">벤더사</th>
+        <th colspan="3">자사</th>
+        <th colspan="3">벤더사</th>
+    </tr>
+    <tr>
+        <th>건수</th>
+        <th>수량</th>
+        <th>금액</th>
+        <th>건수</th>
+        <th>수량</th>
+        <th>금액</th>
+        <th>건수</th>
+        <th>수량</th>
+        <th>금액</th>
+        <th>건수</th>
+        <th>수량</th>
+        <th>금액</th>
+        <th>건수</th>
+        <th>수량</th>
+        <th>금액</th>
+        <th>건수</th>
+        <th>수량</th>
+        <th>금액</th>
+        <th>건수</th>
+        <th>수량</th>
+        <th>금액</th>
+        <th>건수</th>
+        <th>수량</th>
+        <th>금액</th>
+        <th>건수</th>
+        <th>수량</th>
+        <th>금액</th>
+
+    </tr>
+</thead>
                                     <tbody></tbody>
                                 </table>
                             </div>
@@ -503,53 +467,54 @@
                                 <table class="stat-table" id="optionStats">
                                     <thead>
                                         <tr>
-                                            <th rowspan="3">옵션명</th>
-                                            <th colspan="3" rowspan="2">전체</th>
-                                            <th colspan="6">공급처</th>
-                                            <th colspan="6">판매처</th>
-                                            <th colspan="6">발송</th>
-                                            <th colspan="6">미발송</th>
-                                        </tr>
-                                        <tr>
-                                            <th colspan="3">자사</th>
-                                            <th colspan="3">벤더사</th>
-                                            <th colspan="3">자사</th>
-                                            <th colspan="3">셀러</th>
-                                            <th colspan="3">자사</th>
-                                            <th colspan="3">벤더사</th>
-                                            <th colspan="3">자사</th>
-                                            <th colspan="3">벤더사</th>
-                                        </tr>
-                                        <tr>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                        </tr>
-                                    </thead>
+        <th rowspan="3">마켓명</th>
+        <th colspan="3" rowspan="2">전체</th>
+        <th colspan="6">공급처</th>
+        <th colspan="6">판매처</th>
+        <th colspan="6">발송</th>
+        <th colspan="6">미발송</th>
+    </tr>
+    <tr>
+        <th colspan="3">자사</th>
+        <th colspan="3">벤더사</th>
+        <th colspan="3">자사</th>
+        <th colspan="3">셀러</th>
+        <th colspan="3">자사</th>
+        <th colspan="3">벤더사</th>
+        <th colspan="3">자사</th>
+        <th colspan="3">벤더사</th>
+    </tr>
+    <tr>
+        <th>건수</th>
+        <th>수량</th>
+        <th>금액</th>
+        <th>건수</th>
+        <th>수량</th>
+        <th>금액</th>
+        <th>건수</th>
+        <th>수량</th>
+        <th>금액</th>
+        <th>건수</th>
+        <th>수량</th>
+        <th>금액</th>
+        <th>건수</th>
+        <th>수량</th>
+        <th>금액</th>
+        <th>건수</th>
+        <th>수량</th>
+        <th>금액</th>
+        <th>건수</th>
+        <th>수량</th>
+        <th>금액</th>
+        <th>건수</th>
+        <th>수량</th>
+        <th>금액</th>
+        <th>건수</th>
+        <th>수량</th>
+        <th>금액</th>
+
+    </tr>
+</thead>
                                     <tbody></tbody>
                                 </table>
                             </div>
