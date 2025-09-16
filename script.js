@@ -1,13 +1,13 @@
 // ===========================
-// 전역 변수 - window 객체에 직접 할당
+// 전역 변수
 // ===========================
-window.uploadedFiles = [];
-window.mappingData = null;
-window.processedData = null;
-window.standardFields = [];
-window.salesInfo = {};
-window.optionProductInfo = {};
-window.priceCalculationInfo = {};
+let uploadedFiles = [];
+let mappingData = null;
+let processedData = null;
+let standardFields = [];
+let salesInfo = {};
+let optionProductInfo = {};
+let priceCalculationInfo = {};
 
 // API 기본 URL (로컬 개발시는 localhost:3000, 배포시는 자동)
 const API_BASE = '';
@@ -40,9 +40,9 @@ async function loadMappingData() {
             return;
         }
         
-        window.mappingData = data;
+        mappingData = data;
         displaySupportedMarkets(data.markets);
-        console.log('매핑 데이터 로드 완료:', window.mappingData);
+        console.log('매핑 데이터 로드 완료:', mappingData);
     } catch (error) {
         showError('매핑 데이터 로드 실패: ' + error.message);
     } finally {
@@ -53,33 +53,33 @@ async function loadMappingData() {
 async function loadSalesInfo() {
     try {
         const response = await fetch(`${API_BASE}/api/sheets?action=getSalesInfo`);
-        window.salesInfo = await response.json();
-        console.log('판매정보 로드 완료:', Object.keys(window.salesInfo).length, '개');
+        salesInfo = await response.json();
+        console.log('판매정보 로드 완료:', Object.keys(salesInfo).length, '개');
     } catch (error) {
         console.error('판매정보 로드 오류:', error);
-        window.salesInfo = {};
+        salesInfo = {};
     }
 }
 
 async function loadOptionProductInfo() {
     try {
         const response = await fetch(`${API_BASE}/api/sheets?action=getOptionProductInfo`);
-        window.optionProductInfo = await response.json();
-        console.log('옵션상품통합관리 로드 완료:', Object.keys(window.optionProductInfo).length, '개');
+        optionProductInfo = await response.json();
+        console.log('옵션상품통합관리 로드 완료:', Object.keys(optionProductInfo).length, '개');
     } catch (error) {
         console.error('옵션상품통합관리 로드 오류:', error);
-        window.optionProductInfo = {};
+        optionProductInfo = {};
     }
 }
 
 async function loadPriceCalculation() {
     try {
         const response = await fetch(`${API_BASE}/api/sheets?action=getPriceCalculation`);
-        window.priceCalculationInfo = await response.json();
-        console.log('가격계산 로드 완료:', Object.keys(window.priceCalculationInfo).length, '개');
+        priceCalculationInfo = await response.json();
+        console.log('가격계산 로드 완료:', Object.keys(priceCalculationInfo).length, '개');
     } catch (error) {
         console.error('가격계산 로드 오류:', error);
-        window.priceCalculationInfo = {};
+        priceCalculationInfo = {};
     }
 }
 
@@ -143,8 +143,8 @@ function displaySupportedMarkets(markets) {
     container.innerHTML = '<h3 style="width: 100%; margin-bottom: 10px;">지원 마켓</h3>';
     
     let marketNames = [];
-    if (window.mappingData && window.mappingData.marketOrder && window.mappingData.marketOrder.length > 0) {
-        marketNames = window.mappingData.marketOrder;
+    if (mappingData && mappingData.marketOrder && mappingData.marketOrder.length > 0) {
+        marketNames = mappingData.marketOrder;
     } else {
         marketNames = Object.keys(markets);
     }
@@ -194,10 +194,8 @@ function setupEventListeners() {
     document.getElementById('processBtn').addEventListener('click', processOrders);
     
     // 내보내기 버튼
-    const exportExcel = document.getElementById('exportExcel');
-    const saveToSheets = document.getElementById('saveToSheets');
-    if (exportExcel) exportExcel.addEventListener('click', exportToExcel);
-    if (saveToSheets) saveToSheets.addEventListener('click', saveToGoogleSheets);
+    document.getElementById('exportExcel').addEventListener('click', exportToExcel);
+    document.getElementById('saveToSheets').addEventListener('click', saveToGoogleSheets);
     
     // 매핑 시트 열기
     document.getElementById('openMappingSheet').addEventListener('click', function(e) {
@@ -387,6 +385,14 @@ async function processExcelData(jsonData, file, isSmartStore) {
     await detectMarketAndAdd(file, headers, dataRows, rawRows, headerRowIndex);
 }
 
+
+
+
+
+
+
+
+
 // ===========================
 // 마켓 감지 및 파일 추가
 // ===========================
@@ -420,8 +426,8 @@ async function detectMarketAndAdd(file, headers, dataRows, rawRows, provisionalH
                 finalHeaders = (rawRows[idx] || []).map(h => String(h || '').trim());
                 finalDataRows = rawRows.slice(idx + 1);
             }
-        } else if (window.mappingData && window.mappingData.markets && window.mappingData.markets[marketName]) {
-            const market = window.mappingData.markets[marketName];
+        } else if (mappingData && mappingData.markets && mappingData.markets[marketName]) {
+            const market = mappingData.markets[marketName];
             if (market.headerRow != null) {
                 const idx = Math.max(0, market.headerRow - 1);
                 if (rawRows[idx]) {
@@ -457,7 +463,7 @@ async function detectMarketAndAdd(file, headers, dataRows, rawRows, provisionalH
         rowCount: processedRows.length
     };
     
-    window.uploadedFiles.push(fileInfo);
+    uploadedFiles.push(fileInfo);
     updateFileList();
     checkWarnings();
 }
@@ -466,12 +472,12 @@ async function detectMarketAndAdd(file, headers, dataRows, rawRows, provisionalH
 // 주문 통합 처리
 // ===========================
 async function processOrders() {
-    if (window.uploadedFiles.length === 0) {
+    if (uploadedFiles.length === 0) {
         showError('업로드된 파일이 없습니다.');
         return;
     }
     
-    const todayFiles = window.uploadedFiles.filter(f => f.isToday);
+    const todayFiles = uploadedFiles.filter(f => f.isToday);
     if (todayFiles.length === 0) {
         showError('오늘 날짜의 파일이 없습니다. 최신 주문 파일을 다운로드해주세요.');
         return;
@@ -497,8 +503,7 @@ async function processOrders() {
             return;
         }
         
-        window.processedData = result;
-        window.standardFields = result.standardFields;
+        processedData = result;
         showSuccess(`성공적으로 ${result.data.length}개의 주문을 통합했습니다.`);
         displayResults(result);
         
@@ -521,7 +526,7 @@ async function processOrderFiles(filesData) {
             };
         }
         
-        if (!window.mappingData || window.mappingData.error) {
+        if (!mappingData || mappingData.error) {
             return {
                 success: false,
                 error: '매핑 데이터가 없습니다'
@@ -556,13 +561,13 @@ async function processOrderFiles(filesData) {
             }
             
             const marketName = fileData.marketName;
-            if (!marketName || !window.mappingData.markets[marketName]) {
+            if (!marketName || !mappingData.markets[marketName]) {
                 console.log('잘못된 마켓:', marketName);
                 skippedCount++;
                 continue;
             }
             
-            const market = window.mappingData.markets[marketName];
+            const market = mappingData.markets[marketName];
             
             // 마켓 카운터 초기화
             if (!marketCounters[marketName]) {
@@ -588,7 +593,7 @@ async function processOrderFiles(filesData) {
                 const mergedRow = {};
                 
                 // 표준필드 매핑
-                for (const standardField of window.mappingData.standardFields) {
+                for (const standardField of mappingData.standardFields) {
                     if (standardField === '마켓명') {
                         mergedRow['마켓명'] = marketName;
                     } else if (standardField === '연번') {
@@ -643,8 +648,8 @@ async function processOrderFiles(filesData) {
                 const quantity = parseInt(mergedRow['수량']) || 1;
                 
                 // 옵션상품통합관리 정보
-                if (optionName && window.optionProductInfo[optionName]) {
-                    const optionData = window.optionProductInfo[optionName];
+                if (optionName && optionProductInfo[optionName]) {
+                    const optionData = optionProductInfo[optionName];
                     
                     mergedRow['출고'] = optionData.shipment || mergedRow['출고'] || '';
                     mergedRow['송장'] = optionData.invoice || mergedRow['송장'] || '';
@@ -672,8 +677,8 @@ async function processOrderFiles(filesData) {
                 const seller = String(mergedRow['셀러'] || '').trim();
                 
                 if (seller) {
-                    if (optionName && window.priceCalculationInfo[optionName]) {
-                        const unitPrice = window.priceCalculationInfo[optionName].sellerSupplyPrice || 0;
+                    if (optionName && priceCalculationInfo[optionName]) {
+                        const unitPrice = priceCalculationInfo[optionName].sellerSupplyPrice || 0;
                         mergedRow['셀러공급가'] = unitPrice * quantity;
                     } else {
                         mergedRow['셀러공급가'] = '';
@@ -689,8 +694,8 @@ async function processOrderFiles(filesData) {
                     settlementAmount = calculateSettlementAmount(mergedRow, market.settlementFormula, marketName);
                 }
                 
-                if (settlementAmount === 0 && optionName && window.salesInfo[optionName]) {
-                    settlementAmount = window.salesInfo[optionName].sellingPrice || 0;
+                if (settlementAmount === 0 && optionName && salesInfo[optionName]) {
+                    settlementAmount = salesInfo[optionName].sellingPrice || 0;
                 }
                 
                 if (settlementAmount === 0 && mergedRow['상품금액']) {
@@ -740,7 +745,7 @@ async function processOrderFiles(filesData) {
         
         // 구글 시트에 저장
         if (mergedData.length > 0) {
-            const saveResult = await saveToSheet(sheetName, mergedData, window.mappingData.standardFields);
+            const saveResult = await saveToSheet(sheetName, mergedData, mappingData.standardFields);
             if (!saveResult.success) {
                 return {
                     success: false,
@@ -756,7 +761,7 @@ async function processOrderFiles(filesData) {
             sheetName: sheetName,
             processedCount: processedCount,
             skippedCount: skippedCount,
-            standardFields: window.mappingData.standardFields
+            standardFields: mappingData.standardFields
         };
         
     } catch (error) {
@@ -767,6 +772,13 @@ async function processOrderFiles(filesData) {
         };
     }
 }
+
+
+
+
+
+
+
 
 // ===========================
 // 정산금액 계산
@@ -961,7 +973,7 @@ function updateFileList() {
     const fileList = document.getElementById('fileList');
     fileList.innerHTML = '';
     
-    if (window.uploadedFiles.length === 0) {
+    if (uploadedFiles.length === 0) {
         document.getElementById('processBtn').style.display = 'none';
         document.getElementById('fileSummary').style.display = 'none';
         return;
@@ -970,11 +982,11 @@ function updateFileList() {
     document.getElementById('processBtn').style.display = 'inline-block';
     document.getElementById('fileSummary').style.display = 'flex';
     
-    let sortedFiles = [...window.uploadedFiles];
-    if (window.mappingData && window.mappingData.marketOrder && window.mappingData.marketOrder.length > 0) {
+    let sortedFiles = [...uploadedFiles];
+    if (mappingData && mappingData.marketOrder && mappingData.marketOrder.length > 0) {
         sortedFiles.sort((a, b) => {
-            const ia = window.mappingData.marketOrder.indexOf(a.marketName);
-            const ib = window.mappingData.marketOrder.indexOf(b.marketName);
+            const ia = mappingData.marketOrder.indexOf(a.marketName);
+            const ib = mappingData.marketOrder.indexOf(b.marketName);
             if (ia !== -1 && ib !== -1) return ia - ib;
             if (ia !== -1) return -1;
             if (ib !== -1) return 1;
@@ -1005,7 +1017,7 @@ function updateFileList() {
         marketTag.className = 'market-tag';
         marketTag.textContent = file.marketName;
         
-        const market = window.mappingData.markets[file.marketName];
+        const market = mappingData.markets[file.marketName];
         if (market) {
             marketTag.style.background = `rgb(${market.color})`;
             const rgb = market.color.split(',').map(Number);
@@ -1048,19 +1060,19 @@ function updateFileList() {
         fileList.appendChild(fileItem);
     });
     
-    document.getElementById('totalFiles').textContent = window.uploadedFiles.length;
+    document.getElementById('totalFiles').textContent = uploadedFiles.length;
     document.getElementById('totalMarkets').textContent = marketSet.size;
     document.getElementById('totalOrders').textContent = totalOrders.toLocaleString('ko-KR');
 }
 
 function removeFile(index) {
-    window.uploadedFiles.splice(index, 1);
+    uploadedFiles.splice(index, 1);
     updateFileList();
     checkWarnings();
 }
 
 function checkWarnings() {
-    const oldFiles = window.uploadedFiles.filter(f => !f.isToday);
+    const oldFiles = uploadedFiles.filter(f => !f.isToday);
     const warningBox = document.getElementById('warningBox');
     
     if (oldFiles.length > 0) {
@@ -1085,12 +1097,12 @@ function checkWarnings() {
 // 내보내기 함수들
 // ===========================
 function exportToExcel() {
-    if (!window.processedData || !window.processedData.data || window.processedData.data.length === 0) {
+    if (!processedData || !processedData.data || processedData.data.length === 0) {
         showError('내보낼 데이터가 없습니다.');
         return;
     }
     
-    const ws = XLSX.utils.json_to_sheet(window.processedData.data);
+    const ws = XLSX.utils.json_to_sheet(processedData.data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, '통합주문');
     
@@ -1101,12 +1113,12 @@ function exportToExcel() {
 }
 
 async function saveToGoogleSheets() {
-    if (!window.processedData || !window.processedData.data) {
+    if (!processedData || !processedData.data) {
         showError('저장할 데이터가 없습니다.');
         return;
     }
     
-    showSuccess(`구글 시트 "${window.processedData.sheetName}"에 저장되었습니다.`);
+    showSuccess(`구글 시트 "${processedData.sheetName}"에 저장되었습니다.`);
 }
 
 // ===========================
@@ -1149,6 +1161,29 @@ function hideSuccess() {
     document.getElementById('successMessage').classList.remove('show');
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ===========================
 // 결과 표시
 // ===========================
@@ -1160,9 +1195,7 @@ function displayResults(result) {
     displayStatistics(result.statistics);
     
     setTimeout(() => {
-        if (typeof updatePivotTable === 'function') {
-            updatePivotTable();
-        }
+        updatePivotTable();
     }, 100);
     
     resultSection.scrollIntoView({ behavior: 'smooth' });
@@ -1179,12 +1212,12 @@ function displayResultTable(data) {
     }
     
     // 마켓 순서대로 정렬
-    if (window.mappingData && window.mappingData.marketOrder && window.mappingData.marketOrder.length > 0) {
+    if (mappingData && mappingData.marketOrder && mappingData.marketOrder.length > 0) {
         data.sort((a, b) => {
             const marketA = a['마켓명'];
             const marketB = b['마켓명'];
-            const ia = window.mappingData.marketOrder.indexOf(marketA);
-            const ib = window.mappingData.marketOrder.indexOf(marketB);
+            const ia = mappingData.marketOrder.indexOf(marketA);
+            const ib = mappingData.marketOrder.indexOf(marketB);
             if (ia !== -1 && ib !== -1) return ia - ib;
             if (ia !== -1) return -1;
             if (ib !== -1) return 1;
@@ -1192,7 +1225,7 @@ function displayResultTable(data) {
         });
     }
     
-    const headers = window.standardFields.length > 0 ? window.standardFields : Object.keys(data[0]);
+    const headers = standardFields.length > 0 ? standardFields : Object.keys(data[0]);
     
     // 필드별 정렬 설정
     const centerAlignFields = ['마켓명', '연번', '결제일', '주문번호', '주문자', '수취인', '옵션명', '수량', '마켓'];
@@ -1307,8 +1340,8 @@ function displayResultTable(data) {
             // 마켓명 셀 색상
             if (header === '마켓명') {
                 const marketName = row[header];
-                if (marketName && window.mappingData && window.mappingData.markets[marketName]) {
-                    const market = window.mappingData.markets[marketName];
+                if (marketName && mappingData && mappingData.markets[marketName]) {
+                    const market = mappingData.markets[marketName];
                     td.style.background = `rgb(${market.color})`;
                     const rgb = market.color.split(',').map(Number);
                     const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
@@ -1398,8 +1431,6 @@ function formatDateForDisplay(value) {
 
 function initTableResize() {
     const table = document.getElementById('resultTable');
-    if (!table) return;
-    
     const resizeHandles = table.querySelectorAll('.resize-handle');
     let isResizing = false;
     let currentColumn = null;
@@ -1458,8 +1489,6 @@ function displayStatistics(statistics) {
 
 function displayCategorizedStats(tableId, stats, firstColumnName) {
     const tbody = document.querySelector(`#${tableId} tbody`);
-    if (!tbody) return;
-    
     tbody.innerHTML = '';
     
     // 합계 누적
@@ -1483,8 +1512,8 @@ function displayCategorizedStats(tableId, stats, firstColumnName) {
         td1.textContent = key;
         td1.style.fontWeight = 'bold';
         
-        if (tableId === 'marketStats' && window.mappingData && window.mappingData.markets[key]) {
-            const market = window.mappingData.markets[key];
+        if (tableId === 'marketStats' && mappingData && mappingData.markets[key]) {
+            const market = mappingData.markets[key];
             td1.style.background = `rgb(${market.color})`;
             const rgb = market.color.split(',').map(Number);
             const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
@@ -1494,7 +1523,7 @@ function displayCategorizedStats(tableId, stats, firstColumnName) {
         tr.appendChild(td1);
         
         // 통계 계산
-        const filtered = window.processedData.data.filter(row => {
+        const filtered = processedData.data.filter(row => {
             if (tableId === 'marketStats') {
                 return row['마켓명'] === key;
             } else {
@@ -1688,16 +1717,263 @@ function createStatCell(value, isAmount = false) {
 }
 
 // ===========================
-// 전역 함수로 내보내기 (외부 파일 접근용)
+// 피벗테이블
 // ===========================
-window.showLoading = showLoading;
-window.hideLoading = hideLoading;
-window.showError = showError;
-window.showErrorPersistent = showErrorPersistent;
-window.hideError = hideError;
-window.showSuccess = showSuccess;
-window.hideSuccess = hideSuccess;
-window.formatDate = formatDate;
-window.parseNumber = parseNumber;
-window.numberFormat = numberFormat;
-window.formatDateForDisplay = formatDateForDisplay;
+function updatePivotTable() {
+    if (!processedData || !processedData.data || processedData.data.length === 0) {
+        showError('피벗테이블을 생성할 데이터가 없습니다.');
+        return;
+    }
+    
+    const rowField = document.getElementById('pivotRowField').value;
+    const colField = document.getElementById('pivotColField').value;
+    const colField2 = document.getElementById('pivotColField2').value;
+    const valueField = document.getElementById('pivotValueField').value;
+    
+    const pivotData = createPivotData(processedData.data, rowField, colField, colField2, valueField);
+    displayPivotTable(pivotData, rowField, colField, colField2, valueField);
+}
+
+function createPivotData(data, rowField, colField, colField2, valueField) {
+    const pivot = {};
+    const colValues = new Set();
+    const colValues2 = new Set();
+    
+    data.forEach(row => {
+        let rowKey = String(row[rowField] || '(빈값)').trim();
+        if (rowField === '송장번호유무') {
+            rowKey = (row['송장번호'] && String(row['송장번호']).trim() !== '') ? '송장있음' : '송장없음';
+        }
+        
+        if (!pivot[rowKey]) pivot[rowKey] = {};
+        
+        if (colField === 'none') {
+            if (!pivot[rowKey]['전체']) pivot[rowKey]['전체'] = {};
+            if (!pivot[rowKey]['전체']['전체']) pivot[rowKey]['전체']['전체'] = [];
+            pivot[rowKey]['전체']['전체'].push(row);
+        } else {
+            let colKey = String(row[colField] || '(빈값)').trim();
+            if (colField === '송장번호유무') {
+                colKey = (row['송장번호'] && String(row['송장번호']).trim() !== '') ? '송장있음' : '송장없음';
+            }
+            
+            colValues.add(colKey);
+            if (!pivot[rowKey][colKey]) pivot[rowKey][colKey] = {};
+            
+            if (colField2 === 'none') {
+                if (!pivot[rowKey][colKey]['전체']) pivot[rowKey][colKey]['전체'] = [];
+                pivot[rowKey][colKey]['전체'].push(row);
+            } else {
+                let colKey2 = String(row[colField2] || '(빈값)').trim();
+                if (colField2 === '송장번호유무') {
+                    colKey2 = (row['송장번호'] && String(row['송장번호']).trim() !== '') ? '송장있음' : '송장없음';
+                }
+                
+                colValues2.add(colKey2);
+                if (!pivot[rowKey][colKey][colKey2]) pivot[rowKey][colKey][colKey2] = [];
+                pivot[rowKey][colKey][colKey2].push(row);
+            }
+        }
+    });
+    
+    return {
+        data: pivot,
+        columns: colField === 'none' ? ['전체'] : Array.from(colValues).sort(),
+        columns2: colField2 === 'none' ? ['전체'] : Array.from(colValues2).sort()
+    };
+}
+
+function displayPivotTable(pivotData, rowField, colField, colField2, valueField) {
+    const table = document.getElementById('pivotTable');
+    const thead = table.querySelector('thead');
+    const tbody = table.querySelector('tbody');
+    
+    thead.innerHTML = '';
+    tbody.innerHTML = '';
+    
+    // 헤더 생성
+    if (colField2 === 'none' || pivotData.columns2.length === 1) {
+        const headerRow = document.createElement('tr');
+        
+        const th1 = document.createElement('th');
+        th1.textContent = rowField;
+        th1.style.position = 'sticky';
+        th1.style.left = '0';
+        th1.style.background = '#f5f5f5';
+        th1.style.zIndex = '10';
+        headerRow.appendChild(th1);
+        
+        pivotData.columns.forEach(col => {
+            const th = document.createElement('th');
+            th.textContent = col;
+            th.style.background = '#f5f5f5';
+            headerRow.appendChild(th);
+        });
+        
+        const thTotal = document.createElement('th');
+        thTotal.textContent = '합계';
+        thTotal.style.background = '#e8f5e9';
+        thTotal.style.fontWeight = 'bold';
+        headerRow.appendChild(thTotal);
+        
+        thead.appendChild(headerRow);
+    } else {
+        // 2단 헤더
+        const headerRow1 = document.createElement('tr');
+        const headerRow2 = document.createElement('tr');
+        
+        const th1 = document.createElement('th');
+        th1.textContent = rowField;
+        th1.rowSpan = 2;
+        th1.style.position = 'sticky';
+        th1.style.left = '0';
+        th1.style.background = '#f5f5f5';
+        th1.style.zIndex = '10';
+        headerRow1.appendChild(th1);
+        
+        pivotData.columns.forEach(col => {
+            const th = document.createElement('th');
+            th.textContent = col;
+            th.colSpan = pivotData.columns2.length;
+            th.style.background = '#f5f5f5';
+            th.style.borderBottom = '1px solid #ddd';
+            headerRow1.appendChild(th);
+        });
+        
+        const thTotal1 = document.createElement('th');
+        thTotal1.textContent = '합계';
+        thTotal1.rowSpan = 2;
+        thTotal1.style.background = '#e8f5e9';
+        thTotal1.style.fontWeight = 'bold';
+        headerRow1.appendChild(thTotal1);
+        
+        pivotData.columns.forEach(col => {
+            pivotData.columns2.forEach(col2 => {
+                const th = document.createElement('th');
+                th.textContent = col2;
+                th.style.background = '#f9f9f9';
+                th.style.fontSize = '0.9em';
+                headerRow2.appendChild(th);
+            });
+        });
+        
+        thead.appendChild(headerRow1);
+        thead.appendChild(headerRow2);
+    }
+    
+    // 데이터 행 생성
+    const colTotals = {};
+    let grandTotal = 0;
+    
+    Object.keys(pivotData.data).sort().forEach(rowKey => {
+        const tr = document.createElement('tr');
+        
+        const td1 = document.createElement('td');
+        td1.textContent = rowKey;
+        td1.style.fontWeight = 'bold';
+        td1.style.position = 'sticky';
+        td1.style.left = '0';
+        td1.style.background = 'white';
+        td1.style.borderRight = '2px solid #ddd';
+        tr.appendChild(td1);
+        
+        let rowTotal = 0;
+        
+        pivotData.columns.forEach(col => {
+            if (colField2 === 'none' || pivotData.columns2.length === 1) {
+                const td = document.createElement('td');
+                const cellData = pivotData.data[rowKey][col] ? 
+                    (pivotData.data[rowKey][col]['전체'] || pivotData.data[rowKey][col]) : [];
+                const value = calculateValue(Array.isArray(cellData) ? cellData : [], valueField);
+                td.textContent = formatValue(value, valueField);
+                td.style.textAlign = 'right';
+                tr.appendChild(td);
+                
+                rowTotal += value;
+                const colKey = col;
+                if (!colTotals[colKey]) colTotals[colKey] = 0;
+                colTotals[colKey] += value;
+            } else {
+                pivotData.columns2.forEach(col2 => {
+                    const td = document.createElement('td');
+                    const cellData = pivotData.data[rowKey][col] && pivotData.data[rowKey][col][col2] ? 
+                        pivotData.data[rowKey][col][col2] : [];
+                    const value = calculateValue(cellData, valueField);
+                    td.textContent = formatValue(value, valueField);
+                    td.style.textAlign = 'right';
+                    tr.appendChild(td);
+                    
+                    rowTotal += value;
+                    const colKey = `${col}_${col2}`;
+                    if (!colTotals[colKey]) colTotals[colKey] = 0;
+                    colTotals[colKey] += value;
+                });
+            }
+        });
+        
+        const tdRowTotal = document.createElement('td');
+        tdRowTotal.textContent = formatValue(rowTotal, valueField);
+        tdRowTotal.style.textAlign = 'right';
+        tdRowTotal.style.background = '#f8f9fa';
+        tdRowTotal.style.fontWeight = 'bold';
+        tr.appendChild(tdRowTotal);
+        
+        tbody.appendChild(tr);
+        grandTotal += rowTotal;
+    });
+    
+    // 합계 행
+    const totalRow = document.createElement('tr');
+    totalRow.style.borderTop = '2px solid #4CAF50';
+    totalRow.style.background = '#e8f5e9';
+    totalRow.style.fontWeight = 'bold';
+    
+    const tdTotalLabel = document.createElement('td');
+    tdTotalLabel.textContent = '합계';
+    tdTotalLabel.style.position = 'sticky';
+    tdTotalLabel.style.left = '0';
+    tdTotalLabel.style.background = '#e8f5e9';
+    totalRow.appendChild(tdTotalLabel);
+    
+    if (colField2 === 'none' || pivotData.columns2.length === 1) {
+        pivotData.columns.forEach(col => {
+            const td = document.createElement('td');
+            td.textContent = formatValue(colTotals[col] || 0, valueField);
+            td.style.textAlign = 'right';
+            totalRow.appendChild(td);
+        });
+    } else {
+        pivotData.columns.forEach(col => {
+            pivotData.columns2.forEach(col2 => {
+                const td = document.createElement('td');
+                const colKey = `${col}_${col2}`;
+                td.textContent = formatValue(colTotals[colKey] || 0, valueField);
+                td.style.textAlign = 'right';
+                totalRow.appendChild(td);
+            });
+        });
+    }
+    
+    const tdGrandTotal = document.createElement('td');
+    tdGrandTotal.textContent = formatValue(grandTotal, valueField);
+    tdGrandTotal.style.textAlign = 'right';
+    tdGrandTotal.style.background = '#c8e6c9';
+    totalRow.appendChild(tdGrandTotal);
+    
+    tbody.appendChild(totalRow);
+}
+
+function calculateValue(data, valueField) {
+    if (valueField === 'count') {
+        return data.length;
+    }
+    
+    return data.reduce((sum, row) => {
+        const val = parseFloat(row[valueField]) || 0;
+        return sum + val;
+    }, 0);
+}
+
+function formatValue(value, valueField) {
+    return value.toLocaleString('ko-KR');
+}
