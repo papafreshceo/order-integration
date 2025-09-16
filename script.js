@@ -385,14 +385,6 @@ async function processExcelData(jsonData, file, isSmartStore) {
     await detectMarketAndAdd(file, headers, dataRows, rawRows, headerRowIndex);
 }
 
-
-
-
-
-
-
-
-
 // ===========================
 // 마켓 감지 및 파일 추가
 // ===========================
@@ -772,13 +764,6 @@ async function processOrderFiles(filesData) {
         };
     }
 }
-
-
-
-
-
-
-
 
 // ===========================
 // 정산금액 계산
@@ -1160,29 +1145,6 @@ function showSuccess(message) {
 function hideSuccess() {
     document.getElementById('successMessage').classList.remove('show');
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // ===========================
 // 결과 표시
@@ -1712,7 +1674,16 @@ function createStatCell(value, isAmount = false) {
     const td = document.createElement('td');
     td.style.textAlign = isAmount ? 'right' : 'center';
     td.className = isAmount ? 'amount-col' : '';
-    td.textContent = (value || value === 0) ? numberFormat(value) : '';
+    
+    // 0 값은 빈 셀로 표시
+    if (value === 0) {
+        td.textContent = '';
+    } else if (value) {
+        td.textContent = numberFormat(value);
+    } else {
+        td.textContent = '';
+    }
+    
     return td;
 }
 
