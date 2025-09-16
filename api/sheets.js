@@ -3,7 +3,11 @@ const {
   updateSheetData, 
   appendSheetData, 
   clearSheet,
-  createSheet 
+  createSheet,
+  // 주문 시트 함수들 추가
+  createOrderSheet,
+  clearOrderSheet,
+  saveOrderData
 } = require('../lib/google-sheets');
 
 export default async function handler(req, res) {
@@ -106,12 +110,12 @@ export default async function handler(req, res) {
         return res.status(200).json({ values: dashboardData });
 
       case 'saveToSheet':
-        // 새 시트 생성 또는 기존 시트 클리어
-        await createSheet(sheetName);
-        await clearSheet(`${sheetName}!A:ZZ`);
+        // 주문 시트에 저장 (SPREADSHEET_ID_ORDERS 사용)
+        await createOrderSheet(sheetName);
+        await clearOrderSheet(`${sheetName}!A:ZZ`);
         
         // 데이터 저장
-        await updateSheetData(`${sheetName}!A1`, values);
+        await saveOrderData(`${sheetName}!A1`, values);
         
         return res.status(200).json({ 
           success: true, 
