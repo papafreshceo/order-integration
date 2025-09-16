@@ -1,682 +1,876 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>주문통합 프로그램</title>
+/* ========================================
+   CSS Variables - 지침 준수
+   ======================================== */
+:root {
+    /* Background Colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-muted: #fafafa;
+    --bg-hover: #f8f9fa;
+    --bg-today: #e7f3ff;
+    --bg-light: #f5f6fa;
+    --bg-lighter: #fefefe;
+
+    /* Text Colors */
+    --text-primary: #212529;
+    --text-secondary: #495057;
+    --text-muted: #6c757d;
+    --text-link: #2563eb;
+
+    /* Brand Colors */
+    --brand-primary: #2563eb;
+    --brand-primary-hover: #1d4ed8;
+
+    /* Border Colors */
+    --border-default: #dee2e6;
+    --border-light: #f1f3f5;
+    --border-heavy: #e5e7eb;
+
+    /* Status Colors */
+    --success: #10b981;
+    --success-bg: rgba(16, 185, 129, 0.1);
+    --danger: #ef4444;
+    --danger-secondary: #dc3545;
+    --danger-bg: rgba(239, 68, 68, 0.1);
+    --warning: #f59e0b;
+    --info: #2563eb;
+    --info-bg: rgba(37, 99, 235, 0.1);
+
+    /* Blue Scale */
+    --blue-50: #e7f3ff;
+    --blue-100: #dbeafe;
+    --blue-200: #bfdbfe;
+    --blue-300: #93c5fd;
+
+    /* Yellow Scale */
+    --yellow-100: #fef3c7;
+    --yellow-200: #fde68a;
+
+    /* Purple Scale */
+    --purple-100: #ede9fe;
+    --purple-200: #ddd6fe;
+
+    /* Red Scale */
+    --red-100: #fee2e2;
+    --red-200: #fecaca;
+}
+
+/* ========================================
+   Reset & Base - 전체화면 설정
+   ======================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 300;
+    background: var(--bg-muted);
+    color: var(--text-primary);
+    overflow: hidden;
+}
+
+/* ========================================
+   Container - 전체화면
+   ======================================== */
+.container {
+    width: 100%;
+    height: 100vh;
+    background: var(--bg-primary);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ========================================
+   Header
+   ======================================== */
+.header {
+    background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%);
+    color: var(--bg-primary);
+    padding: 40px;
+    text-align: center;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.header h1 {
+    font-size: 36px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.header p {
+    font-size: 14px;
+    font-weight: 300;
+    opacity: 0.95;
+}
+
+/* ========================================
+   Main Content - 스크롤 가능 영역
+   ======================================== */
+.main-content {
+    padding: 40px;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* ========================================
+   Tab Navigation
+   ======================================== */
+.tab-navigation {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--border-default);
+}
+
+.tab-button {
+    padding: 10px 24px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 300;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+}
+
+.tab-button:hover {
+    color: var(--brand-primary);
+}
+
+.tab-button.active {
+    color: var(--brand-primary);
+    border-bottom-color: var(--brand-primary);
+    font-weight: 400;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* ========================================
+   Supported Markets
+   ======================================== */
+.supported-markets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.supported-markets h3 {
+    grid-column: 1 / -1;
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+
+.market-badge {
+    padding: 12px 16px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 400;
+    font-size: 14px;
+    color: var(--bg-primary);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.2s;
+}
+
+.market-badge:hover {
+    transform: translateY(-2px);
+}
+
+/* ========================================
+   Upload Section
+   ======================================== */
+.upload-section {
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    transition: all 0.2s;
+    background: var(--bg-secondary);
+}
+
+.upload-section.dragover {
+    border-color: var(--brand-primary);
+    background: var(--blue-50);
+}
+
+.file-input {
+    display: none;
+}
+
+.upload-btn {
+    background: var(--brand-primary);
+    color: var(--bg-primary);
+    border: none;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 300;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-block;
+    margin: 12px;
+}
+
+.upload-btn:hover {
+    background: var(--brand-primary-hover);
+    transform: translateY(-2px);
+}
+
+.upload-btn:disabled {
+    background: var(--text-muted);
+    cursor: not-allowed;
+}
+
+/* ========================================
+   File List
+   ======================================== */
+.file-list {
+    margin-top: 24px;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+}
+
+.file-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.file-item.warning {
+    background: var(--yellow-100);
+    border-color: var(--yellow-200);
+}
+
+.file-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.file-name-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.file-name {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-primary);
+}
+
+.file-details {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 12px;
+}
+
+.file-order-count {
+    color: var(--danger-secondary);
+    font-weight: 400;
+}
+
+.file-date {
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.market-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 400;
+    margin-left: 12px;
+    min-width: 60px;
+    text-align: center;
+}
+
+/* ========================================
+   File Summary
+   ======================================== */
+.file-summary {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 24px 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.summary-item {
+    text-align: center;
+}
+
+.summary-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    font-weight: 200;
+}
+
+.summary-value {
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.summary-value.orders {
+    color: var(--danger-secondary);
+}
+
+/* ========================================
+   Warning Box
+   ======================================== */
+.warning-box {
+    background: var(--yellow-100);
+    border: 1px solid var(--yellow-200);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    display: none;
+}
+
+.warning-box.show {
+    display: block;
+}
+
+.warning-box h3 {
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    font-size: 20px;
+    font-weight: 400;
+}
+
+.warning-list {
+    list-style: none;
+    margin: 16px 0;
+}
+
+.warning-list li {
+    padding: 4px 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 300;
+}
+
+.confirmation-checkbox {
+    margin: 16px 0;
+}
+
+.confirmation-checkbox input {
+    margin-right: 8px;
+}
+
+.confirmation-checkbox label {
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--text-primary);
+}
+
+/* ========================================
+   Result Section
+   ======================================== */
+.result-section {
+    margin-top: 32px;
+    display: none;
+}
+
+.result-section.show {
+    display: block;
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.result-title {
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.export-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.export-btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 300;
+    transition: all 0.2s;
+}
+
+.export-excel {
+    background: var(--success);
+    color: var(--bg-primary);
+}
+
+.export-excel:hover {
+    transform: translateY(-2px);
+}
+
+.export-sheets {
+    background: var(--brand-primary);
+    color: var(--bg-primary);
+}
+
+.export-sheets:hover {
+    transform: translateY(-2px);
+}
+
+/* ========================================
+   Table
+   ======================================== */
+.table-wrapper {
+    width: 100%;
+    overflow: auto;
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    margin-bottom: 32px;
+    max-height: 800px;
+    position: relative;
+    background: var(--bg-primary);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    position: relative;
+}
+
+thead {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: var(--bg-secondary);
+}
+
+th {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 12px 8px;
+    text-align: center;
+    font-weight: 400;
+    white-space: nowrap;
+    border: 1px solid var(--border-default);
+    position: relative;
+    user-select: none;
+}
+
+th .resize-handle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    cursor: col-resize;
+    background: transparent;
+}
+
+th .resize-handle:hover {
+    background: rgba(37, 99, 235, 0.2);
+}
+
+.fixed-col {
+    position: sticky;
+    background: var(--bg-primary);
+    z-index: 10;
+}
+
+thead .fixed-col {
+    background: var(--bg-secondary);
+    z-index: 30;
+}
+
+tbody .fixed-col {
+    background: inherit;
+}
+
+.last-fixed-col {
+    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+}
+
+tbody tr:nth-child(even) .fixed-col {
+    background: var(--bg-muted);
+}
+
+tbody tr:hover .fixed-col {
+    background: var(--bg-light);
+}
+
+td {
+    padding: 8px;
+    border: 1px solid var(--border-light);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: var(--bg-primary);
+    font-weight: 300;
+    color: var(--text-primary);
+}
+
+tbody tr {
+    background: var(--bg-primary);
+    transition: all 0.2s;
+}
+
+tbody tr:hover {
+    background: var(--bg-light);
+}
+
+tbody tr:nth-child(even) {
+    background: var(--bg-muted);
+}
+
+/* ========================================
+   Statistics Section
+   ======================================== */
+/* 통계 테이블 고정 너비 설정 */
+.stat-card {
+    overflow-x: auto;  /* 가로 스크롤 추가 */
+    overflow-y: visible;
+}
+
+/* 마켓별 통계 테이블 고정 */
+#marketStats {
+    width: 1380px !important;  /* 100 + 60*3 + 50*24 = 1380px */
+    min-width: 1380px !important;
+    max-width: 1380px !important;
+    table-layout: fixed !important;
+}
+
+/* 옵션별 통계 테이블 고정 */
+#optionStats {
+    width: 1380px !important;  /* 100 + 60*3 + 50*24 = 1380px */
+    min-width: 1380px !important;
+    max-width: 1380px !important;
+    table-layout: fixed !important;
+}
+
+/* 열 너비 강제 고정 */
+#marketStats th,
+#marketStats td,
+#optionStats th,
+#optionStats td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 반응형 미디어 쿼리 제거 또는 수정 */
+@media (max-width: 768px) {
+    .stat-card {
+        padding: 25px 20px;
+        overflow-x: auto !important;  /* 모바일에서도 스크롤 유지 */
+    }
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    #marketStats,
+    #optionStats {
+        width: 1380px !important;  /* 모바일에서도 고정 너비 유지 */
+    }
+}
+
+
+
+.statistics-section {
+    display: grid;
+    grid-template-columns: 1fr;  /* 한 열만 사용 */
+    gap: 20px;
+    margin-top: 32px;
+}
+
+.stat-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-default);
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    overflow-x: auto;  /* 가로 스크롤 추가 */
+}
+
+.stat-card h3 {
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--brand-primary);
+    font-size: 20px;
+    font-weight: 400;
+}
+
+.stat-table {
+    width: 1530px;  /* 고정 너비 */
+    min-width: 1530px;  /* 최소 너비도 고정 */
+    font-size: 12px;
+    table-layout: fixed;
+}
+
+/* 마켓별, 옵션별 테이블 고정 너비 */
+#marketStats,
+#optionStats {
+    table-layout: fixed;
+    width: 1530px;
+    min-width: 1530px;
+}
+
+#marketStats col,
+#optionStats col {
+    min-width: initial !important;
+}
+
+.stat-table thead tr th {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 8px;
+    text-align: center;
+    font-weight: 400;
+    border: 1px solid var(--border-default);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stat-table td {
+    padding: 8px;
+    border: 1px solid var(--border-light);
+    text-align: center;
+    font-weight: 300;
+    color: var(--text-secondary);
+}
+
+.stat-table td.amount-col {
+    text-align: right;
+}
+
+.stat-table .total-row {
+    font-weight: 400;
+    background: var(--blue-50);
+    border-top: 2px solid var(--brand-primary);
+}
+
+.stat-table .total-row td {
+    font-size: 14px;
+    color: var(--brand-primary);
+    padding: 10px 8px;
+    font-weight: 400;
+}
+
+/* ========================================
+   Pivot Controls
+   ======================================== */
+.pivot-controls {
+    margin-bottom: 20px;
+    padding: 16px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+}
+
+.pivot-controls select {
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border-default);
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+}
+
+.pivot-controls button {
+    padding: 10px 24px;
+    background: var(--brand-primary);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 300;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.pivot-controls button:hover {
+    background: var(--brand-primary-hover);
+}
+
+/* ========================================
+   Loading Overlay
+   ======================================== */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.loading-overlay.show {
+    display: flex;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid var(--bg-primary);
+    border-top: 4px solid var(--brand-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    color: var(--bg-primary);
+    margin-top: 20px;
+    font-size: 14px;
+    font-weight: 300;
+}
+
+/* ========================================
+   Messages
+   ======================================== */
+.error-message {
+    background: var(--red-100);
+    border: 1px solid var(--red-200);
+    color: var(--danger-secondary);
+    padding: 16px;
+    border-radius: 8px;
+    margin: 20px 0;
+    display: none;
+    white-space: pre-wrap;
+    max-height: 300px;
+    overflow-y: auto;
+    font-size: 14px;
+    font-weight: 300;
+}
+
+.error-message.show {
+    display: block;
+}
+
+.success-message {
+    background: var(--success-bg);
+    border: 1px solid var(--success);
+    color: var(--success);
+    padding: 16px;
+    border-radius: 8px;
+    margin: 20px 0;
+    display: none;
+    font-size: 14px;
+    font-weight: 300;
+}
+
+.success-message.show {
+    display: block;
+}
+
+/* ========================================
+   Responsive
+   ======================================== */
+@media (max-width: 768px) {
+    .header {
+        padding: 25px 20px;
+    }
     
-    <!-- 기존 스타일시트 -->
-    <link rel="stylesheet" href="style.css">
+    .header h1 {
+        font-size: 28px;
+    }
     
-    <style>
-        /* 로그인 관련 스타일 */
-        .initial-loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.95);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-        }
-        
-        .initial-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #2563eb;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .initial-text {
-            margin-top: 20px;
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .login-wrapper {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-        
-        .login-card {
-            background: white;
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            width: 100%;
-            max-width: 400px;
-        }
-        
-        .login-title {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 10px;
-            text-align: center;
-            color: #212529;
-        }
-        
-        .login-subtitle {
-            color: #6c757d;
-            text-align: center;
-            margin-bottom: 30px;
-            font-weight: 300;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 400;
-            color: #495057;
-            font-size: 14px;
-        }
-        
-        .form-input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: border 0.3s;
-            box-sizing: border-box;
-            font-weight: 300;
-        }
-        
-        .form-input:focus {
-            outline: none;
-            border-color: #2563eb;
-        }
-        
-        .btn-login {
-            width: 100%;
-            padding: 12px;
-            background: #2563eb;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: 400;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .btn-login:hover {
-            background: #1d4ed8;
-        }
-        
-        .btn-google {
-            width: 100%;
-            padding: 12px;
-            background: white;
-            color: #212529;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: all 0.3s;
-            font-weight: 300;
-        }
-        
-        .btn-google:hover {
-            background: #f8f9fa;
-            border-color: #2563eb;
-        }
-        
-        .google-icon {
-            font-weight: bold;
-            font-size: 18px;
-            background: linear-gradient(to right, #4285F4, #EA4335, #FBBC05, #34A853);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .divider {
-            text-align: center;
-            margin: 20px 0;
-            color: #6c757d;
-            position: relative;
-            font-weight: 300;
-        }
-        
-        .divider::before,
-        .divider::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            width: 42%;
-            height: 1px;
-            background: #dee2e6;
-        }
-        
-        .divider::before {
-            left: 0;
-        }
-        
-        .divider::after {
-            right: 0;
-        }
-        
-        .auth-footer {
-            text-align: center;
-            margin-top: 20px;
-            color: #6c757d;
-            font-size: 14px;
-            font-weight: 300;
-        }
-        
-        .auth-link {
-            color: #2563eb;
-            text-decoration: none;
-            font-weight: 400;
-        }
-        
-        .auth-link:hover {
-            text-decoration: underline;
-        }
-        
-        .error-message {
-            background: #fee2e2;
-            color: #dc3545;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            display: none;
-            font-size: 14px;
-            border: 1px solid #fecaca;
-            font-weight: 300;
-        }
-        
-        .user-info {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: white;
-            font-size: 14px;
-            font-weight: 300;
-        }
-        
-        .btn-logout {
-            padding: 6px 12px;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.3s;
-            font-weight: 300;
-        }
-        
-        .btn-logout:hover {
-            background: rgba(255,255,255,0.3);
-        }
-        
-        #mainSystem {
-            display: none;
-            width: 100%;
-            height: 100vh;
-        }
-        
-        /* 첫 번째 컬럼 스타일 */
-        #marketStats td:first-child,
-        #optionStats td:first-child {
-            font-weight: bold;
-            text-align: left;
-            padding-left: 12px;
-        }
-    </style>
-</head>
-<body>
-    <!-- 초기 로딩 화면 -->
-    <div class="initial-loading" id="initialLoading">
-        <div class="initial-spinner"></div>
-        <div class="initial-text">시스템 로딩 중...</div>
-    </div>
-
-    <!-- 로그인 화면 -->
-    <div class="login-wrapper" id="loginScreen">
-        <!-- 로그인 카드 -->
-        <div class="login-card" id="loginCard">
-            <h1 class="login-title">주문통합 프로그램</h1>
-            <p class="login-subtitle">로그인하여 시작하세요</p>
-            
-            <div class="error-message" id="errorMsg"></div>
-            
-            <div class="form-group">
-                <label class="form-label">이메일</label>
-                <input type="email" id="email" class="form-input" placeholder="이메일을 입력하세요" onkeypress="handleEnter(event)">
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">비밀번호</label>
-                <input type="password" id="password" class="form-input" placeholder="비밀번호를 입력하세요" onkeypress="handleEnter(event)">
-            </div>
-            
-            <button class="btn-login" onclick="signInWithEmail()">로그인</button>
-            
-            <div class="divider">
-                <span>또는</span>
-            </div>
-            
-            <button class="btn-google" onclick="signInWithGoogle()">
-                <span class="google-icon">G</span>
-                Google로 로그인
-            </button>
-            
-            <div class="auth-footer">
-                <span>계정이 없으신가요? </span>
-                <a href="#" class="auth-link" onclick="showSignUp(); return false;">회원가입</a>
-            </div>
-        </div>
-        
-        <!-- 회원가입 카드 -->
-        <div class="login-card" id="signupCard" style="display: none;">
-            <h1 class="login-title">회원가입</h1>
-            <p class="login-subtitle">새 계정을 만들어보세요</p>
-            
-            <div class="error-message" id="signupErrorMsg"></div>
-            
-            <div class="form-group">
-                <label class="form-label">이름</label>
-                <input type="text" id="signupName" class="form-input" placeholder="이름을 입력하세요">
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">이메일</label>
-                <input type="email" id="signupEmail" class="form-input" placeholder="이메일을 입력하세요">
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">비밀번호</label>
-                <input type="password" id="signupPassword" class="form-input" placeholder="6자 이상의 비밀번호">
-            </div>
-            
-            <button class="btn-login" onclick="signUp()">계정 만들기</button>
-            
-            <div class="auth-footer">
-                <span>이미 계정이 있으신가요? </span>
-                <a href="#" class="auth-link" onclick="showLogin(); return false;">로그인</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- 메인 시스템 -->
-    <div id="mainSystem">
-        <div class="container">
-            <div class="header">
-                <h1>주문통합 프로그램</h1>
-                <p>모든 오픈마켓 주문을 스마트하게 통합하고 관리하세요</p>
-                <div class="user-info">
-                    <span id="userEmail"></span>
-                    <button class="btn-logout" onclick="signOut()">로그아웃</button>
-                </div>
-            </div>
-
-            <div class="main-content">
-                <div class="tab-navigation">
-                    <button class="tab-button active" data-tab="upload">주문 통합</button>
-                    <button class="tab-button" data-tab="dashboard">대시보드</button>
-                    <button class="tab-button" data-tab="settings">설정</button>
-                </div>
-
-                <div id="upload-tab" class="tab-content active">
-                    <div class="supported-markets" id="supportedMarkets"></div>
-
-                    <div class="upload-section" id="uploadSection">
-                        <input type="file" id="fileInput" class="file-input" multiple accept=".xlsx,.xls,.csv">
-                        <button class="upload-btn" id="uploadFileBtn">주문 파일 선택</button>
-                        <p style="margin-top: 15px; color: #6c757d;">엑셀/CSV 파일을 선택하거나 여기로 드래그해주세요</p>
-                    </div>
-
-                    <div class="file-list" id="fileList"></div>
-
-                    <div class="file-summary" id="fileSummary" style="display: none;">
-                        <div class="summary-item">
-                            <div class="summary-label">업로드 파일</div>
-                            <div class="summary-value" id="totalFiles">0</div>
-                        </div>
-                        <div class="summary-item">
-                            <div class="summary-label">마켓 수</div>
-                            <div class="summary-value" id="totalMarkets">0</div>
-                        </div>
-                        <div class="summary-item">
-                            <div class="summary-label">총 주문 수</div>
-                            <div class="summary-value orders" id="totalOrders">0</div>
-                        </div>
-                    </div>
-
-                    <div class="warning-box" id="warningBox">
-                        <h3>주의: 오래된 파일이 감지되었습니다!</h3>
-                        <ul class="warning-list" id="warningList"></ul>
-                        <div class="confirmation-checkbox">
-                            <label>
-                                <input type="checkbox" id="confirmOldFiles">
-                                오늘 날짜가 아닌 파일은 통합에서 제외됩니다
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="error-message" id="errorMessage"></div>
-                    <div class="success-message" id="successMessage"></div>
-
-                    <div style="text-align: center; margin: 30px 0;">
-                        <button class="upload-btn" id="processBtn" style="display: none;">주문 통합 실행</button>
-                    </div>
-
-                    <div class="result-section" id="resultSection">
-                        <div class="result-header">
-                            <h2 class="result-title">통합 결과</h2>
-                            <div class="export-buttons">
-                                <button class="export-btn export-excel" id="exportExcel">엑셀 다운로드</button>
-                                <button class="export-btn export-sheets" id="saveToSheets">구글 시트 저장</button>
-                            </div>
-                        </div>
-                        
-                        <div class="table-wrapper">
-                            <table id="resultTable">
-                                <thead id="resultTableHead"></thead>
-                                <tbody id="resultTableBody"></tbody>
-                            </table>
-                        </div>
-                        
-                        <div class="statistics-section" style="display: block !important;">
-                            <div class="stat-card" style="width: 100% !important; margin-bottom: 20px;">
-                                <h3>마켓별 통계</h3>
-                                <table class="stat-table" id="marketStats">
-                                    <colgroup>
-                                        <col style="width: 100px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 80px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 80px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 80px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 80px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 80px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 80px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 80px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 80px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 80px;">
-                                    </colgroup>
-                                    <thead>
-                                        <tr>
-                                            <th rowspan="3">마켓명</th>
-                                            <th colspan="3" rowspan="2">전체</th>
-                                            <th colspan="6">공급처</th>
-                                            <th colspan="6">판매처</th>
-                                            <th colspan="6">발송</th>
-                                            <th colspan="6">미발송</th>
-                                        </tr>
-                                        <tr>
-                                            <th colspan="3">자사</th>
-                                            <th colspan="3">벤더사</th>
-                                            <th colspan="3">자사</th>
-                                            <th colspan="3">셀러</th>
-                                            <th colspan="3">자사</th>
-                                            <th colspan="3">벤더사</th>
-                                            <th colspan="3">자사</th>
-                                            <th colspan="3">벤더사</th>
-                                        </tr>
-                                        <tr>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                            
-                            <div class="stat-card" style="width: 100% !important;">
-                                <h3>옵션별 통계</h3>
-                                <table class="stat-table" id="optionStats">
-                                    <colgroup>
-                                        <col style="width: 100px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 80px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 80px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 80px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 80px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 80px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 80px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 80px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 80px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 30px;">
-                                        <col style="width: 80px;">
-                                    </colgroup>
-                                    <thead>
-                                        <tr>
-                                            <th rowspan="3">옵션명</th>
-                                            <th colspan="3" rowspan="2">전체</th>
-                                            <th colspan="6">공급처</th>
-                                            <th colspan="6">판매처</th>
-                                            <th colspan="6">발송</th>
-                                            <th colspan="6">미발송</th>
-                                        </tr>
-                                        <tr>
-                                            <th colspan="3">자사</th>
-                                            <th colspan="3">벤더사</th>
-                                            <th colspan="3">자사</th>
-                                            <th colspan="3">셀러</th>
-                                            <th colspan="3">자사</th>
-                                            <th colspan="3">벤더사</th>
-                                            <th colspan="3">자사</th>
-                                            <th colspan="3">벤더사</th>
-                                        </tr>
-                                        <tr>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                            <th>건수</th>
-                                            <th>수량</th>
-                                            <th>금액</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                        </div>
-                        
-                        <div class="stat-card">
-                            <h3>피벗테이블</h3>
-                            <div class="pivot-controls">
-                                <label>
-                                    행:
-                                    <select id="pivotRowField">
-                                        <option value="마켓명">마켓명</option>
-                                        <option value="옵션명">옵션명</option>
-                                        <option value="셀러">셀러</option>
-                                        <option value="벤더사">벤더사</option>
-                                        <option value="송장번호유무">송장유무</option>
-                                    </select>
-                                </label>
-                                <label>
-                                    열:
-                                    <select id="pivotColField">
-                                        <option value="none">없음</option>
-                                        <option value="마켓명">마켓명</option>
-                                        <option value="옵션명">옵션명</option>
-                                        <option value="셀러">셀러</option>
-                                        <option value="벤더사">벤더사</option>
-                                        <option value="송장번호유무">송장유무</option>
-                                    </select>
-                                </label>
-                                <label>
-                                    열2:
-                                    <select id="pivotColField2">
-                                        <option value="none">없음</option>
-                                        <option value="마켓명">마켓명</option>
-                                        <option value="옵션명">옵션명</option>
-                                        <option value="셀러">셀러</option>
-                                        <option value="벤더사">벤더사</option>
-                                        <option value="송장번호유무">송장유무</option>
-                                    </select>
-                                </label>
-                                <label>
-                                    값:
-                                    <select id="pivotValueField">
-                                        <option value="count">건수</option>
-                                        <option value="수량">수량</option>
-                                        <option value="정산예정금액">금액</option>
-                                    </select>
-                                </label>
-                                <button onclick="updatePivotTable()">피벗 업데이트</button>
-                            </div>
-                            <div class="table-wrapper">
-                                <table id="pivotTable">
-                                    <thead></thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="dashboard-tab" class="tab-content">
-                    <div class="table-wrapper">
-                        <table id="dashboardTable">
-                            <tbody id="dashboardBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div id="settings-tab" class="tab-content">
-                    <div class="stat-card">
-                        <h3>매핑 설정</h3>
-                        <p>매핑 시트에서 마켓별 필드 매핑을 설정할 수 있습니다.</p>
-                        <button class="upload-btn" id="openMappingSheet">매핑 시트 열기</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="loading-overlay" id="loadingOverlay">
-        <div style="text-align: center;">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">처리 중...</div>
-        </div>
-    </div>
-
-    <!-- 라이브러리 및 스크립트 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    .main-content {
+        padding: 25px 20px;
+    }
     
-    <!-- Firebase 설정 먼저 로드 -->
-    <script src="firebase-config.js"></script>
+    .supported-markets {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    }
     
-    <!-- 인증 모듈 로드 -->
-    <script src="auth.js"></script>
+    .statistics-section {
+        grid-template-columns: 1fr;
+    }
     
-    <!-- 메인 스크립트 로드 -->
-    <script src="script.js"></script>
-</body>
-</html>
+    .stat-card {
+        padding: 25px 20px;
+    }
+    
+    .tab-navigation {
+        flex-wrap: wrap;
+    }
+    
+    .tab-button {
+        flex: 1;
+        min-width: 100px;
+    }
+    
+    .file-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .file-details {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .export-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .export-btn {
+        width: 100%;
+    }
+}
