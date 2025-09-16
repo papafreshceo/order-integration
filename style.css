@@ -605,6 +605,15 @@ tbody tr:nth-child(even) {
     table-layout: fixed;
 }
 
+/* 통계 테이블 발송/미발송 컬럼 색상 */
+.stat-table td.sent-col {
+    color: #212529; /* 검정색 */
+}
+
+.stat-table td.unsent-col {
+    color: #dc3545; /* 빨강색 */
+}
+
 /* 마켓별, 옵션별 테이블 고정 너비 */
 #marketStats,
 #optionStats {
