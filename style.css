@@ -625,9 +625,27 @@ tbody tr:nth-child(even) {
     background: #dbeafe;
 }
 
-/* ========================================
-   Statistics Section
-   ======================================== */
+/* 고정 컬럼 간격 문제 해결 */
+#resultTable .fixed-col {
+    background: #f0f9ff !important;
+    border-right: 1px solid #e0f2fe;
+}
+
+#resultTable thead .fixed-col {
+    background: #e0f2fe !important;
+}
+
+/* 마지막 고정 컬럼의 그림자 강화 */
+#resultTable .last-fixed-col {
+    box-shadow: 3px 0 8px rgba(0,0,0,0.1);
+    border-right: 2px solid #bae6fd;
+}
+
+/* 고정 컬럼 사이 간격 제거 */
+#resultTable {
+    border-spacing: 0;
+    border-collapse: collapse;
+}
 /* ========================================
    Statistics Section
    ======================================== */
