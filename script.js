@@ -1526,23 +1526,23 @@ function displayCategorizedStats(tableId, stats, firstColumnName) {
         tr.appendChild(createStatCell(computed.sellerSales.quantity));
         tr.appendChild(createStatCell(computed.sellerSales.amount, true));
         
-        // 발송 자사/벤더사
-        tr.appendChild(createStatCell(computed.sentCompany.count));
-        tr.appendChild(createStatCell(computed.sentCompany.quantity));
-        tr.appendChild(createStatCell(computed.sentCompany.amount, true));
+        /// 발송 자사/벤더사 (검정색)
+        tr.appendChild(createStatCell(computed.sentCompany.count, false, 'black'));
+        tr.appendChild(createStatCell(computed.sentCompany.quantity, false, 'black'));
+        tr.appendChild(createStatCell(computed.sentCompany.amount, true, 'black'));
         
-        tr.appendChild(createStatCell(computed.sentVendor.count));
-        tr.appendChild(createStatCell(computed.sentVendor.quantity));
-        tr.appendChild(createStatCell(computed.sentVendor.amount, true));
+        tr.appendChild(createStatCell(computed.sentVendor.count, false, 'black'));
+        tr.appendChild(createStatCell(computed.sentVendor.quantity, false, 'black'));
+        tr.appendChild(createStatCell(computed.sentVendor.amount, true, 'black'));
         
-        // 미발송 자사/벤더사
-        tr.appendChild(createStatCell(computed.unsentCompany.count));
-        tr.appendChild(createStatCell(computed.unsentCompany.quantity));
-        tr.appendChild(createStatCell(computed.unsentCompany.amount, true));
+        // 미발송 자사/벤더사 (빨강색)
+        tr.appendChild(createStatCell(computed.unsentCompany.count, false, '#dc3545'));
+        tr.appendChild(createStatCell(computed.unsentCompany.quantity, false, '#dc3545'));
+        tr.appendChild(createStatCell(computed.unsentCompany.amount, true, '#dc3545'));
         
-        tr.appendChild(createStatCell(computed.unsentVendor.count));
-        tr.appendChild(createStatCell(computed.unsentVendor.quantity));
-        tr.appendChild(createStatCell(computed.unsentVendor.amount, true));
+        tr.appendChild(createStatCell(computed.unsentVendor.count, false, '#dc3545'));
+        tr.appendChild(createStatCell(computed.unsentVendor.quantity, false, '#dc3545'));
+        tr.appendChild(createStatCell(computed.unsentVendor.amount, true, '#dc3545'));
         
         tbody.appendChild(tr);
         
@@ -1582,24 +1582,21 @@ function displayCategorizedStats(tableId, stats, firstColumnName) {
     totalRow.appendChild(createStatCell(totals.sellerSales.quantity));
     totalRow.appendChild(createStatCell(totals.sellerSales.amount, true));
     
-    totalRow.appendChild(createStatCell(totals.sentCompany.count));
-    totalRow.appendChild(createStatCell(totals.sentCompany.quantity));
-    totalRow.appendChild(createStatCell(totals.sentCompany.amount, true));
+    totalRow.appendChild(createStatCell(totals.sentCompany.count, false, 'black'));
+    totalRow.appendChild(createStatCell(totals.sentCompany.quantity, false, 'black'));
+    totalRow.appendChild(createStatCell(totals.sentCompany.amount, true, 'black'));
     
-    totalRow.appendChild(createStatCell(totals.sentVendor.count));
-    totalRow.appendChild(createStatCell(totals.sentVendor.quantity));
-    totalRow.appendChild(createStatCell(totals.sentVendor.amount, true));
+    totalRow.appendChild(createStatCell(totals.sentVendor.count, false, 'black'));
+    totalRow.appendChild(createStatCell(totals.sentVendor.quantity, false, 'black'));
+    totalRow.appendChild(createStatCell(totals.sentVendor.amount, true, 'black'));
     
-    totalRow.appendChild(createStatCell(totals.unsentCompany.count));
-    totalRow.appendChild(createStatCell(totals.unsentCompany.quantity));
-    totalRow.appendChild(createStatCell(totals.unsentCompany.amount, true));
+    totalRow.appendChild(createStatCell(totals.unsentCompany.count, false, '#dc3545'));
+    totalRow.appendChild(createStatCell(totals.unsentCompany.quantity, false, '#dc3545'));
+    totalRow.appendChild(createStatCell(totals.unsentCompany.amount, true, '#dc3545'));
     
-    totalRow.appendChild(createStatCell(totals.unsentVendor.count));
-    totalRow.appendChild(createStatCell(totals.unsentVendor.quantity));
-    totalRow.appendChild(createStatCell(totals.unsentVendor.amount, true));
-    
-    tbody.appendChild(totalRow);
-}
+    totalRow.appendChild(createStatCell(totals.unsentVendor.count, false, '#dc3545'));
+    totalRow.appendChild(createStatCell(totals.unsentVendor.quantity, false, '#dc3545'));
+    totalRow.appendChild(createStatCell(totals.unsentVendor.amount, true, '#dc3545'));
 
 function calculateCategoryStats(data) {
     const stats = {
@@ -1678,10 +1675,15 @@ function calculateCategoryStats(data) {
     return stats;
 }
 
-function createStatCell(value, isAmount = false) {
+function createStatCell(value, isAmount = false, textColor = null) {
     const td = document.createElement('td');
     td.style.textAlign = isAmount ? 'right' : 'center';
     td.className = isAmount ? 'amount-col' : '';
+    
+    // 텍스트 색상 적용
+    if (textColor) {
+        td.style.color = textColor;
+    }
     
     // 0 값은 빈 셀로 표시
     if (value === 0) {
@@ -1956,6 +1958,7 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
 
