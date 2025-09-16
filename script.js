@@ -1257,10 +1257,11 @@ function displayResultTable(data) {
     // 바디 생성
     tbody.innerHTML = '';
     
-    let leftPositions = [0];
-    for (let i = 1; i <= phoneColumnIndex; i++) {
-        leftPositions[i] = leftPositions[i - 1] + columnWidths[i - 1];
-    }
+    // 수정된 코드 - 테두리 너비 고려
+let leftPositions = [0];
+for (let i = 1; i <= phoneColumnIndex; i++) {
+    leftPositions[i] = leftPositions[i - 1] + columnWidths[i - 1] - 1; // 테두리 1px 겹침 고려
+}
     
     data.forEach((row) => {
         const tr = document.createElement('tr');
@@ -1948,3 +1949,4 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
