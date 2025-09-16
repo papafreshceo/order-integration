@@ -10,7 +10,10 @@ auth.onAuthStateChanged((user) => {
     if (user) {
         // 로그인된 상태
         document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('mainSystem').style.display = 'block';
+        const mainSystem = document.getElementById('mainSystem');
+        mainSystem.style.display = 'block';
+        mainSystem.style.width = '100%';
+        mainSystem.style.height = '100vh';
         document.getElementById('userEmail').textContent = user.email;
         
         // 메인 시스템 초기화는 script.js에서 처리
