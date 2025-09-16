@@ -130,27 +130,8 @@ body {
 }
 
 /* ========================================
-   Tab Title
+   Tab Navigation
    ======================================== */
-.tab-title {
-    background: var(--bg-secondary);
-    padding: 24px 32px;
-    margin: -40px -40px 32px -40px;
-    border-bottom: 1px solid var(--border-default);
-}
-
-.tab-title h2 {
-    font-size: 28px;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: 8px;
-}
-
-.tab-title p {
-    font-size: 14px;
-    font-weight: 300;
-    color: var(--text-secondary);
-}
 .tab-navigation {
     display: flex;
     gap: 8px;
