@@ -575,7 +575,7 @@ tbody tr:nth-child(even) {
    ======================================== */
 .statistics-section {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    grid-template-columns: 1fr;  /* 한 열만 사용 */
     gap: 20px;
     margin-top: 32px;
 }
@@ -583,6 +583,7 @@ tbody tr:nth-child(even) {
 .stat-card {
     background: var(--bg-primary);
     border: 1px solid var(--border-default);
+
     border-radius: 16px;
     padding: 40px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
