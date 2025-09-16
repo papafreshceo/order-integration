@@ -964,7 +964,8 @@ function updateFileList() {
         return;
     }
     
-    document.getElementById('processBtn').style.display = 'inline-block';
+    // 처리 버튼은 숨기고 파일 요약만 먼저 표시
+    document.getElementById('processBtn').style.display = 'none';
     document.getElementById('fileSummary').style.display = 'flex';
     
     let sortedFiles = [...uploadedFiles];
@@ -1049,6 +1050,11 @@ sortedFiles.forEach((file) => {
     document.getElementById('totalFiles').textContent = uploadedFiles.length;
     document.getElementById('totalMarkets').textContent = marketSet.size;
     document.getElementById('totalOrders').textContent = totalOrders.toLocaleString('ko-KR');
+    
+    // 파일 목록 렌더링 완료 후 1초 뒤에 버튼 표시
+    setTimeout(() => {
+        document.getElementById('processBtn').style.display = 'inline-block';
+    }, 1000);
 }
 
 function removeFile(index) {
@@ -1950,5 +1956,6 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
