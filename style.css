@@ -573,53 +573,6 @@ tbody tr:nth-child(even) {
 /* ========================================
    Statistics Section
    ======================================== */
-/* 통계 테이블 고정 너비 설정 */
-.stat-card {
-    overflow-x: auto;  /* 가로 스크롤 추가 */
-    overflow-y: visible;
-}
-
-/* 마켓별 통계 테이블 고정 */
-#marketStats {
-    width: 1380px !important;  /* 100 + 60*3 + 50*24 = 1380px */
-    min-width: 1380px !important;
-    max-width: 1380px !important;
-    table-layout: fixed !important;
-}
-
-/* 옵션별 통계 테이블 고정 */
-#optionStats {
-    width: 1380px !important;  /* 100 + 60*3 + 50*24 = 1380px */
-    min-width: 1380px !important;
-    max-width: 1380px !important;
-    table-layout: fixed !important;
-}
-
-/* 열 너비 강제 고정 */
-#marketStats th,
-#marketStats td,
-#optionStats th,
-#optionStats td {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* 반응형 미디어 쿼리 제거 또는 수정 */
-@media (max-width: 768px) {
-    .stat-card {
-        padding: 25px 20px;
-        overflow-x: auto !important;  /* 모바일에서도 스크롤 유지 */
-    }
-    
-    #marketStats,
-    #optionStats {
-        width: 1380px !important;  /* 모바일에서도 고정 너비 유지 */
-    }
-}
-
-
-
 .statistics-section {
     display: grid;
     grid-template-columns: 1fr;  /* 한 열만 사용 */
