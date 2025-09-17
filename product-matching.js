@@ -87,59 +87,64 @@ const ProductMatching = (function() {
     // 주문 데이터에 제품 정보 적용
     // ===========================
     async function applyProductInfo(orderData) {
-        if (!orderData || !Array.isArray(orderData)) {
-            return orderData;
-        }
-        
-        // 제품 데이터가 없으면 로드
-        if (Object.keys(productData).length === 0) {
-            await loadProductData();
-        }
-        
-        unmatchedOptions.clear();
-        
-        orderData.forEach((row, index) => {
-            const optionName = row['옵션명'];
-            
-            if (!optionName) {
-                unmatchedOptions.add(`row-${index}`);
-                return;
-            }
-            
-            const matchedProduct = matchOption(optionName);
-            const sellerPrice = getSellerPrice(optionName);
-            
-            if (matchedProduct) {
-                // 매칭 성공 - 필드 채우기
-                row['출고처'] = matchedProduct.출고처 || row['출고처'] || '';
-                row['송장주체'] = matchedProduct.송장주체 || row['송장주체'] || '';
-                row['벤더사'] = matchedProduct.벤더사 || row['벤더사'] || '';
-                row['발송지명'] = matchedProduct.발송지명 || row['발송지명'] || '';
-                row['발송지주소'] = matchedProduct.발송지주소 || row['발송지주소'] || '';
-                row['발송지연락처'] = matchedProduct.발송지연락처 || row['발송지연락처'] || '';
-                row['출고비용'] = matchedProduct.출고비용 || 0;
-                
-                // 셀러공급가 설정
-                if (sellerPrice !== null) {
-                    const quantity = parseInt(row['수량']) || 1;
-                    row['셀러공급가'] = sellerPrice * quantity;
-                }
-                
-                row['_matchStatus'] = 'matched';
-            } else {
-                // 매칭 실패
-                unmatchedOptions.add(optionName);
-                row['_matchStatus'] = 'unmatched';
-            }
-        });
-        
-        console.log('매칭 결과:', {
-            total: orderData.length,
-            unmatched: unmatchedOptions.size
-        });
-        
+    if (!orderData || !Array.isArray(orderData)) {
         return orderData;
     }
+    
+    // 제품 데이터가 없으면 로드
+    if (Object.keys(productData).length === 0) {
+        await loadProductData();
+    }
+    
+    unmatchedOptions.clear();
+    
+    orderData.forEach((row, index) => {
+        const optionName = row['옵션명'];
+        
+        if (!optionName) {
+            unmatchedOptions.add(`row-${index}`);
+            return;
+        }
+        
+        const matchedProduct = matchOption(optionName);
+        const sellerPrice = getSellerPrice(optionName);
+        
+        if (matchedProduct) {
+            // 매칭 성공 - 필드 채우기
+            console.log('매칭된 제품 정보:', matchedProduct);  // 디버깅용
+            
+            // 필드가 비어있을 때만 채우기 (기존 값 보존)
+            if (!row['출고처']) row['출고처'] = matchedProduct.출고처 || '';
+            if (!row['송장주체']) row['송장주체'] = matchedProduct.송장주체 || '';
+            if (!row['벤더사']) row['벤더사'] = matchedProduct.벤더사 || '';
+            if (!row['발송지명']) row['발송지명'] = matchedProduct.발송지명 || '';
+            if (!row['발송지주소']) row['발송지주소'] = matchedProduct.발송지주소 || '';
+            if (!row['발송지연락처']) row['발송지연락처'] = matchedProduct.발송지연락처 || '';
+            if (!row['출고비용']) row['출고비용'] = matchedProduct.출고비용 || 0;
+            
+            // 셀러공급가 설정
+            if (sellerPrice !== null && row['셀러']) {
+                const quantity = parseInt(row['수량']) || 1;
+                row['셀러공급가'] = sellerPrice * quantity;
+            }
+            
+            row['_matchStatus'] = 'matched';
+            
+            console.log('업데이트된 행:', row);  // 디버깅용
+        } else {
+            // 매칭 실패
+            unmatchedOptions.add(optionName);
+            row['_matchStatus'] = 'unmatched';
+        }
+    });
+    
+    console.log('매칭 결과:', {
+        total: orderData.length,
+        unmatched: unmatchedOptions.size
+    });
+    
+    return orderData;
+}
     
     // ===========================
     // 테이블 셀 편집 가능 설정
