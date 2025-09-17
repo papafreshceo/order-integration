@@ -412,6 +412,7 @@ body {
    ======================================== */
 .result-section {
     margin-top: 60px;
+    padding-top: 100;
     display: none;
 }
 
