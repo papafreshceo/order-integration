@@ -764,6 +764,25 @@ async function processOrderFiles(filesData) {
         
         console.log(`전체 처리 완료: ${processedCount}개 주문, ${skippedCount}개 파일 스킵`);
         
+        // 마켓 순서대로 정렬
+        if (mappingData && mappingData.marketOrder && mappingData.marketOrder.length > 0) {
+            mergedData.sort((a, b) => {
+                const marketA = a['마켓명'];
+                const marketB = b['마켓명'];
+                const ia = mappingData.marketOrder.indexOf(marketA);
+                const ib = mappingData.marketOrder.indexOf(marketB);
+                if (ia !== -1 && ib !== -1) return ia - ib;
+                if (ia !== -1) return -1;
+                if (ib !== -1) return 1;
+                return marketA.localeCompare(marketB);
+            });
+        }
+        
+        // 연번 재할당 (정렬 후)
+        mergedData.forEach((row, index) => {
+            row['연번'] = index + 1;
+        });
+        
         // 구글 시트에 자동 저장 제거 - 저장 버튼을 통해서만 저장
         
         return {
@@ -2291,6 +2310,7 @@ function updateDuplicateStyles() {
 // ===========================
 // 피벗테이블
 // ===========================
+
 
 
 
