@@ -1183,6 +1183,17 @@ function showCenterMessage(message, type = 'success', duration = 3000) {
 // ===========================
 function displayResults(result) {
     const resultSection = document.getElementById('resultSection');
+    
+    // 스페이서 요소 추가 또는 재사용
+    let spacer = document.getElementById('resultSpacer');
+    if (!spacer) {
+        spacer = document.createElement('div');
+        spacer.id = 'resultSpacer';
+        spacer.style.height = '80px';  // 원하는 높이로 조정
+        spacer.style.backgroundColor = 'transparent';
+        resultSection.parentNode.insertBefore(spacer, resultSection);
+    }
+    
     resultSection.classList.add('show');
     
     displayResultTable(result.data);
@@ -1192,7 +1203,8 @@ function displayResults(result) {
         updatePivotTable();
     }, 100);
     
-    resultSection.scrollIntoView({ behavior: 'smooth' });
+    // 스페이서로 스크롤하여 결과 섹션이 적절한 위치에 오도록
+    spacer.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function displayResultTable(data) {
