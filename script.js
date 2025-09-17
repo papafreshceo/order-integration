@@ -1312,7 +1312,6 @@ function displayResultTable(data) {
     
     // 헤더 생성
     const headerRow = document.createElement('tr');
-    let accumulatedWidth = 0;
     const columnWidths = [];
     
     headers.forEach((header, index) => {
@@ -2077,3 +2076,4 @@ function resetResultSection() {
     showSuccess('통합 결과가 초기화되었습니다.');
 
 }
+
