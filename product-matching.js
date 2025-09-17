@@ -341,7 +341,9 @@ const ProductMatching = (function() {
         verifyOptions: verifyOptions,
         updateTableStyles: updateTableStyles,
         getUnmatchedOptions: () => unmatchedOptions,
-        getModifiedCells: () => modifiedCells
+        getModifiedCells: () => modifiedCells,
+        getProductData: () => productData,  // 추가
+        getPriceData: () => priceData       // 추가
     };
 })();
 
