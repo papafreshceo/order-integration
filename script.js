@@ -1519,32 +1519,6 @@ function displayResultTable(data) {
 
 
 
-function calculateColumnWidth(header, data, index) {
-    // 필수 고정 필드는 fixedWidths에서 처리되므로 여기서는 나머지 필드만 처리
-    let maxLength = header.length;
-    const sampleSize = Math.min(100, data.length);
-    
-    for (let i = 0; i < sampleSize; i++) {
-        const value = String(data[i][header] || '');
-        maxLength = Math.max(maxLength, value.length);
-    }
-    
-    let width = maxLength * 8;
-    
-    // 특정 필드 타입별 너비 조정
-    if (header === '주소' || header.includes('주소')) {
-        width = Math.min(400, Math.max(250, width));
-    } else if (header.includes('금액') || header.includes('수수료')) {
-        width = Math.max(120, width);
-    } else if (header === '옵션명') {
-        width = Math.min(300, Math.max(150, width));
-    }
-    
-    // 최소/최대 너비 제한
-    width = Math.max(60, Math.min(500, width));
-    
-    return width;
-}
 
 
 
@@ -2317,5 +2291,6 @@ function updateDuplicateStyles() {
 // ===========================
 // 피벗테이블
 // ===========================
+
 
 
