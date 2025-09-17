@@ -4,6 +4,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@200;300;400;500;600;700&display=swap');
 
 
+
 /* ========================================
    CSS Variables - 지침 준수
    ======================================== */
@@ -112,6 +113,7 @@ body {
     text-align: center;
     position: relative;
     flex-shrink: 0;
+    
 }
 
 .header h1 {
@@ -126,6 +128,12 @@ body {
     font-weight: 300;
     opacity: 0.95;
     color: var(--text-secondary);
+}
+.user-info,
+.user-info span,
+.user-info #userEmail,
+.user-info .role-badge {
+    color: var(--text-primary) !important;
 }
 
 /* ========================================
