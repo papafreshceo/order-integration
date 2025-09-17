@@ -1041,16 +1041,6 @@ function updateFileList() {
         
         const fileItem = document.createElement('div');
         fileItem.className = 'file-item';
-        if (!file.isToday) {
-            fileItem.classList.add('warning');
-            
-            // 경고 배지 추가
-            const warningBadge = document.createElement('span');
-            warningBadge.className = 'warning-badge';
-            warningBadge.textContent = '⚠️ 오래된 파일';
-            warningBadge.style.cssText = 'background: #fef3c7; color: #f59e0b; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 8px;';
-            marketTag.parentNode.insertBefore(warningBadge, marketTag.nextSibling);
-        }
         
         const fileInfo = document.createElement('div');
         fileInfo.className = 'file-info';
@@ -1058,6 +1048,7 @@ function updateFileList() {
         const fileNameSection = document.createElement('div');
         fileNameSection.className = 'file-name-section';
         
+        // marketTag를 먼저 생성
         const marketTag = document.createElement('span');
         marketTag.className = 'market-tag';
         marketTag.textContent = file.marketName;
@@ -1070,11 +1061,24 @@ function updateFileList() {
             marketTag.style.color = brightness > 128 ? '#000' : '#fff';
         }
         
+        fileNameSection.appendChild(marketTag);
+        
+        // 오래된 파일 경고 배지 처리
+        if (!file.isToday) {
+            fileItem.classList.add('warning');
+            
+            // 경고 배지 추가
+            const warningBadge = document.createElement('span');
+            warningBadge.className = 'warning-badge';
+            warningBadge.textContent = '⚠️ 오래된 파일';
+            warningBadge.style.cssText = 'background: #fef3c7; color: #f59e0b; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 8px;';
+            fileNameSection.appendChild(warningBadge);
+        }
+        
         const fileName = document.createElement('div');
         fileName.className = 'file-name';
         fileName.innerHTML = `<span style="color: #666;">파일명:</span> ${file.name}`;
         
-        fileNameSection.appendChild(marketTag);
         fileNameSection.appendChild(fileName);
         
         const fileDetails = document.createElement('div');
