@@ -1189,7 +1189,7 @@ function displayResults(result) {
     if (!spacer) {
         spacer = document.createElement('div');
         spacer.id = 'resultSpacer';
-        spacer.style.height = '80px';  // 원하는 높이로 조정
+        spacer.style.height = '20px';  // 원하는 높이로 조정
         spacer.style.backgroundColor = 'transparent';
         resultSection.parentNode.insertBefore(spacer, resultSection);
     }
