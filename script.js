@@ -505,7 +505,8 @@ async function processOrders() {
         await Promise.all([
             loadSalesInfo(),
             loadOptionProductInfo(),
-            loadPriceCalculation()
+            loadPriceCalculation(),
+            ProductMatching.loadProductData()  // 제품 매칭 데이터 로드 추가
         ]);
         
         // 주문 데이터 처리
@@ -515,6 +516,9 @@ async function processOrders() {
             showError('처리 실패: ' + result.error);
             return;
         }
+        
+        // 제품 정보 적용
+        result.data = await ProductMatching.applyProductInfo(result.data);
         
         processedData = result;
         showSuccess(`성공적으로 ${result.data.length}개의 주문을 통합했습니다.`);
@@ -1414,6 +1418,15 @@ function displayResultTable(data) {
                     td.style.color = brightness > 128 ? '#000' : '#fff';
                     td.style.fontWeight = 'bold';
                     td.style.textAlign = 'center';
+                }
+            }
+            
+            // 옵션명 셀 매칭 상태 표시
+            if (header === '옵션명' && row['_matchStatus']) {
+                if (row['_matchStatus'] === 'unmatched') {
+                    td.classList.add('unmatched-cell');
+                    td.contentEditable = true;
+                    td.classList.add('editable-cell');
                 }
             }
             
