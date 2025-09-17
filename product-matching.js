@@ -149,34 +149,51 @@ const ProductMatching = (function() {
     // ===========================
     // 테이블 셀 편집 가능 설정
     // ===========================
-    function enableCellEditing(td, rowIndex, fieldName) {
-        const originalValue = td.textContent;
-        td.contentEditable = true;
-        td.classList.add('editable-cell');
-        
-        // 포커스 시 전체 선택
-        td.addEventListener('focus', function() {
-            const selection = window.getSelection();
-            const range = document.createRange();
-            range.selectNodeContents(td);
-            selection.removeAllRanges();
-            selection.addRange(range);
-        });
-        
-        // 수정 완료 처리
-        td.addEventListener('blur', function() {
-            handleCellEdit(td, rowIndex, fieldName, originalValue);
-        });
-        
-        // Enter 키 처리
-        td.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                td.blur();
-                td.focus();  // 수정 완료 후 다시 포커스를 주어 선택 상태 유지
-            }
-        });
-    }
+    /* 찾기: enableCellEditing 함수 */
+function enableCellEditing(td, rowIndex, fieldName) {
+    const originalValue = td.textContent;
+    td.contentEditable = true;
+    td.classList.add('editable-cell');
+    
+    // 포커스 시 전체 선택
+    td.addEventListener('focus', function() {
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(td);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    });
+    
+    // 수정 완료 처리
+    td.addEventListener('blur', function() {
+        handleCellEdit(td, rowIndex, fieldName, originalValue);
+    });
+    
+    // Enter 키 처리 - 줄바꿈 방지 및 편집 종료
+    td.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();  // 줄바꿈 방지
+            e.stopPropagation();  // 이벤트 전파 중지
+            
+            // 편집 종료
+            td.contentEditable = false;
+            td.blur();
+            
+            // 편집 가능 상태 복원
+            setTimeout(() => {
+                td.contentEditable = true;
+            }, 100);
+        }
+    });
+    
+    // Shift+Enter도 방지
+    td.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            return false;
+        }
+    });
+}
     
     // ===========================
     // 셀 수정 처리
@@ -358,5 +375,6 @@ const ProductMatching = (function() {
 // 전역 함수로 노출 (HTML onclick에서 호출 가능)
 
 window.ProductMatching = ProductMatching;
+
 
 
