@@ -836,3 +836,35 @@ tbody tr:nth-child(even) {
         width: 100%;
     }
 }
+/* ========================================
+   Center Message
+   ======================================== */
+.center-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    padding: 20px 40px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 400;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    animation: fadeIn 0.3s ease;
+    display: none;
+}
+
+.center-message.success {
+    background: var(--success);
+    color: var(--bg-primary);
+}
+
+.center-message.error {
+    background: var(--danger);
+    color: var(--bg-primary);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}

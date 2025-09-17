@@ -834,6 +834,21 @@ async function saveToSheet(sheetName, data, standardFields) {
             values.push(rowValues);
         });
         
+        // 마켓 색상 매핑 준비
+        const marketColors = {};
+        if (mappingData && mappingData.markets) {
+            Object.entries(mappingData.markets).forEach(([marketName, market]) => {
+                if (market.color) {
+                    const rgb = market.color.split(',').map(Number);
+                    const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+                    marketColors[marketName] = {
+                        color: market.color,
+                        textColor: brightness > 128 ? '#000' : '#fff'
+                    };
+                }
+            });
+        }
+        
         // API 호출
         const response = await fetch(`${API_BASE}/api/sheets`, {
             method: 'POST',
@@ -843,7 +858,8 @@ async function saveToSheet(sheetName, data, standardFields) {
             body: JSON.stringify({
                 action: 'saveToSheet',
                 sheetName: sheetName,
-                values: values
+                values: values,
+                marketColors: marketColors
             })
         });
         
@@ -1110,11 +1126,11 @@ function exportToExcel() {
 
 async function saveToGoogleSheets() {
     if (!processedData || !processedData.data) {
-        showError('저장할 데이터가 없습니다.');
+        showCenterMessage('저장할 데이터가 없습니다.', 'error');
         return;
     }
     
-    showSuccess(`구글 시트 "${processedData.sheetName}"에 저장되었습니다.`);
+    showCenterMessage(`구글 시트 "${processedData.sheetName}"에 저장되었습니다.`, 'success');
 }
 
 // ===========================
@@ -1155,6 +1171,18 @@ function showSuccess(message) {
 
 function hideSuccess() {
     document.getElementById('successMessage').classList.remove('show');
+}
+
+// 중앙 메시지 표시 함수
+function showCenterMessage(message, type = 'success', duration = 3000) {
+    const msgEl = document.getElementById('centerMessage');
+    msgEl.textContent = message;
+    msgEl.className = `center-message ${type}`;
+    msgEl.style.display = 'block';
+    
+    setTimeout(() => {
+        msgEl.style.display = 'none';
+    }, duration);
 }
 
 // ===========================

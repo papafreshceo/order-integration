@@ -11,39 +11,7 @@ const {
   mergeAndSaveOrderData
 } = require('../lib/google-sheets');
 
-// 마켓별 색상 매핑 (매핑 데이터에서 가져와야 하지만, 일단 하드코딩)
-const marketColorMapping = {
-  '스마트스토어': { color: '76,175,80', textColor: '#fff' },
-  '쿠팡': { color: '229,57,53', textColor: '#fff' },
-  '11번가': { color: '244,67,54', textColor: '#fff' },
-  'G마켓': { color: '76,175,80', textColor: '#fff' },
-  '옥션': { color: '255,152,0', textColor: '#000' },
-  '위메프': { color: '233,30,99', textColor: '#fff' },
-  'GS샵': { color: '233,30,99', textColor: '#fff' },
-  '카카오': { color: '255,235,59', textColor: '#000' },
-  '티몬': { color: '229,57,53', textColor: '#fff' },
-  'SSG': { color: '244,67,54', textColor: '#fff' },
-  '인터파크': { color: '255,87,34', textColor: '#fff' },
-  '롯데온': { color: '244,67,54', textColor: '#fff' },
-  '텐바이텐': { color: '156,39,176', textColor: '#fff' },
-  '에이블리': { color: '233,30,99', textColor: '#fff' },
-  '브랜디': { color: '103,58,183', textColor: '#fff' },
-  '무신사': { color: '33,33,33', textColor: '#fff' },
-  '지그재그': { color: '233,30,99', textColor: '#fff' },
-  '29CM': { color: '33,33,33', textColor: '#fff' },
-  '룩핀': { color: '233,30,99', textColor: '#fff' },
-  '스타일쉐어': { color: '156,39,176', textColor: '#fff' },
-  '우먼스톡': { color: '233,30,99', textColor: '#fff' },
-  'W컨셉': { color: '33,33,33', textColor: '#fff' },
-  '하이버': { color: '103,58,183', textColor: '#fff' },
-  '올리브영': { color: '142,195,31', textColor: '#000' },
-  'CJ온스타일': { color: '0,70,140', textColor: '#fff' },
-  '아이디어스': { color: '255,87,34', textColor: '#fff' },
-  '오늘의집': { color: '53,197,240', textColor: '#fff' },
-  '카카오쇼핑': { color: '255,235,59', textColor: '#000' },
-  '트렌비': { color: '233,30,99', textColor: '#fff' },
-  'AK몰': { color: '139,0,0', textColor: '#fff' }
-};
+
 
 export default async function handler(req, res) {
   // CORS 설정
@@ -144,7 +112,7 @@ export default async function handler(req, res) {
         const dashboardData = await getSheetData('대시보드!A:Z');
         return res.status(200).json({ values: dashboardData });
 
-      case 'saveToSheet':
+case 'saveToSheet':
         // 시트 생성 또는 확인
         const sheetResult = await createOrderSheet(sheetName);
         
@@ -152,15 +120,15 @@ export default async function handler(req, res) {
         const headerRow = values[0];
         const dataRows = values.slice(1);
         
-        // 데이터를 배열 형태로 변환
-        const formattedData = dataRows.map(row => row);
+        // 클라이언트에서 받은 마켓 색상 사용
+        const marketColorMap = req.body.marketColors || {};
         
         // 중복 체크 및 병합 저장
         const result = await mergeAndSaveOrderData(
           sheetName, 
-          formattedData, 
+          dataRows, 
           headerRow,
-          marketColorMapping
+          marketColorMap
         );
         
         return res.status(200).json({ 
@@ -168,7 +136,6 @@ export default async function handler(req, res) {
           sheetName: sheetName,
           ...result
         });
-
       case 'appendToSheet':
         const appendResult = await appendSheetData(range, values);
         return res.status(200).json({ 
