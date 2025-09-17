@@ -1228,9 +1228,10 @@ function hideSuccess() {
 }
 
 // 중앙 메시지 표시 함수
+
 function showCenterMessage(message, type = 'success', duration = 3000) {
     const msgEl = document.getElementById('centerMessage');
-    msgEl.textContent = message;
+    msgEl.innerHTML = message;  // textContent 대신 innerHTML 사용
     msgEl.className = `center-message ${type}`;
     msgEl.style.display = 'block';
     
@@ -1238,7 +1239,6 @@ function showCenterMessage(message, type = 'success', duration = 3000) {
         msgEl.style.display = 'none';
     }, duration);
 }
-
 // ===========================
 // 결과 표시
 // ===========================
@@ -2317,3 +2317,4 @@ function updateDuplicateStyles() {
 // ===========================
 // 피벗테이블
 // ===========================
+
