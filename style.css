@@ -129,11 +129,26 @@ body {
     opacity: 0.95;
     color: var(--text-secondary);
 }
-.user-info,
-.user-info span,
-.user-info #userEmail,
-.user-info .role-badge,
-.user-info .btn-logout {
+/* 로그인 후 메인 시스템 헤더 스타일 */
+.main-system .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+}
+
+.main-system .header h1 {
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.main-system .header .user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.main-system .header .user-info * {
     color: var(--text-primary) !important;
 }
 
