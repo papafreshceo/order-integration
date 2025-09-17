@@ -1559,6 +1559,17 @@ function initTableResize() {
     let startX = 0;
     let startWidth = 0;
     
+    // 고정열 끝 인덱스 찾기
+    const headers = table.querySelectorAll('th');
+    let fixedEndIndex = -1;
+    for (let i = 0; i < headers.length; i++) {
+        if (headers[i].style.position === 'sticky') {
+            fixedEndIndex = i;
+        } else if (fixedEndIndex !== -1) {
+            break;
+        }
+    }
+    
     resizeHandles.forEach(handle => {
         handle.addEventListener('mousedown', function(e) {
             isResizing = true;
@@ -1590,6 +1601,25 @@ function initTableResize() {
             td.style.width = newWidth + 'px';
             td.style.minWidth = newWidth + 'px';
         });
+        
+        // 리사이즈한 열이 고정열이거나 그 이전 열이면 고정열 위치 재계산
+        if (currentColumn <= fixedEndIndex) {
+            let leftPos = 0;
+            for (let i = 0; i <= fixedEndIndex; i++) {
+                if (i > 0) {
+                    // 이전 열의 너비를 더해서 위치 계산
+                    leftPos += parseInt(ths[i-1].style.width || ths[i-1].offsetWidth);
+                    ths[i].style.left = leftPos + 'px';
+                    
+                    // 모든 행의 해당 열 위치 업데이트
+                    table.querySelectorAll(`tbody td:nth-child(${i + 1})`).forEach(td => {
+                        if (td.style.position === 'sticky') {
+                            td.style.left = leftPos + 'px';
+                        }
+                    });
+                }
+            }
+        }
     });
     
     document.addEventListener('mouseup', function() {
@@ -1600,7 +1630,6 @@ function initTableResize() {
         document.body.style.userSelect = '';
     });
 }
-
 // ===========================
 // 통계 표시
 // ===========================
@@ -2152,6 +2181,7 @@ function resetResultSection() {
     showSuccess('통합 결과가 초기화되었습니다.');
 
 }
+
 
 
 
