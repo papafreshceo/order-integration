@@ -1312,7 +1312,58 @@ function displayResultTable(data) {
         '발송지연락처': 140
     };
     
-    // 열너비 배열 생성
+    if (data.length === 0) {
+        thead.innerHTML = '';
+        tbody.innerHTML = '<tr><td colspan="100%" style="text-align:center;">데이터가 없습니다</td></tr>';
+        return;
+    }
+    
+    // 마켓 순서대로 정렬
+    if (mappingData && mappingData.marketOrder && mappingData.marketOrder.length > 0) {
+        data.sort((a, b) => {
+            const marketA = a['마켓명'];
+            const marketB = b['마켓명'];
+            const ia = mappingData.marketOrder.indexOf(marketA);
+            const ib = mappingData.marketOrder.indexOf(marketB);
+            if (ia !== -1 && ib !== -1) return ia - ib;
+            if (ia !== -1) return -1;
+            if (ib !== -1) return 1;
+            return marketA.localeCompare(marketB);
+        });
+    }
+    
+    const headers = processedData.standardFields || mappingData.standardFields || Object.keys(data[0]);
+    
+    // 필드별 정렬 설정
+    const centerAlignFields = ['마켓명', '연번', '결제일', '주문번호', '주문자', '수취인', '옵션명', '수량', '마켓'];
+    const leftAlignFields = ['주소', '배송지', '수령인주소', '수취인주소'];
+    const rightAlignFields = ['정산예정금액', '상품금액', '할인금액', '수수료1', '수수료2', '택배비', '셀러공급가', '출고비용'];
+    
+    function getAlignment(fieldName) {
+        if (rightAlignFields.some(f => fieldName.includes(f))) return 'right';
+        if (leftAlignFields.some(f => fieldName.includes(f))) return 'left';
+        if (centerAlignFields.some(f => fieldName.includes(f))) return 'center';
+        return 'center';
+    }
+    
+    // 고정열 끝 인덱스 찾기 (수령인전화번호 또는 수취인전화번호)
+    let fixedEndIndex = -1;
+    for (let i = 0; i < headers.length; i++) {
+        if (headers[i].includes('수령인전화번호') || 
+            headers[i].includes('수령인 전화번호') || 
+            headers[i].includes('수취인전화번호') || 
+            headers[i].includes('수취인 전화번호')) {
+            fixedEndIndex = i;
+            break;
+        }
+    }
+    
+    // 못 찾으면 기본값 설정
+    if (fixedEndIndex === -1) {
+        fixedEndIndex = Math.min(7, headers.length - 1);
+    }
+    
+    // 열너비 배열 생성 - headers와 fixedEndIndex 정의 후에 위치
     const columnWidths = [];
     const leftPositions = [0];
     
@@ -1325,6 +1376,7 @@ function displayResultTable(data) {
             leftPositions[index] = leftPositions[index - 1] + columnWidths[index - 1];
         }
     });
+    
     if (data.length === 0) {
         thead.innerHTML = '';
         tbody.innerHTML = '<tr><td colspan="100%" style="text-align:center;">데이터가 없습니다</td></tr>';
@@ -2099,6 +2151,7 @@ function resetResultSection() {
     showSuccess('통합 결과가 초기화되었습니다.');
 
 }
+
 
 
 
