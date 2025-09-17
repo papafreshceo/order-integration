@@ -604,16 +604,31 @@ tbody td[style*="sticky"]:first-child {
 
 
 
+/* 고정열 z-index 조정 */
+thead th[style*="sticky"] {
+    z-index: 20 !important;
+}
+
+tbody td[style*="sticky"] {
+    z-index: 10 !important;
+}
+
+/* 마켓명 셀이 고정열일 때 우선순위 */
+tbody td[style*="sticky"]:first-child {
+    z-index: 11 !important;
+}
+
 /* 선택된 행 스타일 */
 tbody tr.selected-row {
-    background: rgba(135, 206, 235, 0.3) !important;
+    outline: 2px solid #2563eb;
+    outline-offset: -1px;
 }
 
-tbody tr.selected-row td:not([style*="sticky"]) {
-    background: rgba(135, 206, 235, 0.3) !important;
+tbody tr.selected-row td {
+    font-weight: 500;
 }
 
-/* 셀 선택 가능하게 */
+/* 테이블 셀 선택 가능 */
 #resultTable td {
     cursor: pointer;
     user-select: text;
@@ -622,7 +637,6 @@ tbody tr.selected-row td:not([style*="sticky"]) {
 #resultTable td:hover {
     opacity: 0.9;
 }
-
 
 
 tbody tr {
