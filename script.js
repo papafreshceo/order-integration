@@ -739,16 +739,7 @@ const sheetName = `${year}${month}${day}`;
         
         console.log(`전체 처리 완료: ${processedCount}개 주문, ${skippedCount}개 파일 스킵`);
         
-        // 구글 시트에 저장
-        if (mergedData.length > 0) {
-            const saveResult = await saveToSheet(sheetName, mergedData, mappingData.standardFields);
-            if (!saveResult.success) {
-                return {
-                    success: false,
-                    error: '시트 저장 실패'
-                };
-            }
-        }
+        // 구글 시트에 자동 저장 제거 - 저장 버튼을 통해서만 저장
         
         return {
             success: true,
@@ -1130,24 +1121,35 @@ async function saveToGoogleSheets() {
         return;
     }
     
-    showCenterMessage(`구글 시트 "${processedData.sheetName}"에 저장되었습니다.`, 'success');
-}
-
-async function saveToGoogleSheets() {
-    if (!processedData || !processedData.data) {
-        showCenterMessage('저장할 데이터가 없습니다.', 'error');
-        return;
-    }
+    showLoading();
     
-    showCenterMessage(`구글 시트 "${processedData.sheetName}"에 저장되었습니다.`, 'success');
-    
-    // 구글 시트 열기 (옵션)
-    setTimeout(() => {
-        if (confirm('저장된 구글 시트를 열어보시겠습니까?')) {
-            const SPREADSHEET_ID = '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
-            window.open(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`, '_blank');
+    try {
+        // 구글 시트에 저장
+        const saveResult = await saveToSheet(
+            processedData.sheetName, 
+            processedData.data, 
+            processedData.standardFields
+        );
+        
+        if (!saveResult.success) {
+            showCenterMessage('시트 저장 실패: ' + saveResult.error, 'error');
+            return;
         }
-    }, 1000);
+        
+        showCenterMessage(`구글 시트 "${processedData.sheetName}"에 저장되었습니다.`, 'success');
+        
+        // 구글 시트 열기 (옵션)
+        setTimeout(() => {
+            if (confirm('저장된 구글 시트를 열어보시겠습니까?')) {
+                const SPREADSHEET_ID = '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
+                window.open(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`, '_blank');
+            }
+        }, 1000);
+    } catch (error) {
+        showCenterMessage('저장 중 오류 발생: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
 }
 
 // ===========================
@@ -2013,8 +2015,3 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
-
-
-
-
-
