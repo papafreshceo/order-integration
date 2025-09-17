@@ -816,6 +816,13 @@ async function saveToGoogleSheets() {
         return;
     }
     
+// 이미 저장 중인지 확인
+    if (window.isSaving) {
+        showCenterMessage('저장 중입니다. 잠시만 기다려주세요.', 'info');
+        return;
+    }
+    
+    window.isSaving = true;
     showLoading();
     
     try {
@@ -878,6 +885,7 @@ async function saveToGoogleSheets() {
         showCenterMessage('저장 중 오류 발생: ' + error.message, 'error');
     } finally {
         hideLoading();
+        window.isSaving = false;  // 저장 상태 플래그 해제
     }
 }
 
