@@ -1367,8 +1367,14 @@ function displayResultTable(data) {
     const leftPositions = [0];
     
     headers.forEach((header, index) => {
-        // 지정된 너비가 있으면 사용, 없으면 기본값 120
-        const width = fixedWidths[header] || 120;
+        // 필수 고정 필드는 무조건 지정된 너비 사용
+        let width;
+        if (fixedWidths[header]) {
+            width = fixedWidths[header];
+        } else {
+            // 필수 고정 필드가 아닌 경우 계산된 너비 사용
+            width = calculateColumnWidth(header, data, index);
+        }
         columnWidths[index] = width;
         
         if (index > 0 && index <= fixedEndIndex) {
@@ -1500,6 +1506,37 @@ function displayResultTable(data) {
     
     initTableResize();
 }
+
+
+
+function calculateColumnWidth(header, data, index) {
+    // 필수 고정 필드는 fixedWidths에서 처리되므로 여기서는 나머지 필드만 처리
+    let maxLength = header.length;
+    const sampleSize = Math.min(100, data.length);
+    
+    for (let i = 0; i < sampleSize; i++) {
+        const value = String(data[i][header] || '');
+        maxLength = Math.max(maxLength, value.length);
+    }
+    
+    let width = maxLength * 8;
+    
+    // 특정 필드 타입별 너비 조정
+    if (header === '주소' || header.includes('주소')) {
+        width = Math.min(400, Math.max(250, width));
+    } else if (header.includes('금액') || header.includes('수수료')) {
+        width = Math.max(120, width);
+    } else if (header === '옵션명') {
+        width = Math.min(300, Math.max(150, width));
+    }
+    
+    // 최소/최대 너비 제한
+    width = Math.max(60, Math.min(500, width));
+    
+    return width;
+}
+
+
 
 function formatDateForDisplay(value) {
     if (!value) return '';
@@ -2162,4 +2199,5 @@ function resetResultSection() {
     
     showSuccess('통합 결과가 초기화되었습니다.');
 }
+
 
