@@ -964,3 +964,69 @@ tbody tr:nth-child(even) {
     cursor: not-allowed;
     opacity: 0.6;
 }
+
+/* ========================================
+   옵션명 매칭 상태 스타일
+   ======================================== */
+/* 매칭 실패 - 노란색 */
+.unmatched-cell {
+    background: #fef3c7 !important;
+    border: 1px dashed #dc3545 !important;
+    position: relative;
+}
+
+.unmatched-cell::before {
+    content: '⚠️';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 12px;
+}
+
+/* 수정됨 - 파란색 */
+.modified-cell {
+    background: #e7f3ff !important;
+    border: 1px solid #2563eb !important;
+    position: relative;
+}
+
+.modified-cell::before {
+    content: '✏️';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 12px;
+}
+
+/* 수정 후 매칭 성공 - 초록색 */
+.modified-matched-cell {
+    background: #e8f5e9 !important;
+    border: 1px solid #10b981 !important;
+    position: relative;
+}
+
+.modified-matched-cell::before {
+    content: '✓';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 12px;
+    color: #10b981;
+}
+
+/* 편집 가능 셀 */
+.editable-cell {
+    cursor: text;
+    min-height: 30px;
+}
+
+.editable-cell:focus {
+    outline: 2px solid #2563eb;
+    outline-offset: -1px;
+    background: white !important;
+}
+
+.editable-cell:hover {
+    box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+

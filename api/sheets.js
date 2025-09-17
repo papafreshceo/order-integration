@@ -112,7 +112,68 @@ export default async function handler(req, res) {
         const dashboardData = await getSheetData('대시보드!A:Z');
         return res.status(200).json({ values: dashboardData });
 
-case 'saveToSheet':
+      case 'getProductData':
+        // 제품 정보 조회 (SPREADSHEET_ID_PRODUCTS 사용)
+        const productSpreadsheetId = process.env.SPREADSHEET_ID_PRODUCTS || '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg';
+        
+        // 옵션상품통합관리 시트 데이터
+        const productSheetData = await getProductSheetData(productSpreadsheetId, '옵션상품통합관리!A:Z');
+        const productInfo = {};
+        
+        if (productSheetData && productSheetData.length > 1) {
+          const headers = productSheetData[0];
+          const optionIdx = headers.indexOf('옵션명');
+          const shipmentIdx = headers.indexOf('출고처');
+          const invoiceIdx = headers.indexOf('송장주체');
+          const vendorIdx = headers.indexOf('벤더사');
+          const locationIdx = headers.indexOf('발송지명');
+          const addressIdx = headers.indexOf('발송지주소');
+          const contactIdx = headers.indexOf('발송지연락처');
+          const costIdx = headers.indexOf('출고비용');
+          
+          for (let i = 1; i < productSheetData.length; i++) {
+            const optionName = String(productSheetData[i][optionIdx] || '').trim();
+            if (!optionName) continue;
+            
+            productInfo[optionName] = {
+              출고처: shipmentIdx !== -1 ? String(productSheetData[i][shipmentIdx] || '').trim() : '',
+              송장주체: invoiceIdx !== -1 ? String(productSheetData[i][invoiceIdx] || '').trim() : '',
+              벤더사: vendorIdx !== -1 ? String(productSheetData[i][vendorIdx] || '').trim() : '',
+              발송지명: locationIdx !== -1 ? String(productSheetData[i][locationIdx] || '').trim() : '',
+              발송지주소: addressIdx !== -1 ? String(productSheetData[i][addressIdx] || '').trim() : '',
+              발송지연락처: contactIdx !== -1 ? String(productSheetData[i][contactIdx] || '').trim() : '',
+              출고비용: costIdx !== -1 ? parseNumber(productSheetData[i][costIdx]) : 0
+            };
+          }
+        }
+        
+        // 가격계산 시트 데이터
+        const priceSheetData = await getProductSheetData(productSpreadsheetId, '가격계산!A:Z');
+        const priceInfo = {};
+        
+        if (priceSheetData && priceSheetData.length > 1) {
+          const headers = priceSheetData[0];
+          const optionIdx = headers.indexOf('옵션명');
+          const priceIdx = headers.indexOf('셀러공급가');
+          
+          for (let i = 1; i < priceSheetData.length; i++) {
+            const optionName = String(priceSheetData[i][optionIdx] || '').trim();
+            if (!optionName) continue;
+            
+            priceInfo[optionName] = {
+              sellerSupplyPrice: priceIdx !== -1 ? parseNumber(priceSheetData[i][priceIdx]) : 0
+            };
+          }
+        }
+        
+        return res.status(200).json({
+          productData: productInfo,
+          priceData: priceInfo
+        });
+
+      case 'saveToSheet':
+
+      
         // 시트 생성 또는 확인
         const sheetResult = await createOrderSheet(sheetName);
         
