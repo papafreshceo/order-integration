@@ -1273,7 +1273,58 @@ function displayResults(result) {
 function displayResultTable(data) {
     const thead = document.getElementById('resultTableHead');
     const tbody = document.getElementById('resultTableBody');
+    // 고정 열너비 설정
+    const fixedWidths = {
+        '연번': 60,
+        '마켓명': 80,
+        '마켓': 60,
+        '결제일': 150,
+        '주문번호': 140,
+        '상품주문번호': 140,
+        '주문자': 70,
+        '수취인': 70,
+        '수령인': 70,
+        '주문자전화번호': 140,
+        '수취인전화번호': 140,
+        '수령인전화번호': 140,
+        '주소': 300,
+        '수취인주소': 300,
+        '수령인주소': 300,
+        '배송메세지': 150,
+        '배송메시지': 150,
+        '옵션명': 200,
+        '수량': 60,
+        '상품금액': 100,
+        '할인금액': 100,
+        '정산예정금액': 100,
+        '수수료1': 100,
+        '수수료2': 100,
+        '택배비': 80,
+        '셀러공급가': 100,
+        '출고비용': 100,
+        '송장번호': 140,
+        '셀러': 80,
+        '벤더사': 100,
+        '출고처': 80,
+        '송장주체': 80,
+        '발송지명': 100,
+        '발송지주소': 200,
+        '발송지연락처': 140
+    };
     
+    // 열너비 배열 생성
+    const columnWidths = [];
+    const leftPositions = [0];
+    
+    headers.forEach((header, index) => {
+        // 지정된 너비가 있으면 사용, 없으면 기본값 120
+        const width = fixedWidths[header] || 120;
+        columnWidths[index] = width;
+        
+        if (index > 0 && index <= fixedEndIndex) {
+            leftPositions[index] = leftPositions[index - 1] + columnWidths[index - 1];
+        }
+    });
     if (data.length === 0) {
         thead.innerHTML = '';
         tbody.innerHTML = '<tr><td colspan="100%" style="text-align:center;">데이터가 없습니다</td></tr>';
@@ -1325,18 +1376,7 @@ function displayResultTable(data) {
         fixedEndIndex = Math.min(7, headers.length - 1);
     }
     
-    // 헤더별 너비 계산
-    const columnWidths = [];
-    const leftPositions = [0];
-    
-    headers.forEach((header, index) => {
-        let width = calculateColumnWidth(header, data, index);
-        columnWidths[index] = width;
-        
-        if (index > 0 && index <= fixedEndIndex) {
-            leftPositions[index] = leftPositions[index - 1] + columnWidths[index - 1];
-        }
-    });
+
     
     // 헤더 생성
     const headerRow = document.createElement('tr');
@@ -1362,11 +1402,7 @@ function displayResultTable(data) {
             }
         }
         
-        // 리사이즈 핸들 추가
-        const resizeHandle = document.createElement('div');
-        resizeHandle.className = 'resize-handle';
-        resizeHandle.setAttribute('data-column', index);
-        th.appendChild(resizeHandle);
+
         
         headerRow.appendChild(th);
     });
@@ -1475,50 +1511,10 @@ function displayResultTable(data) {
         tbody.appendChild(tr);
     });
     
-    initTableResize();
+    
 }
 
-function calculateColumnWidth(header, data, index) {
-    const fixedWidths = {
-        '연번': 60,
-        '주문번호': 140,
-        '상품주문번호': 140,
-        '주문자': 70,
-        '수취인': 70,
-        '수령인': 70,
-        '주문자전화번호': 140,
-        '수취인전화번호': 140,
-        '배송메세지': 120,
-        '배송메시지': 120
-    };
 
-    if (header.includes('배송') && (header.includes('메세지') || header.includes('메시지') || header.includes('요청') || header.includes('메모'))) {
-    return 120;
-}
-    
-    if (fixedWidths[header]) {
-        return fixedWidths[header];
-    }
-    
-    let maxLength = header.length;
-    const sampleSize = Math.min(100, data.length);
-    
-    for (let i = 0; i < sampleSize; i++) {
-        const value = String(data[i][header] || '');
-        maxLength = Math.max(maxLength, value.length);
-    }
-    
-    let width = maxLength * 8;
-    
-    if (header === '마켓명') width = Math.max(80, width);
-    else if (header === '주소') width = Math.min(400, Math.max(250, width));
-    else if (header.includes('금액') || header.includes('수수료')) width = Math.max(120, width);
-    else if (header === '옵션명') width = Math.min(300, Math.max(150, width));
-    
-    width = Math.max(60, Math.min(500, width));
-    
-    return width;
-}
 
 function formatDateForDisplay(value) {
     if (!value) return '';
@@ -1551,84 +1547,6 @@ function formatDateForDisplay(value) {
     return strValue;
 }
 
-function initTableResize() {
-    const table = document.getElementById('resultTable');
-    const resizeHandles = table.querySelectorAll('.resize-handle');
-    let isResizing = false;
-    let currentColumn = null;
-    let startX = 0;
-    let startWidth = 0;
-    
-    // 고정열 끝 인덱스 찾기
-    const headers = table.querySelectorAll('th');
-    let fixedEndIndex = -1;
-    for (let i = 0; i < headers.length; i++) {
-        if (headers[i].style.position === 'sticky') {
-            fixedEndIndex = i;
-        } else if (fixedEndIndex !== -1) {
-            break;
-        }
-    }
-    
-    resizeHandles.forEach(handle => {
-        handle.addEventListener('mousedown', function(e) {
-            isResizing = true;
-            currentColumn = parseInt(this.dataset.column);
-            startX = e.pageX;
-            const th = this.parentElement;
-            startWidth = parseInt(window.getComputedStyle(th).width);
-            document.body.style.cursor = 'col-resize';
-            document.body.style.userSelect = 'none';
-            e.preventDefault();
-        });
-    });
-    
-    document.addEventListener('mousemove', function(e) {
-        if (!isResizing) return;
-        
-        const diff = e.pageX - startX;
-        const newWidth = Math.max(50, startWidth + diff);
-        
-        const ths = table.querySelectorAll('th');
-        const tds = table.querySelectorAll(`td:nth-child(${currentColumn + 1})`);
-        
-        if (ths[currentColumn]) {
-            ths[currentColumn].style.width = newWidth + 'px';
-            ths[currentColumn].style.minWidth = newWidth + 'px';
-        }
-        
-        tds.forEach(td => {
-            td.style.width = newWidth + 'px';
-            td.style.minWidth = newWidth + 'px';
-        });
-        
-        // 리사이즈한 열이 고정열이거나 그 이전 열이면 고정열 위치 재계산
-        if (currentColumn <= fixedEndIndex) {
-            let leftPos = 0;
-            for (let i = 0; i <= fixedEndIndex; i++) {
-                if (i > 0) {
-                    // 이전 열의 너비를 더해서 위치 계산
-                    leftPos += parseInt(ths[i-1].style.width || ths[i-1].offsetWidth);
-                    ths[i].style.left = leftPos + 'px';
-                    
-                    // 모든 행의 해당 열 위치 업데이트
-                    table.querySelectorAll(`tbody td:nth-child(${i + 1})`).forEach(td => {
-                        if (td.style.position === 'sticky') {
-                            td.style.left = leftPos + 'px';
-                        }
-                    });
-                }
-            }
-        }
-    });
-    
-    document.addEventListener('mouseup', function() {
-        if (!isResizing) return;
-        isResizing = false;
-        currentColumn = null;
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-    });
 }
 // ===========================
 // 통계 표시
@@ -2181,6 +2099,7 @@ function resetResultSection() {
     showSuccess('통합 결과가 초기화되었습니다.');
 
 }
+
 
 
 
