@@ -1416,6 +1416,29 @@ function displayResultTable(data) {
     });
     
     // 헤더 생성
+    /* 찾기: 헤더 생성 부분 */
+    // 테이블 설정 - 열너비 강제 고정
+    const table = document.getElementById('resultTable');
+    const totalWidth = columnWidths.reduce((sum, width) => sum + width, 0);
+    table.style.minWidth = totalWidth + 'px';
+    table.style.width = totalWidth + 'px';
+    table.style.tableLayout = 'fixed';
+    
+    // colgroup 생성하여 열너비 강제 적용
+    let colgroup = table.querySelector('colgroup');
+    if (!colgroup) {
+        colgroup = document.createElement('colgroup');
+        table.insertBefore(colgroup, thead);
+    }
+    colgroup.innerHTML = '';
+    
+    headers.forEach((header, index) => {
+        const col = document.createElement('col');
+        col.style.width = columnWidths[index] + 'px';
+        colgroup.appendChild(col);
+    });
+    
+    // 헤더 생성
     const headerRow = document.createElement('tr');
     
     headers.forEach((header, index) => {
@@ -1426,6 +1449,7 @@ function displayResultTable(data) {
         th.style.textAlign = 'center';
         th.style.width = columnWidths[index] + 'px';
         th.style.minWidth = columnWidths[index] + 'px';
+        th.style.maxWidth = columnWidths[index] + 'px';
         
         // 고정열 처리
         if (index <= fixedEndIndex) {
@@ -2310,6 +2334,7 @@ function updateDuplicateStyles() {
 // ===========================
 // 피벗테이블
 // ===========================
+
 
 
 
