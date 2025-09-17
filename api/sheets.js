@@ -157,6 +157,32 @@ export default async function handler(req, res) {
           });
         }
 
+      case 'getOrdersByDate':
+        try {
+          const { sheetName } = req.body;
+          const orderData = await getOrderData(`${sheetName}!A:ZZ`);
+          
+          if (orderData.length < 2) {
+            return res.status(200).json({ data: [] });
+          }
+          
+          const headers = orderData[0];
+          const rows = orderData.slice(1);
+          
+          const formattedData = rows.map(row => {
+            const obj = { _sheetName: sheetName };
+            headers.forEach((header, index) => {
+              obj[header] = row[index] || '';
+            });
+            return obj;
+          });
+          
+          return res.status(200).json({ data: formattedData });
+        } catch (error) {
+          console.error('getOrdersByDate 오류:', error);
+          return res.status(200).json({ data: [] });
+        }
+
       case 'saveToSheet':
         // 시트 생성 또는 확인
         const sheetResult = await createOrderSheet(sheetName);
@@ -216,4 +242,5 @@ function parseNumber(value) {
   }
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
+
 }
