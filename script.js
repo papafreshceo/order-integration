@@ -526,10 +526,10 @@ async function processOrderFiles(filesData) {
         }
         
         const today = new Date();
-const year = today.getFullYear();
-const month = String(today.getMonth() + 1).padStart(2, '0');
-const day = String(today.getDate()).padStart(2, '0');
-const sheetName = `${year}${month}${day}`;
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const sheetName = `${year}${month}${day}`;
         
         // 결과 데이터
         const mergedData = [];
@@ -808,16 +808,23 @@ function calculateSettlementAmount(row, formula, marketName) {
 }
 
 // ===========================
-// 구글 시트 저장
+// 구글 시트 저장 - 저장 버튼 클릭시만 실행
 // ===========================
-async function saveToSheet(sheetName, data, standardFields) {
+async function saveToGoogleSheets() {
+    if (!processedData || !processedData.data || processedData.data.length === 0) {
+        showCenterMessage('저장할 데이터가 없습니다. 먼저 주문을 처리해주세요.', 'error');
+        return;
+    }
+    
+    showLoading();
+    
     try {
         // 헤더 행 추가
-        const headers = standardFields;
+        const headers = processedData.standardFields || mappingData.standardFields;
         const values = [headers];
         
         // 데이터 행 추가
-        data.forEach(row => {
+        processedData.data.forEach(row => {
             const rowValues = headers.map(header => {
                 const value = row[header];
                 return value !== undefined && value !== null ? String(value) : '';
@@ -848,7 +855,7 @@ async function saveToSheet(sheetName, data, standardFields) {
             },
             body: JSON.stringify({
                 action: 'saveToSheet',
-                sheetName: sheetName,
+                sheetName: processedData.sheetName,
                 values: values,
                 marketColors: marketColors
             })
@@ -857,16 +864,26 @@ async function saveToSheet(sheetName, data, standardFields) {
         const result = await response.json();
         
         if (result.success) {
-            console.log(`Saved ${data.length} rows to sheet "${sheetName}"`);
-            return { success: true };
+            console.log(`Saved ${processedData.data.length} rows to sheet "${processedData.sheetName}"`);
+            showCenterMessage(`구글 시트 "${processedData.sheetName}"에 저장되었습니다.`, 'success');
+            
+            // 구글 시트 열기 (옵션)
+            setTimeout(() => {
+                if (confirm('저장된 구글 시트를 열어보시겠습니까?')) {
+                    const SPREADSHEET_ID = '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
+                    window.open(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`, '_blank');
+                }
+            }, 1000);
         } else {
             console.error('시트 저장 실패:', result.error);
-            return { success: false, error: result.error };
+            showCenterMessage('시트 저장 실패: ' + (result.error || '알 수 없는 오류'), 'error');
         }
         
     } catch (error) {
-        console.error('시트 저장 오류:', error);
-        return { success: false, error: error.toString() };
+        console.error('저장 중 오류:', error);
+        showCenterMessage('저장 중 오류 발생: ' + error.message, 'error');
+    } finally {
+        hideLoading();
     }
 }
 
@@ -994,69 +1011,69 @@ function updateFileList() {
     let totalOrders = 0;
     const marketSet = new Set();
     
-sortedFiles.forEach((file) => {
-    const originalIndex = uploadedFiles.indexOf(file);  // 원본 배열에서의 실제 인덱스 찾기
-    totalOrders += file.rowCount;
-    marketSet.add(file.marketName);
-    
-    const fileItem = document.createElement('div');
-    fileItem.className = 'file-item';
-    if (!file.isToday) {
-        fileItem.classList.add('warning');
-    }
-    
-    const fileInfo = document.createElement('div');
-    fileInfo.className = 'file-info';
-    
-    const fileNameSection = document.createElement('div');
-    fileNameSection.className = 'file-name-section';
-    
-    const marketTag = document.createElement('span');
-    marketTag.className = 'market-tag';
-    marketTag.textContent = file.marketName;
-    
-    const market = mappingData.markets[file.marketName];
-    if (market) {
-        marketTag.style.background = `rgb(${market.color})`;
-        const rgb = market.color.split(',').map(Number);
-        const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
-        marketTag.style.color = brightness > 128 ? '#000' : '#fff';
-    }
-    
-    const fileName = document.createElement('div');
-    fileName.className = 'file-name';
-    fileName.innerHTML = `<span style="color: #666;">파일명:</span> ${file.name}`;
-    
-    fileNameSection.appendChild(marketTag);
-    fileNameSection.appendChild(fileName);
-    
-    const fileDetails = document.createElement('div');
-    fileDetails.className = 'file-details';
-    
-    const orderCount = document.createElement('span');
-    orderCount.className = 'file-order-count';
-    orderCount.innerHTML = `<span style="color: #333; font-weight: bold;">${file.marketName}</span> ${file.rowCount}개 주문`;
-    
-    const fileDate = document.createElement('span');
-    fileDate.className = 'file-date';
-    const fileDateObj = new Date(file.lastModified);
-    fileDate.textContent = fileDateObj.toLocaleDateString('ko-KR');
-    
-    // 삭제 버튼 추가
-    const removeBtn = document.createElement('button');
-    removeBtn.textContent = '삭제';
-    removeBtn.style.cssText = 'padding: 4px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;';
-    removeBtn.onclick = () => removeFile(originalIndex);  // 원본 인덱스 사용
-    
-    fileDetails.appendChild(orderCount);
-    fileDetails.appendChild(fileDate);
-    fileDetails.appendChild(removeBtn);
-    
-    fileInfo.appendChild(fileNameSection);
-    fileInfo.appendChild(fileDetails);
-    fileItem.appendChild(fileInfo);
-    fileList.appendChild(fileItem);
-});
+    sortedFiles.forEach((file) => {
+        const originalIndex = uploadedFiles.indexOf(file);  // 원본 배열에서의 실제 인덱스 찾기
+        totalOrders += file.rowCount;
+        marketSet.add(file.marketName);
+        
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        if (!file.isToday) {
+            fileItem.classList.add('warning');
+        }
+        
+        const fileInfo = document.createElement('div');
+        fileInfo.className = 'file-info';
+        
+        const fileNameSection = document.createElement('div');
+        fileNameSection.className = 'file-name-section';
+        
+        const marketTag = document.createElement('span');
+        marketTag.className = 'market-tag';
+        marketTag.textContent = file.marketName;
+        
+        const market = mappingData.markets[file.marketName];
+        if (market) {
+            marketTag.style.background = `rgb(${market.color})`;
+            const rgb = market.color.split(',').map(Number);
+            const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+            marketTag.style.color = brightness > 128 ? '#000' : '#fff';
+        }
+        
+        const fileName = document.createElement('div');
+        fileName.className = 'file-name';
+        fileName.innerHTML = `<span style="color: #666;">파일명:</span> ${file.name}`;
+        
+        fileNameSection.appendChild(marketTag);
+        fileNameSection.appendChild(fileName);
+        
+        const fileDetails = document.createElement('div');
+        fileDetails.className = 'file-details';
+        
+        const orderCount = document.createElement('span');
+        orderCount.className = 'file-order-count';
+        orderCount.innerHTML = `<span style="color: #333; font-weight: bold;">${file.marketName}</span> ${file.rowCount}개 주문`;
+        
+        const fileDate = document.createElement('span');
+        fileDate.className = 'file-date';
+        const fileDateObj = new Date(file.lastModified);
+        fileDate.textContent = fileDateObj.toLocaleDateString('ko-KR');
+        
+        // 삭제 버튼 추가
+        const removeBtn = document.createElement('button');
+        removeBtn.textContent = '삭제';
+        removeBtn.style.cssText = 'padding: 4px 12px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;';
+        removeBtn.onclick = () => removeFile(originalIndex);  // 원본 인덱스 사용
+        
+        fileDetails.appendChild(orderCount);
+        fileDetails.appendChild(fileDate);
+        fileDetails.appendChild(removeBtn);
+        
+        fileInfo.appendChild(fileNameSection);
+        fileInfo.appendChild(fileDetails);
+        fileItem.appendChild(fileInfo);
+        fileList.appendChild(fileItem);
+    });
     
     document.getElementById('totalFiles').textContent = uploadedFiles.length;
     document.getElementById('totalMarkets').textContent = marketSet.size;
@@ -1113,43 +1130,6 @@ function exportToExcel() {
     XLSX.writeFile(wb, fileName);
     
     showSuccess('엑셀 파일이 다운로드되었습니다.');
-}
-
-async function saveToGoogleSheets() {
-    if (!processedData || !processedData.data) {
-        showCenterMessage('저장할 데이터가 없습니다.', 'error');
-        return;
-    }
-    
-    showLoading();
-    
-    try {
-        // 구글 시트에 저장
-        const saveResult = await saveToSheet(
-            processedData.sheetName, 
-            processedData.data, 
-            processedData.standardFields
-        );
-        
-        if (!saveResult.success) {
-            showCenterMessage('시트 저장 실패: ' + saveResult.error, 'error');
-            return;
-        }
-        
-        showCenterMessage(`구글 시트 "${processedData.sheetName}"에 저장되었습니다.`, 'success');
-        
-        // 구글 시트 열기 (옵션)
-        setTimeout(() => {
-            if (confirm('저장된 구글 시트를 열어보시겠습니까?')) {
-                const SPREADSHEET_ID = '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
-                window.open(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`, '_blank');
-            }
-        }, 1000);
-    } catch (error) {
-        showCenterMessage('저장 중 오류 발생: ' + error.message, 'error');
-    } finally {
-        hideLoading();
-    }
 }
 
 // ===========================
@@ -1245,7 +1225,7 @@ function displayResultTable(data) {
         });
     }
     
-    const headers = standardFields.length > 0 ? standardFields : Object.keys(data[0]);
+    const headers = processedData.standardFields || mappingData.standardFields || Object.keys(data[0]);
     
     // 필드별 정렬 설정
     const centerAlignFields = ['마켓명', '연번', '결제일', '주문번호', '주문자', '수취인', '옵션명', '수량', '마켓'];
@@ -1316,10 +1296,10 @@ function displayResultTable(data) {
     tbody.innerHTML = '';
     
     // 수정된 코드 - 테두리 너비 고려
-let leftPositions = [0];
-for (let i = 1; i <= phoneColumnIndex; i++) {
-    leftPositions[i] = leftPositions[i - 1] + columnWidths[i - 1] - 1; // 테두리 1px 겹침 고려
-}
+    let leftPositions = [0];
+    for (let i = 1; i <= phoneColumnIndex; i++) {
+        leftPositions[i] = leftPositions[i - 1] + columnWidths[i - 1] - 1; // 테두리 1px 겹침 고려
+    }
     
     data.forEach((row) => {
         const tr = document.createElement('tr');
@@ -1577,7 +1557,7 @@ function displayCategorizedStats(tableId, stats, firstColumnName) {
         tr.appendChild(createStatCell(computed.sellerSales.quantity));
         tr.appendChild(createStatCell(computed.sellerSales.amount, true));
         
-// 발송 자사/벤더사
+        // 발송 자사/벤더사
         tr.appendChild(createStatCell(computed.sentCompany.count, false, 'sent-col'));
         tr.appendChild(createStatCell(computed.sentCompany.quantity, false, 'sent-col'));
         tr.appendChild(createStatCell(computed.sentCompany.amount, true, 'sent-col'));
@@ -1606,7 +1586,6 @@ function displayCategorizedStats(tableId, stats, firstColumnName) {
     });
     
     // 합계 행
-// 합계 행
     const totalRow = document.createElement('tr');
     totalRow.className = 'total-row';
     
