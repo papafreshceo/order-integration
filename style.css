@@ -615,10 +615,8 @@ tbody tr.selected-row {
 
 tbody tr.selected-row td {
     background: #e7f3ff !important;
-}
-
-tbody tr.selected-row td {
-    font-weight: 500;
+   font-size: 14px !important;
+    font-weight: 500 !important;
 }
 
 /* 테이블 셀 선택 가능 */
