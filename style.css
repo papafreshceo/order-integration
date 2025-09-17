@@ -607,18 +607,32 @@ tbody td[style*="sticky"]:first-child {
 }
 
 /* 선택된 행 스타일 */
-
-
 tbody tr.selected-row {
     background: #e7f3ff !important;
 }
 
 tbody tr.selected-row td {
     background: #e7f3ff !important;
-   font-size: 14px !important;
-    font-weight: 500 !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
 }
 
+/* 마켓명과 옵션명은 원래 배경색 유지 */
+tbody tr.selected-row td[data-header="마켓명"] {
+    background: inherit !important;
+}
+
+tbody tr.selected-row td[data-header="옵션명"].unmatched-cell {
+    background: #fef3c7 !important;  /* 매칭 실패 노란색 유지 */
+}
+
+tbody tr.selected-row td[data-header="옵션명"].modified-cell {
+    background: #e7f3ff !important;  /* 수정됨 파란색 유지 */
+}
+
+tbody tr.selected-row td[data-header="옵션명"].modified-matched-cell {
+    background: #e8f5e9 !important;  /* 수정 후 매칭 초록색 유지 */
+}
 /* 테이블 셀 선택 가능 */
 #resultTable td {
     cursor: pointer;
