@@ -296,7 +296,7 @@ const ProductMatching = (function() {
         if (!tbody) return;
         
         const rows = tbody.querySelectorAll('tr');
-        const headers = processedData.standardFields || [];
+        const headers = window.processedData.standardFields || [];
         const optionNameIndex = headers.indexOf('옵션명');
         
         if (optionNameIndex === -1) return;
@@ -348,4 +348,5 @@ const ProductMatching = (function() {
 })();
 
 // 전역 함수로 노출 (HTML onclick에서 호출 가능)
+
 window.ProductMatching = ProductMatching;
