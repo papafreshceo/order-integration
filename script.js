@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
 async function initializeApp() {
     await loadMappingData();
     setupEventListeners();
+    switchTab('dashboard');  // 대시보드 탭을 기본으로 설정
     await loadDashboard();
 }
 
@@ -208,13 +209,25 @@ function setupEventListeners() {
 }
 
 function switchTab(tabName) {
+    // 탭 버튼 활성화 상태 변경
     document.querySelectorAll('.tab-button').forEach(b => {
         b.classList.toggle('active', b.dataset.tab === tabName);
     });
+    
+    // 탭 컨텐츠 활성화 상태 변경
     document.querySelectorAll('.tab-content').forEach(c => {
         c.classList.remove('active');
     });
-    document.getElementById(tabName + '-tab').classList.add('active');
+    
+    const targetTab = document.getElementById(tabName + '-tab');
+    if (targetTab) {
+        targetTab.classList.add('active');
+    }
+    
+    // 대시보드 탭일 때 대시보드 데이터 로드
+    if (tabName === 'dashboard') {
+        loadDashboard();
+    }
 }
 
 // ===========================
@@ -476,7 +489,7 @@ async function processOrders() {
         showError(`오늘 날짜가 아닌 파일이 ${oldFiles.length}개 있습니다. 해당 파일을 제거하거나 최신 파일로 교체 후 진행하세요.`);
         return;
     }
-    
+
     const todayFiles = uploadedFiles.filter(f => f.isToday);
     if (todayFiles.length === 0) {
         showError('오늘 날짜의 파일이 없습니다. 최신 주문 파일을 다운로드해주세요.');
