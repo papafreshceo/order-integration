@@ -1427,11 +1427,11 @@ function displayResultTable(data) {
             td.style.width = columnWidths[index] + 'px';
             td.style.minWidth = columnWidths[index] + 'px';
             
+
             // 고정열 처리
             if (index <= fixedEndIndex) {
                 td.style.position = 'sticky';
                 td.style.left = leftPositions[index] + 'px';
-                td.style.background = rowIndex % 2 === 0 ? 'var(--bg-primary)' : 'var(--bg-muted)';
                 td.style.zIndex = '10';
                 
                 if (index === fixedEndIndex) {
@@ -1484,26 +1484,11 @@ function displayResultTable(data) {
         });
         
         // 행 클릭 선택 이벤트
+        // 행 클릭 선택 이벤트
         tr.addEventListener('click', function(e) {
             // 기존 선택 제거
             tbody.querySelectorAll('tr.selected-row').forEach(selectedRow => {
                 selectedRow.classList.remove('selected-row');
-                // 고정열 원래 배경색 복원
-                selectedRow.querySelectorAll('td').forEach((td, idx) => {
-                    if (idx <= fixedEndIndex) {
-                        const rowIdx = Array.from(tbody.children).indexOf(selectedRow);
-                        const originalRow = data[rowIdx];
-                        if (idx === 0 && headers[0] === '마켓명' && originalRow) {
-                            const marketName = originalRow[headers[0]];
-                            if (marketName && mappingData && mappingData.markets[marketName]) {
-                                const market = mappingData.markets[marketName];
-                                td.style.background = `rgb(${market.color})`;
-                            }
-                        } else {
-                            td.style.background = rowIdx % 2 === 0 ? 'var(--bg-primary)' : 'var(--bg-muted)';
-                        }
-                    }
-                });
             });
             
             // 현재 행 선택
@@ -2177,3 +2162,4 @@ function resetResultSection() {
     
     showSuccess('통합 결과가 초기화되었습니다.');
 }
+
