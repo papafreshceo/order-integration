@@ -607,9 +607,14 @@ tbody td[style*="sticky"]:first-child {
 }
 
 /* 선택된 행 스타일 */
+
+
 tbody tr.selected-row {
-    outline: 2px solid #2563eb;
-    outline-offset: -1px;
+    background: #e7f3ff !important;
+}
+
+tbody tr.selected-row td {
+    background: #e7f3ff !important;
 }
 
 tbody tr.selected-row td {
