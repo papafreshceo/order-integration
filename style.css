@@ -129,27 +129,48 @@ body {
     opacity: 0.95;
     color: var(--text-secondary);
 }
-/* 로그인 후 메인 시스템 헤더 스타일 */
-.main-system .header {
+/* 로그인 후 메인 시스템 헤더 스타일 - id 선택자 사용 */
+#mainSystem .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     text-align: left;
+    padding: 20px 40px;
 }
 
-.main-system .header h1 {
+#mainSystem .header h1 {
     color: var(--text-primary);
     margin: 0;
+    font-size: 24px;
 }
 
-.main-system .header .user-info {
+#mainSystem .header p {
+    display: none;  /* 부제목 숨기기 */
+}
+
+#mainSystem .header .user-info {
     display: flex;
     align-items: center;
     gap: 12px;
+    position: static;  /* absolute 제거 */
 }
 
-.main-system .header .user-info * {
-    color: var(--text-primary) !important;
+#mainSystem .header .user-info span {
+    color: var(--text-primary);
+}
+
+#mainSystem .header .btn-logout {
+    background: var(--brand-primary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+#mainSystem .header .btn-logout:hover {
+    background: var(--brand-primary-hover);
 }
 
 /* ========================================
