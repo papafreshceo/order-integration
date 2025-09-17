@@ -28,7 +28,7 @@ export default async function handler(req, res) {
 
     switch (action) {
       case 'getSalesInfo':
-        const salesData = await getSheetData('판매정보!A:G');
+        const salesData = await getSheetData('판매정보!A:AG');
         const salesInfo = {};
         
         for (let i = 1; i < salesData.length; i++) {
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
         return res.status(200).json(salesInfo);
 
       case 'getOptionProductInfo':
-        const optionData = await getSheetData('옵션상품통합관리!A:Z');
+        const optionData = await getSheetData('옵션상품통합관리!A:AZ');
         if (optionData.length < 2) {
           return res.status(200).json({});
         }
@@ -83,7 +83,7 @@ export default async function handler(req, res) {
         return res.status(200).json(optionInfo);
 
       case 'getPriceCalculation':
-        const priceData = await getSheetData('가격계산!A:Z');
+        const priceData = await getSheetData('가격계산!A:AZ');
         if (priceData.length < 2) {
           return res.status(200).json({});
         }
@@ -109,7 +109,7 @@ export default async function handler(req, res) {
         return res.status(200).json(priceInfo);
 
       case 'getDashboard':
-        const dashboardData = await getSheetData('대시보드!A:Z');
+        const dashboardData = await getSheetData('대시보드!A:AZ');
         return res.status(200).json({ values: dashboardData });
 
       case 'getProductData':
@@ -121,7 +121,7 @@ export default async function handler(req, res) {
         const { getProductSheetData } = require('../lib/google-sheets');
         
         // 옵션상품통합관리 시트 데이터
-        const productSheetData = await getProductSheetData(productSpreadsheetId, '옵션상품통합관리!A:Z');
+        const productSheetData = await getProductSheetData(productSpreadsheetId, '옵션상품통합관리!A:AZ');
         const productInfo = {};
         
         if (productSheetData && productSheetData.length > 1) {
@@ -152,7 +152,7 @@ export default async function handler(req, res) {
         }
         
         // 가격계산 시트 데이터
-        const priceSheetData = await getProductSheetData(productSpreadsheetId, '가격계산!A:Z');
+        const priceSheetData = await getProductSheetData(productSpreadsheetId, '가격계산!A:AZ');
         const priceInfo = {};
         
         if (priceSheetData && priceSheetData.length > 1) {
