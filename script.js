@@ -1445,29 +1445,36 @@ function displayResultTable(data) {
             tr.appendChild(td);
         });
         
-        // 호버 효과
-        tr.addEventListener('mouseenter', function() {
-            this.querySelectorAll('td').forEach((td, index) => {
-                if (index <= fixedEndIndex) {
-                    td.style.background = 'var(--bg-light)';
-                }
-            });
-        });
-        
-        tr.addEventListener('mouseleave', function() {
-            this.querySelectorAll('td').forEach((td, index) => {
-                if (index <= fixedEndIndex) {
-                    const rowIdx = Array.from(tbody.children).indexOf(this);
-                    td.style.background = rowIdx % 2 === 0 ? 'var(--bg-primary)' : 'var(--bg-muted)';
-                    
-                    // 마켓명 셀은 원래 색상 유지
-                    if (index === 0 && headers[0] === '마켓명') {
-                        const marketName = row[headers[0]];
-                        if (marketName && mappingData && mappingData.markets[marketName]) {
-                            const market = mappingData.markets[marketName];
-                            td.style.background = `rgb(${market.color})`;
+        // 행 클릭 선택 이벤트
+        tr.addEventListener('click', function(e) {
+            // 기존 선택 제거
+            tbody.querySelectorAll('tr.selected-row').forEach(selectedRow => {
+                selectedRow.classList.remove('selected-row');
+                // 고정열 원래 배경색 복원
+                selectedRow.querySelectorAll('td').forEach((td, idx) => {
+                    if (idx <= fixedEndIndex) {
+                        const rowIdx = Array.from(tbody.children).indexOf(selectedRow);
+                        const originalRow = data[rowIdx];
+                        if (idx === 0 && headers[0] === '마켓명' && originalRow) {
+                            const marketName = originalRow[headers[0]];
+                            if (marketName && mappingData && mappingData.markets[marketName]) {
+                                const market = mappingData.markets[marketName];
+                                td.style.background = `rgb(${market.color})`;
+                            }
+                        } else {
+                            td.style.background = rowIdx % 2 === 0 ? 'var(--bg-primary)' : 'var(--bg-muted)';
                         }
                     }
+                });
+            });
+            
+            // 현재 행 선택
+            this.classList.add('selected-row');
+            
+            // 고정열 선택 배경색 적용 (마켓명 제외)
+            this.querySelectorAll('td').forEach((td, idx) => {
+                if (idx <= fixedEndIndex && headers[idx] !== '마켓명') {
+                    td.style.background = 'rgba(135, 206, 235, 0.3)';
                 }
             });
         });
@@ -2152,6 +2159,7 @@ function resetResultSection() {
     showSuccess('통합 결과가 초기화되었습니다.');
 
 }
+
 
 
 
