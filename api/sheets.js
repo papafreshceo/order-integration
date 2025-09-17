@@ -11,8 +11,6 @@ const {
   mergeAndSaveOrderData
 } = require('../lib/google-sheets');
 
-
-
 export default async function handler(req, res) {
   // CORS 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -27,26 +25,6 @@ export default async function handler(req, res) {
     const { action, sheetName, range, values } = req.body || req.query;
 
     switch (action) {
-      case 'getSalesInfo':
-        const salesData = await getSheetData('판매정보!A:AG');
-        const salesInfo = {};
-        
-        for (let i = 1; i < salesData.length; i++) {
-          const optionName = String(salesData[i][0] || '').trim();
-          if (!optionName) continue;
-          
-          salesInfo[optionName] = {
-            rawMaterialCost: Number(salesData[i][1]) || 0,
-            supplyCost: Number(salesData[i][2]) || 0,
-            printCost: Number(salesData[i][3]) || 0,
-            productCost: Number(salesData[i][4]) || 0,
-            sellingPrice: Number(salesData[i][5]) || 0,
-            optionPrice: Number(salesData[i][6]) || 0
-          };
-        }
-        
-        return res.status(200).json(salesInfo);
-
       case 'getOptionProductInfo':
         const optionData = await getSheetData('옵션상품통합관리!A:AZ');
         if (optionData.length < 2) {
@@ -108,84 +86,78 @@ export default async function handler(req, res) {
         
         return res.status(200).json(priceInfo);
 
-      case 'getDashboard':
-        const dashboardData = await getSheetData('대시보드!A:AZ');
-        return res.status(200).json({ values: dashboardData });
-
       case 'getProductData':
-    try {
-        // 제품 정보 조회 (SPREADSHEET_ID_PRODUCTS 사용)
-        const productSpreadsheetId = process.env.SPREADSHEET_ID_PRODUCTS || '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg';
-        
-        // google-sheets 모듈에서 getProductSheetData 함수 사용
-        const { getProductSheetData } = require('../lib/google-sheets');
-        
-        // 옵션상품통합관리 시트 데이터
-        const productSheetData = await getProductSheetData(productSpreadsheetId, '옵션상품통합관리!A:AZ');
-        const productInfo = {};
-        
-        if (productSheetData && productSheetData.length > 1) {
-            const headers = productSheetData[0];
-            const optionIdx = headers.indexOf('옵션명');
-            const shipmentIdx = headers.indexOf('출고처');
-            const invoiceIdx = headers.indexOf('송장주체');
-            const vendorIdx = headers.indexOf('벤더사');
-            const locationIdx = headers.indexOf('발송지명');
-            const addressIdx = headers.indexOf('발송지주소');
-            const contactIdx = headers.indexOf('발송지연락처');
-            const costIdx = headers.indexOf('출고비용');
-            
-            for (let i = 1; i < productSheetData.length; i++) {
-                const optionName = String(productSheetData[i][optionIdx] || '').trim();
-                if (!optionName) continue;
-                
-                productInfo[optionName] = {
-                    출고처: shipmentIdx !== -1 ? String(productSheetData[i][shipmentIdx] || '').trim() : '',
-                    송장주체: invoiceIdx !== -1 ? String(productSheetData[i][invoiceIdx] || '').trim() : '',
-                    벤더사: vendorIdx !== -1 ? String(productSheetData[i][vendorIdx] || '').trim() : '',
-                    발송지명: locationIdx !== -1 ? String(productSheetData[i][locationIdx] || '').trim() : '',
-                    발송지주소: addressIdx !== -1 ? String(productSheetData[i][addressIdx] || '').trim() : '',
-                    발송지연락처: contactIdx !== -1 ? String(productSheetData[i][contactIdx] || '').trim() : '',
-                    출고비용: costIdx !== -1 ? parseNumber(productSheetData[i][costIdx]) : 0
-                };
-            }
+        try {
+          // 제품 정보 조회 (SPREADSHEET_ID_PRODUCTS 사용)
+          const productSpreadsheetId = process.env.SPREADSHEET_ID_PRODUCTS || '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg';
+          
+          // google-sheets 모듈에서 getProductSheetData 함수 사용
+          const { getProductSheetData } = require('../lib/google-sheets');
+          
+          // 옵션상품통합관리 시트 데이터
+          const productSheetData = await getProductSheetData(productSpreadsheetId, '옵션상품통합관리!A:AZ');
+          const productInfo = {};
+          
+          if (productSheetData && productSheetData.length > 1) {
+              const headers = productSheetData[0];
+              const optionIdx = headers.indexOf('옵션명');
+              const shipmentIdx = headers.indexOf('출고처');
+              const invoiceIdx = headers.indexOf('송장주체');
+              const vendorIdx = headers.indexOf('벤더사');
+              const locationIdx = headers.indexOf('발송지명');
+              const addressIdx = headers.indexOf('발송지주소');
+              const contactIdx = headers.indexOf('발송지연락처');
+              const costIdx = headers.indexOf('출고비용');
+              
+              for (let i = 1; i < productSheetData.length; i++) {
+                  const optionName = String(productSheetData[i][optionIdx] || '').trim();
+                  if (!optionName) continue;
+                  
+                  productInfo[optionName] = {
+                      출고처: shipmentIdx !== -1 ? String(productSheetData[i][shipmentIdx] || '').trim() : '',
+                      송장주체: invoiceIdx !== -1 ? String(productSheetData[i][invoiceIdx] || '').trim() : '',
+                      벤더사: vendorIdx !== -1 ? String(productSheetData[i][vendorIdx] || '').trim() : '',
+                      발송지명: locationIdx !== -1 ? String(productSheetData[i][locationIdx] || '').trim() : '',
+                      발송지주소: addressIdx !== -1 ? String(productSheetData[i][addressIdx] || '').trim() : '',
+                      발송지연락처: contactIdx !== -1 ? String(productSheetData[i][contactIdx] || '').trim() : '',
+                      출고비용: costIdx !== -1 ? parseNumber(productSheetData[i][costIdx]) : 0
+                  };
+              }
+          }
+          
+          // 가격계산 시트 데이터
+          const priceSheetData = await getProductSheetData(productSpreadsheetId, '가격계산!A:AZ');
+          const priceInfo = {};
+          
+          if (priceSheetData && priceSheetData.length > 1) {
+              const headers = priceSheetData[0];
+              const optionIdx = headers.indexOf('옵션명');
+              const priceIdx = headers.indexOf('셀러공급가');
+              
+              for (let i = 1; i < priceSheetData.length; i++) {
+                  const optionName = String(priceSheetData[i][optionIdx] || '').trim();
+                  if (!optionName) continue;
+                  
+                  priceInfo[optionName] = {
+                      sellerSupplyPrice: priceIdx !== -1 ? parseNumber(priceSheetData[i][priceIdx]) : 0
+                  };
+              }
+          }
+          
+          return res.status(200).json({
+              productData: productInfo,
+              priceData: priceInfo
+          });
+          
+        } catch (error) {
+          console.error('getProductData 오류:', error);
+          return res.status(500).json({
+              error: 'Failed to load product data',
+              details: error.message
+          });
         }
-        
-        // 가격계산 시트 데이터
-        const priceSheetData = await getProductSheetData(productSpreadsheetId, '가격계산!A:AZ');
-        const priceInfo = {};
-        
-        if (priceSheetData && priceSheetData.length > 1) {
-            const headers = priceSheetData[0];
-            const optionIdx = headers.indexOf('옵션명');
-            const priceIdx = headers.indexOf('셀러공급가');
-            
-            for (let i = 1; i < priceSheetData.length; i++) {
-                const optionName = String(priceSheetData[i][optionIdx] || '').trim();
-                if (!optionName) continue;
-                
-                priceInfo[optionName] = {
-                    sellerSupplyPrice: priceIdx !== -1 ? parseNumber(priceSheetData[i][priceIdx]) : 0
-                };
-            }
-        }
-        
-        return res.status(200).json({
-            productData: productInfo,
-            priceData: priceInfo
-        });
-        
-    } catch (error) {
-        console.error('getProductData 오류:', error);
-        return res.status(500).json({
-            error: 'Failed to load product data',
-            details: error.message
-        });
-    }
 
       case 'saveToSheet':
-
-
         // 시트 생성 또는 확인
         const sheetResult = await createOrderSheet(sheetName);
         
@@ -209,6 +181,7 @@ export default async function handler(req, res) {
           sheetName: sheetName,
           ...result
         });
+
       case 'appendToSheet':
         const appendResult = await appendSheetData(range, values);
         return res.status(200).json({ 
