@@ -2138,3 +2138,231 @@ function resetResultSection() {
 
 
 
+
+// ===========================
+// 중복발송검증 함수
+// ===========================
+async function verifyDuplicateOrders() {
+    const button = document.getElementById('verifyDuplicate');
+    button.disabled = true;
+    button.textContent = '검증 중...';
+    
+    showLoading();
+    
+    try {
+        // 7일간 날짜 생성
+        const dates = [];
+        for (let i = 1; i <= 7; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            dates.push(`${year}${month}${day}`);
+        }
+        
+        // 과거 7일 데이터 가져오기
+        const pastOrders = [];
+        for (const sheetName of dates) {
+            try {
+                const response = await fetch(`${API_BASE}/api/sheets`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'getOrdersByDate',
+                        sheetName: sheetName
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.data && result.data.length > 0) {
+                    pastOrders.push(...result.data);
+                }
+            } catch (error) {
+                console.log(`${sheetName} 시트 읽기 실패:`, error);
+            }
+        }
+        
+        console.log(`과거 7일 주문 수: ${pastOrders.length}건`);
+        
+        // 중복 검증
+        let shippedDuplicates = 0;
+        let unshippedDuplicates = 0;
+        const duplicateDetails = [];
+        
+        if (!processedData || !processedData.data) {
+            throw new Error('처리된 데이터가 없습니다.');
+        }
+        
+        // 현재 데이터와 과거 데이터 비교
+        processedData.data.forEach((currentOrder, index) => {
+            const currentOrderNo = String(currentOrder['주문번호'] || '').trim();
+            const currentRecipient = String(currentOrder['수령인'] || currentOrder['수취인'] || '').trim();
+            
+            if (!currentOrderNo || !currentRecipient) return;
+            
+            // 과거 데이터에서 중복 찾기
+            const duplicates = pastOrders.filter(pastOrder => {
+                const pastOrderNo = String(pastOrder['주문번호'] || '').trim();
+                const pastRecipient = String(pastOrder['수령인'] || pastOrder['수취인'] || '').trim();
+                
+                return currentOrderNo === pastOrderNo && currentRecipient === pastRecipient;
+            });
+            
+            if (duplicates.length > 0) {
+                // 발송 여부 확인
+                const hasShipped = duplicates.some(d => d['송장번호'] && String(d['송장번호']).trim() !== '');
+                
+                if (hasShipped) {
+                    shippedDuplicates++;
+                    currentOrder['_duplicateStatus'] = 'shipped';
+                    
+                    const shippedOrder = duplicates.find(d => d['송장번호']);
+                    duplicateDetails.push({
+                        type: 'shipped',
+                        orderNo: currentOrderNo,
+                        recipient: currentRecipient,
+                        invoice: shippedOrder['송장번호'],
+                        sheetName: shippedOrder['_sheetName'] || '과거주문'
+                    });
+                } else {
+                    unshippedDuplicates++;
+                    currentOrder['_duplicateStatus'] = 'unshipped';
+                    
+                    duplicateDetails.push({
+                        type: 'unshipped',
+                        orderNo: currentOrderNo,
+                        recipient: currentRecipient,
+                        sheetName: duplicates[0]['_sheetName'] || '과거주문'
+                    });
+                }
+            }
+        });
+        
+        // 테이블 업데이트
+        updateDuplicateStyles();
+        
+        // 결과 메시지
+        let message = `중복발송 검증 완료\n`;
+        message += `━━━━━━━━━━━━━━━━\n`;
+        
+        if (shippedDuplicates > 0) {
+            message += `⛔ 발송 중복: ${shippedDuplicates}건\n`;
+            message += `   (이미 발송된 주문입니다. 제거 필요)\n`;
+        }
+        
+        if (unshippedDuplicates > 0) {
+            message += `⚠️ 미발송 중복: ${unshippedDuplicates}건\n`;
+            message += `   (과거 미발송 주문과 중복됩니다. 확인 필요)\n`;
+        }
+        
+        if (shippedDuplicates === 0 && unshippedDuplicates === 0) {
+            message += `✓ 중복 주문이 없습니다.`;
+        }
+        
+        showCenterMessage(message.replace(/\n/g, '<br>'), 
+                         shippedDuplicates > 0 ? 'error' : 'success', 
+                         5000);
+        
+        // 중복 상세 내역 콘솔 출력
+        if (duplicateDetails.length > 0) {
+            console.log('중복 상세 내역:', duplicateDetails);
+        }
+        
+    } catch (error) {
+        console.error('중복검증 오류:', error);
+        showCenterMessage('중복발송 검증 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+        button.disabled = false;
+        button.textContent = '중복발송검증';
+    }
+}
+
+// 중복 스타일 업데이트
+function updateDuplicateStyles() {
+    const tbody = document.getElementById('resultTableBody');
+    if (!tbody) return;
+    
+    const rows = tbody.querySelectorAll('tr');
+    const headers = processedData.standardFields || [];
+    const orderNoIndex = headers.indexOf('주문번호');
+    
+    rows.forEach((tr, rowIndex) => {
+        const row = processedData.data[rowIndex];
+        if (!row) return;
+        
+        // 주문번호 셀 찾기
+        if (orderNoIndex !== -1) {
+            const td = tr.children[orderNoIndex];
+            if (td) {
+                // 기존 클래스 제거
+                td.classList.remove('duplicate-shipped', 'duplicate-unshipped');
+                
+                // 중복 상태에 따른 클래스 추가
+                if (row['_duplicateStatus'] === 'shipped') {
+                    td.classList.add('duplicate-shipped');
+                    td.title = '⛔ 이미 발송된 중복 주문';
+                } else if (row['_duplicateStatus'] === 'unshipped') {
+                    td.classList.add('duplicate-unshipped');
+                    td.title = '⚠️ 미발송 중복 주문 확인 필요';
+                }
+            }
+        }
+    });
+}
+
+// ===========================
+// 피벗테이블
+// ===========================
+4. CSS 추가 - 중복 셀 스타일 (style.css)
+삭제할 코드:
+css/* 찾기: 편집 가능 셀 스타일 끝부분 */
+.editable-cell:hover {
+    box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+대체할 코드:
+css/* 찾기: 편집 가능 셀 스타일 끝부분 */
+.editable-cell:hover {
+    box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+/* ========================================
+   중복발송 검증 스타일
+   ======================================== */
+/* 발송 중복 - 빨간색 */
+.duplicate-shipped {
+    background: #fee2e2 !important;
+    border: 2px solid #dc3545 !important;
+    position: relative;
+    color: #dc3545;
+    font-weight: 500;
+}
+
+.duplicate-shipped::before {
+    content: '⛔';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 12px;
+}
+
+/* 미발송 중복 - 노란색 */
+.duplicate-unshipped {
+    background: #fef3c7 !important;
+    border: 2px solid #f59e0b !important;
+    position: relative;
+}
+
+.duplicate-unshipped::before {
+    content: '⚠️';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 12px;
+}
+
+
+
