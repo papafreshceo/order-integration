@@ -1419,6 +1419,10 @@ function calculateColumnWidth(header, data, index) {
         '배송메세지': 120,
         '배송메시지': 120
     };
+
+    if (header.includes('배송') && (header.includes('메세지') || header.includes('메시지') || header.includes('요청') || header.includes('메모'))) {
+    return 120;
+}
     
     if (fixedWidths[header]) {
         return fixedWidths[header];
@@ -2076,4 +2080,5 @@ function resetResultSection() {
     showSuccess('통합 결과가 초기화되었습니다.');
 
 }
+
 
