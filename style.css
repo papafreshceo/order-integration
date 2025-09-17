@@ -132,7 +132,8 @@ body {
 .user-info,
 .user-info span,
 .user-info #userEmail,
-.user-info .role-badge {
+.user-info .role-badge,
+.user-info .btn-logout {
     color: var(--text-primary) !important;
 }
 
