@@ -212,11 +212,18 @@ const ProductMatching = (function() {
         button.disabled = true;
         button.textContent = '검증 중...';
         
-        try {
+         try {
+            console.log('검증 시작 - processedData 확인:', window.processedData);
+            
             // 제품 데이터 다시 로드
-            await loadProductData();
+            const loadResult = await loadProductData();
+            console.log('제품 데이터 로드 결과:', loadResult);
             
             if (!window.processedData || !window.processedData.data) {
+                console.error('processedData 상태:', {
+                    exists: !!window.processedData,
+                    hasData: window.processedData ? !!window.processedData.data : false
+                });
                 throw new Error('처리된 데이터가 없습니다.');
             }
             
@@ -350,3 +357,4 @@ const ProductMatching = (function() {
 // 전역 함수로 노출 (HTML onclick에서 호출 가능)
 
 window.ProductMatching = ProductMatching;
+
