@@ -561,19 +561,7 @@ th {
     user-select: none;
 }
 
-th .resize-handle {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    cursor: col-resize;
-    background: transparent;
-}
 
-th .resize-handle:hover {
-    background: rgba(37, 99, 235, 0.2);
-}
 
 
 
