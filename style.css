@@ -1011,7 +1011,6 @@ tbody tr:nth-child(even) {
 /* 매칭 실패 - 노란색 */
 .unmatched-cell {
     background: #fef3c7 !important;
-    border: 1px dashed #dc3545 !important;
     position: relative;
 }
 
