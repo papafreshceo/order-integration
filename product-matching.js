@@ -173,6 +173,7 @@ const ProductMatching = (function() {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 td.blur();
+                td.focus();  // 수정 완료 후 다시 포커스를 주어 선택 상태 유지
             }
         });
     }
@@ -357,4 +358,5 @@ const ProductMatching = (function() {
 // 전역 함수로 노출 (HTML onclick에서 호출 가능)
 
 window.ProductMatching = ProductMatching;
+
 
