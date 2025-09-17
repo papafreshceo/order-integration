@@ -1308,11 +1308,38 @@ function displayResultTable(data) {
         return 'center';
     }
     
-
+    // 고정열 끝 인덱스 찾기 (수령인전화번호 또는 수취인전화번호)
+    let fixedEndIndex = -1;
+    for (let i = 0; i < headers.length; i++) {
+        if (headers[i].includes('수령인전화번호') || 
+            headers[i].includes('수령인 전화번호') || 
+            headers[i].includes('수취인전화번호') || 
+            headers[i].includes('수취인 전화번호')) {
+            fixedEndIndex = i;
+            break;
+        }
+    }
+    
+    // 못 찾으면 기본값 설정
+    if (fixedEndIndex === -1) {
+        fixedEndIndex = Math.min(7, headers.length - 1);
+    }
+    
+    // 헤더별 너비 계산
+    const columnWidths = [];
+    const leftPositions = [0];
+    
+    headers.forEach((header, index) => {
+        let width = calculateColumnWidth(header, data, index);
+        columnWidths[index] = width;
+        
+        if (index > 0 && index <= fixedEndIndex) {
+            leftPositions[index] = leftPositions[index - 1] + columnWidths[index - 1];
+        }
+    });
     
     // 헤더 생성
     const headerRow = document.createElement('tr');
-    const columnWidths = [];
     
     headers.forEach((header, index) => {
         const th = document.createElement('th');
@@ -1320,12 +1347,20 @@ function displayResultTable(data) {
         th.setAttribute('data-column', index);
         th.setAttribute('data-header', header);
         th.style.textAlign = 'center';
+        th.style.width = columnWidths[index] + 'px';
+        th.style.minWidth = columnWidths[index] + 'px';
         
-        // 컬럼 너비 계산
-        let widthNum = calculateColumnWidth(header, data, index);
-        columnWidths[index] = widthNum;
-        
-        
+        // 고정열 처리
+        if (index <= fixedEndIndex) {
+            th.style.position = 'sticky';
+            th.style.left = leftPositions[index] + 'px';
+            th.style.zIndex = '20';
+            th.style.background = 'var(--bg-secondary)';
+            
+            if (index === fixedEndIndex) {
+                th.style.boxShadow = '2px 0 5px rgba(0,0,0,0.1)';
+            }
+        }
         
         // 리사이즈 핸들 추가
         const resizeHandle = document.createElement('div');
@@ -1342,9 +1377,7 @@ function displayResultTable(data) {
     // 바디 생성
     tbody.innerHTML = '';
     
-
-    
-    data.forEach((row) => {
+    data.forEach((row, rowIndex) => {
         const tr = document.createElement('tr');
         
         headers.forEach((header, index) => {
@@ -1353,8 +1386,20 @@ function displayResultTable(data) {
             let value = row[header] || '';
             
             td.style.textAlign = getAlignment(header);
+            td.style.width = columnWidths[index] + 'px';
+            td.style.minWidth = columnWidths[index] + 'px';
             
-
+            // 고정열 처리
+            if (index <= fixedEndIndex) {
+                td.style.position = 'sticky';
+                td.style.left = leftPositions[index] + 'px';
+                td.style.background = rowIndex % 2 === 0 ? 'var(--bg-primary)' : 'var(--bg-muted)';
+                td.style.zIndex = '10';
+                
+                if (index === fixedEndIndex) {
+                    td.style.boxShadow = '2px 0 5px rgba(0,0,0,0.1)';
+                }
+            }
             
             // 날짜 포맷팅
             if (header.includes('결제일') || header.includes('발송일') || header.includes('주문일')) {
@@ -1398,6 +1443,33 @@ function displayResultTable(data) {
             }
             
             tr.appendChild(td);
+        });
+        
+        // 호버 효과
+        tr.addEventListener('mouseenter', function() {
+            this.querySelectorAll('td').forEach((td, index) => {
+                if (index <= fixedEndIndex) {
+                    td.style.background = 'var(--bg-light)';
+                }
+            });
+        });
+        
+        tr.addEventListener('mouseleave', function() {
+            this.querySelectorAll('td').forEach((td, index) => {
+                if (index <= fixedEndIndex) {
+                    const rowIdx = Array.from(tbody.children).indexOf(this);
+                    td.style.background = rowIdx % 2 === 0 ? 'var(--bg-primary)' : 'var(--bg-muted)';
+                    
+                    // 마켓명 셀은 원래 색상 유지
+                    if (index === 0 && headers[0] === '마켓명') {
+                        const marketName = row[headers[0]];
+                        if (marketName && mappingData && mappingData.markets[marketName]) {
+                            const market = mappingData.markets[marketName];
+                            td.style.background = `rgb(${market.color})`;
+                        }
+                    }
+                }
+            });
         });
         
         tbody.appendChild(tr);
@@ -2080,5 +2152,6 @@ function resetResultSection() {
     showSuccess('통합 결과가 초기화되었습니다.');
 
 }
+
 
 
