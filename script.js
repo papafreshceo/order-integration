@@ -404,8 +404,9 @@ async function detectMarketAndAdd(file, headers, dataRows, rawRows, provisionalH
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     fileDate.setHours(0, 0, 0, 0);
-    const daysDiff = Math.floor((today - fileDate) / (1000 * 60 * 60 * 24));
-    const isRecent = daysDiff <= 7 && daysDiff >= 0;
+const daysDiff = Math.floor((today - fileDate) / (1000 * 60 * 60 * 24));
+    const isToday = daysDiff === 0;  // 오늘 날짜인지 확인
+    const isRecent = isToday;  // 호환성을 위해 유지
     
     let finalHeaders = headers;
     let finalDataRows = dataRows;
@@ -466,6 +467,13 @@ async function detectMarketAndAdd(file, headers, dataRows, rawRows, provisionalH
 async function processOrders() {
     if (uploadedFiles.length === 0) {
         showError('업로드된 파일이 없습니다.');
+        return;
+    }
+    
+    // 오늘 날짜가 아닌 파일 체크
+    const oldFiles = uploadedFiles.filter(f => !f.isToday);
+    if (oldFiles.length > 0) {
+        showError(`오늘 날짜가 아닌 파일이 ${oldFiles.length}개 있습니다. 해당 파일을 제거하거나 최신 파일로 교체 후 진행하세요.`);
         return;
     }
     
@@ -1022,6 +1030,13 @@ function updateFileList() {
         fileItem.className = 'file-item';
         if (!file.isToday) {
             fileItem.classList.add('warning');
+            
+            // 경고 배지 추가
+            const warningBadge = document.createElement('span');
+            warningBadge.className = 'warning-badge';
+            warningBadge.textContent = '⚠️ 오래된 파일';
+            warningBadge.style.cssText = 'background: #fef3c7; color: #f59e0b; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 8px;';
+            marketTag.parentNode.insertBefore(warningBadge, marketTag.nextSibling);
         }
         
         const fileInfo = document.createElement('div');
@@ -1096,6 +1111,7 @@ function removeFile(index) {
 function checkWarnings() {
     const oldFiles = uploadedFiles.filter(f => !f.isToday);
     const warningBox = document.getElementById('warningBox');
+    const processBtn = document.getElementById('processBtn');
     
     if (oldFiles.length > 0) {
         const warningList = document.getElementById('warningList');
@@ -1109,9 +1125,27 @@ function checkWarnings() {
         });
         
         warningBox.classList.add('show');
-        document.getElementById('confirmOldFiles').checked = true;
+        
+        // 처리 버튼 비활성화
+        if (processBtn) {
+            processBtn.disabled = true;
+            processBtn.style.opacity = '0.5';
+            processBtn.style.cursor = 'not-allowed';
+            processBtn.title = '오늘 날짜가 아닌 파일이 포함되어 있습니다. 해당 파일을 제거한 후 진행하세요.';
+        }
+        
+        // 경고 메시지 표시
+        showError(`⚠️ 주의: ${oldFiles.length}개의 오래된 파일이 감지되었습니다. 최신 파일로 다시 다운로드하거나 제거 후 진행하세요.`);
     } else {
         warningBox.classList.remove('show');
+        
+        // 처리 버튼 활성화
+        if (processBtn && uploadedFiles.length > 0) {
+            processBtn.disabled = false;
+            processBtn.style.opacity = '1';
+            processBtn.style.cursor = 'pointer';
+            processBtn.title = '';
+        }
     }
 }
 
