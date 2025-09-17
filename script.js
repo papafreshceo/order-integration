@@ -417,7 +417,7 @@ async function detectMarketAndAdd(file, headers, dataRows, rawRows, provisionalH
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     fileDate.setHours(0, 0, 0, 0);
-const daysDiff = Math.floor((today - fileDate) / (1000 * 60 * 60 * 24));
+    const daysDiff = Math.floor((today - fileDate) / (1000 * 60 * 60 * 24));
     const isToday = daysDiff === 0;  // 오늘 날짜인지 확인
     const isRecent = isToday;  // 호환성을 위해 유지
     
@@ -841,7 +841,7 @@ async function saveToGoogleSheets() {
         return;
     }
     
-// 이미 저장 중인지 확인
+    // 이미 저장 중인지 확인
     if (window.isSaving) {
         showCenterMessage('저장 중입니다. 잠시만 기다려주세요.', 'info');
         return;
@@ -898,8 +898,6 @@ async function saveToGoogleSheets() {
         if (result.success) {
             console.log(`Saved ${processedData.data.length} rows to sheet "${processedData.sheetName}"`);
             showCenterMessage(`구글 시트 "${processedData.sheetName}"에 저장되었습니다.`, 'success');
-            
-
         } else {
             console.error('시트 저장 실패:', result.error);
             showCenterMessage('시트 저장 실패: ' + (result.error || '알 수 없는 오류'), 'error');
@@ -1273,6 +1271,29 @@ function displayResults(result) {
 function displayResultTable(data) {
     const thead = document.getElementById('resultTableHead');
     const tbody = document.getElementById('resultTableBody');
+    
+    if (data.length === 0) {
+        thead.innerHTML = '';
+        tbody.innerHTML = '<tr><td colspan="100%" style="text-align:center;">데이터가 없습니다</td></tr>';
+        return;
+    }
+    
+    // 마켓 순서대로 정렬
+    if (mappingData && mappingData.marketOrder && mappingData.marketOrder.length > 0) {
+        data.sort((a, b) => {
+            const marketA = a['마켓명'];
+            const marketB = b['마켓명'];
+            const ia = mappingData.marketOrder.indexOf(marketA);
+            const ib = mappingData.marketOrder.indexOf(marketB);
+            if (ia !== -1 && ib !== -1) return ia - ib;
+            if (ia !== -1) return -1;
+            if (ib !== -1) return 1;
+            return marketA.localeCompare(marketB);
+        });
+    }
+    
+    const headers = processedData.standardFields || mappingData.standardFields || Object.keys(data[0]);
+    
     // 고정 열너비 설정
     const fixedWidths = {
         '연번': 60,
@@ -1312,28 +1333,6 @@ function displayResultTable(data) {
         '발송지연락처': 140
     };
     
-    if (data.length === 0) {
-        thead.innerHTML = '';
-        tbody.innerHTML = '<tr><td colspan="100%" style="text-align:center;">데이터가 없습니다</td></tr>';
-        return;
-    }
-    
-    // 마켓 순서대로 정렬
-    if (mappingData && mappingData.marketOrder && mappingData.marketOrder.length > 0) {
-        data.sort((a, b) => {
-            const marketA = a['마켓명'];
-            const marketB = b['마켓명'];
-            const ia = mappingData.marketOrder.indexOf(marketA);
-            const ib = mappingData.marketOrder.indexOf(marketB);
-            if (ia !== -1 && ib !== -1) return ia - ib;
-            if (ia !== -1) return -1;
-            if (ib !== -1) return 1;
-            return marketA.localeCompare(marketB);
-        });
-    }
-    
-    const headers = processedData.standardFields || mappingData.standardFields || Object.keys(data[0]);
-    
     // 필드별 정렬 설정
     const centerAlignFields = ['마켓명', '연번', '결제일', '주문번호', '주문자', '수취인', '옵션명', '수량', '마켓'];
     const leftAlignFields = ['주소', '배송지', '수령인주소', '수취인주소'];
@@ -1363,7 +1362,7 @@ function displayResultTable(data) {
         fixedEndIndex = Math.min(7, headers.length - 1);
     }
     
-    // 열너비 배열 생성 - headers와 fixedEndIndex 정의 후에 위치
+    // 열너비 배열 생성
     const columnWidths = [];
     const leftPositions = [0];
     
@@ -1376,59 +1375,6 @@ function displayResultTable(data) {
             leftPositions[index] = leftPositions[index - 1] + columnWidths[index - 1];
         }
     });
-    
-    if (data.length === 0) {
-        thead.innerHTML = '';
-        tbody.innerHTML = '<tr><td colspan="100%" style="text-align:center;">데이터가 없습니다</td></tr>';
-        return;
-    }
-    
-    // 마켓 순서대로 정렬
-    if (mappingData && mappingData.marketOrder && mappingData.marketOrder.length > 0) {
-        data.sort((a, b) => {
-            const marketA = a['마켓명'];
-            const marketB = b['마켓명'];
-            const ia = mappingData.marketOrder.indexOf(marketA);
-            const ib = mappingData.marketOrder.indexOf(marketB);
-            if (ia !== -1 && ib !== -1) return ia - ib;
-            if (ia !== -1) return -1;
-            if (ib !== -1) return 1;
-            return marketA.localeCompare(marketB);
-        });
-    }
-    
-    const headers = processedData.standardFields || mappingData.standardFields || Object.keys(data[0]);
-    
-    // 필드별 정렬 설정
-    const centerAlignFields = ['마켓명', '연번', '결제일', '주문번호', '주문자', '수취인', '옵션명', '수량', '마켓'];
-    const leftAlignFields = ['주소', '배송지', '수령인주소', '수취인주소'];
-    const rightAlignFields = ['정산예정금액', '상품금액', '할인금액', '수수료1', '수수료2', '택배비', '셀러공급가', '출고비용'];
-    
-    function getAlignment(fieldName) {
-        if (rightAlignFields.some(f => fieldName.includes(f))) return 'right';
-        if (leftAlignFields.some(f => fieldName.includes(f))) return 'left';
-        if (centerAlignFields.some(f => fieldName.includes(f))) return 'center';
-        return 'center';
-    }
-    
-    // 고정열 끝 인덱스 찾기 (수령인전화번호 또는 수취인전화번호)
-    let fixedEndIndex = -1;
-    for (let i = 0; i < headers.length; i++) {
-        if (headers[i].includes('수령인전화번호') || 
-            headers[i].includes('수령인 전화번호') || 
-            headers[i].includes('수취인전화번호') || 
-            headers[i].includes('수취인 전화번호')) {
-            fixedEndIndex = i;
-            break;
-        }
-    }
-    
-    // 못 찾으면 기본값 설정
-    if (fixedEndIndex === -1) {
-        fixedEndIndex = Math.min(7, headers.length - 1);
-    }
-    
-
     
     // 헤더 생성
     const headerRow = document.createElement('tr');
@@ -1454,7 +1400,11 @@ function displayResultTable(data) {
             }
         }
         
-
+        // 리사이즈 핸들 추가
+        const resizeHandle = document.createElement('div');
+        resizeHandle.className = 'resize-handle';
+        resizeHandle.setAttribute('data-column', index);
+        th.appendChild(resizeHandle);
         
         headerRow.appendChild(th);
     });
@@ -1563,10 +1513,8 @@ function displayResultTable(data) {
         tbody.appendChild(tr);
     });
     
-    
+    initTableResize();
 }
-
-
 
 function formatDateForDisplay(value) {
     if (!value) return '';
@@ -1599,7 +1547,86 @@ function formatDateForDisplay(value) {
     return strValue;
 }
 
+function initTableResize() {
+    const table = document.getElementById('resultTable');
+    const resizeHandles = table.querySelectorAll('.resize-handle');
+    let isResizing = false;
+    let currentColumn = null;
+    let startX = 0;
+    let startWidth = 0;
+    
+    // 고정열 끝 인덱스 찾기
+    const headers = table.querySelectorAll('th');
+    let fixedEndIndex = -1;
+    for (let i = 0; i < headers.length; i++) {
+        if (headers[i].style.position === 'sticky') {
+            fixedEndIndex = i;
+        } else if (fixedEndIndex !== -1) {
+            break;
+        }
+    }
+    
+    resizeHandles.forEach(handle => {
+        handle.addEventListener('mousedown', function(e) {
+            isResizing = true;
+            currentColumn = parseInt(this.dataset.column);
+            startX = e.pageX;
+            const th = this.parentElement;
+            startWidth = parseInt(window.getComputedStyle(th).width);
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            e.preventDefault();
+        });
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+        if (!isResizing) return;
+        
+        const diff = e.pageX - startX;
+        const newWidth = Math.max(50, startWidth + diff);
+        
+        const ths = table.querySelectorAll('th');
+        const tds = table.querySelectorAll(`td:nth-child(${currentColumn + 1})`);
+        
+        if (ths[currentColumn]) {
+            ths[currentColumn].style.width = newWidth + 'px';
+            ths[currentColumn].style.minWidth = newWidth + 'px';
+        }
+        
+        tds.forEach(td => {
+            td.style.width = newWidth + 'px';
+            td.style.minWidth = newWidth + 'px';
+        });
+        
+        // 리사이즈한 열이 고정열이거나 그 이전 열이면 고정열 위치 재계산
+        if (currentColumn <= fixedEndIndex) {
+            let leftPos = 0;
+            for (let i = 0; i <= fixedEndIndex; i++) {
+                if (i > 0) {
+                    // 이전 열의 너비를 더해서 위치 계산
+                    leftPos += parseInt(ths[i-1].style.width || ths[i-1].offsetWidth);
+                    ths[i].style.left = leftPos + 'px';
+                    
+                    // 모든 행의 해당 열 위치 업데이트
+                    table.querySelectorAll(`tbody td:nth-child(${i + 1})`).forEach(td => {
+                        if (td.style.position === 'sticky') {
+                            td.style.left = leftPos + 'px';
+                        }
+                    });
+                }
+            }
+        }
+    });
+    
+    document.addEventListener('mouseup', function() {
+        if (!isResizing) return;
+        isResizing = false;
+        currentColumn = null;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+    });
 }
+
 // ===========================
 // 통계 표시
 // ===========================
@@ -2149,13 +2176,4 @@ function resetResultSection() {
     }
     
     showSuccess('통합 결과가 초기화되었습니다.');
-
 }
-
-
-
-
-
-
-
-
