@@ -575,32 +575,7 @@ th .resize-handle:hover {
     background: rgba(37, 99, 235, 0.2);
 }
 
-.fixed-col {
-    position: sticky;
-    background: var(--bg-primary);
-    z-index: 10;
-}
 
-thead .fixed-col {
-    background: var(--bg-secondary);
-    z-index: 30;
-}
-
-tbody .fixed-col {
-    background: inherit;
-}
-
-.last-fixed-col {
-    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
-}
-
-tbody tr:nth-child(even) .fixed-col {
-    background: var(--bg-muted);
-}
-
-tbody tr:hover .fixed-col {
-    background: var(--bg-light);
-}
 
 td {
     padding: 8px;
