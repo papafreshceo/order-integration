@@ -588,6 +588,19 @@ td {
     color: var(--text-primary);
 }
 
+/* 고정열 z-index 조정 */
+thead th[style*="sticky"] {
+    z-index: 20 !important;
+}
+
+tbody td[style*="sticky"] {
+    z-index: 10 !important;
+}
+
+/* 마켓명 셀이 고정열일 때 우선순위 */
+tbody td[style*="sticky"]:first-child {
+    z-index: 11 !important;
+}
 tbody tr {
     background: var(--bg-primary);
     transition: all 0.2s;
