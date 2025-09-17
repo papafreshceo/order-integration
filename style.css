@@ -973,12 +973,35 @@ tbody tr:nth-child(even) {
     transform: translateY(-1px);
 }
 
+/* 찾기: 버튼 스타일 섹션 끝부분 */
 .btn-verify:disabled {
     background: #6c757d;
     cursor: not-allowed;
     opacity: 0.6;
 }
 
+.btn-duplicate {
+    padding: 6px 16px;
+    background: #f59e0b;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 300;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-duplicate:hover {
+    background: #d97706;
+    transform: translateY(-1px);
+}
+
+.btn-duplicate:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
 /* ========================================
    옵션명 매칭 상태 스타일
    ======================================== */
