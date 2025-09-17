@@ -1308,20 +1308,7 @@ function displayResultTable(data) {
         return 'center';
     }
     
-    // 고정할 컬럼 찾기 (수취인전화번호까지)
-    let phoneColumnIndex = -1;
-    for (let i = 0; i < headers.length; i++) {
-        if (headers[i].includes('수취인전화번호') || 
-            headers[i].includes('수취인 전화번호') || 
-            headers[i].includes('수령인전화번호') || 
-            headers[i].includes('수령인 전화번호')) {
-            phoneColumnIndex = i;
-            break;
-        }
-    }
-    if (phoneColumnIndex === -1) {
-        phoneColumnIndex = Math.min(6, headers.length - 1);
-    }
+
     
     // 헤더 생성
     const headerRow = document.createElement('tr');
@@ -1339,15 +1326,7 @@ function displayResultTable(data) {
         let widthNum = calculateColumnWidth(header, data, index);
         columnWidths[index] = widthNum;
         
-        // 고정 컬럼 처리
-        if (index <= phoneColumnIndex) {
-            th.className = 'fixed-col';
-            th.style.left = accumulatedWidth + 'px';
-            if (index === phoneColumnIndex) {
-                th.classList.add('last-fixed-col');
-            }
-            accumulatedWidth += widthNum;
-        }
+        
         
         // 리사이즈 핸들 추가
         const resizeHandle = document.createElement('div');
@@ -1364,11 +1343,7 @@ function displayResultTable(data) {
     // 바디 생성
     tbody.innerHTML = '';
     
-    // 수정된 코드 - 테두리 너비 고려
-    let leftPositions = [0];
-    for (let i = 1; i <= phoneColumnIndex; i++) {
-        leftPositions[i] = leftPositions[i - 1] + columnWidths[i - 1] - 1; // 테두리 1px 겹침 고려
-    }
+
     
     data.forEach((row) => {
         const tr = document.createElement('tr');
@@ -1380,14 +1355,7 @@ function displayResultTable(data) {
             
             td.style.textAlign = getAlignment(header);
             
-            // 고정 컬럼 처리
-            if (index <= phoneColumnIndex) {
-                td.className = 'fixed-col';
-                td.style.left = leftPositions[index] + 'px';
-                if (index === phoneColumnIndex) {
-                    td.classList.add('last-fixed-col');
-                }
-            }
+
             
             // 날짜 포맷팅
             if (header.includes('결제일') || header.includes('발송일') || header.includes('주문일')) {
@@ -2107,4 +2075,5 @@ function resetResultSection() {
     }
     
     showSuccess('통합 결과가 초기화되었습니다.');
+
 }
