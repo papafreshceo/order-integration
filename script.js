@@ -867,13 +867,7 @@ async function saveToGoogleSheets() {
             console.log(`Saved ${processedData.data.length} rows to sheet "${processedData.sheetName}"`);
             showCenterMessage(`구글 시트 "${processedData.sheetName}"에 저장되었습니다.`, 'success');
             
-            // 구글 시트 열기 (옵션)
-            setTimeout(() => {
-                if (confirm('저장된 구글 시트를 열어보시겠습니까?')) {
-                    const SPREADSHEET_ID = '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
-                    window.open(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`, '_blank');
-                }
-            }, 1000);
+
         } else {
             console.error('시트 저장 실패:', result.error);
             showCenterMessage('시트 저장 실패: ' + (result.error || '알 수 없는 오류'), 'error');
