@@ -2059,3 +2059,39 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
+// ===========================
+// 결과 초기화 함수
+// ===========================
+function resetResultSection() {
+    if (!confirm('통합 결과를 초기화하시겠습니까?')) {
+        return;
+    }
+    
+    // 결과 섹션 숨기기
+    const resultSection = document.getElementById('resultSection');
+    resultSection.classList.remove('show');
+    
+    // 결과 테이블 초기화
+    document.getElementById('resultTableHead').innerHTML = '';
+    document.getElementById('resultTableBody').innerHTML = '';
+    
+    // 통계 테이블 초기화
+    document.querySelector('#marketStats tbody').innerHTML = '';
+    document.querySelector('#optionStats tbody').innerHTML = '';
+    
+    // 피벗 테이블 초기화
+    document.querySelector('#pivotTable thead').innerHTML = '';
+    document.querySelector('#pivotTable tbody').innerHTML = '';
+    
+    // 처리된 데이터 초기화
+    processedData = null;
+    
+    // 스페이서 제거
+    const spacer = document.getElementById('resultSpacer');
+    if (spacer) {
+        spacer.remove();
+    }
+    
+    showSuccess('통합 결과가 초기화되었습니다.');
+}

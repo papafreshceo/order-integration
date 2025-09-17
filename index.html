@@ -421,7 +421,10 @@
 
                     <div class="result-section" id="resultSection">
                         <div class="result-header">
-                            <h2 class="result-title">통합 결과</h2>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <h2 class="result-title">통합 결과</h2>
+                                <button class="btn-reset" id="resetResults" onclick="resetResultSection()">초기화</button>
+                            </div>
                             <div class="export-buttons">
                                 <button class="export-btn export-excel" id="exportExcel">엑셀 다운로드</button>
                                 <button class="export-btn export-sheets" id="saveToSheets">구글 시트 저장</button>
@@ -688,7 +691,7 @@
 
                 <div id="settings-tab" class="tab-content">
                     <div class="stat-card">
-                        
+
                         <h3>매핑 설정</h3>
                         <p>매핑 시트에서 마켓별 필드 매핑을 설정할 수 있습니다.</p>
                         <button class="upload-btn" id="openMappingSheet">매핑 시트 열기</button>
