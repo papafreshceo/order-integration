@@ -1362,19 +1362,33 @@ function displayResultTable(data) {
         fixedEndIndex = Math.min(7, headers.length - 1);
     }
     
-    // 열너비 배열 생성
+    // 열너비 배열 생성 - 필수 고정 필드 강제 적용
     const columnWidths = [];
     const leftPositions = [0];
     
+    // 필수 고정 필드 목록
+    const mandatoryFixedFields = [
+        '마켓명', '연번', '결제일', '주문번호', 
+        '주문자', '주문자전화번호', '주문자 전화번호',
+        '수령인', '수령인전화번호', '수령인 전화번호',
+        '수취인', '수취인전화번호', '수취인 전화번호'
+    ];
+    
     headers.forEach((header, index) => {
-        // 필수 고정 필드는 무조건 지정된 너비 사용
         let width;
-        if (fixedWidths[header]) {
+        
+        // 필수 고정 필드인지 확인
+        if (mandatoryFixedFields.includes(header)) {
+            // 필수 고정 필드는 무조건 fixedWidths 값 사용
+            width = fixedWidths[header] || fixedWidths[header.replace(/ /g, '')] || 100;
+        } else if (fixedWidths[header]) {
+            // 기타 fixedWidths에 정의된 필드
             width = fixedWidths[header];
         } else {
-            // 필수 고정 필드가 아닌 경우 계산된 너비 사용
-            width = calculateColumnWidth(header, data, index);
+            // 나머지는 기본값
+            width = 120;
         }
+        
         columnWidths[index] = width;
         
         if (index > 0 && index <= fixedEndIndex) {
@@ -2199,5 +2213,6 @@ function resetResultSection() {
     
     showSuccess('통합 결과가 초기화되었습니다.');
 }
+
 
 
