@@ -1470,13 +1470,6 @@ function displayResultTable(data) {
             
             // 현재 행 선택
             this.classList.add('selected-row');
-            
-            // 고정열 선택 배경색 적용 (마켓명 제외)
-            this.querySelectorAll('td').forEach((td, idx) => {
-                if (idx <= fixedEndIndex && headers[idx] !== '마켓명') {
-                    td.style.background = 'rgba(135, 206, 235, 0.3)';
-                }
-            });
         });
         
         tbody.appendChild(tr);
@@ -2159,6 +2152,7 @@ function resetResultSection() {
     showSuccess('통합 결과가 초기화되었습니다.');
 
 }
+
 
 
 
