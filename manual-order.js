@@ -328,132 +328,21 @@ const ManualOrder = (function() {
     // 주문 목록 업데이트
     // ===========================
     function updateOrderList() {
-        const listContainer = document.getElementById('manualOrderList');
-        if (!listContainer) return;
-        
-        if (manualOrders.length === 0) {
-            listContainer.innerHTML = '<div class="empty-list">추가된 주문이 없습니다</div>';
-            return;
-        }
-        
-         // 매핑 데이터가 없으면 종료
-        if (!window.mappingData || !window.mappingData.standardFields) {
-            console.error('매핑 데이터가 없습니다. 먼저 매핑 데이터를 로드하세요.');
-            listContainer.innerHTML = '<div class="error-message">매핑 데이터를 로드 중입니다. 잠시만 기다려주세요.</div>';
-            return;
-        }
-        
-        // 매핑시트의 표준필드 순서 사용
-        const headers = window.mappingData.standardFields;
-        
-        // script.js의 displayResultTable 로직 참조
-        const fixedWidths = window.fixedWidths || {
-            '연번': 50,
-            '마켓명': 100,
-            '마켓': 60,
-            '결제일': 150,
-            '주문번호': 140,
-            '상품주문번호': 140,
-            '주문자': 70,
-            '수령인': 70,
-            '수취인': 70,
-            '주문자전화번호': 120,
-            '수취인전화번호': 120,
-            '수령인전화번호': 120,
-            '주소': 300,
-            '수취인주소': 300,
-            '수령인주소': 300,
-            '배송메세지': 100,
-            '배송메시지': 100,
-            '옵션명': 160,
-            '수량': 60,
-            '정산예정금액': 90
-        };
-        
-        const centerAlignFields = ['마켓명', '연번', '결제일', '주문번호', '주문자', '수취인', '옵션명', '수량', '마켓'];
-        const rightAlignFields = ['셀러공급가', '출고비용', '정산예정금액', '정산대상금액', '상품금액', '택배비', '기타비용'];
-        
-        const getAlignment = (fieldName) => {
-            if (rightAlignFields.some(f => fieldName.includes(f))) return 'right';
-            if (centerAlignFields.some(f => fieldName.includes(f))) return 'center';
-            return 'left';
-        };
-        
-        // 건별입력 주문 데이터 보완
-        manualOrders.forEach(order => {
-            // 누락된 필드 채우기
-            headers.forEach(field => {
-                if (order[field] === undefined) {
-                    order[field] = '';
-                }
+        // OrderTable 모듈 사용
+        if (window.OrderTable) {
+            OrderTable.render('manualOrderList', manualOrders, {
+                showDelete: true,
+                onDelete: 'ManualOrder.removeOrder',
+                showSummary: true,
+                maxHeight: '400px'
             });
-        });
-        
-        // HTML 생성
-        const html = `
-            <div style="overflow-x: auto; max-height: 400px;">
-                <table class="manual-order-table">
-                    <thead style="position: sticky; top: 0; background: white; z-index: 10;">
-                        <tr>
-                            ${headers.map(header => 
-                                `<th style="width: ${fixedWidths[header] || 100}px;">${header}</th>`
-                            ).join('')}
-                            <th style="width: 60px;">삭제</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${manualOrders.map((order, index) => {
-                            // 마켓 색상 가져오기
-                            let marketColor = '200,200,200';
-                            let textColor = '#000';
-                            
-                            if (window.mappingData && window.mappingData.markets) {
-                                const market = window.mappingData.markets[order['마켓명']];
-                                if (market && market.color) {
-                                    marketColor = market.color;
-                                    const rgb = marketColor.split(',').map(Number);
-                                    const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
-                                    textColor = brightness > 128 ? '#000' : '#fff';
-                                }
-                            }
-                            
-                            return `
-                                <tr>
-                                    ${headers.map(header => {
-                                        const value = order[header] || '';
-                                        const alignment = getAlignment(header);
-                                        
-                                        // 마켓명 필드 특별 처리
-                                        if (header === '마켓명') {
-                                            return `<td style="background: rgb(${marketColor}); color: ${textColor}; font-weight: bold; text-align: center;">${value}</td>`;
-                                        }
-                                        
-                                        // 금액 필드 포맷팅
-                                        if (rightAlignFields.some(f => header.includes(f)) && value) {
-                                            const numValue = typeof value === 'number' ? value : parseFloat(String(value).replace(/[^\d.-]/g, ''));
-                                            if (!isNaN(numValue)) {
-                                                return `<td style="text-align: ${alignment};">${formatNumber(numValue)}</td>`;
-                                            }
-                                        }
-                                        
-                                        return `<td style="text-align: ${alignment};">${value}</td>`;
-                                    }).join('')}
-                                    <td style="text-align: center;">
-                                        <button onclick="ManualOrder.removeOrder(${index})" class="btn-remove">삭제</button>
-                                    </td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            </div>
-            <div class="manual-order-summary">
-                총 ${manualOrders.length}건 / 
-                합계: ${formatNumber(manualOrders.reduce((sum, o) => sum + (o['정산예정금액'] || 0), 0))}원
-            </div>
-        `;
-        
-        listContainer.innerHTML = html;
+        } else {
+            console.error('OrderTable 모듈이 로드되지 않았습니다.');
+            const listContainer = document.getElementById('manualOrderList');
+            if (listContainer) {
+                listContainer.innerHTML = '<div class="error-message">테이블 모듈을 로드 중입니다...</div>';
+            }
+        }
     }
     
     // ===========================
