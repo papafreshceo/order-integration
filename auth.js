@@ -75,7 +75,7 @@ if (userInfo) {
     roleSpan.style.cssText = 'padding: 4px 8px; background: ' + 
         (currentUser.role === 'admin' ? '#dc3545' : '#6c757d') + 
         '; color: white; border-radius: 4px; font-size: 12px;';
-    roleSpan.textContent = currentUser.role === 'admin' ? '관리자' : '직원';
+    roleSpan.textContent = currentUser.role === 'admin' ? '관리자' : '스탭';
 }
         
         // 메인 시스템 초기화는 script.js에서 처리
@@ -253,5 +253,6 @@ function adjustUIByRole() {
         // 구글 시트 저장 버튼은 유지 (직원도 저장 가능)
     }
 }
+
 
 
