@@ -23,7 +23,7 @@ export default async function handler(req, res) {
         
         if (!user) {
           // 사용자가 없으면 자동으로 staff로 생성
-          const isAdmin = email === 'papafresh.ceo@gmail.com';
+          const isAdmin = false; // 모든 신규 사용자는 staff로 시작, 구글 시트에서 수동으로 admin 지정
           const newUserData = {
             email: email,
             name: userData?.name || email.split('@')[0],
