@@ -546,7 +546,26 @@ thead {
     position: sticky;
     top: 0;
     z-index: 30;
-    background: var(--bg-secondary);
+    background: var(--bg-primary);
+}
+
+thead tr {
+    background: var(--bg-primary);
+}
+
+/* 테이블 헤더 행 전체 배경 */
+#resultTable thead {
+    background: var(--bg-primary);
+    border-bottom: 2px solid var(--border-default);
+}
+
+#resultTable thead tr {
+    background: var(--bg-primary);
+}
+
+/* 헤더 셀 사이 빈 공간 메우기 */
+#resultTable thead th {
+    border-top: 1px solid var(--border-default);
 }
 
 th {
