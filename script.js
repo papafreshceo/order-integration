@@ -1571,6 +1571,11 @@ function displayResultTable(data) {
         // 행 클릭 선택 이벤트
         // 행 클릭 선택 이벤트
         tr.addEventListener('click', function(e) {
+            // 마켓명 셀 클릭은 무시
+            if (e.target.getAttribute('data-header') === '마켓명') {
+                return;
+            }
+            
             // 기존 선택 제거
             tbody.querySelectorAll('tr.selected-row').forEach(selectedRow => {
                 selectedRow.classList.remove('selected-row');
@@ -2633,5 +2638,6 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
