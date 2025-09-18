@@ -206,8 +206,12 @@ function setupEventListeners() {
             window.open(`https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit#gid=0`, '_blank');
         }
     });
+    
+    // 헤더 타이틀 클릭시 대시보드로 이동
+    document.getElementById('headerTitle').addEventListener('click', function() {
+        switchTab('dashboard');
+    });
 }
-
 function switchTab(tabName) {
     // 탭 버튼 활성화 상태 변경
     document.querySelectorAll('.tab-button').forEach(b => {
@@ -2350,6 +2354,7 @@ function updateDuplicateStyles() {
 // ===========================
 // 피벗테이블
 // ===========================
+
 
 
 
