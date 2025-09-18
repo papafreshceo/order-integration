@@ -1173,8 +1173,22 @@ function exportToExcel() {
     }
     
     try {
-        // 헤더 준비
-        const headers = processedData.standardFields || mappingData.standardFields || Object.keys(processedData.data[0]);
+        // 직원이 볼 수 없는 컬럼 정의 (택배비 제외)
+        const restrictedColumns = [
+            '셀러공급가', '출고비용', '정산예정금액', '정산대상금액',
+            '상품금액', '최종결제금액', '할인금액', '마켓부담할인액',
+            '판매자할인쿠폰할인', '구매쿠폰적용금액', '쿠폰할인금액',
+            '기타지원금할인금', '수수료1', '수수료2'
+            // 택배비는 제외 (직원도 볼 수 있음)
+        ];
+        
+        // 전체 헤더
+        const allHeaders = processedData.standardFields || mappingData.standardFields || Object.keys(processedData.data[0]);
+        
+        // 권한에 따른 헤더 필터링
+        const headers = allHeaders.filter(header => 
+            window.currentUser?.role === 'admin' || !restrictedColumns.includes(header)
+        );
         
         // 워크시트 데이터 준비
         const wsData = [];
@@ -1539,6 +1553,15 @@ function displayResultTable(data) {
         return;
     }
     
+    // 직원이 볼 수 없는 컬럼 정의 (택배비 제외)
+    const restrictedColumns = [
+        '셀러공급가', '출고비용', '정산예정금액', '정산대상금액',
+        '상품금액', '최종결제금액', '할인금액', '마켓부담할인액',
+        '판매자할인쿠폰할인', '구매쿠폰적용금액', '쿠폰할인금액',
+        '기타지원금할인금', '수수료1', '수수료2'
+        // 택배비는 제외 (직원도 볼 수 있음)
+    ];
+    
     // 마켓 순서대로 정렬
     if (mappingData && mappingData.marketOrder && mappingData.marketOrder.length > 0) {
         data.sort((a, b) => {
@@ -1553,7 +1576,12 @@ function displayResultTable(data) {
         });
     }
     
-    const headers = processedData.standardFields || mappingData.standardFields || Object.keys(data[0]);
+    const allHeaders = processedData.standardFields || mappingData.standardFields || Object.keys(data[0]);
+    
+    // 권한에 따른 헤더 필터링
+    const headers = allHeaders.filter(header => 
+        window.currentUser?.role === 'admin' || !restrictedColumns.includes(header)
+    );
     
     // 고정 열너비 설정
     const fixedWidths = {
@@ -1699,10 +1727,12 @@ function displayResultTable(data) {
     // 헤더 생성
     const headerRow = document.createElement('tr');
     
-    headers.forEach((header, index) => {
+    headers.forEach((header, colIndex) => {
+        // allHeaders에서의 실제 인덱스 찾기 (필터링된 경우를 위해)
+        const index = allHeaders.indexOf(header);
         const th = document.createElement('th');
         th.textContent = header;
-        th.setAttribute('data-column', index);
+        th.setAttribute('data-column', colIndex);
         th.setAttribute('data-header', header);
         th.style.textAlign = 'center';
         th.style.width = columnWidths[index] + 'px';
@@ -1750,7 +1780,8 @@ function displayResultTable(data) {
     data.forEach((row, rowIndex) => {
         const tr = document.createElement('tr');
         
-        headers.forEach((header, index) => {
+        headers.forEach((header, colIndex) => {
+            const index = allHeaders.indexOf(header);
             const td = document.createElement('td');
             td.setAttribute('data-header', header);
             let value = row[header] || '';
@@ -2171,6 +2202,13 @@ function createStatCell(value, isAmount = false, className = '') {
     // 추가 클래스 적용
     if (className) {
         td.classList.add(className);
+    }
+    
+    // 직원인 경우 금액 숨김
+    if (isAmount && window.currentUser?.role !== 'admin') {
+        td.textContent = '-';
+        td.style.color = '#dee2e6';
+        return td;
     }
     
     // 0 값은 빈 셀로 표시
@@ -2926,6 +2964,7 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
 
