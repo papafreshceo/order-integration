@@ -1,25 +1,87 @@
 // ===========================
+// 사용자 권한 관련 변수
+// ===========================
+let currentUser = {
+    email: '',
+    name: '',
+    role: 'staff',  // 기본값 staff
+    status: 'active'
+};
+
+window.currentUser = currentUser;  // 다른 모듈에서 접근 가능하도록
+
+// ===========================
 // 인증 관련 함수들
 // ===========================
 
 // 로그인 상태 확인
-auth.onAuthStateChanged((user) => {
+auth.onAuthStateChanged(async (user) => {
     // 초기 로딩 숨기기
     document.getElementById('initialLoading').style.display = 'none';
     
     if (user) {
+        // 사용자 권한 확인
+        try {
+            const response = await fetch('/api/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'checkUser',
+                    email: user.email,
+                    userData: {
+                        name: user.displayName || user.email.split('@')[0]
+                    }
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.user) {
+                currentUser = result.user;
+                window.currentUser = currentUser;
+                
+                // 역할별 UI 조정
+                adjustUIByRole();
+            }
+        } catch (error) {
+            console.error('사용자 권한 확인 오류:', error);
+            // 오류 시 기본값 staff
+            currentUser.email = user.email;
+            currentUser.name = user.displayName || user.email.split('@')[0];
+            currentUser.role = 'staff';
+            window.currentUser = currentUser;
+        }
+        
         // 로그인된 상태
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('mainSystem').style.display = 'block';
         document.getElementById('userEmail').textContent = user.email;
+        
+        // 역할 표시 추가
+        const userInfo = document.querySelector('.user-info');
+        if (userInfo && !document.getElementById('userRole')) {
+            const roleSpan = document.createElement('span');
+            roleSpan.id = 'userRole';
+            roleSpan.style.cssText = 'padding: 4px 8px; background: ' + 
+                (currentUser.role === 'admin' ? '#dc3545' : '#6c757d') + 
+                '; color: white; border-radius: 4px; font-size: 12px;';
+            roleSpan.textContent = currentUser.role === 'admin' ? '관리자' : '직원';
+            userInfo.insertBefore(roleSpan, userInfo.firstChild);
+        }
         
         // 메인 시스템 초기화는 script.js에서 처리
     } else {
         // 로그아웃 상태
         document.getElementById('loginScreen').style.display = 'flex';
         document.getElementById('mainSystem').style.display = 'none';
+        currentUser = { email: '', name: '', role: 'staff', status: 'active' };
+        window.currentUser = currentUser;
     }
 });
+
+
 
 // 이메일 로그인
 function signInWithEmail() {
@@ -162,3 +224,4 @@ function getErrorMessage(errorCode) {
     
     return errorMessages[errorCode] || '로그인 중 오류가 발생했습니다.';
 }
+
