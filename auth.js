@@ -63,17 +63,20 @@ if (result.user) {
         document.getElementById('mainSystem').style.display = 'block';
         document.getElementById('userEmail').textContent = user.email;
         
-        // 역할 표시 추가
-        const userInfo = document.querySelector('.user-info');
-        if (userInfo && !document.getElementById('userRole')) {
-            const roleSpan = document.createElement('span');
-            roleSpan.id = 'userRole';
-            roleSpan.style.cssText = 'padding: 4px 8px; background: ' + 
-                (currentUser.role === 'admin' ? '#dc3545' : '#6c757d') + 
-                '; color: white; border-radius: 4px; font-size: 12px;';
-            roleSpan.textContent = currentUser.role === 'admin' ? '관리자' : '직원';
-            userInfo.insertBefore(roleSpan, userInfo.firstChild);
-        }
+        // 역할 표시 추가/업데이트
+const userInfo = document.querySelector('.user-info');
+if (userInfo) {
+    let roleSpan = document.getElementById('userRole');
+    if (!roleSpan) {
+        roleSpan = document.createElement('span');
+        roleSpan.id = 'userRole';
+        userInfo.insertBefore(roleSpan, userInfo.firstChild);
+    }
+    roleSpan.style.cssText = 'padding: 4px 8px; background: ' + 
+        (currentUser.role === 'admin' ? '#dc3545' : '#6c757d') + 
+        '; color: white; border-radius: 4px; font-size: 12px;';
+    roleSpan.textContent = currentUser.role === 'admin' ? '관리자' : '직원';
+}
         
         // 메인 시스템 초기화는 script.js에서 처리
     } else {
@@ -250,4 +253,5 @@ function adjustUIByRole() {
         // 구글 시트 저장 버튼은 유지 (직원도 저장 가능)
     }
 }
+
 
