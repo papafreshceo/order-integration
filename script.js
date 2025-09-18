@@ -1575,11 +1575,6 @@ function displayResultTable(data) {
         });
         
         tbody.appendChild(tr);
-    });
-    
-  
-}
-
 
 
 
@@ -2354,6 +2349,7 @@ function updateDuplicateStyles() {
 // ===========================
 // 피벗테이블
 // ===========================
+
 
 
 
