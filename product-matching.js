@@ -237,20 +237,20 @@ function enableCellEditing(td, rowIndex, fieldName) {
             const loadResult = await loadProductData();
             console.log('제품 데이터 로드 결과:', loadResult);
             
-            if (!window.processedData || !window.processedData.data) {
-                console.error('processedData 상태:', {
-                    exists: !!window.processedData,
-                    hasData: window.processedData ? !!window.processedData.data : false
-                });
-                throw new Error('처리된 데이터가 없습니다.');
-            }
+            if (!processedData || !processedData.data) {
+            console.error('processedData 상태:', {
+                exists: !!processedData,
+                hasData: processedData ? !!processedData.data : false
+            });
+            throw new Error('처리된 데이터가 없습니다.');
+        }
             
             let matchedCount = 0;
             let unmatchedCount = 0;
             let modifiedMatchedCount = 0;
             
             // 모든 행 재검증
-            window.processedData.data.forEach((row, index) => {
+            processedData.data.forEach((row, index) => {
                 const optionName = row['옵션명'];
                 const cellKey = `${index}-옵션명`;
                 const wasModified = modifiedCells.has(cellKey);
@@ -321,7 +321,7 @@ function enableCellEditing(td, rowIndex, fieldName) {
         if (!tbody) return;
         
         const rows = tbody.querySelectorAll('tr');
-        const headers = window.processedData.standardFields || [];
+         const headers = processedData.standardFields || [];
         const optionNameIndex = headers.indexOf('옵션명');
         
         if (optionNameIndex === -1) return;
@@ -330,7 +330,7 @@ function enableCellEditing(td, rowIndex, fieldName) {
             const td = tr.children[optionNameIndex];
             if (!td) return;
             
-            const row = window.processedData.data[rowIndex];
+            const row = processedData.data[rowIndex];
             if (!row) return;
             
             // 기존 클래스 제거
@@ -375,6 +375,7 @@ function enableCellEditing(td, rowIndex, fieldName) {
 // 전역 함수로 노출 (HTML onclick에서 호출 가능)
 
 window.ProductMatching = ProductMatching;
+
 
 
 
