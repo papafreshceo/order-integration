@@ -164,7 +164,7 @@ function enableCellEditing(td, rowIndex, fieldName) {
         selection.addRange(range);
     });
     
-    // 수정 완료 처리
+// 수정 완료 처리
     td.addEventListener('blur', function() {
         handleCellEdit(td, rowIndex, fieldName, originalValue);
     });
@@ -181,29 +181,10 @@ function enableCellEditing(td, rowIndex, fieldName) {
                 const tbody = document.getElementById('resultTableBody');
                 tbody.querySelectorAll('tr.selected-row').forEach(row => {
                     row.classList.remove('selected-row');
-                    // 마켓명 셀의 원래 색상 복원
-                    const marketTd = row.querySelector('td[data-header="마켓명"]');
-                    if (marketTd) {
-                        const marketName = marketTd.textContent;
-                        if (marketName && mappingData && mappingData.markets[marketName]) {
-                            const market = mappingData.markets[marketName];
-                            marketTd.style.background = `rgb(${market.color})`;
-                        }
-                    }
                 });
                 
                 // 현재 행 선택 상태로 설정
                 currentRow.classList.add('selected-row');
-                
-                // 현재 행의 마켓명 색상 유지
-                const selectedMarketTd = currentRow.querySelector('td[data-header="마켓명"]');
-                if (selectedMarketTd) {
-                    const marketName = selectedMarketTd.textContent;
-                    if (marketName && mappingData && mappingData.markets[marketName]) {
-                        const market = mappingData.markets[marketName];
-                        selectedMarketTd.style.background = `rgb(${market.color})`;
-                    }
-                }
             }
             
             td.blur();  // 포커스 제거하여 편집 종료
@@ -431,6 +412,7 @@ function handleCellEdit(td, rowIndex, fieldName, originalValue) {
 // 전역 함수로 노출 (HTML onclick에서 호출 가능)
 
 window.ProductMatching = ProductMatching;
+
 
 
 
