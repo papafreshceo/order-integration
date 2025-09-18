@@ -141,7 +141,25 @@ async function detectMarket(fileName, headers, firstDataRow) {
 // ===========================
 function displaySupportedMarkets(markets) {
     const container = document.getElementById('supportedMarkets');
-    container.innerHTML = '<h3 style="width: 100%; margin-bottom: 10px;">지원 마켓</h3>';
+    
+    // 헤더 컨테이너 생성
+    const headerDiv = document.createElement('div');
+    headerDiv.style.cssText = 'width: 100%; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;';
+    
+    // SVG 아이콘 추가
+    const svgIcon = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+    `;
+    
+    headerDiv.innerHTML = svgIcon + '<h3 style="margin: 0;">Excel 업로드</h3>';
+    container.innerHTML = '';
+    container.appendChild(headerDiv);
     
     let marketNames = [];
     if (mappingData && mappingData.marketOrder && mappingData.marketOrder.length > 0) {
@@ -2688,6 +2706,7 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
 
