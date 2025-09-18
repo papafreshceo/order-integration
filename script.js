@@ -1556,41 +1556,65 @@ function displayResultTable(data) {
                 }
             }
             
-            // 옵션명 셀 매칭 상태 표시
-            if (header === '옵션명' && row['_matchStatus']) {
-                if (row['_matchStatus'] === 'unmatched') {
-                    td.classList.add('unmatched-cell');
-                    td.contentEditable = true;
-                    td.classList.add('editable-cell');
+// 옵션명 셀 매칭 상태 표시
+            if (header === '옵션명') {
+                if (row['_matchStatus'] === 'unmatched' || row['_matchStatus'] === 'modified' || row['_matchStatus'] === 'modified-matched') {
+                    // 상태별 클래스 적용
+                    if (row['_matchStatus'] === 'unmatched') {
+                        td.classList.add('unmatched-cell');
+                    } else if (row['_matchStatus'] === 'modified') {
+                        td.classList.add('modified-cell');
+                    } else if (row['_matchStatus'] === 'modified-matched') {
+                        td.classList.add('modified-matched-cell');
+                    }
                     
-                    // blur 이벤트로 값 변경 감지
-                    td.addEventListener('blur', function() {
-                        const newValue = td.textContent.trim();
-                        if (newValue !== row['옵션명']) {
-                            // processedData 업데이트
-                            row['옵션명'] = newValue;
-                            processedData.data[rowIndex]['옵션명'] = newValue;
-                        }
-                    });
-                    
-                    // 엔터키 처리 추가
-                    td.addEventListener('keydown', function(e) {
-                        if (e.key === 'Enter') {
-                            e.preventDefault();  // 줄바꿈 방지
-                            td.blur();  // 편집 종료
-                            
-                            // 현재 행 선택
-                            setTimeout(function() {
-                                // 모든 행의 선택 상태 제거
-                                tbody.querySelectorAll('tr.selected-row').forEach(selectedRow => {
-                                    selectedRow.classList.remove('selected-row');
+                    // 매칭 실패나 수정된 경우만 편집 가능
+                    if (row['_matchStatus'] !== 'modified-matched') {
+                        td.contentEditable = true;
+                        td.classList.add('editable-cell');
+                        
+                        const originalValue = row['옵션명'];
+                        
+                        // blur 이벤트로 값 변경 감지
+                        td.addEventListener('blur', function() {
+                            const newValue = td.textContent.trim();
+                            if (newValue !== originalValue) {
+                                // processedData 업데이트
+                                row['옵션명'] = newValue;
+                                row['_matchStatus'] = 'modified';
+                                
+                                // 수정된 셀 추적
+                                const modifiedCells = ProductMatching.getModifiedCells();
+                                modifiedCells.set(`${rowIndex}-옵션명`, {
+                                    original: originalValue,
+                                    modified: newValue
                                 });
                                 
+                                // 클래스 업데이트
+                                td.classList.remove('unmatched-cell');
+                                td.classList.add('modified-cell');
+                            }
+                        });
+                        
+                        // 엔터키 처리 추가
+                        td.addEventListener('keydown', function(e) {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();  // 줄바꿈 방지
+                                td.blur();  // 편집 종료
+                                
                                 // 현재 행 선택
-                                tr.classList.add('selected-row');
-                            }, 10);
-                        }
-                    });
+                                setTimeout(function() {
+                                    // 모든 행의 선택 상태 제거
+                                    tbody.querySelectorAll('tr.selected-row').forEach(selectedRow => {
+                                        selectedRow.classList.remove('selected-row');
+                                    });
+                                    
+                                    // 현재 행 선택
+                                    tr.classList.add('selected-row');
+                                }, 10);
+                            }
+                        });
+                    }
                 }
             }
             
@@ -2642,6 +2666,7 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
 
