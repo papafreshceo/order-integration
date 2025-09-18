@@ -25,66 +25,7 @@ export default async function handler(req, res) {
     const { action, sheetName, range, values } = req.body || req.query;
 
     switch (action) {
-      case 'getOptionProductInfo':
-        const optionData = await getSheetData('옵션상품통합관리!A:AZ');
-        if (optionData.length < 2) {
-          return res.status(200).json({});
-        }
-        
-        const headers = optionData[0];
-        const optionNameIdx = headers.indexOf('옵션명');
-        const shipmentIdx = headers.indexOf('출고');
-        const invoiceIdx = headers.indexOf('송장');
-        const shippingLocationIdx = headers.indexOf('발송지');
-        const shippingAddressIdx = headers.indexOf('발송지주소');
-        const shippingContactIdx = headers.indexOf('발송지연락처');
-        const totalCostIdx = headers.indexOf('총원가');
-        const vendorIdx = headers.indexOf('벤더사');
-        
-        const optionInfo = {};
-        
-        for (let i = 1; i < optionData.length; i++) {
-          const optionName = String(optionData[i][optionNameIdx] || '').trim();
-          if (!optionName) continue;
-          
-          optionInfo[optionName] = {
-            shipment: shipmentIdx !== -1 ? String(optionData[i][shipmentIdx] || '').trim() : '',
-            invoice: invoiceIdx !== -1 ? String(optionData[i][invoiceIdx] || '').trim() : '',
-            shippingLocation: shippingLocationIdx !== -1 ? String(optionData[i][shippingLocationIdx] || '').trim() : '',
-            shippingAddress: shippingAddressIdx !== -1 ? String(optionData[i][shippingAddressIdx] || '').trim() : '',
-            shippingContact: shippingContactIdx !== -1 ? String(optionData[i][shippingContactIdx] || '').trim() : '',
-            totalCost: totalCostIdx !== -1 ? parseNumber(optionData[i][totalCostIdx]) : 0,
-            vendor: vendorIdx !== -1 ? String(optionData[i][vendorIdx] || '').trim() : ''
-          };
-        }
-        
-        return res.status(200).json(optionInfo);
 
-      case 'getPriceCalculation':
-        const priceData = await getSheetData('가격계산!A:AZ');
-        if (priceData.length < 2) {
-          return res.status(200).json({});
-        }
-        
-        const priceHeaders = priceData[0];
-        const priceOptionIdx = priceHeaders.indexOf('옵션명');
-        const sellerSupplyPriceIdx = priceHeaders.indexOf('셀러공급가');
-        
-        const priceInfo = {};
-        
-        for (let i = 1; i < priceData.length; i++) {
-          const optionName = String(priceData[i][priceOptionIdx] || '').trim();
-          if (!optionName) continue;
-          
-          const supplyPrice = sellerSupplyPriceIdx !== -1 ? 
-            parseNumber(priceData[i][sellerSupplyPriceIdx]) : 0;
-          
-          priceInfo[optionName] = {
-            sellerSupplyPrice: supplyPrice
-          };
-        }
-        
-        return res.status(200).json(priceInfo);
 
       case 'getProductData':
         try {
@@ -244,3 +185,4 @@ function parseNumber(value) {
   return isNaN(num) ? 0 : num;
 
 }
+
