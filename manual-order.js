@@ -61,6 +61,7 @@ const ManualOrder = (function() {
         }
         
         // 단가 변경시 금액 계산
+        // 단가 변경시 금액 계산
         const unitPriceInput = document.getElementById('manualUnitPrice');
         if (unitPriceInput) {
             unitPriceInput.addEventListener('input', function(e) {
@@ -73,6 +74,24 @@ const ManualOrder = (function() {
         const quantityInput = document.getElementById('manualQuantity');
         if (quantityInput) {
             quantityInput.addEventListener('input', calculateAmount);
+        }
+        
+        // 택배비 변경시 금액 계산
+        const shippingCostInput = document.getElementById('manualShippingCost');
+        if (shippingCostInput) {
+            shippingCostInput.addEventListener('input', function(e) {
+                formatNumberInput(e.target);
+                calculateAmount();
+            });
+        }
+        
+        // 기타비용 변경시 금액 계산
+        const extraCostInput = document.getElementById('manualExtraCost');
+        if (extraCostInput) {
+            extraCostInput.addEventListener('input', function(e) {
+                formatNumberInput(e.target);
+                calculateAmount();
+            });
         }
         
         // 전화번호 자동 포맷
@@ -177,9 +196,14 @@ const ManualOrder = (function() {
     function calculateAmount() {
         const unitPriceStr = document.getElementById('manualUnitPrice').value;
         const quantity = parseInt(document.getElementById('manualQuantity').value) || 0;
+        const shippingCostStr = document.getElementById('manualShippingCost').value;
+        const extraCostStr = document.getElementById('manualExtraCost').value;
         
         const unitPrice = parseFloat(unitPriceStr.replace(/,/g, '')) || 0;
-        const totalAmount = quantity * unitPrice;
+        const shippingCost = parseFloat(shippingCostStr.replace(/,/g, '')) || 0;
+        const extraCost = parseFloat(extraCostStr.replace(/,/g, '')) || 0;
+        
+        const totalAmount = (quantity * unitPrice) + shippingCost + extraCost;
         
         document.getElementById('manualTotalAmount').value = formatNumber(totalAmount);
     }
@@ -235,12 +259,16 @@ const ManualOrder = (function() {
     function collectFormData() {
         const unitPrice = parseFloat(document.getElementById('manualUnitPrice').value.replace(/,/g, '')) || 0;
         const quantity = parseInt(document.getElementById('manualQuantity').value) || 0;
+        const shippingCost = parseFloat(document.getElementById('manualShippingCost').value.replace(/,/g, '')) || 0;
+        const extraCost = parseFloat(document.getElementById('manualExtraCost').value.replace(/,/g, '')) || 0;
         
         return {
             '구분': document.getElementById('manualOrderType').value,
             '옵션명': document.getElementById('manualOptionName').value,
             '단가': unitPrice,
             '수량': quantity,
+            '택배비': shippingCost,
+            '기타비용': extraCost,
             '주문번호': 'M' + Date.now(),
             '주문자': document.getElementById('manualOrderer').value,
             '주문자전화번호': document.getElementById('manualOrdererPhone').value,
@@ -248,7 +276,7 @@ const ManualOrder = (function() {
             '수령인전화번호': document.getElementById('manualReceiverPhone').value,
             '수령인주소': document.getElementById('manualAddress').value,
             '배송메시지': document.getElementById('manualDeliveryMsg').value,
-            '정산예정금액': unitPrice * quantity,
+            '정산예정금액': (unitPrice * quantity) + shippingCost + extraCost,
             '셀러': ''
         };
     }
@@ -393,9 +421,10 @@ const ManualOrder = (function() {
         document.getElementById('manualOrderForm').reset();
         document.getElementById('manualOrderType').value = 'CS재발송';
         document.getElementById('manualQuantity').value = '1';
+        document.getElementById('manualShippingCost').value = '0';
+        document.getElementById('manualExtraCost').value = '0';
         currentOrder = {};
     }
-
     // ===========================
     // 수량 변경 함수 추가
     // ===========================
