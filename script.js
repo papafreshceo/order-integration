@@ -1562,6 +1562,25 @@ function displayResultTable(data) {
                     td.classList.add('unmatched-cell');
                     td.contentEditable = true;
                     td.classList.add('editable-cell');
+                    
+                    // 엔터키 처리 추가
+                    td.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();  // 줄바꿈 방지
+                            td.blur();  // 편집 종료
+                            
+                            // 현재 행 선택
+                            setTimeout(function() {
+                                // 모든 행의 선택 상태 제거
+                                tbody.querySelectorAll('tr.selected-row').forEach(selectedRow => {
+                                    selectedRow.classList.remove('selected-row');
+                                });
+                                
+                                // 현재 행 선택
+                                tr.classList.add('selected-row');
+                            }, 10);
+                        }
+                    });
                 }
             }
             
@@ -2613,6 +2632,7 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
 
