@@ -1594,7 +1594,8 @@ function displayResultTable(data) {
         });
         
         tbody.appendChild(tr);
-
+    });
+}
 
 
 
@@ -2626,3 +2627,4 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
