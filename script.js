@@ -1536,6 +1536,12 @@ function displayResultTable(data) {
             
             td.textContent = String(value || '');
             
+            // 특이/요청사항 컬럼 빨강색 처리
+            if (header === '특이/요청사항' && value) {
+                td.style.color = '#dc3545';
+                td.style.fontWeight = '400';
+            }
+            
             // 마켓명 셀 색상
             if (header === '마켓명') {
                 const marketName = row[header];
@@ -2627,4 +2633,5 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
