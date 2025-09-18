@@ -503,7 +503,7 @@ const ManualOrder = (function() {
     
     function resetForm() {
         document.getElementById('manualOrderForm').reset();
-        document.getElementById('manualOrderType').value = 'CS재발송';
+        document.getElementById('manualOrderType').value = 'CS발송';
         document.getElementById('manualQuantity').value = '1';
         currentOrder = {};
     
