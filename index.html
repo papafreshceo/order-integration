@@ -291,7 +291,118 @@
             white-space: nowrap;
             transition: all 0.2s;
         }
+        /* 주소 모달 스타일 */
+        .address-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s;
+        }
         
+        .address-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .address-modal-content {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            width: 500px;
+            max-width: 90%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            animation: slideUp 0.3s;
+        }
+        
+        .address-modal-header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .address-modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 500;
+            color: #212529;
+        }
+        
+        .address-modal-body {
+            margin-bottom: 20px;
+        }
+        
+        .address-display {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .address-display label {
+            font-weight: 400;
+            color: #495057;
+            display: inline-block;
+            min-width: 70px;
+        }
+        
+        .address-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .modal-btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .modal-btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .modal-btn-primary:hover {
+            background: #1d4ed8;
+        }
+        
+        .modal-btn-secondary {
+            background: #e9ecef;
+            color: #495057;
+        }
+        
+        .modal-btn-secondary:hover {
+            background: #dee2e6;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to { 
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
         .btn-search-address:hover {
             background: #1d4ed8;
         }
@@ -540,20 +651,12 @@
                                                 <label>수령인 연락처 <span class="required">*</span></label>
                                                 <input type="tel" id="manualReceiverPhone" class="form-input-direct text-center" placeholder="010-0000-0000" required>
                                             </div>
-                                            <div class="form-group" style="width: 80px;">
-                                            <label>우편번호</label>
-                                            <input type="text" id="manualZipcode" class="form-input-readonly text-center" readonly>
-                                        </div>
-                                        <div class="form-group" style="width: 300px;">
+                                            <div class="form-group" style="width: 400px;">
                                             <label>주소 <span class="required">*</span></label>
                                             <div style="display: flex; gap: 8px;">
                                                 <input type="text" id="manualAddress" class="form-input-readonly" readonly required style="flex: 1;">
                                                 <button type="button" onclick="searchAddress()" class="btn-search-address">주소검색</button>
                                             </div>
-                                        </div>
-                                        <div class="form-group" style="width: 200px;">
-                                            <label>상세주소</label>
-                                            <input type="text" id="manualAddressDetail" class="form-input-direct" placeholder="상세주소 입력">
                                         </div>
                                         </div>
                                     </div>
@@ -944,6 +1047,32 @@
     <!-- 중앙 메시지 -->
     <div id="centerMessage" class="center-message"></div>
     
+<!-- 중앙 메시지 -->
+    <div id="centerMessage" class="center-message"></div>
+    
+    <!-- 주소 상세입력 모달 -->
+    <div id="addressModal" class="address-modal">
+        <div class="address-modal-content">
+            <div class="address-modal-header">
+                <h3>주소 상세 입력</h3>
+            </div>
+            <div class="address-modal-body">
+                <div class="address-display">
+                    <div><label>우편번호:</label> <span id="modalZipcode"></span></div>
+                    <div><label>주소:</label> <span id="modalAddress"></span></div>
+                </div>
+                <div class="form-group">
+                    <label>상세주소 입력</label>
+                    <input type="text" id="modalAddressDetail" class="form-input-direct" placeholder="동/호수 등을 입력하세요" style="width: 100%;">
+                </div>
+            </div>
+            <div class="address-modal-footer">
+                <button type="button" class="modal-btn modal-btn-secondary" onclick="cancelAddressModal()">취소</button>
+                <button type="button" class="modal-btn modal-btn-primary" onclick="confirmAddress()">확인</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 라이브러리 및 스크립트 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
@@ -983,28 +1112,90 @@
         }
         
         // 주소 검색 함수
+        let tempAddressData = {};
+        
         function searchAddress() {
             new daum.Postcode({
                 oncomplete: function(data) {
-                    // 우편번호
-                    document.getElementById('manualZipcode').value = data.zonecode;
-                    
-                    // 도로명 주소 우선, 없으면 지번 주소
-                    let addr = data.roadAddress || data.jibunAddress;
+                    // 임시 저장
+                    tempAddressData.zonecode = data.zonecode;
+                    tempAddressData.address = data.roadAddress || data.jibunAddress;
                     
                     // 건물명이 있으면 추가
                     if(data.buildingName !== '') {
-                        addr += ' (' + data.buildingName + ')';
+                        tempAddressData.address += ' (' + data.buildingName + ')';
                     }
                     
-                    // 주소 입력
-                    document.getElementById('manualAddress').value = addr;
+                    // 모달에 표시
+                    document.getElementById('modalZipcode').textContent = tempAddressData.zonecode;
+                    document.getElementById('modalAddress').textContent = tempAddressData.address;
+                    document.getElementById('modalAddressDetail').value = '';
                     
-                    // 상세주소 입력란으로 포커스 이동
-                    document.getElementById('manualAddressDetail').focus();
+                    // 모달 표시
+                    document.getElementById('addressModal').classList.add('show');
+                    
+                    // 상세주소 입력란에 포커스
+                    setTimeout(() => {
+                        document.getElementById('modalAddressDetail').focus();
+                    }, 100);
                 }
             }).open();
         }
+        
+        // 주소 확인
+        function confirmAddress() {
+            const detailAddress = document.getElementById('modalAddressDetail').value.trim();
+            
+            // 전체 주소 조합
+            let fullAddress = tempAddressData.address;
+            if (detailAddress) {
+                fullAddress += ' ' + detailAddress;
+            }
+            
+            // 입력란에 설정
+            document.getElementById('manualAddress').value = fullAddress;
+            
+            // 우편번호 hidden 필드 추가 (필요시)
+            if (!document.getElementById('manualZipcode')) {
+                const zipcodeInput = document.createElement('input');
+                zipcodeInput.type = 'hidden';
+                zipcodeInput.id = 'manualZipcode';
+                zipcodeInput.value = tempAddressData.zonecode;
+                document.getElementById('manualOrderForm').appendChild(zipcodeInput);
+            } else {
+                document.getElementById('manualZipcode').value = tempAddressData.zonecode;
+            }
+            
+            // 모달 닫기
+            document.getElementById('addressModal').classList.remove('show');
+            
+            // 다음 입력 필드로 포커스 이동
+            const deliveryMsg = document.getElementById('manualDeliveryMsg');
+            if (deliveryMsg) {
+                deliveryMsg.focus();
+            }
+        }
+        
+        // 주소 취소
+        function cancelAddressModal() {
+            document.getElementById('addressModal').classList.remove('show');
+            tempAddressData = {};
+        }
+        
+        // 모달 외부 클릭시 닫기
+        document.getElementById('addressModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                cancelAddressModal();
+            }
+        });
+        
+        // 엔터키로 확인
+        document.getElementById('modalAddressDetail').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmAddress();
+            }
+        });
     </script>
 </body>
 </html>
