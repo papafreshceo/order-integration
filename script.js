@@ -1563,6 +1563,16 @@ function displayResultTable(data) {
                     td.contentEditable = true;
                     td.classList.add('editable-cell');
                     
+                    // blur 이벤트로 값 변경 감지
+                    td.addEventListener('blur', function() {
+                        const newValue = td.textContent.trim();
+                        if (newValue !== row['옵션명']) {
+                            // processedData 업데이트
+                            row['옵션명'] = newValue;
+                            processedData.data[rowIndex]['옵션명'] = newValue;
+                        }
+                    });
+                    
                     // 엔터키 처리 추가
                     td.addEventListener('keydown', function(e) {
                         if (e.key === 'Enter') {
@@ -2632,6 +2642,7 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
 
