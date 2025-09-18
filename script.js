@@ -1473,8 +1473,8 @@ function displayResultTable(data) {
         
         // 특정 헤더들에 연한 초록색 배경 적용
         const greenHeaders = ['마켓명', '연번', '마켓', '결제일', '주문번호', '상품주문번호', 
-                             '주문자', '수취인', '수령인', '주문자전화번호', '수취인전화번호', 
-                             '수령인전화번호', '주소', '수취인주소', '수령인주소', 
+                             '주문자', '수취인', '수령인', '주문자 전화번호', '수취인 전화번호', 
+                             '수령인 전화번호', '주소', '수취인주소', '수령인주소', 
                              '배송메세지', '배송메시지', '옵션명', '수량', '확인', '특이/요청사항'];
         
         // 고정열 처리
@@ -1485,7 +1485,7 @@ function displayResultTable(data) {
             
             // 초록색 배경 적용 (고정열도 체크)
             if (greenHeaders.includes(header)) {
-                th.style.background = '#f0fdf4';
+                th.style.background = '#eafffd';
             } else {
                 th.style.background = 'var(--bg-secondary)';
             }
@@ -1496,7 +1496,7 @@ function displayResultTable(data) {
         } else {
             // 고정열이 아닌 헤더도 초록색 체크
             if (greenHeaders.includes(header)) {
-                th.style.background = '#f0fdf4';
+                th.style.background = '#eafffd';
             }
         }
         
@@ -2688,6 +2688,7 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
 
