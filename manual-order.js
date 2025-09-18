@@ -336,16 +336,15 @@ const ManualOrder = (function() {
             return;
         }
         
-        // 표준필드 가져오기 (script.js의 processedData 또는 mappingData 사용)
-        let headers = [];
-        if (window.processedData && window.processedData.standardFields) {
-            headers = window.processedData.standardFields;
-        } else if (window.mappingData && window.mappingData.standardFields) {
-            headers = window.mappingData.standardFields;
-        } else {
-            // 기본값
-            headers = ['연번', '마켓명', '마켓', '결제일', '주문번호', '주문자', '수령인', '수령인전화번호', '수령인주소', '옵션명', '수량', '정산예정금액'];
+         // 매핑 데이터가 없으면 종료
+        if (!window.mappingData || !window.mappingData.standardFields) {
+            console.error('매핑 데이터가 없습니다. 먼저 매핑 데이터를 로드하세요.');
+            listContainer.innerHTML = '<div class="error-message">매핑 데이터를 로드 중입니다. 잠시만 기다려주세요.</div>';
+            return;
         }
+        
+        // 매핑시트의 표준필드 순서 사용
+        const headers = window.mappingData.standardFields;
         
         // script.js의 displayResultTable 로직 참조
         const fixedWidths = window.fixedWidths || {
@@ -513,7 +512,7 @@ const ManualOrder = (function() {
         currentOrder = {};
     }
 
-    
+
     // ===========================
     // 수량 변경 함수 추가
     // ===========================
