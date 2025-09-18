@@ -1542,6 +1542,14 @@ function displayResultTable(data) {
                 td.style.fontWeight = '400';
             }
             
+            // 수량 2 이상 강조 처리
+            if (header === '수량') {
+                const quantity = parseInt(value);
+                if (quantity >= 2) {
+                    td.classList.add('quantity-highlight');
+                }
+            }
+            
             // 마켓명 셀 색상
             if (header === '마켓명') {
                 const marketName = row[header];
@@ -2666,6 +2674,7 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
 
