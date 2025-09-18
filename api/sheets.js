@@ -35,8 +35,8 @@ export default async function handler(req, res) {
           // google-sheets 모듈에서 getProductSheetData 함수 사용
           const { getProductSheetData } = require('../lib/google-sheets');
           
-          // 옵션상품통합관리 시트 데이터
-          const productSheetData = await getProductSheetData(productSpreadsheetId, '옵션상품통합관리!A:AZ');
+          // 통합상품마스터 시트 데이터
+          const productSheetData = await getProductSheetData(productSpreadsheetId, '통합상품마스터!A:DZ');
           const productInfo = {};
           
           if (productSheetData && productSheetData.length > 1) {
@@ -184,6 +184,7 @@ function parseNumber(value) {
   return isNaN(num) ? 0 : num;
 
 }
+
 
 
 
