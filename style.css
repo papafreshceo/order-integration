@@ -561,6 +561,29 @@ th {
     user-select: none;
 }
 
+/* 통합결과 테이블 헤더 - 마켓명부터 특이/요청사항까지 연한 초록색 */
+#resultTable th[data-header="마켓명"],
+#resultTable th[data-header="연번"],
+#resultTable th[data-header="결제일"],
+#resultTable th[data-header="주문번호"],
+#resultTable th[data-header="상품주문번호"],
+#resultTable th[data-header="주문자"],
+#resultTable th[data-header="수취인"],
+#resultTable th[data-header="수령인"],
+#resultTable th[data-header="주문자전화번호"],
+#resultTable th[data-header="수취인전화번호"],
+#resultTable th[data-header="수령인전화번호"],
+#resultTable th[data-header="주소"],
+#resultTable th[data-header="수취인주소"],
+#resultTable th[data-header="수령인주소"],
+#resultTable th[data-header="배송메세지"],
+#resultTable th[data-header="배송메시지"],
+#resultTable th[data-header="옵션명"],
+#resultTable th[data-header="수량"],
+#resultTable th[data-header="특이/요청사항"] {
+    background: #f0fdf4;
+}
+
 
 
 
@@ -1118,4 +1141,13 @@ tbody tr:nth-child(even) {
     top: 2px;
     right: 2px;
     font-size: 12px;
+}
+
+
+
+/* 수량 2 이상 스타일 */
+.quantity-highlight {
+    font-weight: 500 !important;
+    font-size: 13px !important;
+    color: #ec4899 !important;
 }
