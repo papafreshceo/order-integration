@@ -28,7 +28,7 @@ async function initializeApp() {
 // ===========================
 // API 호출 함수들
 // ===========================
-aasync function loadMappingData() {
+async function loadMappingData() {
     showLoading();
     try {
         const response = await fetch(`${API_BASE}/api/mapping`);
