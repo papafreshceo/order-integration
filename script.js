@@ -2331,7 +2331,6 @@ async function verifyDuplicateOrders() {
         button.textContent = '중복발송검증';
     }
 }
-    }
 
 // 중복 스타일 업데이트
 function updateDuplicateStyles() {
@@ -2365,24 +2364,3 @@ function updateDuplicateStyles() {
         }
     });
 }
-
-// ===========================
-// 피벗테이블
-// ===========================
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
