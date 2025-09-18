@@ -484,6 +484,7 @@ const ManualOrder = (function() {
         changeQuantity: changeQuantity,  // 이 줄 추가
         validateQuantity: validateQuantity,  // 이 줄 추가
         getOrders: () => manualOrders,
+        getProductList: () => productList,  // 추가
         clearOrders: () => {
             manualOrders = [];
             orderCounter = 0;
