@@ -28,7 +28,7 @@ async function initializeApp() {
 // ===========================
 // API 호출 함수들
 // ===========================
-async function loadMappingData() {
+aasync function loadMappingData() {
     showLoading();
     try {
         const response = await fetch(`${API_BASE}/api/mapping`);
@@ -41,6 +41,7 @@ async function loadMappingData() {
         }
         
         mappingData = data;
+        window.mappingData = data;  // 전역 변수로 설정
         displaySupportedMarkets(data.markets);
         console.log('매핑 데이터 로드 완료:', mappingData);
     } catch (error) {

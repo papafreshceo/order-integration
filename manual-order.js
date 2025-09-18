@@ -13,8 +13,11 @@ const ManualOrder = (function() {
     // ===========================
     function init() {
         setupManualOrderForm();
-        loadSavedOrders();
-        loadProductData();
+        // 매핑 데이터 로드 후 실행
+        setTimeout(() => {
+            loadSavedOrders();
+            loadProductData();
+        }, 1000);
     }
     
     // ===========================
