@@ -611,14 +611,16 @@ tbody tr.selected-row {
     background: #e7f3ff !important;
 }
 
-tbody tr.selected-row td {
+tbody tr.selected-row td:not([data-header="마켓명"]) {
     background: #e7f3ff !important;
     font-size: 14px !important;
     font-weight: 400 !important;
 }
 
-/* 마켓명과 옵션명은 원래 배경색 유지 */
+/* 마켓명 열은 항상 원래 스타일 유지 */
 tbody tr.selected-row td[data-header="마켓명"] {
+    font-size: 12px !important;
+    font-weight: bold !important;
 }
 
 tbody tr.selected-row td[data-header="옵션명"].unmatched-cell {
