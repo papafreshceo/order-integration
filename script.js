@@ -1568,10 +1568,29 @@ function displayResultTable(data) {
             // 기존 선택 제거
             tbody.querySelectorAll('tr.selected-row').forEach(selectedRow => {
                 selectedRow.classList.remove('selected-row');
+                // 마켓명 셀의 원래 색상 복원
+                const marketTd = selectedRow.querySelector('td[data-header="마켓명"]');
+                if (marketTd) {
+                    const marketName = marketTd.textContent;
+                    if (marketName && mappingData && mappingData.markets[marketName]) {
+                        const market = mappingData.markets[marketName];
+                        marketTd.style.background = `rgb(${market.color})`;
+                    }
+                }
             });
             
             // 현재 행 선택
             this.classList.add('selected-row');
+            
+            // 선택된 행의 마켓명 색상 유지
+            const selectedMarketTd = this.querySelector('td[data-header="마켓명"]');
+            if (selectedMarketTd) {
+                const marketName = selectedMarketTd.textContent;
+                if (marketName && mappingData && mappingData.markets[marketName]) {
+                    const market = mappingData.markets[marketName];
+                    selectedMarketTd.style.background = `rgb(${market.color})`;
+                }
+            }
         });
         
         tbody.appendChild(tr);
@@ -2349,6 +2368,7 @@ function updateDuplicateStyles() {
 // ===========================
 // 피벗테이블
 // ===========================
+
 
 
 
