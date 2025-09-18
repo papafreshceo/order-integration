@@ -5,9 +5,7 @@ let uploadedFiles = [];
 let mappingData = null;
 let processedData = null;
 let standardFields = [];
-let salesInfo = {};
-let optionProductInfo = {};
-let priceCalculationInfo = {};
+
 
 // API 기본 URL (로컬 개발시는 localhost:3000, 배포시는 자동)
 const API_BASE = '';
@@ -52,38 +50,7 @@ async function loadMappingData() {
     }
 }
 
-async function loadSalesInfo() {
-    try {
-        const response = await fetch(`${API_BASE}/api/sheets?action=getSalesInfo`);
-        salesInfo = await response.json();
-        console.log('판매정보 로드 완료:', Object.keys(salesInfo).length, '개');
-    } catch (error) {
-        console.error('판매정보 로드 오류:', error);
-        salesInfo = {};
-    }
-}
 
-async function loadOptionProductInfo() {
-    try {
-        const response = await fetch(`${API_BASE}/api/sheets?action=getOptionProductInfo`);
-        optionProductInfo = await response.json();
-        console.log('옵션상품통합관리 로드 완료:', Object.keys(optionProductInfo).length, '개');
-    } catch (error) {
-        console.error('옵션상품통합관리 로드 오류:', error);
-        optionProductInfo = {};
-    }
-}
-
-async function loadPriceCalculation() {
-    try {
-        const response = await fetch(`${API_BASE}/api/sheets?action=getPriceCalculation`);
-        priceCalculationInfo = await response.json();
-        console.log('가격계산 로드 완료:', Object.keys(priceCalculationInfo).length, '개');
-    } catch (error) {
-        console.error('가격계산 로드 오류:', error);
-        priceCalculationInfo = {};
-    }
-}
 
 async function loadDashboard() {
     try {
@@ -528,12 +495,7 @@ async function processOrders() {
     
     try {
         // 필요한 데이터 로드
-        await Promise.all([
-            loadSalesInfo(),
-            loadOptionProductInfo(),
-            loadPriceCalculation(),
-            ProductMatching.loadProductData()  // 제품 매칭 데이터 로드 추가
-        ]);
+        await ProductMatching.loadProductData();
         
         // 주문 데이터 처리
         const result = await processOrderFiles(todayFiles);
@@ -709,45 +671,15 @@ async function processOrderFiles(filesData) {
                 const optionName = String(mergedRow['옵션명'] || '').trim();
                 const quantity = parseInt(mergedRow['수량']) || 1;
                 
-                // 옵션상품통합관리 정보
-                if (optionName && optionProductInfo[optionName]) {
-                    const optionData = optionProductInfo[optionName];
-                    
-                    mergedRow['출고'] = optionData.shipment || mergedRow['출고'] || '';
-                    mergedRow['송장'] = optionData.invoice || mergedRow['송장'] || '';
-                    mergedRow['발송지'] = optionData.shippingLocation || mergedRow['발송지'] || '';
-                    mergedRow['발송지주소'] = optionData.shippingAddress || mergedRow['발송지주소'] || '';
-                    mergedRow['발송지연락처'] = optionData.shippingContact || mergedRow['발송지연락처'] || '';
-                    mergedRow['벤더사'] = optionData.vendor || mergedRow['벤더사'] || '';
-                    
-                    if (optionData.shipment === '위탁') {
-                        mergedRow['출고비용'] = optionData.totalCost * quantity;
-                    } else {
-                        mergedRow['출고비용'] = 0;
-                    }
-                } else {
-                    mergedRow['출고'] = mergedRow['출고'] || '';
-                    mergedRow['송장'] = mergedRow['송장'] || '';
-                    mergedRow['발송지'] = mergedRow['발송지'] || '';
-                    mergedRow['발송지주소'] = mergedRow['발송지주소'] || '';
-                    mergedRow['발송지연락처'] = mergedRow['발송지연락처'] || '';
-                    mergedRow['벤더사'] = mergedRow['벤더사'] || '';
-                    mergedRow['출고비용'] = 0;
-                }
-                
-                // 셀러공급가 계산
-                const seller = String(mergedRow['셀러'] || '').trim();
-                
-                if (seller) {
-                    if (optionName && priceCalculationInfo[optionName]) {
-                        const unitPrice = priceCalculationInfo[optionName].sellerSupplyPrice || 0;
-                        mergedRow['셀러공급가'] = unitPrice * quantity;
-                    } else {
-                        mergedRow['셀러공급가'] = '';
-                    }
-                } else {
-                    mergedRow['셀러공급가'] = '';
-                }
+                // ProductMatching에서 처리하도록 위임
+                mergedRow['출고'] = mergedRow['출고'] || '';
+                mergedRow['송장'] = mergedRow['송장'] || '';
+                mergedRow['발송지'] = mergedRow['발송지'] || '';
+                mergedRow['발송지주소'] = mergedRow['발송지주소'] || '';
+                mergedRow['발송지연락처'] = mergedRow['발송지연락처'] || '';
+                mergedRow['벤더사'] = mergedRow['벤더사'] || '';
+                mergedRow['출고비용'] = 0;
+                mergedRow['셀러공급가'] = '';
                 
                 // 정산예정금액 계산
                 let settlementAmount = 0;
@@ -2725,6 +2657,7 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
 
