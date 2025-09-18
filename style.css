@@ -619,7 +619,6 @@ tbody tr.selected-row td {
 
 /* 마켓명과 옵션명은 원래 배경색 유지 */
 tbody tr.selected-row td[data-header="마켓명"] {
-    background: inherit !important;
 }
 
 tbody tr.selected-row td[data-header="옵션명"].unmatched-cell {
