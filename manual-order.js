@@ -33,6 +33,8 @@ const ManualOrder = (function() {
             });
             
             const result = await response.json();
+            console.log('API 응답:', result);  // 디버깅용
+            
             if (result.productData) {
                 productList = Object.entries(result.productData);
                 console.log('제품 데이터 로드 완료:', productList.length);
@@ -95,12 +97,18 @@ const ManualOrder = (function() {
         }
         
         try {
+            // productList가 비어있으면 다시 로드
+            if (productList.length === 0) {
+                await loadProductData();
+            }
+            
             // 품목, 품종, 옵션명에서 검색
             const results = productList.filter(([optionName, data]) => {
                 const searchText = `${data.품목 || ''} ${data.품종 || ''} ${optionName}`.toLowerCase();
                 return searchText.includes(query.toLowerCase());
             }).slice(0, 10);
             
+            console.log('검색 결과:', results);  // 디버깅용
             displaySearchResults(results);
         } catch (error) {
             console.error('상품 검색 오류:', error);
