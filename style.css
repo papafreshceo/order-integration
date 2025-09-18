@@ -1018,9 +1018,9 @@ tbody tr:nth-child(even) {
 
 .btn-verify {
     padding: 6px 16px;
-    background: #10b981;
-    color: white;
-    border: none;
+    background: #ffffff;
+    color: #212529;
+    border: 1px solid #2563eb;
     border-radius: 6px;
     font-size: 14px;
     font-weight: 300;
@@ -1029,22 +1029,25 @@ tbody tr:nth-child(even) {
 }
 
 .btn-verify:hover {
-    background: #059669;
+    background: #e7f3ff;
+    border-color: #1d4ed8;
     transform: translateY(-1px);
 }
 
 /* 찾기: 버튼 스타일 섹션 끝부분 */
 .btn-verify:disabled {
-    background: #6c757d;
+    background: #f8f9fa;
+    border-color: #dee2e6;
+    color: #6c757d;
     cursor: not-allowed;
     opacity: 0.6;
 }
 
 .btn-duplicate {
     padding: 6px 16px;
-    background: #f59e0b;
-    color: white;
-    border: none;
+    background: #ffffff;
+    color: #212529;
+    border: 1px solid #2563eb;
     border-radius: 6px;
     font-size: 14px;
     font-weight: 300;
@@ -1053,12 +1056,15 @@ tbody tr:nth-child(even) {
 }
 
 .btn-duplicate:hover {
-    background: #d97706;
+    background: #e7f3ff;
+    border-color: #1d4ed8;
     transform: translateY(-1px);
 }
 
 .btn-duplicate:disabled {
-    background: #6c757d;
+    background: #f8f9fa;
+    border-color: #dee2e6;
+    color: #6c757d;
     cursor: not-allowed;
     opacity: 0.6;
 }
