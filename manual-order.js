@@ -146,31 +146,30 @@ const ManualOrder = (function() {
     // 상품 선택
     // ===========================
     function selectProduct(optionName) {
-        const productData = productList.find(([name, data]) => name === optionName);
+    const productData = productList.find(([name, data]) => name === optionName);
+    
+    if (productData) {
+        const [name, data] = productData;  // data는 여기서 정의됨
         
-        if (productData) {
-            const [name, data] = productData;
-            
-            // 옵션명 설정
-            document.getElementById('manualOptionName').value = name;
-            
-            // 셀러공급가를 단가로 설정 (수정 가능)
-            const priceData = ProductMatching.getPriceData();
-            if (priceData && priceData[name]) {
-                const unitPrice = priceData[name].sellerSupplyPrice || 0;
-                const unitPriceInput = document.getElementById('manualUnitPrice');
-                unitPriceInput.value = formatNumber(unitPrice);
-            }
-            
-            currentOrder.product = data;
-            currentOrder.optionName = name;
-            
-            calculateAmount();
+        // 옵션명 설정
+        document.getElementById('manualOptionName').value = name;
+        
+        // C무료판매가를 단가로 설정 (수정 가능)
+        if (data.C무료판매가) {
+            const unitPrice = data.C무료판매가 || 0;
+            const unitPriceInput = document.getElementById('manualUnitPrice');
+            unitPriceInput.value = formatNumber(unitPrice);
         }
         
-        hideSearchResults();
-        document.getElementById('manualProductSearch').value = '';
+        currentOrder.product = data;
+        currentOrder.optionName = name;
+        
+        calculateAmount();
     }
+    
+    hideSearchResults();
+    document.getElementById('manualProductSearch').value = '';
+}
     
     // ===========================
     // 금액 계산
