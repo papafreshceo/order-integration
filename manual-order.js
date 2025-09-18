@@ -393,6 +393,30 @@ const ManualOrder = (function() {
         document.getElementById('manualQuantity').value = '1';
         currentOrder = {};
     }
+
+    // ===========================
+    // 수량 변경 함수 추가
+    // ===========================
+    function changeQuantity(delta) {
+        const input = document.getElementById('manualQuantity');
+        let value = parseInt(input.value) || 1;
+        value = Math.max(1, value + delta);
+        input.value = value;
+        calculateAmount();
+    }
+    
+    function validateQuantity() {
+        const input = document.getElementById('manualQuantity');
+        let value = parseInt(input.value) || 1;
+        value = Math.max(1, value);
+        input.value = value;
+        calculateAmount();
+    }
+    
+    function saveOrders() {
+        localStorage.setItem('manualOrders', JSON.stringify(manualOrders));
+    }
+
     
     function saveOrders() {
         localStorage.setItem('manualOrders', JSON.stringify(manualOrders));
@@ -457,6 +481,8 @@ const ManualOrder = (function() {
         init: init,
         selectProduct: selectProduct,
         removeOrder: removeOrder,
+        changeQuantity: changeQuantity,  // 이 줄 추가
+        validateQuantity: validateQuantity,  // 이 줄 추가
         getOrders: () => manualOrders,
         clearOrders: () => {
             manualOrders = [];
