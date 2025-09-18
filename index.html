@@ -544,12 +544,16 @@
                                             <label>우편번호</label>
                                             <input type="text" id="manualZipcode" class="form-input-readonly text-center" readonly>
                                         </div>
-                                        <div class="form-group" style="width: 400px;">
+                                        <div class="form-group" style="width: 300px;">
                                             <label>주소 <span class="required">*</span></label>
                                             <div style="display: flex; gap: 8px;">
-                                                <input type="text" id="manualAddress" class="form-input-direct" required style="flex: 1;">
+                                                <input type="text" id="manualAddress" class="form-input-readonly" readonly required style="flex: 1;">
                                                 <button type="button" onclick="searchAddress()" class="btn-search-address">주소검색</button>
                                             </div>
+                                        </div>
+                                        <div class="form-group" style="width: 200px;">
+                                            <label>상세주소</label>
+                                            <input type="text" id="manualAddressDetail" class="form-input-direct" placeholder="상세주소 입력">
                                         </div>
                                         </div>
                                     </div>
@@ -996,9 +1000,8 @@
                     // 주소 입력
                     document.getElementById('manualAddress').value = addr;
                     
-                    // 주소 입력 후 포커스를 상세주소 입력으로 이동하거나
-                    // 다음 입력 필드로 이동
-                    document.getElementById('manualAddress').focus();
+                    // 상세주소 입력란으로 포커스 이동
+                    document.getElementById('manualAddressDetail').focus();
                 }
             }).open();
         }
