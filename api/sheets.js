@@ -42,31 +42,26 @@ export default async function handler(req, res) {
           if (productSheetData && productSheetData.length > 1) {
               const headers = productSheetData[0];
               const optionIdx = headers.indexOf('옵션명');
-              const itemIdx = headers.indexOf('품목');
-              const varietyIdx = headers.indexOf('품종');
-              const shipmentIdx = headers.indexOf('출고처');
-              const invoiceIdx = headers.indexOf('송장주체');
-              const vendorIdx = headers.indexOf('벤더사');
-              const locationIdx = headers.indexOf('발송지명');
-              const addressIdx = headers.indexOf('발송지주소');
-              const contactIdx = headers.indexOf('발송지연락처');
-              const costIdx = headers.indexOf('출고비용');
               
               for (let i = 1; i < productSheetData.length; i++) {
                   const optionName = String(productSheetData[i][optionIdx] || '').trim();
                   if (!optionName) continue;
                   
-                  productInfo[optionName] = {
-                      품목: itemIdx !== -1 ? String(productSheetData[i][itemIdx] || '').trim() : '',
-                      품종: varietyIdx !== -1 ? String(productSheetData[i][varietyIdx] || '').trim() : '',
-                      출고처: shipmentIdx !== -1 ? String(productSheetData[i][shipmentIdx] || '').trim() : '',
-                      송장주체: invoiceIdx !== -1 ? String(productSheetData[i][invoiceIdx] || '').trim() : '',
-                      벤더사: vendorIdx !== -1 ? String(productSheetData[i][vendorIdx] || '').trim() : '',
-                      발송지명: locationIdx !== -1 ? String(productSheetData[i][locationIdx] || '').trim() : '',
-                      발송지주소: addressIdx !== -1 ? String(productSheetData[i][addressIdx] || '').trim() : '',
-                      발송지연락처: contactIdx !== -1 ? String(productSheetData[i][contactIdx] || '').trim() : '',
-                      출고비용: costIdx !== -1 ? parseNumber(productSheetData[i][costIdx]) : 0
-                  };
+                  // 모든 컬럼 데이터를 객체로 저장
+                  const rowData = {};
+                  headers.forEach((header, idx) => {
+                      if (header && header !== '옵션명') {
+                          const value = productSheetData[i][idx];
+                          // 숫자 필드 처리
+                          if (header.includes('비용') || header.includes('가격') || header.includes('금액')) {
+                              rowData[header] = parseNumber(value);
+                          } else {
+                              rowData[header] = String(value || '').trim();
+                          }
+                      }
+                  });
+                  
+                  productInfo[optionName] = rowData;
               }
           }
           
@@ -189,5 +184,6 @@ function parseNumber(value) {
   return isNaN(num) ? 0 : num;
 
 }
+
 
 
