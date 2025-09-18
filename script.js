@@ -1972,8 +1972,36 @@ function displayStatistics(statistics) {
 }
 
 function displayCategorizedStats(tableId, stats, firstColumnName) {
+    const table = document.getElementById(tableId);
     const tbody = document.querySelector(`#${tableId} tbody`);
     tbody.innerHTML = '';
+    
+    // colgroup이 없으면 추가하여 열너비 강제 고정
+    if (!table.querySelector('colgroup')) {
+        const colgroup = document.createElement('colgroup');
+        // 첫 번째 열 (마켓명/옵션명)
+        const col1 = document.createElement('col');
+        col1.style.width = '100px';
+        colgroup.appendChild(col1);
+        
+        // 나머지 27개 열
+        for (let i = 0; i < 27; i++) {
+            const col = document.createElement('col');
+            if (i < 3) {
+                col.style.width = '60px';  // 전체 건수/수량/금액
+            } else {
+                col.style.width = '50px';  // 나머지
+            }
+            colgroup.appendChild(col);
+        }
+        
+        table.insertBefore(colgroup, table.querySelector('thead'));
+    }
+    
+    // 테이블 전체 너비 강제 설정
+    table.style.width = '1530px';
+    table.style.minWidth = '1530px';
+    table.style.tableLayout = 'fixed';
     
     // 합계 누적
     const totals = {
@@ -2964,6 +2992,7 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
 
