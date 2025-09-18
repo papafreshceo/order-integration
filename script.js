@@ -1472,27 +1472,33 @@ function displayResultTable(data) {
         th.style.maxWidth = columnWidths[index] + 'px';
         
         // 특정 헤더들에 연한 초록색 배경 적용
-        const greenHeaders = ['마켓명', '연번', '결제일', '주문번호', '상품주문번호', 
+        const greenHeaders = ['마켓명', '연번', '마켓', '결제일', '주문번호', '상품주문번호', 
                              '주문자', '수취인', '수령인', '주문자전화번호', '수취인전화번호', 
                              '수령인전화번호', '주소', '수취인주소', '수령인주소', 
-                             '배송메세지', '배송메시지', '옵션명', '수량', '특이/요청사항'];
-        if (greenHeaders.includes(header)) {
-            th.style.background = '#f0fdf4';
-        }
+                             '배송메세지', '배송메시지', '옵션명', '수량', '확인', '특이/요청사항'];
         
         // 고정열 처리
         if (index <= fixedEndIndex) {
             th.style.position = 'sticky';
             th.style.left = leftPositions[index] + 'px';
             th.style.zIndex = '20';
-            th.style.background = 'var(--bg-secondary)';
+            
+            // 초록색 배경 적용 (고정열도 체크)
+            if (greenHeaders.includes(header)) {
+                th.style.background = '#f0fdf4';
+            } else {
+                th.style.background = 'var(--bg-secondary)';
+            }
             
             if (index === fixedEndIndex) {
                 th.style.boxShadow = '2px 0 5px rgba(0,0,0,0.1)';
             }
+        } else {
+            // 고정열이 아닌 헤더도 초록색 체크
+            if (greenHeaders.includes(header)) {
+                th.style.background = '#f0fdf4';
+            }
         }
-        
-        
         
         headerRow.appendChild(th);
     });
@@ -1515,7 +1521,6 @@ function displayResultTable(data) {
             td.style.width = columnWidths[index] + 'px';
             td.style.minWidth = columnWidths[index] + 'px';
             
-
             // 고정열 처리
             if (index <= fixedEndIndex) {
                 td.style.position = 'sticky';
@@ -2683,6 +2688,7 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
 
