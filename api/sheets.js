@@ -42,6 +42,8 @@ export default async function handler(req, res) {
           if (productSheetData && productSheetData.length > 1) {
               const headers = productSheetData[0];
               const optionIdx = headers.indexOf('옵션명');
+              const itemIdx = headers.indexOf('품목');
+              const varietyIdx = headers.indexOf('품종');
               const shipmentIdx = headers.indexOf('출고처');
               const invoiceIdx = headers.indexOf('송장주체');
               const vendorIdx = headers.indexOf('벤더사');
@@ -55,6 +57,8 @@ export default async function handler(req, res) {
                   if (!optionName) continue;
                   
                   productInfo[optionName] = {
+                      품목: itemIdx !== -1 ? String(productSheetData[i][itemIdx] || '').trim() : '',
+                      품종: varietyIdx !== -1 ? String(productSheetData[i][varietyIdx] || '').trim() : '',
                       출고처: shipmentIdx !== -1 ? String(productSheetData[i][shipmentIdx] || '').trim() : '',
                       송장주체: invoiceIdx !== -1 ? String(productSheetData[i][invoiceIdx] || '').trim() : '',
                       벤더사: vendorIdx !== -1 ? String(productSheetData[i][vendorIdx] || '').trim() : '',
@@ -185,4 +189,5 @@ function parseNumber(value) {
   return isNaN(num) ? 0 : num;
 
 }
+
 
