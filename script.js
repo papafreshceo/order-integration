@@ -1163,20 +1163,289 @@ function checkWarnings() {
 // ===========================
 // 내보내기 함수들
 // ===========================
+// ===========================
+// 내보내기 함수들
+// ===========================
 function exportToExcel() {
     if (!processedData || !processedData.data || processedData.data.length === 0) {
         showError('내보낼 데이터가 없습니다.');
         return;
     }
     
-    const ws = XLSX.utils.json_to_sheet(processedData.data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, '통합주문');
-    
-    const fileName = `주문통합_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, fileName);
-    
-    showSuccess('엑셀 파일이 다운로드되었습니다.');
+    try {
+        // 헤더 준비
+        const headers = processedData.standardFields || mappingData.standardFields || Object.keys(processedData.data[0]);
+        
+        // 워크시트 데이터 준비
+        const wsData = [];
+        
+        // 헤더 행 추가
+        wsData.push(headers);
+        
+        // 데이터 행 추가
+        processedData.data.forEach(row => {
+            const rowData = headers.map(header => {
+                const value = row[header];
+                
+                // 날짜 형식 처리
+                if (header.includes('결제일') || header.includes('발송일') || header.includes('주문일')) {
+                    return formatDateForDisplay(value);
+                }
+                
+                // 금액 형식 처리 (숫자로 유지)
+                const amountFields = ['셀러공급가', '출고비용', '정산예정금액', '정산대상금액', '상품금액', 
+                                     '최종결제금액', '할인금액', '마켓부담할인액', '판매자할인쿠폰할인', 
+                                     '구매쿠폰적용금액', '쿠폰할인금액', '기타지원금할인금', '수수료1', '수수료2', '택배비'];
+                if (amountFields.some(field => header.includes(field))) {
+                    const numValue = parseFloat(String(value || '').replace(/[^\d.-]/g, ''));
+                    return isNaN(numValue) ? 0 : numValue;
+                }
+                
+                return value !== undefined && value !== null ? String(value) : '';
+            });
+            wsData.push(rowData);
+        });
+        
+        // 워크시트 생성
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        
+        // 열 너비 설정
+        const fixedWidths = {
+            '연번': 50, '마켓명': 100, '마켓': 60, '결제일': 150,
+            '주문번호': 140, '상품주문번호': 140, '주문자': 70, '수취인': 70,
+            '수령인': 70, '주문자전화번호': 120, '수취인전화번호': 120,
+            '수령인전화번호': 120, '주소': 300, '수취인주소': 300,
+            '수령인주소': 300, '배송메세지': 100, '배송메시지': 100,
+            '옵션명': 160, '수량': 60, '확인': 160, '셀러': 80,
+            '셀러공급가': 70, '출고처': 80, '송장주체': 60, '벤더사': 100,
+            '발송지명': 100, '발송지주소': 300, '발송지연락처': 120,
+            '출고비용': 90, '정산예정금액': 90, '정산대상금액': 90,
+            '상품금액': 80, '최종결제금액': 90, '할인금액': 90,
+            '마켓부담할인금액': 120, '판매자할인쿠폰할인': 120,
+            '구매쿠폰적용금액': 120, '쿠폰할인금액': 100,
+            '기타지원금할인금': 120, '수수료1': 70, '수수료2': 70,
+            '판매아이디': 80, '분리배송 Y/N': 100, '택배비': 80,
+            '발송일(송장입력일)': 150, '택배사': 80, '송장번호': 140
+        };
+        
+        ws['!cols'] = headers.map(header => ({
+            wch: Math.floor((fixedWidths[header] || 120) / 7)
+        }));
+        
+        // 셀 스타일 적용
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        
+        // 초록색 배경 헤더 필드
+        const greenHeaders = ['마켓명', '연번', '마켓', '결제일', '주문번호', '상품주문번호',
+                             '주문자', '수취인', '수령인', '주문자전화번호', '수취인전화번호',
+                             '수령인전화번호', '주소', '수취인주소', '수령인주소',
+                             '배송메세지', '배송메시지', '옵션명', '수량', '확인', '특이/요청사항'];
+        
+        // 정렬 설정
+        const centerAlignFields = ['마켓명', '연번', '결제일', '주문번호', '주문자', '수취인', '옵션명', '수량', '마켓', '택배사'];
+        const leftAlignFields = ['주소', '배송지', '수령인주소', '수취인주소'];
+        const rightAlignFields = ['셀러공급가', '출고비용', '정산예정금액', '정산대상금액', '상품금액',
+                                 '최종결제금액', '할인금액', '마켓부담할인액', '판매자할인쿠폰할인',
+                                 '구매쿠폰적용금액', '쿠폰할인금액', '기타지원금할인금', '수수료1', '수수료2', '택배비'];
+        
+        // 각 셀에 스타일 적용
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                const cell = ws[cellAddress];
+                
+                if (!cell) continue;
+                
+                // 기본 스타일 객체 생성
+                if (!cell.s) cell.s = {};
+                
+                const header = headers[C];
+                
+                // 헤더 행 스타일 (R === 0)
+                if (R === 0) {
+                    cell.s = {
+                        fill: {
+                            patternType: 'solid',
+                            fgColor: { rgb: greenHeaders.includes(header) ? 'F0FDF4' : 'F8F9FA' }
+                        },
+                        font: {
+                            bold: true,
+                            sz: 11
+                        },
+                        alignment: {
+                            horizontal: 'center',
+                            vertical: 'center'
+                        },
+                        border: {
+                            top: { style: 'thin', color: { rgb: 'DEE2E6' } },
+                            bottom: { style: 'medium', color: { rgb: 'DEE2E6' } },
+                            left: { style: 'thin', color: { rgb: 'DEE2E6' } },
+                            right: { style: 'thin', color: { rgb: 'DEE2E6' } }
+                        }
+                    };
+                } else {
+                    // 데이터 행 스타일
+                    const row = processedData.data[R - 1];
+                    
+                    // 정렬 설정
+                    let alignment = 'left';
+                    if (rightAlignFields.some(f => header.includes(f))) alignment = 'right';
+                    else if (centerAlignFields.some(f => header.includes(f))) alignment = 'center';
+                    else if (leftAlignFields.some(f => header.includes(f))) alignment = 'left';
+                    else alignment = 'center';
+                    
+                    cell.s.alignment = {
+                        horizontal: alignment,
+                        vertical: 'center'
+                    };
+                    
+                    // 테두리
+                    cell.s.border = {
+                        top: { style: 'thin', color: { rgb: 'F1F3F5' } },
+                        bottom: { style: 'thin', color: { rgb: 'F1F3F5' } },
+                        left: { style: 'thin', color: { rgb: 'F1F3F5' } },
+                        right: { style: 'thin', color: { rgb: 'F1F3F5' } }
+                    };
+                    
+                    // 마켓명 셀 색상
+                    if (header === '마켓명' && row) {
+                        const marketName = row['마켓명'];
+                        if (marketName && mappingData && mappingData.markets[marketName]) {
+                            const market = mappingData.markets[marketName];
+                            const rgb = market.color.split(',').map(n => {
+                                const hex = parseInt(n).toString(16).padStart(2, '0');
+                                return hex;
+                            }).join('').toUpperCase();
+                            
+                            const brightness = (parseInt(market.color.split(',')[0]) * 299 +
+                                              parseInt(market.color.split(',')[1]) * 587 +
+                                              parseInt(market.color.split(',')[2]) * 114) / 1000;
+                            
+                            cell.s.fill = {
+                                patternType: 'solid',
+                                fgColor: { rgb: rgb }
+                            };
+                            cell.s.font = {
+                                bold: true,
+                                sz: 11,
+                                color: { rgb: brightness > 128 ? '000000' : 'FFFFFF' }
+                            };
+                        }
+                    }
+                    
+                    // 옵션명 매칭 상태 스타일
+                    if (header === '옵션명' && row) {
+                        if (row['_matchStatus'] === 'unmatched') {
+                            cell.s.fill = {
+                                patternType: 'solid',
+                                fgColor: { rgb: 'FEF3C7' }
+                            };
+                        } else if (row['_matchStatus'] === 'modified') {
+                            cell.s.fill = {
+                                patternType: 'solid',
+                                fgColor: { rgb: 'E7F3FF' }
+                            };
+                            cell.s.border = {
+                                top: { style: 'thin', color: { rgb: '2563EB' } },
+                                bottom: { style: 'thin', color: { rgb: '2563EB' } },
+                                left: { style: 'thin', color: { rgb: '2563EB' } },
+                                right: { style: 'thin', color: { rgb: '2563EB' } }
+                            };
+                        } else if (row['_matchStatus'] === 'modified-matched') {
+                            cell.s.fill = {
+                                patternType: 'solid',
+                                fgColor: { rgb: 'E8F5E9' }
+                            };
+                            cell.s.border = {
+                                top: { style: 'thin', color: { rgb: '10B981' } },
+                                bottom: { style: 'thin', color: { rgb: '10B981' } },
+                                left: { style: 'thin', color: { rgb: '10B981' } },
+                                right: { style: 'thin', color: { rgb: '10B981' } }
+                            };
+                        }
+                    }
+                    
+                    // 중복 검증 스타일
+                    if (header === '주문번호' && row) {
+                        if (row['_duplicateStatus'] === 'shipped') {
+                            cell.s.fill = {
+                                patternType: 'solid',
+                                fgColor: { rgb: 'FEE2E2' }
+                            };
+                            cell.s.font = {
+                                bold: true,
+                                sz: 11,
+                                color: { rgb: 'DC3545' }
+                            };
+                            cell.s.border = {
+                                top: { style: 'medium', color: { rgb: 'DC3545' } },
+                                bottom: { style: 'medium', color: { rgb: 'DC3545' } },
+                                left: { style: 'medium', color: { rgb: 'DC3545' } },
+                                right: { style: 'medium', color: { rgb: 'DC3545' } }
+                            };
+                        } else if (row['_duplicateStatus'] === 'unshipped') {
+                            cell.s.fill = {
+                                patternType: 'solid',
+                                fgColor: { rgb: 'FEF3C7' }
+                            };
+                            cell.s.border = {
+                                top: { style: 'medium', color: { rgb: 'F59E0B' } },
+                                bottom: { style: 'medium', color: { rgb: 'F59E0B' } },
+                                left: { style: 'medium', color: { rgb: 'F59E0B' } },
+                                right: { style: 'medium', color: { rgb: 'F59E0B' } }
+                            };
+                        }
+                    }
+                    
+                    // 수량 2 이상 강조
+                    if (header === '수량' && row) {
+                        const quantity = parseInt(row['수량']);
+                        if (quantity >= 2) {
+                            cell.s.font = {
+                                bold: true,
+                                sz: 11,
+                                color: { rgb: 'EC4899' }
+                            };
+                        }
+                    }
+                    
+                    // 특이/요청사항 빨강색
+                    if (header === '특이/요청사항' && row && row['특이/요청사항']) {
+                        cell.s.font = {
+                            sz: 11,
+                            color: { rgb: 'DC3545' }
+                        };
+                    }
+                    
+                    // 금액 필드 숫자 형식
+                    const amountFields = ['셀러공급가', '출고비용', '정산예정금액', '정산대상금액', '상품금액',
+                                        '최종결제금액', '할인금액', '마켓부담할인액', '판매자할인쿠폰할인',
+                                        '구매쿠폰적용금액', '쿠폰할인금액', '기타지원금할인금', '수수료1', '수수료2', '택배비'];
+                    if (amountFields.some(field => header.includes(field))) {
+                        cell.z = '#,##0';
+                        cell.t = 'n';
+                    }
+                }
+            }
+        }
+        
+        // 워크북 생성
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, '통합주문');
+        
+        // 파일명 생성
+        const today = new Date();
+        const fileName = `주문통합_${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}.xlsx`;
+        
+        // 파일 다운로드
+        XLSX.writeFile(wb, fileName, { bookType: 'xlsx', type: 'binary' });
+        
+        showSuccess('엑셀 파일이 다운로드되었습니다.');
+        
+    } catch (error) {
+        console.error('엑셀 내보내기 오류:', error);
+        showError('엑셀 파일 생성 중 오류가 발생했습니다.');
+    }
 }
 
 // ===========================
@@ -2657,6 +2926,7 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
 
