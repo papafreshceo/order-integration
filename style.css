@@ -1449,3 +1449,63 @@ tbody tr:nth-child(even) {
 .form-row-custom input {
     box-sizing: border-box;
 }
+
+
+/* 수량 컨트롤 스타일 */
+.quantity-control {
+    display: flex;
+    align-items: center;
+    width: 80px;
+    height: 38px;
+    border: 1px solid #2563eb;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.qty-input {
+    flex: 1;
+    border: none;
+    background: white;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 400;
+    width: 30px;
+    padding: 0;
+}
+
+.qty-input:focus {
+    outline: none;
+}
+
+.qty-btn {
+    width: 25px;
+    height: 100%;
+    border: none;
+    background: #f8f9fa;
+    color: #2563eb;
+    font-size: 18px;
+    font-weight: 300;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qty-btn:hover {
+    background: #2563eb;
+    color: white;
+}
+
+.qty-btn:active {
+    background: #1d4ed8;
+}
+
+.qty-minus {
+    border-right: 1px solid #dee2e6;
+}
+
+.qty-plus {
+    border-left: 1px solid #dee2e6;
+}
