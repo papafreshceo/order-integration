@@ -1456,7 +1456,7 @@ tbody tr:nth-child(even) {
     display: flex;
     align-items: center;
     width: 80px;
-    height: 38px;
+    height: 34px;
     border: 1px solid #2563eb;
     border-radius: 4px;
     overflow: hidden;
@@ -1471,6 +1471,7 @@ tbody tr:nth-child(even) {
     font-weight: 400;
     width: 45px;
     padding: 0;
+    height: 100%;
 }
 
 .qty-input:focus {
@@ -1478,12 +1479,12 @@ tbody tr:nth-child(even) {
 }
 
 .qty-btn {
-    width: 25px;
+    width: 24px;
     height: 100%;
     border: none;
     background: #f8f9fa;
     color: #2563eb;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 300;
     cursor: pointer;
     transition: all 0.2s;
