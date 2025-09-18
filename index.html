@@ -278,8 +278,24 @@
             text-align: left;
             padding-left: 12px;
         }
+/* 주소 검색 버튼 */
+        .btn-search-address {
+            padding: 8px 16px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 400;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        
+        .btn-search-address:hover {
+            background: #1d4ed8;
+        }
 
-        /* 아코디언 토글 버튼 스타일 */
         /* 아코디언 토글 버튼 스타일 */
         .section-toggle {
             display: inline-flex;
@@ -950,6 +966,41 @@
                 section.classList.toggle('collapsed');
                 button.classList.toggle('collapsed');
             }
+        }
+    </script>
+    <script>
+        // 섹션 토글 함수
+        function toggleSection(sectionId, button) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.classList.toggle('collapsed');
+                button.classList.toggle('collapsed');
+            }
+        }
+        
+        // 주소 검색 함수
+        function searchAddress() {
+            new daum.Postcode({
+                oncomplete: function(data) {
+                    // 우편번호
+                    document.getElementById('manualZipcode').value = data.zonecode;
+                    
+                    // 도로명 주소 우선, 없으면 지번 주소
+                    let addr = data.roadAddress || data.jibunAddress;
+                    
+                    // 건물명이 있으면 추가
+                    if(data.buildingName !== '') {
+                        addr += ' (' + data.buildingName + ')';
+                    }
+                    
+                    // 주소 입력
+                    document.getElementById('manualAddress').value = addr;
+                    
+                    // 주소 입력 후 포커스를 상세주소 입력으로 이동하거나
+                    // 다음 입력 필드로 이동
+                    document.getElementById('manualAddress').focus();
+                }
+            }).open();
         }
     </script>
 </body>
