@@ -104,7 +104,10 @@ const ManualOrder = (function() {
             
             // 품목, 품종, 옵션명에서 검색
             const results = productList.filter(([optionName, data]) => {
-                const searchText = `${data.품목 || ''} ${data.품종 || ''} ${optionName}`.toLowerCase();
+                if (!data) return false;
+                const 품목 = data['품목'] || data.품목 || '';
+                const 품종 = data['품종'] || data.품종 || '';
+                const searchText = `${품목} ${품종} ${optionName}`.toLowerCase();
                 return searchText.includes(query.toLowerCase());
             }).slice(0, 10);
             
