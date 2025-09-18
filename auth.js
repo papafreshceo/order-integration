@@ -23,24 +23,28 @@ auth.onAuthStateChanged(async (user) => {
         // 사용자 권한 확인
         try {
             const response = await fetch('/api/users', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    action: 'checkUser',
-                    email: user.email,
-                    userData: {
-                        name: user.displayName || user.email.split('@')[0]
-                    }
-                })
-            });
-            
-            const result = await response.json();
-            
-            if (result.user) {
-                currentUser = result.user;
-                window.currentUser = currentUser;
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        action: 'checkUser',
+        email: user.email,
+        userData: {
+            name: user.displayName || user.email.split('@')[0]
+        }
+    })
+});
+
+const result = await response.json();
+console.log('API 응답 result:', result);  // 추가
+console.log('API 응답 user:', result.user);  // 추가
+
+if (result.user) {
+    currentUser = result.user;
+    window.currentUser = currentUser;
+    console.log('설정된 currentUser:', currentUser);  // 추가
+    console.log('역할:', currentUser.role);  // 추가
                 
                 // 역할별 UI 조정
                 adjustUIByRole();
@@ -246,3 +250,4 @@ function adjustUIByRole() {
         // 구글 시트 저장 버튼은 유지 (직원도 저장 가능)
     }
 }
+
