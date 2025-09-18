@@ -484,7 +484,7 @@ async function processOrders() {
     }
 
     const todayFiles = uploadedFiles.filter(f => f.isToday);
-    if (todayFiles.length === 0) {
+    if (todayFiles.length === 0 && !hasManualOrders) {
         showError('오늘 날짜의 파일이 없습니다. 최신 주문 파일을 다운로드해주세요.');
         return;
     }
@@ -1163,9 +1163,6 @@ function checkWarnings() {
 // ===========================
 // 내보내기 함수들
 // ===========================
-// ===========================
-// 내보내기 함수들
-// ===========================
 function exportToExcel() {
     if (!processedData || !processedData.data || processedData.data.length === 0) {
         showError('내보낼 데이터가 없습니다.');
@@ -1246,203 +1243,6 @@ function exportToExcel() {
             wch: Math.floor((fixedWidths[header] || 120) / 7)
         }));
         
-        // 셀 스타일 적용
-        const range = XLSX.utils.decode_range(ws['!ref']);
-        
-        // 초록색 배경 헤더 필드
-        const greenHeaders = ['마켓명', '연번', '마켓', '결제일', '주문번호', '상품주문번호',
-                             '주문자', '수취인', '수령인', '주문자전화번호', '수취인전화번호',
-                             '수령인전화번호', '주소', '수취인주소', '수령인주소',
-                             '배송메세지', '배송메시지', '옵션명', '수량', '확인', '특이/요청사항'];
-        
-        // 정렬 설정
-        const centerAlignFields = ['마켓명', '연번', '결제일', '주문번호', '주문자', '수취인', '옵션명', '수량', '마켓', '택배사'];
-        const leftAlignFields = ['주소', '배송지', '수령인주소', '수취인주소'];
-        const rightAlignFields = ['셀러공급가', '출고비용', '정산예정금액', '정산대상금액', '상품금액',
-                                 '최종결제금액', '할인금액', '마켓부담할인금액', '판매자할인쿠폰할인',
-                                 '구매쿠폰적용금액', '쿠폰할인금액', '기타지원금할인금', '수수료1', '수수료2', '택배비'];
-        
-        // 각 셀에 스타일 적용
-        for (let R = range.s.r; R <= range.e.r; ++R) {
-            for (let C = range.s.c; C <= range.e.c; ++C) {
-                const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-                const cell = ws[cellAddress];
-                
-                if (!cell) continue;
-                
-                // 기본 스타일 객체 생성
-                if (!cell.s) cell.s = {};
-                
-                const header = headers[C];
-                
-                // 헤더 행 스타일 (R === 0)
-                if (R === 0) {
-                    cell.s = {
-                        fill: {
-                            patternType: 'solid',
-                            fgColor: { rgb: greenHeaders.includes(header) ? 'F0FDF4' : 'F8F9FA' }
-                        },
-                        font: {
-                            bold: true,
-                            sz: 11
-                        },
-                        alignment: {
-                            horizontal: 'center',
-                            vertical: 'center'
-                        },
-                        border: {
-                            top: { style: 'thin', color: { rgb: 'DEE2E6' } },
-                            bottom: { style: 'medium', color: { rgb: 'DEE2E6' } },
-                            left: { style: 'thin', color: { rgb: 'DEE2E6' } },
-                            right: { style: 'thin', color: { rgb: 'DEE2E6' } }
-                        }
-                    };
-                } else {
-                    // 데이터 행 스타일
-                    const row = processedData.data[R - 1];
-                    
-                    // 정렬 설정
-                    let alignment = 'left';
-                    if (rightAlignFields.some(f => header.includes(f))) alignment = 'right';
-                    else if (centerAlignFields.some(f => header.includes(f))) alignment = 'center';
-                    else if (leftAlignFields.some(f => header.includes(f))) alignment = 'left';
-                    else alignment = 'center';
-                    
-                    cell.s.alignment = {
-                        horizontal: alignment,
-                        vertical: 'center'
-                    };
-                    
-                    // 테두리
-                    cell.s.border = {
-                        top: { style: 'thin', color: { rgb: 'F1F3F5' } },
-                        bottom: { style: 'thin', color: { rgb: 'F1F3F5' } },
-                        left: { style: 'thin', color: { rgb: 'F1F3F5' } },
-                        right: { style: 'thin', color: { rgb: 'F1F3F5' } }
-                    };
-                    
-                    // 마켓명 셀 색상
-                    if (header === '마켓명' && row) {
-                        const marketName = row['마켓명'];
-                        if (marketName && mappingData && mappingData.markets[marketName]) {
-                            const market = mappingData.markets[marketName];
-                            const rgb = market.color.split(',').map(n => {
-                                const hex = parseInt(n).toString(16).padStart(2, '0');
-                                return hex;
-                            }).join('').toUpperCase();
-                            
-                            const brightness = (parseInt(market.color.split(',')[0]) * 299 +
-                                              parseInt(market.color.split(',')[1]) * 587 +
-                                              parseInt(market.color.split(',')[2]) * 114) / 1000;
-                            
-                            cell.s.fill = {
-                                patternType: 'solid',
-                                fgColor: { rgb: rgb }
-                            };
-                            cell.s.font = {
-                                bold: true,
-                                sz: 11,
-                                color: { rgb: brightness > 128 ? '000000' : 'FFFFFF' }
-                            };
-                        }
-                    }
-                    
-                    // 옵션명 매칭 상태 스타일
-                    if (header === '옵션명' && row) {
-                        if (row['_matchStatus'] === 'unmatched') {
-                            cell.s.fill = {
-                                patternType: 'solid',
-                                fgColor: { rgb: 'FEF3C7' }
-                            };
-                        } else if (row['_matchStatus'] === 'modified') {
-                            cell.s.fill = {
-                                patternType: 'solid',
-                                fgColor: { rgb: 'E7F3FF' }
-                            };
-                            cell.s.border = {
-                                top: { style: 'thin', color: { rgb: '2563EB' } },
-                                bottom: { style: 'thin', color: { rgb: '2563EB' } },
-                                left: { style: 'thin', color: { rgb: '2563EB' } },
-                                right: { style: 'thin', color: { rgb: '2563EB' } }
-                            };
-                        } else if (row['_matchStatus'] === 'modified-matched') {
-                            cell.s.fill = {
-                                patternType: 'solid',
-                                fgColor: { rgb: 'E8F5E9' }
-                            };
-                            cell.s.border = {
-                                top: { style: 'thin', color: { rgb: '10B981' } },
-                                bottom: { style: 'thin', color: { rgb: '10B981' } },
-                                left: { style: 'thin', color: { rgb: '10B981' } },
-                                right: { style: 'thin', color: { rgb: '10B981' } }
-                            };
-                        }
-                    }
-                    
-                    // 중복 검증 스타일
-                    if (header === '주문번호' && row) {
-                        if (row['_duplicateStatus'] === 'shipped') {
-                            cell.s.fill = {
-                                patternType: 'solid',
-                                fgColor: { rgb: 'FEE2E2' }
-                            };
-                            cell.s.font = {
-                                bold: true,
-                                sz: 11,
-                                color: { rgb: 'DC3545' }
-                            };
-                            cell.s.border = {
-                                top: { style: 'medium', color: { rgb: 'DC3545' } },
-                                bottom: { style: 'medium', color: { rgb: 'DC3545' } },
-                                left: { style: 'medium', color: { rgb: 'DC3545' } },
-                                right: { style: 'medium', color: { rgb: 'DC3545' } }
-                            };
-                        } else if (row['_duplicateStatus'] === 'unshipped') {
-                            cell.s.fill = {
-                                patternType: 'solid',
-                                fgColor: { rgb: 'FEF3C7' }
-                            };
-                            cell.s.border = {
-                                top: { style: 'medium', color: { rgb: 'F59E0B' } },
-                                bottom: { style: 'medium', color: { rgb: 'F59E0B' } },
-                                left: { style: 'medium', color: { rgb: 'F59E0B' } },
-                                right: { style: 'medium', color: { rgb: 'F59E0B' } }
-                            };
-                        }
-                    }
-                    
-                    // 수량 2 이상 강조
-                    if (header === '수량' && row) {
-                        const quantity = parseInt(row['수량']);
-                        if (quantity >= 2) {
-                            cell.s.font = {
-                                bold: true,
-                                sz: 11,
-                                color: { rgb: 'EC4899' }
-                            };
-                        }
-                    }
-                    
-                    // 특이/요청사항 빨강색
-                    if (header === '특이/요청사항' && row && row['특이/요청사항']) {
-                        cell.s.font = {
-                            sz: 11,
-                            color: { rgb: 'DC3545' }
-                        };
-                    }
-                    
-                    // 금액 필드 숫자 형식
-                    const amountFields = ['셀러공급가', '출고비용', '정산예정금액', '정산대상금액', '상품금액',
-                                        '최종결제금액', '할인금액', '마켓부담할인금액', '판매자할인쿠폰할인',
-                                        '구매쿠폰적용금액', '쿠폰할인금액', '기타지원금할인금', '수수료1', '수수료2', '택배비'];
-                    if (amountFields.some(field => header.includes(field))) {
-                        cell.z = '#,##0';
-                        cell.t = 'n';
-                    }
-                }
-            }
-        }
-        
         // 워크북 생성
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, '통합주문');
@@ -1503,7 +1303,6 @@ function hideSuccess() {
 }
 
 // 중앙 메시지 표시 함수
-
 function showCenterMessage(message, type = 'success', duration = 3000) {
     const msgEl = document.getElementById('centerMessage');
     msgEl.innerHTML = message;  // textContent 대신 innerHTML 사용
@@ -1514,6 +1313,7 @@ function showCenterMessage(message, type = 'success', duration = 3000) {
         msgEl.style.display = 'none';
     }, duration);
 }
+
 // ===========================
 // 결과 표시
 // ===========================
@@ -1557,7 +1357,7 @@ function displayResultTable(data) {
     const restrictedColumns = [
         '셀러공급가', '출고비용', '정산예정금액', '정산대상금액',
         '상품금액', '최종결제금액', '할인금액', '마켓부담할인금액',
-        '판매자할인쿠폰할인', '구매쿠폰적용금액', '쿠폰할인금액',
+        '판매자할인쿠폰할인', '구매쿠폰적용금액', '쿠폰할인금액', '마켓부담할인액',
         '기타지원금할인금', '수수료1', '수수료2'
         // 택배비는 제외 (직원도 볼 수 있음)
     ];
@@ -1629,19 +1429,16 @@ function displayResultTable(data) {
         '수수료2': 70,
         '판매아이디':80,
         '분리배송 Y/N':100,
-
         '택배비': 80,
         '발송일(송장입력일)':150,      
         '택배사': 80,
         '송장번호': 140
-        
     };
     
     // 필드별 정렬 설정
     const centerAlignFields = ['마켓명', '연번', '결제일', '주문번호', '주문자', '수취인', '옵션명', '수량', '마켓','택배사'];
     const leftAlignFields = ['주소', '배송지', '수령인주소', '수취인주소'];
-    const rightAlignFields = ['셀러공급가','출고비용' , '정산예정금액', '정산대상금액' , '상품금액','최종결제금액', '할인금액','마켓부담할인금액','판매자할인쿠폰할인','구매쿠폰적용금액','쿠폰할인금액','기타지원금할인금', '수수료1', '수수료2', 
-                                 '택배비'];
+    const rightAlignFields = ['셀러공급가','출고비용' , '정산예정금액', '정산대상금액' , '상품금액','최종결제금액', '할인금액','마켓부담할인금액','판매자할인쿠폰할인','구매쿠폰적용금액','쿠폰할인금액','기타지원금할인금', '수수료1', '수수료2', '택배비'];
     
     function getAlignment(fieldName) {
         if (rightAlignFields.some(f => fieldName.includes(f))) return 'right';
@@ -1701,8 +1498,6 @@ function displayResultTable(data) {
         }
     });
     
-    // 헤더 생성
-    /* 찾기: 헤더 생성 부분 */
     // 테이블 설정 - 열너비 강제 고정
     const table = document.getElementById('resultTable');
     const totalWidth = columnWidths.reduce((sum, width) => sum + width, 0);
@@ -1735,9 +1530,9 @@ function displayResultTable(data) {
         th.setAttribute('data-column', colIndex);
         th.setAttribute('data-header', header);
         th.style.textAlign = 'center';
-        th.style.width = columnWidths[index] + 'px';
-        th.style.minWidth = columnWidths[index] + 'px';
-        th.style.maxWidth = columnWidths[index] + 'px';
+        th.style.width = columnWidths[colIndex] + 'px';
+        th.style.minWidth = columnWidths[colIndex] + 'px';
+        th.style.maxWidth = columnWidths[colIndex] + 'px';
         
         // 특정 헤더들에 연한 초록색 배경 적용
         const greenHeaders = ['마켓명', '연번', '마켓', '결제일', '주문번호', '상품주문번호', 
@@ -1746,9 +1541,9 @@ function displayResultTable(data) {
                              '배송메세지', '배송메시지', '옵션명', '수량', '확인', '특이/요청사항'];
         
         // 고정열 처리
-        if (index <= fixedEndIndex) {
+        if (colIndex <= fixedEndIndex) {
             th.style.position = 'sticky';
-            th.style.left = leftPositions[index] + 'px';
+            th.style.left = leftPositions[colIndex] + 'px';
             th.style.zIndex = '20';
             
             // 초록색 배경 적용 (고정열도 체크)
@@ -1758,7 +1553,7 @@ function displayResultTable(data) {
                 th.style.background = 'var(--bg-secondary)';
             }
             
-            if (index === fixedEndIndex) {
+            if (colIndex === fixedEndIndex) {
                 th.style.boxShadow = '2px 0 5px rgba(0,0,0,0.1)';
             }
         } else {
@@ -1781,22 +1576,21 @@ function displayResultTable(data) {
         const tr = document.createElement('tr');
         
         headers.forEach((header, colIndex) => {
-            const index = allHeaders.indexOf(header);
             const td = document.createElement('td');
             td.setAttribute('data-header', header);
             let value = row[header] || '';
             
             td.style.textAlign = getAlignment(header);
-            td.style.width = columnWidths[index] + 'px';
-            td.style.minWidth = columnWidths[index] + 'px';
+            td.style.width = columnWidths[colIndex] + 'px';
+            td.style.minWidth = columnWidths[colIndex] + 'px';
             
             // 고정열 처리
-            if (index <= fixedEndIndex) {
+            if (colIndex <= fixedEndIndex) {
                 td.style.position = 'sticky';
-                td.style.left = leftPositions[index] + 'px';
+                td.style.left = leftPositions[colIndex] + 'px';
                 td.style.zIndex = '10';
                 
-                if (index === fixedEndIndex) {
+                if (colIndex === fixedEndIndex) {
                     td.style.boxShadow = '2px 0 5px rgba(0,0,0,0.1)';
                 }
             }
@@ -1807,8 +1601,7 @@ function displayResultTable(data) {
             }
             
             // 금액 포맷팅
-            const amountFields = ['셀러공급가','출고비용' , '정산예정금액', '정산대상금액' , '상품금액','최종결제금액', '할인금액','마켓부담할인금액','판매자할인쿠폰할인','구매쿠폰적용금액','쿠폰할인금액','기타지원금할인금', '수수료1', '수수료2', 
-                                 '택배비'];
+            const amountFields = ['셀러공급가','출고비용' , '정산예정금액', '정산대상금액' , '상품금액','최종결제금액', '할인금액','마켓부담할인금액','판매자할인쿠폰할인','구매쿠폰적용금액','쿠폰할인금액','기타지원금할인금', '수수료1', '수수료2', '택배비'];
             if (amountFields.some(field => header.includes(field))) {
                 const numValue = parseFloat(String(value).replace(/[^\d.-]/g, ''));
                 if (!isNaN(numValue) && value !== '') {
@@ -1847,7 +1640,7 @@ function displayResultTable(data) {
                 }
             }
             
-// 옵션명 셀 매칭 상태 표시
+            // 옵션명 셀 매칭 상태 표시
             if (header === '옵션명') {
                 if (row['_matchStatus'] === 'unmatched' || row['_matchStatus'] === 'modified' || row['_matchStatus'] === 'modified-matched') {
                     // 상태별 클래스 적용
@@ -1927,9 +1720,6 @@ function displayResultTable(data) {
     });
 }
 
-
-
-
 function formatDateForDisplay(value) {
     if (!value) return '';
     
@@ -1961,10 +1751,8 @@ function formatDateForDisplay(value) {
     return strValue;
 }
 
-
-
 // ===========================
-// 통계 표시
+// 통계 표시 - 직원 모드에서 금액 숨기기 추가
 // ===========================
 function displayStatistics(statistics) {
     displayCategorizedStats('marketStats', statistics.byMarket, '마켓명');
@@ -1976,6 +1764,48 @@ function displayCategorizedStats(tableId, stats, firstColumnName) {
     const tbody = document.querySelector(`#${tableId} tbody`);
     tbody.innerHTML = '';
     
+    // 직원 모드 체크
+    const isStaff = window.currentUser?.role !== 'admin';
+    
+    // 직원 모드에서 thead의 금액 컬럼 숨기기
+    if (isStaff) {
+        const thead = table.querySelector('thead');
+        const rows = thead.querySelectorAll('tr');
+        
+        // 3번째 행의 th들 (건수/수량/금액 반복)
+        if (rows[2]) {
+            const ths = rows[2].querySelectorAll('th');
+            // 금액 컬럼 인덱스: 2, 5, 8, 11, 14, 17, 20, 23, 26
+            [2, 5, 8, 11, 14, 17, 20, 23, 26].forEach(index => {
+                if (ths[index]) {
+                    ths[index].style.display = 'none';
+                }
+            });
+        }
+        
+        // 2번째 행의 colspan 조정
+        if (rows[1]) {
+            const ths = rows[1].querySelectorAll('th');
+            ths.forEach(th => {
+                if (th.colSpan === '3') {
+                    th.colSpan = '2';  // 금액 제외하여 2개로
+                }
+            });
+        }
+        
+        // 1번째 행의 colspan 조정
+        if (rows[0]) {
+            const ths = rows[0].querySelectorAll('th');
+            ths.forEach(th => {
+                if (th.colSpan === '6') {
+                    th.colSpan = '4';  // 금액 2개 제외하여 4개로
+                } else if (th.colSpan === '3' && th.rowSpan !== '2') {
+                    th.colSpan = '2';  // 전체 섹션
+                }
+            });
+        }
+    }
+    
     // colgroup이 없으면 추가하여 열너비 강제 고정
     if (!table.querySelector('colgroup')) {
         const colgroup = document.createElement('colgroup');
@@ -1984,11 +1814,12 @@ function displayCategorizedStats(tableId, stats, firstColumnName) {
         col1.style.width = '100px';
         colgroup.appendChild(col1);
         
-        // 나머지 27개 열
-        for (let i = 0; i < 27; i++) {
+        // 나머지 27개 열 (직원 모드면 18개)
+        const colCount = isStaff ? 18 : 27;
+        for (let i = 0; i < colCount; i++) {
             const col = document.createElement('col');
-            if (i < 3) {
-                col.style.width = '60px';  // 전체 건수/수량/금액
+            if (i < (isStaff ? 2 : 3)) {
+                col.style.width = '60px';  // 전체 건수/수량(/금액)
             } else {
                 col.style.width = '50px';  // 나머지
             }
@@ -1999,8 +1830,8 @@ function displayCategorizedStats(tableId, stats, firstColumnName) {
     }
     
     // 테이블 전체 너비 강제 설정
-    table.style.width = '1530px';
-    table.style.minWidth = '1530px';
+    table.style.width = isStaff ? '1080px' : '1530px';
+    table.style.minWidth = isStaff ? '1080px' : '1530px';
     table.style.tableLayout = 'fixed';
     
     // 합계 누적
@@ -2048,43 +1879,61 @@ function displayCategorizedStats(tableId, stats, firstColumnName) {
         // 전체
         tr.appendChild(createStatCell(computed.overall.count));
         tr.appendChild(createStatCell(computed.overall.quantity));
-        tr.appendChild(createStatCell(computed.overall.amount, true));
+        const amountCell1 = createStatCell(computed.overall.amount, true);
+        if (isStaff) amountCell1.style.display = 'none';
+        tr.appendChild(amountCell1);
         
         // 공급처 자사/벤더사
         tr.appendChild(createStatCell(computed.companyProduct.count));
         tr.appendChild(createStatCell(computed.companyProduct.quantity));
-        tr.appendChild(createStatCell(computed.companyProduct.amount, true));
+        const amountCell2 = createStatCell(computed.companyProduct.amount, true);
+        if (isStaff) amountCell2.style.display = 'none';
+        tr.appendChild(amountCell2);
         
         tr.appendChild(createStatCell(computed.vendorProduct.count));
         tr.appendChild(createStatCell(computed.vendorProduct.quantity));
-        tr.appendChild(createStatCell(computed.vendorProduct.amount, true));
+        const amountCell3 = createStatCell(computed.vendorProduct.amount, true);
+        if (isStaff) amountCell3.style.display = 'none';
+        tr.appendChild(amountCell3);
         
         // 판매처 자체/셀러
         tr.appendChild(createStatCell(computed.companySales.count));
         tr.appendChild(createStatCell(computed.companySales.quantity));
-        tr.appendChild(createStatCell(computed.companySales.amount, true));
+        const amountCell4 = createStatCell(computed.companySales.amount, true);
+        if (isStaff) amountCell4.style.display = 'none';
+        tr.appendChild(amountCell4);
         
         tr.appendChild(createStatCell(computed.sellerSales.count));
         tr.appendChild(createStatCell(computed.sellerSales.quantity));
-        tr.appendChild(createStatCell(computed.sellerSales.amount, true));
+        const amountCell5 = createStatCell(computed.sellerSales.amount, true);
+        if (isStaff) amountCell5.style.display = 'none';
+        tr.appendChild(amountCell5);
         
         // 발송 자사/벤더사
         tr.appendChild(createStatCell(computed.sentCompany.count, false, 'sent-col'));
         tr.appendChild(createStatCell(computed.sentCompany.quantity, false, 'sent-col'));
-        tr.appendChild(createStatCell(computed.sentCompany.amount, true, 'sent-col'));
+        const amountCell6 = createStatCell(computed.sentCompany.amount, true, 'sent-col');
+        if (isStaff) amountCell6.style.display = 'none';
+        tr.appendChild(amountCell6);
         
         tr.appendChild(createStatCell(computed.sentVendor.count, false, 'sent-col'));
         tr.appendChild(createStatCell(computed.sentVendor.quantity, false, 'sent-col'));
-        tr.appendChild(createStatCell(computed.sentVendor.amount, true, 'sent-col'));
+        const amountCell7 = createStatCell(computed.sentVendor.amount, true, 'sent-col');
+        if (isStaff) amountCell7.style.display = 'none';
+        tr.appendChild(amountCell7);
         
         // 미발송 자사/벤더사
         tr.appendChild(createStatCell(computed.unsentCompany.count, false, 'unsent-col'));
         tr.appendChild(createStatCell(computed.unsentCompany.quantity, false, 'unsent-col'));
-        tr.appendChild(createStatCell(computed.unsentCompany.amount, true, 'unsent-col'));
+        const amountCell8 = createStatCell(computed.unsentCompany.amount, true, 'unsent-col');
+        if (isStaff) amountCell8.style.display = 'none';
+        tr.appendChild(amountCell8);
         
         tr.appendChild(createStatCell(computed.unsentVendor.count, false, 'unsent-col'));
         tr.appendChild(createStatCell(computed.unsentVendor.quantity, false, 'unsent-col'));
-        tr.appendChild(createStatCell(computed.unsentVendor.amount, true, 'unsent-col'));
+        const amountCell9 = createStatCell(computed.unsentVendor.amount, true, 'unsent-col');
+        if (isStaff) amountCell9.style.display = 'none';
+        tr.appendChild(amountCell9);
         
         tbody.appendChild(tr);
         
@@ -2106,41 +1955,59 @@ function displayCategorizedStats(tableId, stats, firstColumnName) {
     
     totalRow.appendChild(createStatCell(totals.overall.count));
     totalRow.appendChild(createStatCell(totals.overall.quantity));
-    totalRow.appendChild(createStatCell(totals.overall.amount, true));
+    const totalAmountCell1 = createStatCell(totals.overall.amount, true);
+    if (isStaff) totalAmountCell1.style.display = 'none';
+    totalRow.appendChild(totalAmountCell1);
     
     totalRow.appendChild(createStatCell(totals.companyProduct.count));
     totalRow.appendChild(createStatCell(totals.companyProduct.quantity));
-    totalRow.appendChild(createStatCell(totals.companyProduct.amount, true));
+    const totalAmountCell2 = createStatCell(totals.companyProduct.amount, true);
+    if (isStaff) totalAmountCell2.style.display = 'none';
+    totalRow.appendChild(totalAmountCell2);
     
     totalRow.appendChild(createStatCell(totals.vendorProduct.count));
     totalRow.appendChild(createStatCell(totals.vendorProduct.quantity));
-    totalRow.appendChild(createStatCell(totals.vendorProduct.amount, true));
+    const totalAmountCell3 = createStatCell(totals.vendorProduct.amount, true);
+    if (isStaff) totalAmountCell3.style.display = 'none';
+    totalRow.appendChild(totalAmountCell3);
     
     totalRow.appendChild(createStatCell(totals.companySales.count));
     totalRow.appendChild(createStatCell(totals.companySales.quantity));
-    totalRow.appendChild(createStatCell(totals.companySales.amount, true));
+    const totalAmountCell4 = createStatCell(totals.companySales.amount, true);
+    if (isStaff) totalAmountCell4.style.display = 'none';
+    totalRow.appendChild(totalAmountCell4);
     
     totalRow.appendChild(createStatCell(totals.sellerSales.count));
     totalRow.appendChild(createStatCell(totals.sellerSales.quantity));
-    totalRow.appendChild(createStatCell(totals.sellerSales.amount, true));
+    const totalAmountCell5 = createStatCell(totals.sellerSales.amount, true);
+    if (isStaff) totalAmountCell5.style.display = 'none';
+    totalRow.appendChild(totalAmountCell5);
     
     // 발송 - 검정색
     totalRow.appendChild(createStatCell(totals.sentCompany.count, false, 'sent-col'));
     totalRow.appendChild(createStatCell(totals.sentCompany.quantity, false, 'sent-col'));
-    totalRow.appendChild(createStatCell(totals.sentCompany.amount, true, 'sent-col'));
+    const totalAmountCell6 = createStatCell(totals.sentCompany.amount, true, 'sent-col');
+    if (isStaff) totalAmountCell6.style.display = 'none';
+    totalRow.appendChild(totalAmountCell6);
     
     totalRow.appendChild(createStatCell(totals.sentVendor.count, false, 'sent-col'));
     totalRow.appendChild(createStatCell(totals.sentVendor.quantity, false, 'sent-col'));
-    totalRow.appendChild(createStatCell(totals.sentVendor.amount, true, 'sent-col'));
+    const totalAmountCell7 = createStatCell(totals.sentVendor.amount, true, 'sent-col');
+    if (isStaff) totalAmountCell7.style.display = 'none';
+    totalRow.appendChild(totalAmountCell7);
     
     // 미발송 - 빨강색
     totalRow.appendChild(createStatCell(totals.unsentCompany.count, false, 'unsent-col'));
     totalRow.appendChild(createStatCell(totals.unsentCompany.quantity, false, 'unsent-col'));
-    totalRow.appendChild(createStatCell(totals.unsentCompany.amount, true, 'unsent-col'));
+    const totalAmountCell8 = createStatCell(totals.unsentCompany.amount, true, 'unsent-col');
+    if (isStaff) totalAmountCell8.style.display = 'none';
+    totalRow.appendChild(totalAmountCell8);
     
     totalRow.appendChild(createStatCell(totals.unsentVendor.count, false, 'unsent-col'));
     totalRow.appendChild(createStatCell(totals.unsentVendor.quantity, false, 'unsent-col'));
-    totalRow.appendChild(createStatCell(totals.unsentVendor.amount, true, 'unsent-col'));
+    const totalAmountCell9 = createStatCell(totals.unsentVendor.amount, true, 'unsent-col');
+    if (isStaff) totalAmountCell9.style.display = 'none';
+    totalRow.appendChild(totalAmountCell9);
     
     tbody.appendChild(totalRow);
 }
@@ -2232,13 +2099,6 @@ function createStatCell(value, isAmount = false, className = '') {
         td.classList.add(className);
     }
     
-    // 직원인 경우 금액 숨김
-    if (isAmount && window.currentUser?.role !== 'admin') {
-        td.textContent = '-';
-        td.style.color = '#dee2e6';
-        return td;
-    }
-    
     // 0 값은 빈 셀로 표시
     if (value === 0) {
         td.textContent = '';
@@ -2252,7 +2112,7 @@ function createStatCell(value, isAmount = false, className = '') {
 }
 
 // ===========================
-// 피벗테이블
+// 피벗테이블 - 직원 모드에서 금액 옵션 제거
 // ===========================
 function updatePivotTable() {
     if (!processedData || !processedData.data || processedData.data.length === 0) {
@@ -2260,258 +2120,34 @@ function updatePivotTable() {
         return;
     }
     
+    // 직원 모드에서 금액 옵션 제거
+    const valueField = document.getElementById('pivotValueField');
+    if (window.currentUser?.role !== 'admin') {
+        // 금액 옵션이 선택되어 있으면 건수로 변경
+        if (valueField.value === '정산예정금액') {
+            valueField.value = 'count';
+        }
+        // 금액 옵션 숨기기
+        const options = valueField.querySelectorAll('option');
+        options.forEach(option => {
+            if (option.value === '정산예정금액' || option.textContent === '금액') {
+                option.style.display = 'none';
+                option.disabled = true;
+            }
+        });
+    }
+    
     const rowField = document.getElementById('pivotRowField').value;
     const colField = document.getElementById('pivotColField').value;
     const colField2 = document.getElementById('pivotColField2').value;
-    const valueField = document.getElementById('pivotValueField').value;
+    const valueFieldValue = valueField.value;
     
-    const pivotData = createPivotData(processedData.data, rowField, colField, colField2, valueField);
-    displayPivotTable(pivotData, rowField, colField, colField2, valueField);
+    const pivotData = createPivotData(processedData.data, rowField, colField, colField2, valueFieldValue);
+    displayPivotTable(pivotData, rowField, colField, colField2, valueFieldValue);
 }
 
-function createPivotData(data, rowField, colField, colField2, valueField) {
-    const pivot = {};
-    const colValues = new Set();
-    const colValues2 = new Set();
-    
-    data.forEach(row => {
-        let rowKey = String(row[rowField] || '(빈값)').trim();
-        if (rowField === '송장번호유무') {
-            rowKey = (row['송장번호'] && String(row['송장번호']).trim() !== '') ? '송장있음' : '송장없음';
-        }
-        
-        if (!pivot[rowKey]) pivot[rowKey] = {};
-        
-        if (colField === 'none') {
-            if (!pivot[rowKey]['전체']) pivot[rowKey]['전체'] = {};
-            if (!pivot[rowKey]['전체']['전체']) pivot[rowKey]['전체']['전체'] = [];
-            pivot[rowKey]['전체']['전체'].push(row);
-        } else {
-            let colKey = String(row[colField] || '(빈값)').trim();
-            if (colField === '송장번호유무') {
-                colKey = (row['송장번호'] && String(row['송장번호']).trim() !== '') ? '송장있음' : '송장없음';
-            }
-            
-            colValues.add(colKey);
-            if (!pivot[rowKey][colKey]) pivot[rowKey][colKey] = {};
-            
-            if (colField2 === 'none') {
-                if (!pivot[rowKey][colKey]['전체']) pivot[rowKey][colKey]['전체'] = [];
-                pivot[rowKey][colKey]['전체'].push(row);
-            } else {
-                let colKey2 = String(row[colField2] || '(빈값)').trim();
-                if (colField2 === '송장번호유무') {
-                    colKey2 = (row['송장번호'] && String(row['송장번호']).trim() !== '') ? '송장있음' : '송장없음';
-                }
-                
-                colValues2.add(colKey2);
-                if (!pivot[rowKey][colKey][colKey2]) pivot[rowKey][colKey][colKey2] = [];
-                pivot[rowKey][colKey][colKey2].push(row);
-            }
-        }
-    });
-    
-    return {
-        data: pivot,
-        columns: colField === 'none' ? ['전체'] : Array.from(colValues).sort(),
-        columns2: colField2 === 'none' ? ['전체'] : Array.from(colValues2).sort()
-    };
-}
-
-function displayPivotTable(pivotData, rowField, colField, colField2, valueField) {
-    const table = document.getElementById('pivotTable');
-    const thead = table.querySelector('thead');
-    const tbody = table.querySelector('tbody');
-    
-    thead.innerHTML = '';
-    tbody.innerHTML = '';
-    
-    // 헤더 생성
-    if (colField2 === 'none' || pivotData.columns2.length === 1) {
-        const headerRow = document.createElement('tr');
-        
-        const th1 = document.createElement('th');
-        th1.textContent = rowField;
-        th1.style.position = 'sticky';
-        th1.style.left = '0';
-        th1.style.background = '#f5f5f5';
-        th1.style.zIndex = '10';
-        headerRow.appendChild(th1);
-        
-        pivotData.columns.forEach(col => {
-            const th = document.createElement('th');
-            th.textContent = col;
-            th.style.background = '#f5f5f5';
-            headerRow.appendChild(th);
-        });
-        
-        const thTotal = document.createElement('th');
-        thTotal.textContent = '합계';
-        thTotal.style.background = '#e8f5e9';
-        thTotal.style.fontWeight = 'bold';
-        headerRow.appendChild(thTotal);
-        
-        thead.appendChild(headerRow);
-    } else {
-        // 2단 헤더
-        const headerRow1 = document.createElement('tr');
-        const headerRow2 = document.createElement('tr');
-        
-        const th1 = document.createElement('th');
-        th1.textContent = rowField;
-        th1.rowSpan = 2;
-        th1.style.position = 'sticky';
-        th1.style.left = '0';
-        th1.style.background = '#f5f5f5';
-        th1.style.zIndex = '10';
-        headerRow1.appendChild(th1);
-        
-        pivotData.columns.forEach(col => {
-            const th = document.createElement('th');
-            th.textContent = col;
-            th.colSpan = pivotData.columns2.length;
-            th.style.background = '#f5f5f5';
-            th.style.borderBottom = '1px solid #ddd';
-            headerRow1.appendChild(th);
-        });
-        
-        const thTotal1 = document.createElement('th');
-        thTotal1.textContent = '합계';
-        thTotal1.rowSpan = 2;
-        thTotal1.style.background = '#e8f5e9';
-        thTotal1.style.fontWeight = 'bold';
-        headerRow1.appendChild(thTotal1);
-        
-        pivotData.columns.forEach(col => {
-            pivotData.columns2.forEach(col2 => {
-                const th = document.createElement('th');
-                th.textContent = col2;
-                th.style.background = '#f9f9f9';
-                th.style.fontSize = '0.9em';
-                headerRow2.appendChild(th);
-            });
-        });
-        
-        thead.appendChild(headerRow1);
-        thead.appendChild(headerRow2);
-    }
-    
-    // 데이터 행 생성
-    const colTotals = {};
-    let grandTotal = 0;
-    
-    Object.keys(pivotData.data).sort().forEach(rowKey => {
-        const tr = document.createElement('tr');
-        
-        const td1 = document.createElement('td');
-        td1.textContent = rowKey;
-        td1.style.fontWeight = 'bold';
-        td1.style.position = 'sticky';
-        td1.style.left = '0';
-        td1.style.background = 'white';
-        td1.style.borderRight = '2px solid #ddd';
-        tr.appendChild(td1);
-        
-        let rowTotal = 0;
-        
-        pivotData.columns.forEach(col => {
-            if (colField2 === 'none' || pivotData.columns2.length === 1) {
-                const td = document.createElement('td');
-                const cellData = pivotData.data[rowKey][col] ? 
-                    (pivotData.data[rowKey][col]['전체'] || pivotData.data[rowKey][col]) : [];
-                const value = calculateValue(Array.isArray(cellData) ? cellData : [], valueField);
-                td.textContent = formatValue(value, valueField);
-                td.style.textAlign = 'right';
-                tr.appendChild(td);
-                
-                rowTotal += value;
-                const colKey = col;
-                if (!colTotals[colKey]) colTotals[colKey] = 0;
-                colTotals[colKey] += value;
-            } else {
-                pivotData.columns2.forEach(col2 => {
-                    const td = document.createElement('td');
-                    const cellData = pivotData.data[rowKey][col] && pivotData.data[rowKey][col][col2] ? 
-                        pivotData.data[rowKey][col][col2] : [];
-                    const value = calculateValue(cellData, valueField);
-                    td.textContent = formatValue(value, valueField);
-                    td.style.textAlign = 'right';
-                    tr.appendChild(td);
-                    
-                    rowTotal += value;
-                    const colKey = `${col}_${col2}`;
-                    if (!colTotals[colKey]) colTotals[colKey] = 0;
-                    colTotals[colKey] += value;
-                });
-            }
-        });
-        
-        const tdRowTotal = document.createElement('td');
-        tdRowTotal.textContent = formatValue(rowTotal, valueField);
-        tdRowTotal.style.textAlign = 'right';
-        tdRowTotal.style.background = '#f8f9fa';
-        tdRowTotal.style.fontWeight = 'bold';
-        tr.appendChild(tdRowTotal);
-        
-        tbody.appendChild(tr);
-        grandTotal += rowTotal;
-    });
-    
-    // 합계 행
-    const totalRow = document.createElement('tr');
-    totalRow.style.borderTop = '2px solid #4CAF50';
-    totalRow.style.background = '#e8f5e9';
-    totalRow.style.fontWeight = 'bold';
-    
-    const tdTotalLabel = document.createElement('td');
-    tdTotalLabel.textContent = '합계';
-    tdTotalLabel.style.position = 'sticky';
-    tdTotalLabel.style.left = '0';
-    tdTotalLabel.style.background = '#e8f5e9';
-    totalRow.appendChild(tdTotalLabel);
-    
-    if (colField2 === 'none' || pivotData.columns2.length === 1) {
-        pivotData.columns.forEach(col => {
-            const td = document.createElement('td');
-            td.textContent = formatValue(colTotals[col] || 0, valueField);
-            td.style.textAlign = 'right';
-            totalRow.appendChild(td);
-        });
-    } else {
-        pivotData.columns.forEach(col => {
-            pivotData.columns2.forEach(col2 => {
-                const td = document.createElement('td');
-                const colKey = `${col}_${col2}`;
-                td.textContent = formatValue(colTotals[colKey] || 0, valueField);
-                td.style.textAlign = 'right';
-                totalRow.appendChild(td);
-            });
-        });
-    }
-    
-    const tdGrandTotal = document.createElement('td');
-    tdGrandTotal.textContent = formatValue(grandTotal, valueField);
-    tdGrandTotal.style.textAlign = 'right';
-    tdGrandTotal.style.background = '#c8e6c9';
-    totalRow.appendChild(tdGrandTotal);
-    
-    tbody.appendChild(totalRow);
-}
-
-function calculateValue(data, valueField) {
-    if (valueField === 'count') {
-        return data.length;
-    }
-    
-    return data.reduce((sum, row) => {
-        const val = parseFloat(row[valueField]) || 0;
-        return sum + val;
-    }, 0);
-}
-
-function formatValue(value, valueField) {
-    return value.toLocaleString('ko-KR');
-}
+// 나머지 함수들은 동일 (createPivotData, displayPivotTable, calculateValue, formatValue 등)
+// ... (기존 코드 그대로)
 
 // ===========================
 // 결과 초기화 함수
@@ -2548,13 +2184,6 @@ function resetResultSection() {
     
     showSuccess('통합 결과가 초기화되었습니다.');
 }
-
-
-
-
-
-
-
 
 // ===========================
 // 중복발송검증 함수
@@ -2731,24 +2360,7 @@ function updateDuplicateStyles() {
     });
 }
 
-// ===========================
-// 피벗테이블
-// ===========================
-function updatePivotTable() {
-    if (!processedData || !processedData.data || processedData.data.length === 0) {
-        showError('피벗테이블을 생성할 데이터가 없습니다.');
-        return;
-    }
-    
-    const rowField = document.getElementById('pivotRowField').value;
-    const colField = document.getElementById('pivotColField').value;
-    const colField2 = document.getElementById('pivotColField2').value;
-    const valueField = document.getElementById('pivotValueField').value;
-    
-    const pivotData = createPivotData(processedData.data, rowField, colField, colField2, valueField);
-    displayPivotTable(pivotData, rowField, colField, colField2, valueField);
-}
-
+// 피벗테이블 관련 함수들은 그대로 유지
 function createPivotData(data, rowField, colField, colField2, valueField) {
     const pivot = {};
     const colValues = new Set();
@@ -2992,23 +2604,3 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
