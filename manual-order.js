@@ -286,6 +286,11 @@ const ManualOrder = (function() {
     // 유효성 검사
     // ===========================
     function validateOrder(orderData) {
+        if (!orderData['구분']) {
+            showError('구분을 선택해주세요.');
+            return false;
+        }
+        
         if (!orderData['옵션명']) {
             showError('상품을 선택해주세요.');
             return false;
@@ -503,11 +508,12 @@ const ManualOrder = (function() {
     
     function resetForm() {
         document.getElementById('manualOrderForm').reset();
-        document.getElementById('manualOrderType').value = 'CS발송';
+        document.getElementById('manualOrderType').value = '';  // 선택필수로 초기화
         document.getElementById('manualQuantity').value = '1';
         currentOrder = {};
-    
     }
+
+    
     // ===========================
     // 수량 변경 함수 추가
     // ===========================
