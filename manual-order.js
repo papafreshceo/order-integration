@@ -6,6 +6,7 @@ const ManualOrder = (function() {
     let manualOrders = [];
     let currentOrder = {};
     let orderCounter = 0;
+    let productList = [];
     
     // ===========================
     // 초기화
@@ -13,6 +14,32 @@ const ManualOrder = (function() {
     function init() {
         setupManualOrderForm();
         loadSavedOrders();
+        loadProductData();
+    }
+    
+    // ===========================
+    // 제품 데이터 로드
+    // ===========================
+    async function loadProductData() {
+        try {
+            const response = await fetch('/api/sheets', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'getProductData'
+                })
+            });
+            
+            const result = await response.json();
+            if (result.productData) {
+                productList = Object.entries(result.productData);
+                console.log('제품 데이터 로드 완료:', productList.length);
+            }
+        } catch (error) {
+            console.error('제품 데이터 로드 실패:', error);
+        }
     }
     
     // ===========================
@@ -31,11 +58,30 @@ const ManualOrder = (function() {
             productSearchInput.addEventListener('input', debounce(searchProducts, 300));
         }
         
+        // 단가 변경시 금액 계산
+        const unitPriceInput = document.getElementById('manualUnitPrice');
+        if (unitPriceInput) {
+            unitPriceInput.addEventListener('input', function(e) {
+                formatNumberInput(e.target);
+                calculateAmount();
+            });
+        }
+        
         // 수량 변경시 금액 계산
         const quantityInput = document.getElementById('manualQuantity');
         if (quantityInput) {
             quantityInput.addEventListener('input', calculateAmount);
         }
+        
+        // 전화번호 자동 포맷
+        ['manualOrdererPhone', 'manualReceiverPhone'].forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.addEventListener('input', function(e) {
+                    formatPhoneNumber(e.target);
+                });
+            }
+        });
     }
     
     // ===========================
@@ -49,10 +95,10 @@ const ManualOrder = (function() {
         }
         
         try {
-            // ProductMatching 모듈의 데이터 활용
-            const productData = ProductMatching.getProductData();
-            const results = Object.entries(productData).filter(([key, value]) => {
-                return key.toLowerCase().includes(query.toLowerCase());
+            // 품목, 품종, 옵션명에서 검색
+            const results = productList.filter(([optionName, data]) => {
+                const searchText = `${data.품목 || ''} ${data.품종 || ''} ${optionName}`.toLowerCase();
+                return searchText.includes(query.toLowerCase());
             }).slice(0, 10);
             
             displaySearchResults(results);
@@ -76,9 +122,8 @@ const ManualOrder = (function() {
         
         resultsDiv.innerHTML = results.map(([optionName, data]) => {
             return `
-                <div class="search-result-item" onclick="ManualOrder.selectProduct('${optionName}')">
+                <div class="search-result-item" onclick="ManualOrder.selectProduct('${optionName.replace(/'/g, "\\'")}')">
                     <span class="result-name">${optionName}</span>
-                    <span class="result-vendor">${data.벤더사 || '자사'}</span>
                 </div>
             `;
         }).join('');
@@ -90,37 +135,43 @@ const ManualOrder = (function() {
     // 상품 선택
     // ===========================
     function selectProduct(optionName) {
-        const productData = ProductMatching.getProductData();
-        const priceData = ProductMatching.getPriceData();
+        const productData = productList.find(([name, data]) => name === optionName);
         
-        const product = productData[optionName];
-        const price = priceData[optionName];
-        
-        if (product) {
-            document.getElementById('manualOptionName').value = optionName;
+        if (productData) {
+            const [name, data] = productData;
             
-            if (price) {
-                document.getElementById('manualUnitPrice').value = price.sellerSupplyPrice || 0;
-                calculateAmount();
+            // 옵션명 설정
+            document.getElementById('manualOptionName').value = name;
+            
+            // 셀러공급가를 단가로 설정 (수정 가능)
+            const priceData = ProductMatching.getPriceData();
+            if (priceData && priceData[name]) {
+                const unitPrice = priceData[name].sellerSupplyPrice || 0;
+                const unitPriceInput = document.getElementById('manualUnitPrice');
+                unitPriceInput.value = formatNumber(unitPrice);
             }
+            
+            currentOrder.product = data;
+            currentOrder.optionName = name;
+            
+            calculateAmount();
         }
         
-        currentOrder.product = product;
-        currentOrder.optionName = optionName;
-        
         hideSearchResults();
-        document.getElementById('manualProductSearch').value = optionName;
+        document.getElementById('manualProductSearch').value = '';
     }
     
     // ===========================
     // 금액 계산
     // ===========================
     function calculateAmount() {
+        const unitPriceStr = document.getElementById('manualUnitPrice').value;
         const quantity = parseInt(document.getElementById('manualQuantity').value) || 0;
-        const unitPrice = parseFloat(document.getElementById('manualUnitPrice').value) || 0;
+        
+        const unitPrice = parseFloat(unitPriceStr.replace(/,/g, '')) || 0;
         const totalAmount = quantity * unitPrice;
         
-        document.getElementById('manualTotalAmount').value = totalAmount.toLocaleString('ko-KR');
+        document.getElementById('manualTotalAmount').value = formatNumber(totalAmount);
     }
     
     // ===========================
@@ -144,7 +195,6 @@ const ManualOrder = (function() {
         
         // 제품 정보에서 자동 채우기
         if (currentOrder.product) {
-            orderData['셀러'] = '';
             orderData['벤더사'] = currentOrder.product.벤더사 || '';
             orderData['출고처'] = currentOrder.product.출고처 || '';
             orderData['출고'] = currentOrder.product.출고처 || '';
@@ -173,9 +223,14 @@ const ManualOrder = (function() {
     // 폼 데이터 수집
     // ===========================
     function collectFormData() {
+        const unitPrice = parseFloat(document.getElementById('manualUnitPrice').value.replace(/,/g, '')) || 0;
+        const quantity = parseInt(document.getElementById('manualQuantity').value) || 0;
+        
         return {
+            '구분': document.getElementById('manualOrderType').value,
             '옵션명': document.getElementById('manualOptionName').value,
-            '수량': document.getElementById('manualQuantity').value,
+            '단가': unitPrice,
+            '수량': quantity,
             '주문번호': 'M' + Date.now(),
             '주문자': document.getElementById('manualOrderer').value,
             '주문자전화번호': document.getElementById('manualOrdererPhone').value,
@@ -183,7 +238,8 @@ const ManualOrder = (function() {
             '수령인전화번호': document.getElementById('manualReceiverPhone').value,
             '수령인주소': document.getElementById('manualAddress').value,
             '배송메시지': document.getElementById('manualDeliveryMsg').value,
-            '정산예정금액': parseFloat(document.getElementById('manualTotalAmount').value.replace(/,/g, '')) || 0
+            '정산예정금액': unitPrice * quantity,
+            '셀러': ''
         };
     }
     
@@ -196,13 +252,23 @@ const ManualOrder = (function() {
             return false;
         }
         
-        if (!orderData['주문자'] || orderData['주문자'].length < 2) {
-            showError('주문자명을 2자 이상 입력해주세요.');
+        if (!orderData['수량'] || orderData['수량'] <= 0) {
+            showError('수량을 입력해주세요.');
             return false;
         }
         
-        if (!orderData['수령인'] || orderData['수령인'].length < 2) {
-            showError('수령인명을 2자 이상 입력해주세요.');
+        if (!orderData['단가'] || orderData['단가'] <= 0) {
+            showError('단가를 확인해주세요.');
+            return false;
+        }
+        
+        if (!orderData['수령인']) {
+            showError('수령인을 입력해주세요.');
+            return false;
+        }
+        
+        if (!orderData['수령인전화번호']) {
+            showError('수령인 연락처를 입력해주세요.');
             return false;
         }
         
@@ -231,11 +297,12 @@ const ManualOrder = (function() {
                 <thead>
                     <tr>
                         <th>연번</th>
+                        <th>구분</th>
                         <th>옵션명</th>
+                        <th>단가</th>
                         <th>수량</th>
-                        <th>주문자</th>
-                        <th>수령인</th>
                         <th>금액</th>
+                        <th>수령인</th>
                         <th>삭제</th>
                     </tr>
                 </thead>
@@ -243,11 +310,12 @@ const ManualOrder = (function() {
                     ${manualOrders.map((order, index) => `
                         <tr>
                             <td>${order['연번']}</td>
+                            <td>${order['구분']}</td>
                             <td>${order['옵션명']}</td>
-                            <td>${order['수량']}</td>
-                            <td>${order['주문자']}</td>
+                            <td style="text-align: right;">${formatNumber(order['단가'])}원</td>
+                            <td style="text-align: center;">${order['수량']}</td>
+                            <td style="text-align: right;">${formatNumber(order['정산예정금액'])}원</td>
                             <td>${order['수령인']}</td>
-                            <td>${order['정산예정금액'].toLocaleString('ko-KR')}원</td>
                             <td>
                                 <button onclick="ManualOrder.removeOrder(${index})" class="btn-remove">삭제</button>
                             </td>
@@ -257,41 +325,67 @@ const ManualOrder = (function() {
             </table>
             <div class="manual-order-summary">
                 총 ${manualOrders.length}건 / 
-                합계: ${manualOrders.reduce((sum, o) => sum + o['정산예정금액'], 0).toLocaleString('ko-KR')}원
+                합계: ${formatNumber(manualOrders.reduce((sum, o) => sum + o['정산예정금액'], 0))}원
             </div>
         `;
     }
     
     // ===========================
-    // 주문 삭제
+    // 전화번호 포맷
+    // ===========================
+    function formatPhoneNumber(input) {
+        let value = input.value.replace(/[^0-9]/g, '');
+        
+        if (value.length === 10) {
+            if (value.substring(0, 2) === '02') {
+                value = value.substring(0, 2) + '-' + value.substring(2, 6) + '-' + value.substring(6);
+            } else {
+                value = value.substring(0, 3) + '-' + value.substring(3, 6) + '-' + value.substring(6);
+            }
+        } else if (value.length === 11) {
+            value = value.substring(0, 3) + '-' + value.substring(3, 7) + '-' + value.substring(7);
+        }
+        
+        input.value = value;
+    }
+    
+    // ===========================
+    // 숫자 포맷
+    // ===========================
+    function formatNumber(num) {
+        return num.toLocaleString('ko-KR');
+    }
+    
+    function formatNumberInput(input) {
+        const value = input.value.replace(/[^0-9]/g, '');
+        if (value) {
+            input.value = parseInt(value).toLocaleString('ko-KR');
+        }
+    }
+    
+    // ===========================
+    // 기타 함수들
     // ===========================
     function removeOrder(index) {
         if (confirm('해당 주문을 삭제하시겠습니까?')) {
             manualOrders.splice(index, 1);
-            
-            // 연번 재정렬
             manualOrders.forEach((order, i) => {
                 order['연번'] = i + 1;
                 order['마켓'] = 'M' + String(i + 1).padStart(3, '0');
             });
-            
             orderCounter = manualOrders.length;
             updateOrderList();
             saveOrders();
         }
     }
     
-    // ===========================
-    // 폼 초기화
-    // ===========================
     function resetForm() {
         document.getElementById('manualOrderForm').reset();
+        document.getElementById('manualOrderType').value = 'CS재발송';
+        document.getElementById('manualQuantity').value = '1';
         currentOrder = {};
     }
     
-    // ===========================
-    // 로컬 저장/불러오기
-    // ===========================
     function saveOrders() {
         localStorage.setItem('manualOrders', JSON.stringify(manualOrders));
     }
@@ -309,9 +403,6 @@ const ManualOrder = (function() {
         }
     }
     
-    // ===========================
-    // 유틸리티 함수
-    // ===========================
     function hideSearchResults() {
         const resultsDiv = document.getElementById('productSearchResults');
         if (resultsDiv) {
@@ -353,9 +444,7 @@ const ManualOrder = (function() {
         };
     }
     
-    // ===========================
     // 퍼블릭 API
-    // ===========================
     return {
         init: init,
         selectProduct: selectProduct,
@@ -370,5 +459,4 @@ const ManualOrder = (function() {
     };
 })();
 
-// 전역 노출
 window.ManualOrder = ManualOrder;
