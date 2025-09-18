@@ -65,28 +65,9 @@ export default async function handler(req, res) {
               }
           }
           
-          // 가격계산 시트 데이터
-          const priceSheetData = await getProductSheetData(productSpreadsheetId, '가격계산!A:AZ');
-          const priceInfo = {};
-          
-          if (priceSheetData && priceSheetData.length > 1) {
-              const headers = priceSheetData[0];
-              const optionIdx = headers.indexOf('옵션명');
-              const priceIdx = headers.indexOf('셀러공급가');
-              
-              for (let i = 1; i < priceSheetData.length; i++) {
-                  const optionName = String(priceSheetData[i][optionIdx] || '').trim();
-                  if (!optionName) continue;
-                  
-                  priceInfo[optionName] = {
-                      sellerSupplyPrice: priceIdx !== -1 ? parseNumber(priceSheetData[i][priceIdx]) : 0
-                  };
-              }
-          }
-          
-          return res.status(200).json({
+           return res.status(200).json({
               productData: productInfo,
-              priceData: priceInfo
+              priceData: productInfo  // productInfo에 이미 셀러공급가 포함
           });
           
         } catch (error) {
@@ -184,6 +165,7 @@ function parseNumber(value) {
   return isNaN(num) ? 0 : num;
 
 }
+
 
 
 
