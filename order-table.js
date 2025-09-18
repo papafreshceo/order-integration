@@ -279,9 +279,17 @@ const OrderTable = (function() {
                 return sum + amount;
             }, 0);
             
-            html += '<div class="order-table-summary" style="margin-top: 16px; padding: 12px; background: #f8f9fa; border-radius: 4px; text-align: right;">';
+            html += '<div class="order-table-summary" style="margin-top: 16px; padding: 12px; background: #f8f9fa; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">';
+            html += '<div style="font-size: 16px; font-weight: 400;">';
             html += `총 ${data.length}건 / `;
             html += `합계: ${totalAmount.toLocaleString('ko-KR')}원`;
+            html += '</div>';
+            
+            // 저장 버튼 추가
+            if (options.showSaveButton) {
+                html += '<button onclick="' + options.onSave + '()" class="btn-save-sheets" style="padding: 8px 20px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 400;">구글 시트 저장</button>';
+            }
+            
             html += '</div>';
         }
         

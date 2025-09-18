@@ -337,6 +337,8 @@ const ManualOrder = (function() {
                 showDelete: true,
                 onDelete: 'ManualOrder.removeOrder',
                 showSummary: true,
+                showSaveButton: true,
+                onSave: 'ManualOrder.saveToSheets',
                 maxHeight: '400px'
             });
         } else {
@@ -492,15 +494,96 @@ const ManualOrder = (function() {
         init: init,
         selectProduct: selectProduct,
         removeOrder: removeOrder,
-        changeQuantity: changeQuantity,  // 이 줄 추가
-        validateQuantity: validateQuantity,  // 이 줄 추가
+        changeQuantity: changeQuantity,
+        validateQuantity: validateQuantity,
         getOrders: () => manualOrders,
-        getProductList: () => productList,  // 추가
+        getProductList: () => productList,
         clearOrders: () => {
             manualOrders = [];
             orderCounter = 0;
             updateOrderList();
             saveOrders();
+        },
+        saveToSheets: async function() {
+            if (manualOrders.length === 0) {
+                showError('저장할 주문이 없습니다.');
+                return;
+            }
+            
+            // showLoading 함수 사용
+            if (window.showLoading) window.showLoading();
+            
+            try {
+                // 오늘 날짜로 시트명 생성
+                const today = new Date();
+                const sheetName = today.getFullYear() + 
+                                 String(today.getMonth() + 1).padStart(2, '0') + 
+                                 String(today.getDate()).padStart(2, '0');
+                
+                // 헤더 행 생성
+                const headers = window.mappingData.standardFields;
+                const values = [headers];
+                
+                // 데이터 행 추가
+                manualOrders.forEach(order => {
+                    const row = headers.map(header => {
+                        const value = order[header];
+                        return value !== undefined && value !== null ? String(value) : '';
+                    });
+                    values.push(row);
+                });
+                
+                // 마켓 색상 정보
+                const marketColors = {};
+                if (window.mappingData && window.mappingData.markets) {
+                    Object.entries(window.mappingData.markets).forEach(([marketName, market]) => {
+                        if (market.color) {
+                            const rgb = market.color.split(',').map(Number);
+                            const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+                            marketColors[marketName] = {
+                                color: market.color,
+                                textColor: brightness > 128 ? '#000' : '#fff'
+                            };
+                        }
+                    });
+                }
+                
+                // API 호출
+                const response = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'saveToSheet',
+                        sheetName: sheetName,
+                        values: values,
+                        marketColors: marketColors
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess(`${manualOrders.length}건의 주문이 "${sheetName}" 시트에 저장되었습니다.`);
+                    
+                    // 저장 후 초기화 여부 확인
+                    if (confirm('저장이 완료되었습니다. 주문 목록을 초기화하시겠습니까?')) {
+                        manualOrders = [];
+                        orderCounter = 0;
+                        updateOrderList();
+                        saveOrders();
+                    }
+                } else {
+                    showError('저장 실패: ' + (result.error || '알 수 없는 오류'));
+                }
+                
+            } catch (error) {
+                console.error('저장 오류:', error);
+                showError('저장 중 오류가 발생했습니다.');
+            } finally {
+                if (window.hideLoading) window.hideLoading();
+            }
         }
     };
 })();
