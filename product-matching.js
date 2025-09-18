@@ -173,24 +173,7 @@ function enableCellEditing(td, rowIndex, fieldName) {
     td.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();  // 줄바꿈 방지
-            e.stopPropagation();  // 이벤트 전파 중지
-            
-            // 편집 종료
-            td.contentEditable = false;
-            td.blur();
-            
-            // 편집 가능 상태 복원
-            setTimeout(() => {
-                td.contentEditable = true;
-            }, 100);
-        }
-    });
-    
-    // Shift+Enter도 방지
-    td.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            return false;
+            td.blur();  // 포커스 제거하여 편집 종료
         }
     });
 }
@@ -198,29 +181,68 @@ function enableCellEditing(td, rowIndex, fieldName) {
     // ===========================
     // 셀 수정 처리
     // ===========================
-    function handleCellEdit(td, rowIndex, fieldName, originalValue) {
-        const newValue = td.textContent.trim();
-        
-        if (newValue !== originalValue) {
-            // processedData 업데이트
-            if (window.processedData && window.processedData.data[rowIndex]) {
-                window.processedData.data[rowIndex][fieldName] = newValue;
+    /* 찾기: handleCellEdit 함수 전체 */
+function handleCellEdit(td, rowIndex, fieldName, originalValue) {
+    const newValue = td.textContent.trim();
+    
+    if (newValue !== originalValue) {
+        // processedData 업데이트
+        if (processedData && processedData.data[rowIndex]) {
+            processedData.data[rowIndex][fieldName] = newValue;
+            
+            // 수정된 셀 추적
+            const cellKey = `${rowIndex}-${fieldName}`;
+            modifiedCells.set(cellKey, {
+                original: originalValue,
+                modified: newValue
+            });
+            
+            // 즉시 재매칭 시도
+            if (fieldName === '옵션명') {
+                const matchedProduct = matchOption(newValue);
+                const row = processedData.data[rowIndex];
                 
-                // 수정된 셀 추적
-                const cellKey = `${rowIndex}-${fieldName}`;
-                modifiedCells.set(cellKey, {
-                    original: originalValue,
-                    modified: newValue
-                });
+                // 기존 클래스 모두 제거
+                td.classList.remove('unmatched-cell', 'modified-cell', 'modified-matched-cell');
                 
-                // 셀 스타일 변경 (수정됨 표시)
+                if (matchedProduct) {
+                    // 매칭 성공
+                    td.classList.add('modified-matched-cell');
+                    row['_matchStatus'] = 'modified-matched';
+                    
+                    // 제품 정보 업데이트
+                    row['출고처'] = matchedProduct.출고처 || '';
+                    row['송장주체'] = matchedProduct.송장주체 || '';
+                    row['벤더사'] = matchedProduct.벤더사 || '';
+                    row['발송지명'] = matchedProduct.발송지명 || '';
+                    row['발송지주소'] = matchedProduct.발송지주소 || '';
+                    row['발송지연락처'] = matchedProduct.발송지연락처 || '';
+                    row['출고비용'] = matchedProduct.출고비용 || 0;
+                    
+                    // 셀러공급가 업데이트
+                    const sellerPrice = getSellerPrice(newValue);
+                    if (sellerPrice !== null && row['셀러']) {
+                        const quantity = parseInt(row['수량']) || 1;
+                        row['셀러공급가'] = sellerPrice * quantity;
+                    }
+                    
+                    console.log(`매칭 성공: ${newValue}`);
+                } else {
+                    // 매칭 실패
+                    td.classList.add('modified-cell');
+                    row['_matchStatus'] = 'modified';
+                    console.log(`매칭 실패: ${newValue}`);
+                }
+            } else {
+                // 옵션명이 아닌 경우
                 td.classList.remove('unmatched-cell');
                 td.classList.add('modified-cell');
-                
-                console.log(`셀 수정: [${rowIndex}][${fieldName}] ${originalValue} → ${newValue}`);
             }
+            
+            console.log(`셀 수정: [${rowIndex}][${fieldName}] ${originalValue} → ${newValue}`);
         }
     }
+}
     
     // ===========================
     // 옵션명 검증
@@ -375,6 +397,7 @@ function enableCellEditing(td, rowIndex, fieldName) {
 // 전역 함수로 노출 (HTML onclick에서 호출 가능)
 
 window.ProductMatching = ProductMatching;
+
 
 
 
