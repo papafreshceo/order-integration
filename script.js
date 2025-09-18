@@ -17,8 +17,9 @@ const API_BASE = '';
 // ===========================
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
+    // 건별 입력 초기화
+    ManualOrder.init();
 });
-
 async function initializeApp() {
     await loadMappingData();
     setupEventListeners();
@@ -500,8 +501,13 @@ async function detectMarketAndAdd(file, headers, dataRows, rawRows, provisionalH
 // 주문 통합 처리
 // ===========================
 async function processOrders() {
-    if (uploadedFiles.length === 0) {
-        showError('업로드된 파일이 없습니다.');
+    // 건별 입력과 Excel 파일 모두 체크
+    const manualOrders = ManualOrder.getOrders();
+    const hasManualOrders = manualOrders.length > 0;
+    const hasUploadedFiles = uploadedFiles.length > 0;
+    
+    if (!hasManualOrders && !hasUploadedFiles) {
+        showError('처리할 주문이 없습니다. 건별 입력 또는 Excel 파일을 추가해주세요.');
         return;
     }
     
@@ -556,6 +562,21 @@ async function processOrders() {
 async function processOrderFiles(filesData) {
     try {
         console.log('processOrderFiles 시작');
+        
+        // 건별 입력 데이터 추가
+        const manualOrders = ManualOrder.getOrders();
+        if (manualOrders.length > 0) {
+            const manualFileData = {
+                name: '건별입력',
+                marketName: '건별입력',
+                isToday: true,
+                headers: Object.keys(manualOrders[0]),
+                data: manualOrders,
+                rowCount: manualOrders.length
+            };
+            filesData = [manualFileData, ...filesData];
+        }
+        
         console.log('받은 파일 수:', filesData.length);
         
         if (!filesData || filesData.length === 0) {
@@ -2706,6 +2727,7 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
 
