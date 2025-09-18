@@ -1177,7 +1177,7 @@ function exportToExcel() {
         const restrictedColumns = [
             '셀러공급가', '출고비용', '정산예정금액', '정산대상금액',
             '상품금액', '최종결제금액', '할인금액', '마켓부담할인액',
-            '판매자할인쿠폰할인', '구매쿠폰적용금액', '쿠폰할인금액',
+            '판매자할인쿠폰할인', '구매쿠폰적용금액', '쿠폰할인금액', '마켓부담할인액',
             '기타지원금할인금', '수수료1', '수수료2'
             // 택배비는 제외 (직원도 볼 수 있음)
         ];
@@ -2964,6 +2964,7 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
 
