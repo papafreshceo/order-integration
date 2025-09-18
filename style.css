@@ -1513,3 +1513,45 @@ tbody tr:nth-child(even) {
 .qty-plus {
     border-left: 1px solid #dee2e6;
 }
+
+
+/* 건별 입력 반응형 레이아웃 */
+.form-row-table {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: flex-end;
+}
+
+/* 묶음 단위 정의 */
+.form-group-wrapper {
+    display: flex;
+    gap: 10px;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+}
+
+/* 미디어 쿼리 - 화면 크기별 대응 */
+@media (max-width: 1400px) {
+    .form-row-table {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .form-group-wrapper {
+        width: 100%;
+    }
+}
+
+@media (max-width: 900px) {
+    .form-group-wrapper {
+        flex-wrap: wrap;
+    }
+    
+    .form-group {
+        min-width: 120px;
+        flex: 1;
+    }
+}
+
