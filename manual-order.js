@@ -223,7 +223,7 @@ const ManualOrder = (function() {
         // 연번 추가
         orderCounter++;
         orderData['연번'] = orderCounter;
-        orderData['마켓명'] = '건별입력';
+        orderData['마켓명'] = orderData['구분'];  // 구분 값을 마켓명에 넣기
         orderData['마켓'] = 'M' + String(orderCounter).padStart(3, '0');
         orderData['결제일'] = new Date().toISOString().split('T')[0] + ' 00:00:00';
         
@@ -331,42 +331,125 @@ const ManualOrder = (function() {
             return;
         }
         
-        listContainer.innerHTML = `
-            <table class="manual-order-table">
-                <thead>
-                    <tr>
-                        <th>연번</th>
-                        <th>구분</th>
-                        <th>옵션명</th>
-                        <th>단가</th>
-                        <th>수량</th>
-                        <th>금액</th>
-                        <th>수령인</th>
-                        <th>삭제</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${manualOrders.map((order, index) => `
+        // 표준필드 가져오기 (script.js의 processedData 또는 mappingData 사용)
+        let headers = [];
+        if (window.processedData && window.processedData.standardFields) {
+            headers = window.processedData.standardFields;
+        } else if (window.mappingData && window.mappingData.standardFields) {
+            headers = window.mappingData.standardFields;
+        } else {
+            // 기본값
+            headers = ['연번', '마켓명', '마켓', '결제일', '주문번호', '주문자', '수령인', '수령인전화번호', '수령인주소', '옵션명', '수량', '정산예정금액'];
+        }
+        
+        // script.js의 displayResultTable 로직 참조
+        const fixedWidths = window.fixedWidths || {
+            '연번': 50,
+            '마켓명': 100,
+            '마켓': 60,
+            '결제일': 150,
+            '주문번호': 140,
+            '상품주문번호': 140,
+            '주문자': 70,
+            '수령인': 70,
+            '수취인': 70,
+            '주문자전화번호': 120,
+            '수취인전화번호': 120,
+            '수령인전화번호': 120,
+            '주소': 300,
+            '수취인주소': 300,
+            '수령인주소': 300,
+            '배송메세지': 100,
+            '배송메시지': 100,
+            '옵션명': 160,
+            '수량': 60,
+            '정산예정금액': 90
+        };
+        
+        const centerAlignFields = ['마켓명', '연번', '결제일', '주문번호', '주문자', '수취인', '옵션명', '수량', '마켓'];
+        const rightAlignFields = ['셀러공급가', '출고비용', '정산예정금액', '정산대상금액', '상품금액', '택배비', '기타비용'];
+        
+        const getAlignment = (fieldName) => {
+            if (rightAlignFields.some(f => fieldName.includes(f))) return 'right';
+            if (centerAlignFields.some(f => fieldName.includes(f))) return 'center';
+            return 'left';
+        };
+        
+        // 건별입력 주문 데이터 보완
+        manualOrders.forEach(order => {
+            // 누락된 필드 채우기
+            headers.forEach(field => {
+                if (order[field] === undefined) {
+                    order[field] = '';
+                }
+            });
+        });
+        
+        // HTML 생성
+        const html = `
+            <div style="overflow-x: auto; max-height: 400px;">
+                <table class="manual-order-table">
+                    <thead style="position: sticky; top: 0; background: white; z-index: 10;">
                         <tr>
-                            <td>${order['연번']}</td>
-                            <td>${order['구분']}</td>
-                            <td>${order['옵션명']}</td>
-                            <td style="text-align: right;">${formatNumber(order['단가'])}원</td>
-                            <td style="text-align: center;">${order['수량']}</td>
-                            <td style="text-align: right;">${formatNumber(order['정산예정금액'])}원</td>
-                            <td>${order['수령인']}</td>
-                            <td>
-                                <button onclick="ManualOrder.removeOrder(${index})" class="btn-remove">삭제</button>
-                            </td>
+                            ${headers.map(header => 
+                                `<th style="width: ${fixedWidths[header] || 100}px;">${header}</th>`
+                            ).join('')}
+                            <th style="width: 60px;">삭제</th>
                         </tr>
-                    `).join('')}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        ${manualOrders.map((order, index) => {
+                            // 마켓 색상 가져오기
+                            let marketColor = '200,200,200';
+                            let textColor = '#000';
+                            
+                            if (window.mappingData && window.mappingData.markets) {
+                                const market = window.mappingData.markets[order['마켓명']];
+                                if (market && market.color) {
+                                    marketColor = market.color;
+                                    const rgb = marketColor.split(',').map(Number);
+                                    const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+                                    textColor = brightness > 128 ? '#000' : '#fff';
+                                }
+                            }
+                            
+                            return `
+                                <tr>
+                                    ${headers.map(header => {
+                                        const value = order[header] || '';
+                                        const alignment = getAlignment(header);
+                                        
+                                        // 마켓명 필드 특별 처리
+                                        if (header === '마켓명') {
+                                            return `<td style="background: rgb(${marketColor}); color: ${textColor}; font-weight: bold; text-align: center;">${value}</td>`;
+                                        }
+                                        
+                                        // 금액 필드 포맷팅
+                                        if (rightAlignFields.some(f => header.includes(f)) && value) {
+                                            const numValue = typeof value === 'number' ? value : parseFloat(String(value).replace(/[^\d.-]/g, ''));
+                                            if (!isNaN(numValue)) {
+                                                return `<td style="text-align: ${alignment};">${formatNumber(numValue)}</td>`;
+                                            }
+                                        }
+                                        
+                                        return `<td style="text-align: ${alignment};">${value}</td>`;
+                                    }).join('')}
+                                    <td style="text-align: center;">
+                                        <button onclick="ManualOrder.removeOrder(${index})" class="btn-remove">삭제</button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
             <div class="manual-order-summary">
                 총 ${manualOrders.length}건 / 
-                합계: ${formatNumber(manualOrders.reduce((sum, o) => sum + o['정산예정금액'], 0))}원
+                합계: ${formatNumber(manualOrders.reduce((sum, o) => sum + (o['정산예정금액'] || 0), 0))}원
             </div>
         `;
+        
+        listContainer.innerHTML = html;
     }
     
     // ===========================
