@@ -1353,3 +1353,23 @@ tbody tr:nth-child(even) {
     color: var(--text-muted);
     font-size: 14px;
 }
+/* 건별 입력 폼 레이아웃 */
+.form-row-full {
+    display: flex;
+    margin-bottom: 16px;
+}
+
+.form-row-custom {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    align-items: flex-end;
+}
+
+.form-row-custom .form-group {
+    flex: none;
+}
+
+.form-row-custom input {
+    box-sizing: border-box;
+}
