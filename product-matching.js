@@ -387,16 +387,18 @@ function handleCellEdit(td, rowIndex, fieldName, originalValue) {
         applyProductInfo: applyProductInfo,
         verifyOptions: verifyOptions,
         updateTableStyles: updateTableStyles,
+        enableCellEditing: enableCellEditing,  // 추가
         getUnmatchedOptions: () => unmatchedOptions,
         getModifiedCells: () => modifiedCells,
-        getProductData: () => productData,  // 추가
-        getPriceData: () => priceData       // 추가
+        getProductData: () => productData,
+        getPriceData: () => priceData
     };
 })();
 
 // 전역 함수로 노출 (HTML onclick에서 호출 가능)
 
 window.ProductMatching = ProductMatching;
+
 
 
 
