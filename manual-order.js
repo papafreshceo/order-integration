@@ -274,6 +274,7 @@ const ManualOrder = (function() {
             '주문자전화번호': document.getElementById('manualOrdererPhone').value,
             '수령인': document.getElementById('manualReceiver').value,
             '수령인전화번호': document.getElementById('manualReceiverPhone').value,
+            '우편번호': document.getElementById('manualZipcode').value,
             '수령인주소': document.getElementById('manualAddress').value,
             '배송메시지': document.getElementById('manualDeliveryMsg').value,
             '정산예정금액': (unitPrice * quantity) + shippingCost + extraCost,
