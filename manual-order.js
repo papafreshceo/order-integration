@@ -421,9 +421,8 @@ const ManualOrder = (function() {
         document.getElementById('manualOrderForm').reset();
         document.getElementById('manualOrderType').value = 'CS재발송';
         document.getElementById('manualQuantity').value = '1';
-        document.getElementById('manualShippingCost').value = '0';
-        document.getElementById('manualExtraCost').value = '0';
         currentOrder = {};
+    }
     }
     // ===========================
     // 수량 변경 함수 추가
