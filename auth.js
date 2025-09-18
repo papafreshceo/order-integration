@@ -225,3 +225,24 @@ function getErrorMessage(errorCode) {
     return errorMessages[errorCode] || '로그인 중 오류가 발생했습니다.';
 }
 
+function getErrorMessage(errorCode) {
+    const errorMessages = {
+        'auth/invalid-email': '유효하지 않은 이메일 형식입니다.',
+        // ... 생략 ...
+    };
+    
+    return errorMessages[errorCode] || '로그인 중 오류가 발생했습니다.';
+}
+
+// 역할별 UI 조정 함수
+function adjustUIByRole() {
+    if (currentUser.role !== 'admin') {
+        // 직원인 경우 설정 탭 숨기기
+        const settingsTab = document.querySelector('[data-tab="settings"]');
+        if (settingsTab) {
+            settingsTab.style.display = 'none';
+        }
+        
+        // 구글 시트 저장 버튼은 유지 (직원도 저장 가능)
+    }
+}
