@@ -389,66 +389,65 @@
                         
                         <div class="manual-order-section">
                             <form id="manualOrderForm" class="manual-order-form">
-                                <!-- 1행: 상품 검색 -->
-                                <div class="form-row-full">
-                                    <div class="form-group">
+                                <!-- 1행: 모든 입력 필드 -->
+                                <div class="form-row-table">
+                                    <div class="form-group" style="width: 100px;">
+                                        <label>구분</label>
+                                        <select id="manualOrderType" class="form-input-direct">
+                                            <option value="CS재발송">CS재발송</option>
+                                            <option value="전화주문">전화주문</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="width: 150px;">
                                         <label>상품 검색</label>
                                         <div style="position: relative;">
-                                            <input type="text" id="manualProductSearch" placeholder="옵션명 검색..." style="width: 100%;">
+                                            <input type="text" id="manualProductSearch" class="form-input-direct" placeholder="검색...">
                                             <div id="productSearchResults" class="search-results"></div>
                                         </div>
                                     </div>
-                                </div>
-                                
-                                <!-- 2행: 옵션명, 수량, 단가, 금액 -->
-                                <div class="form-row-custom">
-                                    <div class="form-group" style="width: 160px;">
-                                        <label>옵션명</label>
-                                        <input type="text" id="manualOptionName" readonly style="width: 160px;">
-                                    </div>
-                                    <div class="form-group" style="width: 40px;">
-                                        <label>수량</label>
-                                        <input type="number" id="manualQuantity" value="1" min="1" style="width: 40px;">
+                                    <div class="form-group" style="width: 200px;">
+                                        <label>옵션명 <span class="required">*</span></label>
+                                        <input type="text" id="manualOptionName" class="form-input-readonly" readonly>
                                     </div>
                                     <div class="form-group" style="width: 90px;">
-                                        <label>단가</label>
-                                        <input type="number" id="manualUnitPrice" readonly style="width: 90px;">
+                                        <label>단가 <span class="required">*</span></label>
+                                        <input type="text" id="manualUnitPrice" class="form-input-direct text-right">
+                                    </div>
+                                    <div class="form-group" style="width: 80px;">
+                                        <label>수량 <span class="required">*</span></label>
+                                        <input type="number" id="manualQuantity" value="1" min="1" class="form-input-direct text-center">
                                     </div>
                                     <div class="form-group" style="width: 120px;">
                                         <label>금액</label>
-                                        <input type="text" id="manualTotalAmount" readonly style="width: 120px;">
+                                        <input type="text" id="manualTotalAmount" class="form-input-readonly text-right" readonly>
                                     </div>
-                                </div>
-                                
-                                <!-- 3행: 주문자, 연락처, 수령인, 연락처, 주소 -->
-                                <div class="form-row-custom">
-                                    <div class="form-group" style="width: 120px;">
+                                    <div class="form-group" style="width: 80px;">
                                         <label>주문자</label>
-                                        <input type="text" id="manualOrderer" required style="width: 120px;">
-                                    </div>
-                                    <div class="form-group" style="width: 150px;">
-                                        <label>주문자 연락처</label>
-                                        <input type="tel" id="manualOrdererPhone" placeholder="010-0000-0000" style="width: 150px;">
+                                        <input type="text" id="manualOrderer" class="form-input-direct text-center">
                                     </div>
                                     <div class="form-group" style="width: 120px;">
-                                        <label>수령인</label>
-                                        <input type="text" id="manualReceiver" required style="width: 120px;">
+                                        <label>주문자 연락처</label>
+                                        <input type="tel" id="manualOrdererPhone" class="form-input-direct text-center" placeholder="010-0000-0000">
                                     </div>
-                                    <div class="form-group" style="width: 150px;">
-                                        <label>수령인 연락처</label>
-                                        <input type="tel" id="manualReceiverPhone" placeholder="010-0000-0000" style="width: 150px;">
+                                    <div class="form-group" style="width: 80px;">
+                                        <label>수령인 <span class="required">*</span></label>
+                                        <input type="text" id="manualReceiver" class="form-input-direct text-center" required>
                                     </div>
-                                    <div class="form-group" style="width: 400px;">
-                                        <label>주소</label>
-                                        <input type="text" id="manualAddress" required style="width: 400px;">
+                                    <div class="form-group" style="width: 120px;">
+                                        <label>수령인 연락처 <span class="required">*</span></label>
+                                        <input type="tel" id="manualReceiverPhone" class="form-input-direct text-center" placeholder="010-0000-0000" required>
+                                    </div>
+                                    <div class="form-group" style="width: 600px;">
+                                        <label>주소 <span class="required">*</span></label>
+                                        <input type="text" id="manualAddress" class="form-input-direct" required>
                                     </div>
                                 </div>
                                 
-                                <!-- 4행: 배송 메시지, 주문 추가 버튼 -->
-                                <div class="form-row-custom">
-                                    <div class="form-group" style="width: 300px;">
+                                <!-- 2행: 배송 메시지, 주문 추가 버튼 -->
+                                <div class="form-row-bottom">
+                                    <div class="form-group" style="width: 500px;">
                                         <label>배송 메시지</label>
-                                        <input type="text" id="manualDeliveryMsg" style="width: 300px;">
+                                        <input type="text" id="manualDeliveryMsg" class="form-input-direct">
                                     </div>
                                     <div class="form-group">
                                         <button type="button" id="addManualOrder" class="btn-add-order">주문 추가</button>
