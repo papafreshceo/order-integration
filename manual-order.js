@@ -98,8 +98,6 @@ const ManualOrder = (function() {
         
         if (product) {
             document.getElementById('manualOptionName').value = optionName;
-            document.getElementById('manualVendor').value = product.벤더사 || '';
-            document.getElementById('manualShipFrom').value = product.출고처 || '';
             
             if (price) {
                 document.getElementById('manualUnitPrice').value = price.sellerSupplyPrice || 0;
@@ -144,6 +142,18 @@ const ManualOrder = (function() {
         orderData['마켓'] = 'M' + String(orderCounter).padStart(3, '0');
         orderData['결제일'] = new Date().toISOString().split('T')[0] + ' 00:00:00';
         
+        // 제품 정보에서 자동 채우기
+        if (currentOrder.product) {
+            orderData['셀러'] = '';
+            orderData['벤더사'] = currentOrder.product.벤더사 || '';
+            orderData['출고처'] = currentOrder.product.출고처 || '';
+            orderData['출고'] = currentOrder.product.출고처 || '';
+            orderData['송장'] = currentOrder.product.송장주체 || '';
+            orderData['발송지'] = currentOrder.product.발송지명 || '';
+            orderData['발송지주소'] = currentOrder.product.발송지주소 || '';
+            orderData['발송지연락처'] = currentOrder.product.발송지연락처 || '';
+        }
+        
         // 주문 추가
         manualOrders.push(orderData);
         
@@ -173,9 +183,6 @@ const ManualOrder = (function() {
             '수령인전화번호': document.getElementById('manualReceiverPhone').value,
             '수령인주소': document.getElementById('manualAddress').value,
             '배송메시지': document.getElementById('manualDeliveryMsg').value,
-            '셀러': document.getElementById('manualSeller').value,
-            '벤더사': document.getElementById('manualVendor').value,
-            '출고처': document.getElementById('manualShipFrom').value,
             '정산예정금액': parseFloat(document.getElementById('manualTotalAmount').value.replace(/,/g, '')) || 0
         };
     }
