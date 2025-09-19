@@ -893,9 +893,9 @@ let marketColors = {}; // 추가
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                action: 'getOrdersByDate',
-                sheetName: today
-            })
+    action: 'getMarketData',
+    useMainSpreadsheet: true  // 메인 스프레드시트 사용 플래그
+})
         });
 
         const result = await response.json();
