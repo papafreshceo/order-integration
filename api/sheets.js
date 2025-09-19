@@ -108,38 +108,32 @@ export default async function handler(req, res) {
 case 'updateTracking':
         try {
           const { sheetName, updates } = req.body;
-          const { getOrderData, updateSheetData } = require('../lib/google-sheets');
+          const { getOrderData, updateOrderCell } = require('../lib/google-sheets');
           const targetSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
           
-          // 시트 헤더만 읽기
-          const headerData = await getOrderData(`'${sheetName}'!A1:ZZ1`, targetSpreadsheetId);
-          if (!headerData || headerData.length === 0) {
-            return res.status(400).json({ success: false, error: '시트 헤더를 찾을 수 없습니다' });
-          }
-          
+          // 헤더와 주문번호 컬럼만 읽기
+          const headerData = await getOrderData(`${sheetName}!1:1`, targetSpreadsheetId);
           const headers = headerData[0];
-          const orderNumIndex = headers.indexOf('주문번호');
-          const carrierIndex = headers.indexOf('택배사');
-          const trackingIndex = headers.indexOf('송장번호');
-          const dateIndex = headers.indexOf('발송일(송장입력일)');
           
-          if (orderNumIndex === -1) {
-            return res.status(400).json({ success: false, error: '주문번호 컬럼을 찾을 수 없습니다' });
-          }
+          const orderNumCol = headers.indexOf('주문번호');
+          const carrierCol = headers.indexOf('택배사');
+          const trackingCol = headers.indexOf('송장번호');
+          const dateCol = headers.indexOf('발송일(송장입력일)');
           
-          // 컬럼 인덱스를 문자로 변환하는 함수
-          const getColumnLetter = (index) => {
+          // 컬럼 번호를 문자로 변환
+          const getColumnLetter = (col) => {
             let letter = '';
-            while (index >= 0) {
-              letter = String.fromCharCode((index % 26) + 65) + letter;
-              index = Math.floor(index / 26) - 1;
+            let num = col;
+            while (num >= 0) {
+              letter = String.fromCharCode((num % 26) + 65) + letter;
+              num = Math.floor(num / 26) - 1;
             }
             return letter;
           };
           
-          // 주문번호 컬럼만 읽어서 행 번호 찾기
-          const orderColumnLetter = getColumnLetter(orderNumIndex);
-          const orderNumbers = await getOrderData(`'${sheetName}'!${orderColumnLetter}2:${orderColumnLetter}`, targetSpreadsheetId);
+          // 주문번호 컬럼 데이터 읽기
+          const orderNumLetter = getColumnLetter(orderNumCol);
+          const orderData = await getOrderData(`${sheetName}!${orderNumLetter}:${orderNumLetter}`, targetSpreadsheetId);
           
           // 오늘 날짜
           const today = new Date().toLocaleDateString('ko-KR', {
@@ -150,46 +144,32 @@ case 'updateTracking':
           
           let updateCount = 0;
           
-          // 각 업데이트 개별 처리
+          // 각 업데이트 처리
           for (const update of updates) {
             // 주문번호로 행 찾기
-            let rowIndex = -1;
-            for (let i = 0; i < orderNumbers.length; i++) {
-              if (orderNumbers[i] && orderNumbers[i][0] === update.orderNumber) {
-                rowIndex = i + 2; // +2는 헤더(1) + 0-based to 1-based
+            let targetRow = -1;
+            for (let i = 1; i < orderData.length; i++) {
+              if (orderData[i][0] === update.orderNumber) {
+                targetRow = i + 1; // 실제 행 번호
                 break;
               }
             }
             
-            if (rowIndex > 0) {
-              // 택배사 업데이트
-              if (carrierIndex >= 0 && update.carrier) {
-                const carrierLetter = getColumnLetter(carrierIndex);
-                await updateSheetData(
-                  `'${sheetName}'!${carrierLetter}${rowIndex}`,
-                  [[update.carrier]],
-                  targetSpreadsheetId
-                );
+            if (targetRow > 0) {
+              // 개별 셀 업데이트
+              if (update.carrier && carrierCol >= 0) {
+                const cell = `${sheetName}!${getColumnLetter(carrierCol)}${targetRow}`;
+                await updateOrderCell(cell, update.carrier, targetSpreadsheetId);
               }
               
-              // 송장번호 업데이트
-              if (trackingIndex >= 0 && update.trackingNumber) {
-                const trackingLetter = getColumnLetter(trackingIndex);
-                await updateSheetData(
-                  `'${sheetName}'!${trackingLetter}${rowIndex}`,
-                  [[update.trackingNumber]],
-                  targetSpreadsheetId
-                );
+              if (update.trackingNumber && trackingCol >= 0) {
+                const cell = `${sheetName}!${getColumnLetter(trackingCol)}${targetRow}`;
+                await updateOrderCell(cell, update.trackingNumber, targetSpreadsheetId);
               }
               
-              // 발송일 업데이트
-              if (dateIndex >= 0 && update.trackingNumber) {
-                const dateLetter = getColumnLetter(dateIndex);
-                await updateSheetData(
-                  `'${sheetName}'!${dateLetter}${rowIndex}`,
-                  [[today]],
-                  targetSpreadsheetId
-                );
+              if (update.trackingNumber && dateCol >= 0) {
+                const cell = `${sheetName}!${getColumnLetter(dateCol)}${targetRow}`;
+                await updateOrderCell(cell, today, targetSpreadsheetId);
               }
               
               updateCount++;
@@ -487,6 +467,7 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
+
 
 
 
