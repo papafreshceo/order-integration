@@ -259,6 +259,14 @@
             min-width: 1530px;
         }
         
+        /* 첫 번째 컬럼 스타일 */
+        #marketStats td:first-child,
+        #optionStats td:first-child {
+            font-weight: bold;
+            text-align: left;
+            padding-left: 12px;
+        }
+        
         /* 주소 검색 버튼 */
         .btn-search-address {
             padding: 8px 16px;
@@ -271,11 +279,6 @@
             font-weight: 400;
             white-space: nowrap;
             transition: all 0.2s;
-        }
-        
-        .btn-search-address:hover {
-            background: #e7f3ff;
-            border-color: #1d4ed8;
         }
         
         /* 주소 모달 스타일 */
@@ -390,6 +393,11 @@
             }
         }
 
+        .btn-search-address:hover {
+            background: #e7f3ff;
+            border-color: #1d4ed8;
+        }
+
         /* 아코디언 토글 버튼 스타일 */
         .section-toggle {
             display: inline-flex;
@@ -447,7 +455,6 @@
             color: #212529;
         }
     </style>
-    
     <!-- Daum 우편번호 서비스 -->
     <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 </head>
@@ -538,33 +545,33 @@
             </div>
 
             <div class="main-content">
-                <!-- 탭 네비게이션 -->
+                <!-- 탭 네비게이션 부분 -->
                 <div class="tab-navigation">
                     <button class="tab-button active" data-tab="dashboard">대시보드</button>
-                    <button class="tab-button" data-tab="order-search">주문조회</button>
-                    <button class="tab-button" data-tab="upload">주문통합(Excel)</button>
+                    <button class="tab-button" data-tab="search">주문조회</button>
+                    <button class="tab-button" data-tab="products">상품조회</button>
+                    <button class="tab-button" data-tab="upload">주문통합</button>
                     <button class="tab-button" data-tab="shipping">발송관리</button>
+                    <button class="tab-button" data-tab="purchase">구매관리</button>
+                    <button class="tab-button" data-tab="customer">고객관리</button>
+                    <button class="tab-button" data-tab="partner">거래처관리</button>
+                    <button class="tab-button" data-tab="expense">지출관리</button>
                     <button class="tab-button" data-tab="settings">설정</button>
                 </div>
                 
-                <!-- 대시보드 탭 -->
+                <!-- 탭 컨텐츠 영역 -->
                 <div id="dashboard-tab" class="tab-content active">
-                    <div class="table-wrapper">
-                        <table id="dashboardTable">
-                            <tbody id="dashboardBody"></tbody>
-                        </table>
-                    </div>
+                    <iframe src="tab/dashboard/dashboard-module.html" style="width: 100%; height: calc(100vh - 200px); border: none;"></iframe>
                 </div>
 
-                <!-- 주문조회 탭 -->
-                <div id="order-search-tab" class="tab-content">
-                    <div class="stat-card">
-                        <h3>주문 조회</h3>
-                        <p>주문 정보를 검색하고 조회할 수 있습니다.</p>
-                    </div>
+                <div id="search-tab" class="tab-content">
+                    <iframe src="tab/search/search-module.html" style="width: 100%; height: calc(100vh - 200px); border: none;"></iframe>
                 </div>
 
-                <!-- 주문통합 탭 -->
+                <div id="products-tab" class="tab-content">
+                    <iframe src="tab/products/products-module.html" style="width: 100%; height: calc(100vh - 200px); border: none;"></iframe>
+                </div>
+
                 <div id="upload-tab" class="tab-content">
                     <!-- 건별 입력 섹션 -->
                     <div class="section-container">
@@ -626,7 +633,7 @@
                                                     <button type="button" class="qty-btn qty-plus" onclick="ManualOrder.changeQuantity(1)">+</button>
                                                 </div>
                                             </div>
-                                            <div class="form-group" style="width: 90px;">
+                                           <div class="form-group" style="width: 90px;">
                                                 <label>택배비</label>
                                                 <input type="text" id="manualShippingCost" class="form-input-direct text-right" placeholder="0">
                                             </div>
@@ -659,12 +666,12 @@
                                                 <input type="tel" id="manualReceiverPhone" class="form-input-direct text-center" placeholder="010-0000-0000" required>
                                             </div>
                                             <div class="form-group" style="width: 700px;">
-                                                <label>주소 <span class="required">*</span></label>
-                                                <div style="display: flex; gap: 8px;">
-                                                    <input type="text" id="manualAddress" class="form-input-readonly" readonly required style="flex: 1;">
-                                                    <button type="button" onclick="searchAddress()" class="btn-search-address">주소검색</button>
-                                                </div>
+                                            <label>주소 <span class="required">*</span></label>
+                                            <div style="display: flex; gap: 8px;">
+                                                <input type="text" id="manualAddress" class="form-input-readonly" readonly required style="flex: 1;">
+                                                <button type="button" onclick="searchAddress()" class="btn-search-address">주소검색</button>
                                             </div>
+                                        </div>
                                         </div>
                                     </div>
                                     
@@ -738,7 +745,7 @@
                             </div>
                         </div>
                         
-                        <!-- 주문 통합 실행 버튼 -->
+                        <!-- 주문 통합 실행 버튼 이동 -->
                         <div style="text-align: center; margin: 30px 0;">
                             <button class="upload-btn" id="processBtn" style="display: none;">주문 통합 실행</button>
                         </div>
@@ -781,9 +788,7 @@
                                 </table>
                             </div>
                             
-                            <!-- 통계 섹션 -->
                             <div class="statistics-section" style="display: block !important;">
-                                <!-- 마켓별 통계 -->
                                 <div class="stat-card" style="width: 100% !important; margin-bottom: 20px; overflow-x: auto;">
                                     <h3>마켓별 통계</h3>
                                     <table class="stat-table" id="marketStats">
@@ -870,7 +875,6 @@
                                     </table>
                                 </div>
                                 
-                                <!-- 옵션별 통계 -->
                                 <div class="stat-card" style="width: 100% !important; overflow-x: auto;">
                                     <h3>옵션별 통계</h3>
                                     <table class="stat-table" id="optionStats">
@@ -956,74 +960,84 @@
                                         <tbody></tbody>
                                     </table>
                                 </div>
-                                
-                                <!-- 피벗 테이블 -->
-                                <div class="stat-card">
-                                    <h3>피벗테이블</h3>
-                                    <div class="pivot-controls">
-                                        <label>
-                                            행:
-                                            <select id="pivotRowField">
-                                                <option value="마켓명">마켓명</option>
-                                                <option value="옵션명">옵션명</option>
-                                                <option value="셀러">셀러</option>
-                                                <option value="벤더사">벤더사</option>
-                                                <option value="송장번호유무">송장유무</option>
-                                            </select>
-                                        </label>
-                                        <label>
-                                            열:
-                                            <select id="pivotColField">
-                                                <option value="none">없음</option>
-                                                <option value="마켓명">마켓명</option>
-                                                <option value="옵션명">옵션명</option>
-                                                <option value="셀러">셀러</option>
-                                                <option value="벤더사">벤더사</option>
-                                                <option value="송장번호유무">송장유무</option>
-                                            </select>
-                                        </label>
-                                        <label>
-                                            열2:
-                                            <select id="pivotColField2">
-                                                <option value="none">없음</option>
-                                                <option value="마켓명">마켓명</option>
-                                                <option value="옵션명">옵션명</option>
-                                                <option value="셀러">셀러</option>
-                                                <option value="벤더사">벤더사</option>
-                                                <option value="송장번호유무">송장유무</option>
-                                            </select>
-                                        </label>
-                                        <label>
-                                            값:
-                                            <select id="pivotValueField">
-                                                <option value="count">건수</option>
-                                                <option value="수량">수량</option>
-                                                <option value="정산예정금액">금액</option>
-                                            </select>
-                                        </label>
-                                        <button onclick="updatePivotTable()">피벗 업데이트</button>
-                                    </div>
-                                    <div class="table-wrapper">
-                                        <table id="pivotTable">
-                                            <thead></thead>
-                                            <tbody></tbody>
-                                        </table>
-                                    </div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <h3>피벗테이블</h3>
+                                <div class="pivot-controls">
+                                    <label>
+                                        행:
+                                        <select id="pivotRowField">
+                                            <option value="마켓명">마켓명</option>
+                                            <option value="옵션명">옵션명</option>
+                                            <option value="셀러">셀러</option>
+                                            <option value="벤더사">벤더사</option>
+                                            <option value="송장번호유무">송장유무</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        열:
+                                        <select id="pivotColField">
+                                            <option value="none">없음</option>
+                                            <option value="마켓명">마켓명</option>
+                                            <option value="옵션명">옵션명</option>
+                                            <option value="셀러">셀러</option>
+                                            <option value="벤더사">벤더사</option>
+                                            <option value="송장번호유무">송장유무</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        열2:
+                                        <select id="pivotColField2">
+                                            <option value="none">없음</option>
+                                            <option value="마켓명">마켓명</option>
+                                            <option value="옵션명">옵션명</option>
+                                            <option value="셀러">셀러</option>
+                                            <option value="벤더사">벤더사</option>
+                                            <option value="송장번호유무">송장유무</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        값:
+                                        <select id="pivotValueField">
+                                            <option value="count">건수</option>
+                                            <option value="수량">수량</option>
+                                            <option value="정산예정금액">금액</option>
+                                        </select>
+                                    </label>
+                                    <button onclick="updatePivotTable()">피벗 업데이트</button>
+                                </div>
+                                <div class="table-wrapper">
+                                    <table id="pivotTable">
+                                        <thead></thead>
+                                        <tbody></tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 발송관리 탭 -->
                 <div id="shipping-tab" class="tab-content">
-                    <div class="stat-card">
-                        <h3>발송 관리</h3>
-                        <p>발송 상태를 관리하고 송장 번호를 업데이트할 수 있습니다.</p>
-                    </div>
+                    <iframe src="tab/shipping/shipping-module.html" style="width: 100%; height: calc(100vh - 200px); border: none;"></iframe>
                 </div>
 
-                <!-- 설정 탭 -->
+                <div id="purchase-tab" class="tab-content">
+                    <iframe src="tab/purchase/purchase-module.html" style="width: 100%; height: calc(100vh - 200px); border: none;"></iframe>
+                </div>
+
+                <div id="customer-tab" class="tab-content">
+                    <iframe src="tab/customer/customer-module.html" style="width: 100%; height: calc(100vh - 200px); border: none;"></iframe>
+                </div>
+
+                <div id="partner-tab" class="tab-content">
+                    <iframe src="tab/partner/partner-module.html" style="width: 100%; height: calc(100vh - 200px); border: none;"></iframe>
+                </div>
+
+                <div id="expense-tab" class="tab-content">
+                    <iframe src="tab/expense/expense-module.html" style="width: 100%; height: calc(100vh - 200px); border: none;"></iframe>
+                </div>
+
                 <div id="settings-tab" class="tab-content">
                     <div class="stat-card">
                         <h3>매핑 설정</h3>
@@ -1035,7 +1049,6 @@
         </div>
     </div>
 
-    <!-- 로딩 오버레이 -->
     <div class="loading-overlay" id="loadingOverlay">
         <div style="text-align: center;">
             <div class="loading-spinner"></div>
