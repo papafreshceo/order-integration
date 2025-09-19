@@ -2010,7 +2010,7 @@ if (header === '마켓명' && order[header]) {
                     const exportData = marketOrders.map((order, index) => {
                         const row = {};
                         
-                        // 각 마켓별 매핑
+                        // 각 마켓별 매핑 (exportByMarket과 동일한 로직)
                         if (marketName === '스마트스토어') {
                             row['상품주문번호'] = order['상품주문번호'] || order['주문번호'];
                             row['배송방법'] = '택배';
@@ -2050,7 +2050,6 @@ if (header === '마켓명' && order[header]) {
                             row['택배사코드'] = getCarrierCode(order['택배사']);
                             row['송장번호'] = order['송장번호'] || '';
                         } else {
-                            // 기본값
                             row['주문번호'] = order['주문번호'];
                             row['택배사'] = order['택배사'] || '';
                             row['송장번호'] = order['송장번호'] || '';
@@ -2059,7 +2058,7 @@ if (header === '마켓명' && order[header]) {
                         return row;
                     });
                     
-                    // 택배사 코드 변환 함수
+                    // 택배사 코드 변환
                     function getCarrierCode(carrierName) {
                         const codes = {
                             'CJ대한통운': '04',
@@ -2071,7 +2070,7 @@ if (header === '마켓명' && order[header]) {
                         return codes[carrierName] || carrierName;
                     }
                     
-                    // 송장번호 '-' 제거 및 텍스트 처리
+                    // 송장번호 처리
                     exportData.forEach(row => {
                         Object.keys(row).forEach(key => {
                             if (key.includes('송장') || key.includes('운송장')) {
@@ -2088,11 +2087,9 @@ if (header === '마켓명' && order[header]) {
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, '발송처리');
                     
-                    // 파일명 형식: (송장등록)_마켓명_날짜
                     XLSX.writeFile(wb, `(송장등록)_${marketName}_${dateStr}.xlsx`);
                     successCount++;
                     
-                    // 다운로드 간격 (브라우저가 여러 파일 다운로드를 처리하도록)
                     await new Promise(resolve => setTimeout(resolve, 200));
                 }
                 
