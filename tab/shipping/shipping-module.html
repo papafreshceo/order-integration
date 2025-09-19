@@ -352,9 +352,6 @@
         }
 
         .checkbox-cell {
-            width: 40px;
-        }
-
         /* 입력 필드 스타일 */
         .tracking-input {
             width: 100%;
@@ -1046,7 +1043,7 @@
             const headers = Object.keys(currentOrders[0]);
 
             // 테이블 전체 너비 계산
-            let totalWidth = 40; // 체크박스 너비
+            let totalWidth = 50; // 체크박스 너비
             headers.forEach(header => {
                 const width = columnWidths[header] || 100;
                 totalWidth += width;
@@ -1070,7 +1067,7 @@
             }
             
             // 누적 너비 계산
-            let cumulativeWidths = [0, 40];
+            let cumulativeWidths = [0, 50];
             headers.forEach(header => {
                 const width = columnWidths[header] || 100;
                 cumulativeWidths.push(cumulativeWidths[cumulativeWidths.length - 1] + width);
@@ -1079,14 +1076,18 @@
             // 헤더 생성 - 모든 헤더 가운데 정렬
             thead.innerHTML = `
                 <tr>
-                    <th class="checkbox-cell" style="position: sticky; left: 0px; z-index: 11; background: #f8f9fa; width: 40px; text-align: center;">
+                    <th class="checkbox-cell" style="position: sticky; left: 0px; z-index: 11; background: #f8f9fa; width: 50px; text-align: center; padding: 8px;">
                         <input type="checkbox" onchange="toggleSelectAll(this)">
                     </th>
                     ${headers.map((header, index) => {
                         const width = columnWidths[header] || 100;
                         const colIndex = index + 1;
                         const isFixed = colIndex <= fixedColIndex;
-                        const leftPos = cumulativeWidths[colIndex];
+                        let cumulativeWidths = [0, 50];
+headers.forEach(header => {
+    const width = columnWidths[header] || 100;
+    cumulativeWidths.push(cumulativeWidths[cumulativeWidths.length - 1] + width);
+});
                         
                         const fixedStyle = isFixed ? 
                             `position: sticky; left: ${leftPos}px; z-index: 10; background: #f8f9fa;` : '';
@@ -1106,7 +1107,7 @@ currentOrders.forEach((order, rowIndex) => {
     const rowBgColor = hasTracking ? '#f0f3f7' : '#f8f0fa';
     
     row.innerHTML = `
-                    <td class="checkbox-cell" style="position: sticky; left: 0px; z-index: 6; background: ${rowBgColor}; width: 40px; text-align: center;">
+                    <td class="checkbox-cell" style="position: sticky; left: 0px; z-index: 6; background: ${rowBgColor}; width: 50px; text-align: center; padding: 8px;">
                         <input type="checkbox" data-index="${rowIndex}">
                     </td>
                     ${headers.map((header, colIdx) => {
