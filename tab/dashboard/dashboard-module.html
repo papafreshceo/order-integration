@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>대시보드</title>
+    <style>
+        /* ========================================
+           대시보드 레이아웃
+           ======================================== */
+        .dashboard-container {
+            padding: 40px;
+            background: #fafafa;
+            min-height: 100vh;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 20px;
+            }
+        }
+
+        /* ========================================
+           통계 카드 섹션
+           ======================================== */
+        .dashboard-stats-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-stats-container {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+
+        .stats-card {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .stats-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .stats-content {
+            flex: 1;
+        }
+
+        .stats-label {
+            font-size: 12px;
+            font-weight: 300;
+            color: #6c757d;
+            margin-bottom: 4px;
+        }
+
+        .stats-value {
+            font-size: 28px;
+            font-weight: 600;
+            color: #212529;
+            line-height: 1.2;
+        }
+
+        .stats-change {
+            font-size: 12px;
+            font-weight: 300;
+            margin-top: 4px;
+        }
+
+        .stats-change.positive {
+            color: #10b981;
+        }
+
+        .stats-change.negative {
+            color: #ef4444;
+        }
+
+        /* ========================================
+           중단 섹션: 배송 현황과 캘린더
+           ======================================== */
+        .dashboard-middle-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-middle-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ========================================
+           배송 현황 카드
+           ======================================== */
+        .delivery-status-card {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #212529;
+        }
+
+        .btn-refresh {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-refresh:hover {
+            border-color: #2563eb;
+            color: #2563eb;
+        }
+
+        .delivery-status-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .delivery-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .delivery-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 300;
+            color: #6c757d;
+            margin-bottom: 8px;
+        }
+
+        .delivery-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .delivery-count {
+            font-size: 24px;
+            font-weight: 600;
+            color: #212529;
+        }
+
+        .delivery-progress {
+            flex: 0 0 auto;
+            padding: 0 8px;
+        }
+
+        .delivery-summary {
+            padding-top: 20px;
+            border-top: 1px solid #f1f3f5;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .summary-label {
+            font-size: 12px;
+            font-weight: 300;
+            color: #6c757d;
+        }
+
+        .summary-value {
+            font-size: 14px;
+            font-weight: 500;
+            color: #212529;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #2563eb;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        /* ========================================
+           캘린더 위젯
+           ======================================== */
+        .calendar-widget-card {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .calendar-navigation {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-nav {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-nav:hover {
+            border-color: #2563eb;
+            color: #2563eb;
+        }
+
+        .calendar-month {
+            font-size: 14px;
+            font-weight: 500;
+            color: #212529;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .calendar-content {
+            margin-top: 20px;
+        }
+
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .weekday {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 400;
+            color: #6c757d;
+            padding: 8px 0;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            background: #ffffff;
+            border: 1px solid #f1f3f5;
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .calendar-day:hover:not(.empty) {
+            background: #f8f9fa;
+            border-color: #2563eb;
+        }
+
+        .calendar-day.empty {
+            cursor: default;
+            background: transparent;
+            border: none;
+        }
+
+        .calendar-day.today {
+            background: #e7f3ff;
+            border-color: #2563eb;
+        }
+
+        .calendar-day.selected {
+            background: #2563eb;
+            color: white;
+        }
+
+        .calendar-day.selected .calendar-date,
+        .calendar-day.selected .calendar-delivery-count {
+            color: white;
+        }
+
+        .calendar-day.sunday .calendar-date {
+            color: #dc3545;
+        }
+
+        .calendar-day.saturday .calendar-date {
+            color: #2563eb;
+        }
+
+        .calendar-date {
+            font-size: 14px;
+            font-weight: 400;
+            color: #212529;
+        }
+
+        .calendar-delivery-count {
+            font-size: 10px;
+            font-weight: 300;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+
+        /* ========================================
+           차트 섹션
+           ======================================== */
+        .dashboard-charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .chart-filter {
+            padding: 6px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            background: #ffffff;
+            font-size: 12px;
+            font-weight: 300;
+            color: #212529;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chart-filter:hover {
+            border-color: #2563eb;
+        }
+
+        .chart-filter:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-icon:hover {
+            border-color: #2563eb;
+            color: #2563eb;
+        }
+
+        .chart-content {
+            margin-top: 24px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        /* ========================================
+           애니메이션
+           ======================================== */
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- 상단 통계 카드 섹션 -->
+        <div class="dashboard-stats-container">
+            <div class="stats-card">
+                <div class="stats-icon" style="background: #dbeafe; color: #2563eb;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <div class="stats-content">
+                    <div class="stats-label">오늘 주문</div>
+                    <div class="stats-value" id="todayOrders">156</div>
+                    <div class="stats-change positive">+12% 전일 대비</div>
+                </div>
+            </div>
+            
+            <div class="stats-card">
+                <div class="stats-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="16 12 12 8 8 12"></polyline>
+                        <line x1="12" y1="16" x2="12" y2="8"></line>
+                    </svg>
+                </div>
+                <div class="stats-content">
+                    <div class="stats-label">발송 완료</div>
+                    <div class="stats-value" id="completedShipping">89</div>
+                    <div class="stats-change positive">+8% 전주 대비</div>
+                </div>
+            </div>
+            
+            <div class="stats-card">
+                <div class="stats-icon" style="background: #fef3c7; color: #f59e0b;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                    </svg>
+                </div>
+                <div class="stats-content">
+                    <div class="stats-label">처리 대기</div>
+                    <div class="stats-value" id="pendingOrders">67</div>
+                    <div class="stats-change negative">-5% 감소</div>
+                </div>
+            </div>
+            
+            <div class="stats-card">
+                <div class="stats-icon" style="background: #ede9fe; color: #2563eb;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                </div>
+                <div class="stats-content">
+                    <div class="stats-label">이번 달 총 주문</div>
+                    <div class="stats-value" id="monthlyOrders">3,421</div>
+                    <div class="stats-change positive">+15% 성장</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 중단 섹션: 배송 현황과 캘린더 -->
+        <div class="dashboard-middle-container">
+            <!-- 배송 현황 카드 -->
+            <div class="delivery-status-card">
+                <div class="card-header">
+                    <h3 class="card-title">배송 현황</h3>
+                    <button class="btn-refresh" onclick="refreshDeliveryStatus()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="delivery-status-content">
+                    <div class="delivery-item">
+                        <div class="delivery-label">
+                            <span class="delivery-dot" style="background: #2563eb;"></span>
+                            접수
+                        </div>
+                        <div class="delivery-count" id="deliveryReceived">45</div>
+                    </div>
+                    <div class="delivery-progress">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dee2e6" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                    
+                    <div class="delivery-item">
+                        <div class="delivery-label">
+                            <span class="delivery-dot" style="background: #f59e0b;"></span>
+                            처리중
+                        </div>
+                        <div class="delivery-count" id="deliveryProcessing">32</div>
+                    </div>
+                    <div class="delivery-progress">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dee2e6" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                    
+                    <div class="delivery-item">
+                        <div class="delivery-label">
+                            <span class="delivery-dot" style="background: #2563eb;"></span>
+                            배송중
+                        </div>
+                        <div class="delivery-count" id="deliveryShipping">28</div>
+                    </div>
+                    <div class="delivery-progress">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dee2e6" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                    
+                    <div class="delivery-item">
+                        <div class="delivery-label">
+                            <span class="delivery-dot" style="background: #10b981;"></span>
+                            완료
+                        </div>
+                        <div class="delivery-count" id="deliveryCompleted">89</div>
+                    </div>
+                </div>
+                
+                <div class="delivery-summary">
+                    <div class="summary-row">
+                        <span class="summary-label">전체 진행률</span>
+                        <span class="summary-value">78%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 78%;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 캘린더 위젯 -->
+            <div class="calendar-widget-card">
+                <div class="card-header">
+                    <h3 class="card-title">배송 캘린더</h3>
+                    <div class="calendar-navigation">
+                        <button class="btn-nav" onclick="previousMonth()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                        </button>
+                        <span class="calendar-month" id="currentMonth">2025년 1월</span>
+                        <button class="btn-nav" onclick="nextMonth()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="calendar-content">
+                    <div class="calendar-weekdays">
+                        <div class="weekday" style="color: #dc3545;">일</div>
+                        <div class="weekday">월</div>
+                        <div class="weekday">화</div>
+                        <div class="weekday">수</div>
+                        <div class="weekday">목</div>
+                        <div class="weekday">금</div>
+                        <div class="weekday" style="color: #2563eb;">토</div>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid">
+                        <!-- 캘린더 날짜들이 여기에 동적으로 생성됨 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 하단 차트 섹션 -->
+        <div class="dashboard-charts-container">
+            <div class="chart-card">
+                <div class="card-header">
+                    <h3 class="card-title">주간 주문 추이</h3>
+                    <select class="chart-filter">
+                        <option>최근 7일</option>
+                        <option>최근 30일</option>
+                        <option>최근 3개월</option>
+                    </select>
+                </div>
+                <div class="chart-content" id="weeklyChart">
+                    <canvas id="weeklyOrderChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="card-header">
+                    <h3 class="card-title">마켓별 주문 비율</h3>
+                    <button class="btn-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="1"></circle>
+                            <circle cx="12" cy="5" r="1"></circle>
+                            <circle cx="12" cy="19" r="1"></circle>
+                        </svg>
+                    </button>
+                </div>
+                <div class="chart-content" id="marketChart">
+                    <canvas id="marketShareChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 대시보드 상태 관리
+        const dashboardState = {
+            currentDate: new Date(),
+            selectedDate: null
+        };
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            renderCalendar();
+            initCharts();
+            loadDashboardData();
+        });
+
+        // 캘린더 렌더링
+        function renderCalendar() {
+            const year = dashboardState.currentDate.getFullYear();
+            const month = dashboardState.currentDate.getMonth();
+            
+            // 월 표시 업데이트
+            document.getElementById('currentMonth').textContent = `${year}년 ${month + 1}월`;
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+            
+            const calendarGrid = document.getElementById('calendarGrid');
+            calendarGrid.innerHTML = '';
+            
+            // 빈 칸 채우기
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day empty';
+                calendarGrid.appendChild(emptyDay);
+            }
+            
+            // 날짜 채우기
+            for (let date = 1; date <= lastDate; date++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                
+                const currentDay = new Date(year, month, date);
+                const dayOfWeek = currentDay.getDay();
+                
+                // 오늘 날짜 표시
+                if (year === today.getFullYear() && 
+                    month === today.getMonth() && 
+                    date === today.getDate()) {
+                    dayElement.classList.add('today');
+                }
+                
+                // 주말 색상
+                if (dayOfWeek === 0) {
+                    dayElement.classList.add('sunday');
+                } else if (dayOfWeek === 6) {
+                    dayElement.classList.add('saturday');
+                }
+                
+                // 배송 정보 표시 (예시 데이터)
+                const hasDelivery = Math.random() > 0.6;
+                const deliveryCount = hasDelivery ? Math.floor(Math.random() * 50) + 1 : 0;
+                
+                dayElement.innerHTML = `
+                    <div class="calendar-date">${date}</div>
+                    ${hasDelivery ? `<div class="calendar-delivery-count">${deliveryCount}건</div>` : ''}
+                `;
+                
+                dayElement.onclick = () => selectDate(year, month, date);
+                calendarGrid.appendChild(dayElement);
+            }
+        }
+
+        // 날짜 선택
+        function selectDate(year, month, date) {
+            dashboardState.selectedDate = new Date(year, month, date);
+            
+            // 선택된 날짜 스타일 업데이트
+            document.querySelectorAll('.calendar-day').forEach(day => {
+                day.classList.remove('selected');
+            });
+            
+            event.target.closest('.calendar-day').classList.add('selected');
+            
+            console.log('선택된 날짜:', dashboardState.selectedDate);
+        }
+
+        // 이전 달로 이동
+        function previousMonth() {
+            dashboardState.currentDate.setMonth(dashboardState.currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+
+        // 다음 달로 이동
+        function nextMonth() {
+            dashboardState.currentDate.setMonth(dashboardState.currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+
+        // 배송 현황 새로고침
+        function refreshDeliveryStatus() {
+            // 로딩 애니메이션
+            const refreshBtn = event.target.closest('.btn-refresh');
+            if (refreshBtn) {
+                refreshBtn.style.animation = 'spin 1s linear';
+                setTimeout(() => {
+                    refreshBtn.style.animation = '';
+                }, 1000);
+            }
+            
+            // 데이터 다시 로드
+            loadDeliveryData();
+        }
+
+        // 대시보드 데이터 로드
+        function loadDashboardData() {
+            // API 호출 또는 로컬 데이터 로드
+            // 여기서는 예시 데이터 사용
+            console.log('대시보드 데이터 로딩...');
+            
+            // 통계 카드 애니메이션
+            animateNumbers();
+        }
+
+        // 배송 데이터 로드
+        function loadDeliveryData() {
+            console.log('배송 데이터 새로고침...');
+            
+            // 예시: 랜덤 데이터로 업데이트
+            const received = Math.floor(Math.random() * 100);
+            const processing = Math.floor(Math.random() * 100);
+            const shipping = Math.floor(Math.random() * 100);
+            const completed = Math.floor(Math.random() * 200);
+            
+            document.getElementById('deliveryReceived').textContent = received;
+            document.getElementById('deliveryProcessing').textContent = processing;
+            document.getElementById('deliveryShipping').textContent = shipping;
+            document.getElementById('deliveryCompleted').textContent = completed;
+            
+            // 진행률 계산
+            const total = received + processing + shipping + completed;
+            const completedPercent = Math.round((completed / total) * 100);
+            
+            const progressFill = document.querySelector('.progress-fill');
+            if (progressFill) {
+                progressFill.style.width = `${completedPercent}%`;
+            }
+            
+            document.querySelector('.delivery-summary .summary-value').textContent = `${completedPercent}%`;
+        }
+
+        // 숫자 애니메이션
+        function animateNumbers() {
+            const elements = [
+                { id: 'todayOrders', value: 156 },
+                { id: 'completedShipping', value: 89 },
+                { id: 'pendingOrders', value: 67 },
+                { id: 'monthlyOrders', value: 3421 }
+            ];
+            
+            elements.forEach(el => {
+                const element = document.getElementById(el.id);
+                if (element) {
+                    animateNumber(element, 0, el.value, 1000);
+                }
+            });
+        }
+
+        // 숫자 애니메이션 함수
+        function animateNumber(element, start, end, duration) {
+            const range = end - start;
+            const increment = range / (duration / 16);
+            let current = start;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= end) {
+                    current = end;
+                    clearInterval(timer);
+                }
+                element.textContent = Math.round(current).toLocaleString('ko-KR');
+            }, 16);
+        }
+
+        // 차트 초기화
+        function initCharts() {
+            renderWeeklyChart();
+            renderMarketChart();
+        }
+
+        // 주간 차트 렌더링
+        function renderWeeklyChart() {
+            const canvas = document.getElementById('weeklyOrderChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // 간단한 막대 차트
+            const data = [45, 52, 38, 65, 48, 72, 58];
+            const labels = ['월', '화', '수', '목', '금', '토', '일'];
+            const maxValue = Math.max(...data);
+            
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = 200;
+            
+            const barWidth = canvas.width / (data.length * 2);
+            const barSpacing = barWidth;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            data.forEach((value, index) => {
+                const barHeight = (value / maxValue) * (canvas.height - 40);
+                const x = (index * (barWidth + barSpacing)) + barSpacing;
+                const y = canvas.height - barHeight - 20;
+                
+                // 막대 그리기
+                ctx.fillStyle = '#2563eb';
+                ctx.fillRect(x, y, barWidth, barHeight);
+                
+                // 라벨
+                ctx.fillStyle = '#6c757d';
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(labels[index], x + barWidth / 2, canvas.height - 5);
+                
+                // 값
+                ctx.fillText(value, x + barWidth / 2, y - 5);
+            });
+        }
+
+        // 마켓 차트 렌더링
+        function renderMarketChart() {
+            const canvas = document.getElementById('marketShareChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // 도넛 차트 데이터
+            const data = [
+                { name: '쿠팡', value: 35, color: '#2563eb' },
+                { name: '네이버', value: 28, color: '#10b981' },
+                { name: '지마켓', value: 20, color: '#f59e0b' },
+                { name: '11번가', value: 12, color: '#ef4444' },
+                { name: '기타', value: 5, color: '#6c757d' }
+            ];
+            
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = 200;
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 60;
+            const innerRadius = 35;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            let currentAngle = -Math.PI / 2;
+            
+            data.forEach((segment, index) => {
+                const angle = (segment.value / 100) * Math.PI * 2;
+                
+                // 도넛 그리기
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + angle);
+                ctx.arc(centerX, centerY, innerRadius, currentAngle + angle, currentAngle, true);
+                ctx.closePath();
+                ctx.fillStyle = segment.color;
+                ctx.fill();
+                
+                currentAngle += angle;
+            });
+            
+            // 범례
+            let legendY = 20;
+            data.forEach((segment, index) => {
+                ctx.fillStyle = segment.color;
+                ctx.fillRect(10, legendY - 8, 12, 12);
+                
+                ctx.fillStyle = '#495057';
+                ctx.font = '12px sans-serif';
+                ctx.fillText(`${segment.name} ${segment.value}%`, 30, legendY);
+                
+                legendY += 20;
+            });
+        }
+    </script>
+</body>
+</html>
