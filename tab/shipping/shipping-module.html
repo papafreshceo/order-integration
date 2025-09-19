@@ -101,8 +101,6 @@
             border-bottom: 1px solid #f1f3f5;
         }
 
-
-
         .vendor-table .total-row {
             font-weight: 500;
             background: #f8f9fa;
@@ -281,7 +279,7 @@
         }
 
         .table-wrapper {
-overflow-x: auto;
+            overflow-x: auto;
             max-height: 600px;
             overflow-y: auto;
             position: relative;
@@ -290,6 +288,7 @@ overflow-x: auto;
         .shipping-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
 
         .shipping-table thead {
@@ -323,28 +322,21 @@ overflow-x: auto;
         }
 
         /* 모든 테이블 호버 효과 - 옅은 분홍색 */
-.shipping-table tbody tr:hover td,
-.vendor-table tbody tr:hover td,
-.preview-table tbody tr:hover td {
-    background-color: #ffe4e6 !important; /* 옅은 분홍색 */
-}
+        .shipping-table tbody tr:hover td,
+        .vendor-table tbody tr:hover td,
+        .preview-table tbody tr:hover td {
+            background-color: #ffe4e6 !important;
+        }
 
-/* 선택된 행 스타일 (호버보다 우선순위 높게) */
-.shipping-table tbody tr.selected-row td {
-    color: #2563eb !important;
-    font-size: 14px !important; /* 기본 12px에서 2px 증가 */
-    background-color: #e7f3ff !important;
-}
-
-/* 선택된 행에 호버시 약간 진한 파란색 */
-.shipping-table tbody tr.selected-row:hover td {
-    background-color: #dbeafe !important;
-}
-        
         /* 선택된 행 스타일 */
         .shipping-table tbody tr.selected-row td {
             color: #2563eb !important;
-            font-weight: 600 !important;
+            font-size: 14px !important;
+            background-color: #e7f3ff !important;
+        }
+
+        .shipping-table tbody tr.selected-row:hover td {
+            background-color: #dbeafe !important;
         }
 
         .checkbox-cell {
@@ -599,68 +591,51 @@ overflow-x: auto;
                 opacity: 1;
             }
         }
-
-
-        .shipping-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed; /* 중요: 고정 테이블 레이아웃 */
-}
-
-.shipping-table th,
-.shipping-table td {
-    box-sizing: border-box;
-    padding: 8px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-        
     </style>
 </head>
 <body>
     <div class="shipping-container">
         <!-- 상단 통계 -->
-<div class="shipping-stats" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
-    <div class="stat-card">
-        <div class="stat-icon" style="background: #fef3c7; color: #f59e0b;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="1" y="3" width="15" height="13"></rect>
-                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-            </svg>
-        </div>
-        <div class="stat-content">
-            <div class="stat-label">상품 준비중</div>
-            <div class="stat-value" id="statPreparing">0</div>
-        </div>
-    </div>
+        <div class="shipping-stats" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #fef3c7; color: #f59e0b;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="1" y="3" width="15" height="13"></rect>
+                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">상품 준비중</div>
+                    <div class="stat-value" id="statPreparing">0</div>
+                </div>
+            </div>
 
-    <div class="stat-card">
-        <div class="stat-icon" style="background: #d1fae5; color: #10b981;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-            </svg>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #d1fae5; color: #10b981;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">발송완료</div>
+                    <div class="stat-value" id="statShipped">0</div>
+                </div>
+            </div>
         </div>
-        <div class="stat-content">
-            <div class="stat-label">발송완료</div>
-            <div class="stat-value" id="statShipped">0</div>
-        </div>
-    </div>
-</div>
 
         <!-- 벤더사별 집계 테이블 -->
         <div class="vendor-stats-section">
             <h3 class="vendor-stats-title">벤더사별 발송 현황</h3>
             <table class="vendor-table">
                 <thead>
-    <tr>
-        <th>벤더사</th>
-        <th style="text-align: center;">합계</th>
-        <th style="text-align: center;">상품 준비중</th>
-        <th style="text-align: center;">발송완료</th>
-    </tr>
-</thead>
+                    <tr>
+                        <th>벤더사</th>
+                        <th style="text-align: center;">합계</th>
+                        <th style="text-align: center;">상품 준비중</th>
+                        <th style="text-align: center;">발송완료</th>
+                    </tr>
+                </thead>
                 <tbody id="vendorTableBody">
                     <!-- 동적 생성 -->
                 </tbody>
@@ -720,7 +695,7 @@ overflow-x: auto;
         </div>
 
         <!-- 테이블 섹션 -->
-       <div class="table-section">
+        <div class="table-section">
             <div class="table-header">
                 <div style="display: flex; align-items: center; flex: 1;">
                     <h3 class="table-title">발송 목록</h3>
@@ -866,9 +841,9 @@ overflow-x: auto;
     <script>
         // 전역 변수
         let currentOrders = [];
-let bulkUploadData = [];
-let marketFormats = {};
-let marketColors = {}; // 추가
+        let bulkUploadData = [];
+        let marketFormats = {};
+        let marketColors = {};
         
         // 페이지 로드 시 실행
         document.addEventListener('DOMContentLoaded', async function() {
@@ -878,93 +853,93 @@ let marketColors = {}; // 추가
 
         // 오늘 날짜의 주문 불러오기
         async function loadTodayOrders() {
-    showLoading();
-    try {
-        const today = new Date().toLocaleDateString('ko-KR', {
-            timeZone: 'Asia/Seoul',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        }).replace(/\. /g, '').replace(/\./g, '').replace(/-/g, '');
+            showLoading();
+            try {
+                const today = new Date().toLocaleDateString('ko-KR', {
+                    timeZone: 'Asia/Seoul',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                }).replace(/\. /g, '').replace(/\./g, '').replace(/-/g, '');
 
-        const response = await fetch('/api/sheets', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-    action: 'getMarketData',
-    useMainSpreadsheet: true  // 메인 스프레드시트 사용 플래그
-})
-        });
+                const response = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'getMarketData',
+                        useMainSpreadsheet: true  // 주문 데이터와 마켓 색상 모두 가져오기
+                    })
+                });
 
-        const result = await response.json();
-        
-        if (!result.success) {
-            throw new Error(result.error || '주문 데이터를 불러올 수 없습니다.');
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error || '주문 데이터를 불러올 수 없습니다.');
+                }
+
+                currentOrders = result.data || [];
+                
+                // 마켓 색상도 함께 저장
+                if (result.colors) {
+                    marketColors = result.colors;
+                    window.marketColors = result.colors;
+                }
+                
+                updateStatistics();
+                updateVendorTable();
+                updateShippingTable();
+                
+            } catch (error) {
+                console.error('주문 로드 오류:', error);
+                showMessage('주문 데이터를 불러오는 중 오류가 발생했습니다.', 'error');
+            } finally {
+                hideLoading();
+            }
         }
-
-        currentOrders = result.data || [];
-        
-        updateStatistics();
-        updateVendorTable();
-        updateShippingTable();
-        
-    } catch (error) {
-        console.error('주문 로드 오류:', error);
-        showMessage('주문 데이터를 불러오는 중 오류가 발생했습니다.', 'error');
-    } finally {
-        hideLoading();
-    }
-}
 
         // 통계 업데이트
-function updateStatistics() {
-    // 상품 준비중: 송장번호가 없는 경우
-    const preparing = currentOrders.filter(order => !order['송장번호']).length;
-    // 발송완료: 송장번호가 있는 경우  
-    const shipped = currentOrders.filter(order => order['송장번호']).length;
-    
-    document.getElementById('statPreparing').textContent = preparing;
-    document.getElementById('statShipped').textContent = shipped;
-}
+        function updateStatistics() {
+            const preparing = currentOrders.filter(order => !order['송장번호']).length;
+            const shipped = currentOrders.filter(order => order['송장번호']).length;
+            
+            document.getElementById('statPreparing').textContent = preparing;
+            document.getElementById('statShipped').textContent = shipped;
+        }
 
         // 벤더사별 테이블 업데이트
-function updateVendorTable() {
-    const vendorStats = {};
-    
-    currentOrders.forEach(order => {
-        const vendor = order['벤더사'] || '자사';
-        if (!vendorStats[vendor]) {
-            vendorStats[vendor] = { preparing: 0, shipped: 0 };
-        }
-        
-        if (order['송장번호']) {
-            // 발송완료
-            vendorStats[vendor].shipped++;
-        } else {
-            // 상품 준비중 (송장번호가 없는 모든 경우)
-            vendorStats[vendor].preparing++;
-        }
-    });
+        function updateVendorTable() {
+            const vendorStats = {};
             
+            currentOrders.forEach(order => {
+                const vendor = order['벤더사'] || '자사';
+                if (!vendorStats[vendor]) {
+                    vendorStats[vendor] = { preparing: 0, shipped: 0 };
+                }
+                
+                if (order['송장번호']) {
+                    vendorStats[vendor].shipped++;
+                } else {
+                    vendorStats[vendor].preparing++;
+                }
+            });
+                
             const tbody = document.getElementById('vendorTableBody');
             tbody.innerHTML = '';
-            
 
             let totalPreparing = 0;
             let totalShipped = 0;
             
-             Object.entries(vendorStats).forEach(([vendor, stats]) => {
-        const row = tbody.insertRow();
-        const total = stats.preparing + stats.shipped;
-        row.innerHTML = `
-            <td>${vendor}</td>
-            <td style="text-align: center; font-weight: 500;">${total}</td>
-            <td style="text-align: center; color: #f59e0b;">${stats.preparing}</td>
-            <td style="text-align: center; color: #10b981;">${stats.shipped}</td>
-        `;
-                
+            Object.entries(vendorStats).forEach(([vendor, stats]) => {
+                const row = tbody.insertRow();
+                const total = stats.preparing + stats.shipped;
+                row.innerHTML = `
+                    <td>${vendor}</td>
+                    <td style="text-align: center; font-weight: 500;">${total}</td>
+                    <td style="text-align: center; color: #f59e0b;">${stats.preparing}</td>
+                    <td style="text-align: center; color: #10b981;">${stats.shipped}</td>
+                `;
 
                 totalPreparing += stats.preparing;
                 totalShipped += stats.shipped;
@@ -972,14 +947,14 @@ function updateVendorTable() {
             
             // 합계 행 추가
             const totalRow = tbody.insertRow();
-    totalRow.className = 'total-row';
-    const grandTotal = totalPreparing + totalShipped;
-    totalRow.innerHTML = `
-        <td>합계</td>
-        <td style="text-align: center; font-weight: 600;">${grandTotal}</td>
-        <td style="text-align: center; color: #f59e0b; font-weight: 600;">${totalPreparing}</td>
-        <td style="text-align: center; color: #10b981; font-weight: 600;">${totalShipped}</td>
-    `;
+            totalRow.className = 'total-row';
+            const grandTotal = totalPreparing + totalShipped;
+            totalRow.innerHTML = `
+                <td>합계</td>
+                <td style="text-align: center; font-weight: 600;">${grandTotal}</td>
+                <td style="text-align: center; color: #f59e0b; font-weight: 600;">${totalPreparing}</td>
+                <td style="text-align: center; color: #10b981; font-weight: 600;">${totalShipped}</td>
+            `;
         }
 
         // 발송 테이블 업데이트
@@ -1049,8 +1024,6 @@ function updateVendorTable() {
             // 주소 필드
             const addressFields = ['주소', '수취인주소', '수령인주소', '발송지주소', '배송메세지', '배송메시지'];
             
-            
-            
             if (currentOrders.length === 0) {
                 thead.innerHTML = '';
                 tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 40px;">오늘 날짜의 주문이 없습니다.</td></tr>';
@@ -1058,32 +1031,31 @@ function updateVendorTable() {
             }
             
             // 헤더 생성
-const headers = Object.keys(currentOrders[0]);
+            const headers = Object.keys(currentOrders[0]);
 
-// 테이블 전체 너비 계산
-let totalWidth = 40; // 체크박스 너비
-headers.forEach(header => {
-    const width = columnWidths[header] || 100;
-    totalWidth += width;
-});
+            // 테이블 전체 너비 계산
+            let totalWidth = 40; // 체크박스 너비
+            headers.forEach(header => {
+                const width = columnWidths[header] || 100;
+                totalWidth += width;
+            });
 
-// 테이블에 전체 너비 설정
-const table = document.getElementById('shippingTable');
-if (table) {
-    table.style.minWidth = `${totalWidth}px`;
-}
+            // 테이블에 전체 너비 설정
+            const table = document.getElementById('shippingTable');
+            if (table) {
+                table.style.minWidth = `${totalWidth}px`;
+            }
             
             // 수령인 전화번호 컬럼 찾기
-            
             let fixedColIndex = 0;
-const phoneFields = ['수령인 전화번호', '수취인 전화번호', '수령인전화번호', '수취인전화번호'];
+            const phoneFields = ['수령인 전화번호', '수취인 전화번호', '수령인전화번호', '수취인전화번호'];
 
-for (let i = 0; i < headers.length; i++) {
-    if (phoneFields.includes(headers[i])) {
-        fixedColIndex = i + 1; // 체크박스 때문에 +1
-        break;
-    }
-}
+            for (let i = 0; i < headers.length; i++) {
+                if (phoneFields.includes(headers[i])) {
+                    fixedColIndex = i + 1; // 체크박스 때문에 +1
+                    break;
+                }
+            }
             
             // 누적 너비 계산
             let cumulativeWidths = [0, 40];
@@ -1207,7 +1179,7 @@ for (let i = 0; i < headers.length; i++) {
         }
 
         // 전체 선택
-         function toggleSelectAll(checkbox) {
+        function toggleSelectAll(checkbox) {
             const checkboxes = document.querySelectorAll('#shippingTableBody input[type="checkbox"]');
             checkboxes.forEach(cb => cb.checked = checkbox.checked);
         }
@@ -1239,67 +1211,68 @@ for (let i = 0; i < headers.length; i++) {
                 showMessage('선택된 주문이 없습니다.', 'error');
             }
         }
+
         // 송장번호 저장
         async function saveTrackingNumbers() {
-    const updates = [];
-    
-    document.querySelectorAll('.tracking-input').forEach(input => {
-        const index = parseInt(input.dataset.index);
-        const value = input.value.trim();
-        const carrierSelect = document.querySelector(`.carrier-select[data-index="${index}"]`);
-        const carrier = carrierSelect ? carrierSelect.value : '';
-        
-        if (value || carrier) {
-            updates.push({
-                orderNumber: currentOrders[index]['주문번호'],
-                carrier: carrier,
-                trackingNumber: value
+            const updates = [];
+            
+            document.querySelectorAll('.tracking-input').forEach(input => {
+                const index = parseInt(input.dataset.index);
+                const value = input.value.trim();
+                const carrierSelect = document.querySelector(`.carrier-select[data-index="${index}"]`);
+                const carrier = carrierSelect ? carrierSelect.value : '';
+                
+                if (value || carrier) {
+                    updates.push({
+                        orderNumber: currentOrders[index]['주문번호'],
+                        carrier: carrier,
+                        trackingNumber: value
+                    });
+                }
             });
-        }
-    });
-    
-    if (updates.length === 0) {
-        showMessage('저장할 송장번호가 없습니다.', 'error');
-        return;
-    }
-    
-    showLoading();
-    try {
-        const today = new Date().toLocaleDateString('ko-KR', {
-            timeZone: 'Asia/Seoul',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        }).replace(/\. /g, '').replace(/\./g, '').replace(/-/g, '');
+            
+            if (updates.length === 0) {
+                showMessage('저장할 송장번호가 없습니다.', 'error');
+                return;
+            }
+            
+            showLoading();
+            try {
+                const today = new Date().toLocaleDateString('ko-KR', {
+                    timeZone: 'Asia/Seoul',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                }).replace(/\. /g, '').replace(/\./g, '').replace(/-/g, '');
 
-        const response = await fetch('/api/sheets', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                action: 'updateTracking',
-                sheetName: today,
-                updates: updates
-            })
-        });
-        
-        const result = await response.json();
-        
-        if (!result.success) {
-            throw new Error(result.error || '송장번호 저장에 실패했습니다.');
+                const response = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'updateTracking',
+                        sheetName: today,
+                        updates: updates
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error || '송장번호 저장에 실패했습니다.');
+                }
+                
+                showMessage(`${updates.length}건의 송장번호가 저장되었습니다.`, 'success');
+                await loadTodayOrders();
+                
+            } catch (error) {
+                console.error('저장 오류:', error);
+                showMessage('저장 중 오류가 발생했습니다.', 'error');
+            } finally {
+                hideLoading();
+            }
         }
-        
-        showMessage(`${updates.length}건의 송장번호가 저장되었습니다.`, 'success');
-        await loadTodayOrders();
-        
-    } catch (error) {
-        console.error('저장 오류:', error);
-        showMessage('저장 중 오류가 발생했습니다.', 'error');
-    } finally {
-        hideLoading();
-    }
-}
 
         // 일괄 업로드 모달
         function openBulkUploadModal() {
@@ -1398,61 +1371,61 @@ for (let i = 0; i < headers.length; i++) {
 
         // 일괄 송장 저장
         async function saveBulkTracking() {
-    if (bulkUploadData.length === 0) return;
-    
-    showLoading();
-    try {
-        const today = new Date().toLocaleDateString('ko-KR', {
-            timeZone: 'Asia/Seoul',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        }).replace(/\. /g, '').replace(/\./g, '').replace(/-/g, '');
+            if (bulkUploadData.length === 0) return;
+            
+            showLoading();
+            try {
+                const today = new Date().toLocaleDateString('ko-KR', {
+                    timeZone: 'Asia/Seoul',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                }).replace(/\. /g, '').replace(/\./g, '').replace(/-/g, '');
 
-        const response = await fetch('/api/sheets', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                action: 'updateTracking',
-                sheetName: today,
-                updates: bulkUploadData
-            })
-        });
-        
-        const result = await response.json();
-        
-        if (!result.success) {
-            throw new Error(result.error || '송장번호 저장에 실패했습니다.');
+                const response = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'updateTracking',
+                        sheetName: today,
+                        updates: bulkUploadData
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error || '송장번호 저장에 실패했습니다.');
+                }
+                
+                showMessage(`${bulkUploadData.length}건의 송장번호가 저장되었습니다.`, 'success');
+                closeBulkUploadModal();
+                await loadTodayOrders();
+                
+            } catch (error) {
+                console.error('저장 오류:', error);
+                showMessage('저장 중 오류가 발생했습니다.', 'error');
+            } finally {
+                hideLoading();
+            }
         }
-        
-        showMessage(`${bulkUploadData.length}건의 송장번호가 저장되었습니다.`, 'success');
-        closeBulkUploadModal();
-        await loadTodayOrders();
-        
-    } catch (error) {
-        console.error('저장 오류:', error);
-        showMessage('저장 중 오류가 발생했습니다.', 'error');
-    } finally {
-        hideLoading();
-    }
-}
 
         // 마켓 양식 로드
         async function loadMarketFormats() {
-    try {
-        // 마켓 목록과 색상 가져오기
-        const marketResponse = await fetch('/api/sheets', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-    action: 'getMarketData',
-    useMainSpreadsheet: false  // 설정 시트에서 색상 정보만 읽기
-})
-        });
+            try {
+                // 마켓 목록과 색상 가져오기 (설정 시트에서)
+                const marketResponse = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'getMarketData',
+                        useMainSpreadsheet: false  // 설정 시트에서 색상만 읽기
+                    })
+                });
                 
                 const marketData = await marketResponse.json();
                 
@@ -1472,15 +1445,12 @@ for (let i = 0; i < headers.length; i++) {
                 
                 // 마켓 목록 저장
                 if (marketData.success) {
-    window.marketList = marketData.markets || [];
-    window.marketColors = marketData.colors || {};
-    marketColors = marketData.colors || {};
-    console.log('로드된 마켓 색상:', marketColors); // 디버깅용
-}
-
-
-        
-            }  catch (error) {
+                    window.marketList = marketData.markets || [];
+                    window.marketColors = marketData.colors || {};
+                    marketColors = marketData.colors || {};
+                    console.log('로드된 마켓 색상:', marketColors);
+                }
+            } catch (error) {
                 console.error('마켓 정보 로드 오류:', error);
                 // 기본값 사용
                 window.marketList = ['쿠팡', '네이버', '11번가', '지마켓', '옥션'];
@@ -1494,35 +1464,35 @@ for (let i = 0; i < headers.length; i++) {
 
         // 내보내기 모달
         function openExportModal() {
-    document.getElementById('exportModal').classList.add('show');
-    
-    // 마켓 카드 생성
-    const container = document.getElementById('marketCards');
-    container.innerHTML = '';
-    
-    // 매핑 시트에서 가져온 마켓 목록 사용
-    const markets = window.marketList || ['쿠팡', '네이버', '11번가', '지마켓', '옥션'];
-    const colors = window.marketColors || {};
-    
-    markets.forEach(market => {
-        const card = document.createElement('div');
-        card.className = 'market-card';
-        card.onclick = () => exportByMarket(market);
-        
-        // 마켓 색상 적용 (없으면 기본 파란색)
-        const marketColor = colors[market] || '#2563eb';
-        
-        card.innerHTML = `
-            <div class="market-card-icon" style="background: ${marketColor};">
-                ${market[0]}
-            </div>
-            <div class="market-card-name" style="color: ${marketColor}; font-weight: 500;">
-                ${market}
-            </div>
-        `;
-        container.appendChild(card);
-    });
-}
+            document.getElementById('exportModal').classList.add('show');
+            
+            // 마켓 카드 생성
+            const container = document.getElementById('marketCards');
+            container.innerHTML = '';
+            
+            // 매핑 시트에서 가져온 마켓 목록 사용
+            const markets = window.marketList || ['쿠팡', '네이버', '11번가', '지마켓', '옥션'];
+            const colors = window.marketColors || {};
+            
+            markets.forEach(market => {
+                const card = document.createElement('div');
+                card.className = 'market-card';
+                card.onclick = () => exportByMarket(market);
+                
+                // 마켓 색상 적용 (없으면 기본 파란색)
+                const marketColor = colors[market] || '#2563eb';
+                
+                card.innerHTML = `
+                    <div class="market-card-icon" style="background: ${marketColor};">
+                        ${market[0]}
+                    </div>
+                    <div class="market-card-name" style="color: ${marketColor}; font-weight: 500;">
+                        ${market}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
 
         function closeExportModal() {
             document.getElementById('exportModal').classList.remove('show');
@@ -1584,7 +1554,7 @@ for (let i = 0; i < headers.length; i++) {
             console.log('검색 기능은 추후 구현 예정');
         }
 
-        // 로딩 표시
+        // 로// 로딩 표시
         function showLoading() {
             document.getElementById('loading').classList.add('show');
         }
