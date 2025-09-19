@@ -107,102 +107,71 @@ export default async function handler(req, res) {
 
 case 'updateTracking':
         try {
-          const { sheetName, updates, spreadsheetId } = req.body;
-          const { getOrderData } = require('../lib/google-sheets');
-          const { google } = require('googleapis');
+          const { sheetName, updates } = req.body;
+          const { getOrderData, updateSheetData } = require('../lib/google-sheets');
+          const targetSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
           
-          // 먼저 시트 데이터 읽기 (SPREADSHEET_ID_ORDERS 사용)
-          const orderData = await getOrderData(`${sheetName}!A:ZZ`, spreadsheetId || process.env.SPREADSHEET_ID_ORDERS);
+          // 시트 데이터 읽기
+          const orderData = await getOrderData(`${sheetName}!A:ZZ`, targetSpreadsheetId);
           
           if (!orderData || orderData.length < 2) {
             return res.status(400).json({ success: false, error: '시트 데이터가 없습니다' });
           }
           
           const headers = orderData[0];
-          const rows = orderData.slice(1);
           
-          // 필요한 컬럼 인덱스 찾기
-          const orderNumIndex = headers.indexOf('주문번호');
-          const carrierIndex = headers.indexOf('택배사');
-          const trackingIndex = headers.indexOf('송장번호');
-          const deliveryDateIndex = headers.indexOf('발송일(송장입력일)');
-          
-          if (orderNumIndex === -1) {
-            return res.status(400).json({ success: false, error: '주문번호 컬럼을 찾을 수 없습니다' });
-          }
-          
-          // 개별 셀 업데이트를 위한 배치 요청 준비
-          const batchUpdateRequests = [];
-          let updatedCount = 0;
-          
-          // 오늘 날짜 (발송일)
+          // 오늘 날짜
           const today = new Date().toLocaleDateString('ko-KR', {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit'
           }).replace(/\. /g, '-').replace(/\./g, '');
           
-          updates.forEach(update => {
-            // 주문번호로 행 찾기
-            const rowIndex = rows.findIndex(row => row[orderNumIndex] === update.orderNumber);
+          // 업데이트할 행 수정
+          let updateCount = 0;
+          for (let i = 1; i < orderData.length; i++) {
+            const row = orderData[i];
+            const orderNumber = row[headers.indexOf('주문번호')];
             
-            if (rowIndex >= 0) {
-              const actualRowIndex = rowIndex + 2; // 헤더 + 1-based index
+            const updateItem = updates.find(u => u.orderNumber === orderNumber);
+            if (updateItem) {
+              const carrierIndex = headers.indexOf('택배사');
+              const trackingIndex = headers.indexOf('송장번호');
+              const dateIndex = headers.indexOf('발송일(송장입력일)');
               
-              // 택배사 업데이트
-              if (update.carrier && carrierIndex >= 0) {
-                batchUpdateRequests.push({
-                  range: `${sheetName}!${columnToLetter(carrierIndex + 1)}${actualRowIndex}`,
-                  values: [[update.carrier]]
-                });
-                updatedCount++;
+              if (carrierIndex >= 0 && updateItem.carrier) {
+                orderData[i][carrierIndex] = updateItem.carrier;
               }
-              
-              // 송장번호 업데이트
-              if (update.trackingNumber && trackingIndex >= 0) {
-                batchUpdateRequests.push({
-                  range: `${sheetName}!${columnToLetter(trackingIndex + 1)}${actualRowIndex}`,
-                  values: [[update.trackingNumber]]
-                });
-                updatedCount++;
+              if (trackingIndex >= 0 && updateItem.trackingNumber) {
+                orderData[i][trackingIndex] = updateItem.trackingNumber;
               }
-              
-              // 발송일(송장입력일) 업데이트
-              if (deliveryDateIndex >= 0 && update.trackingNumber) {
-                batchUpdateRequests.push({
-                  range: `${sheetName}!${columnToLetter(deliveryDateIndex + 1)}${actualRowIndex}`,
-                  values: [[today]]
-                });
+              if (dateIndex >= 0 && updateItem.trackingNumber) {
+                orderData[i][dateIndex] = today;
               }
+              updateCount++;
             }
-          });
+          }
           
-          / Google Sheets API로 개별 셀 업데이트
-          if (batchUpdateRequests.length > 0) {
-            const { updateSheetData } = require('../lib/google-sheets');
-            
-            // 각 업데이트 요청 처리
-            for (const request of batchUpdateRequests) {
-              await updateSheetData(
-                request.range,
-                request.values,
-                spreadsheetId || process.env.SPREADSHEET_ID_ORDERS
-              );
-            }
+          // 전체 시트 업데이트
+          if (updateCount > 0) {
+            await updateSheetData(
+              `${sheetName}!A1:ZZ${orderData.length}`,
+              orderData,
+              targetSpreadsheetId
+            );
           }
           
           return res.status(200).json({ 
             success: true, 
-            updated: updatedCount,
-            message: `${updates.length}건의 송장번호가 업데이트되었습니다`
+            updated: updateCount,
+            message: `${updateCount}건의 송장번호가 업데이트되었습니다`
           });
           
         } catch (error) {
           console.error('updateTracking 오류:', error);
           return res.status(500).json({ 
             success: false, 
-            error: '송장번호 업데이트 실패',
-            details: error.message 
+            error: error.message || '송장번호 업데이트 실패'
           });
         }
 
@@ -483,6 +452,7 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
+
 
 
 
