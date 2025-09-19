@@ -5,7 +5,7 @@
     <title>주문조회</title>
     <style>
         /* ========================================
-           주문조회 레이아웃
+           주문조회 레이아웃 (원본)
            ======================================== */
         .order-search-container {
             padding: 40px;
@@ -20,7 +20,7 @@
         }
 
         /* ========================================
-           검색 섹션
+           검색 섹션 (원본)
            ======================================== */
         .search-section {
             background: #ffffff;
@@ -68,13 +68,8 @@
             border-color: #adb5bd;
         }
 
-        .table-actions {
-            display: flex;
-            gap: 8px;
-        }
-        
         /* ========================================
-           검색 필터
+           검색 필터 (원본)
            ======================================== */
         .search-filters {
             display: grid;
@@ -130,7 +125,7 @@
         }
 
         /* ========================================
-           빠른 필터 버튼
+           빠른 필터 버튼 (원본)
            ======================================== */
         .quick-filters {
             display: flex;
@@ -164,7 +159,7 @@
         }
 
         /* ========================================
-           검색 버튼
+           검색 버튼 (원본)
            ======================================== */
         .search-button-group {
             display: flex;
@@ -206,82 +201,30 @@
         }
 
         /* ========================================
-           결과 요약
+           테이블 래퍼 (이전 코드)
            ======================================== */
-        .result-summary {
-            background: #ffffff;
-            border: 1px solid #dee2e6;
-            border-radius: 16px;
-            padding: 16px 24px;
-            margin-bottom: 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .result-info {
-            display: flex;
-            gap: 24px;
-            align-items: center;
-        }
-
-        .result-count {
-            font-size: 14px;
-            color: #212529;
-        }
-
-        .result-count strong {
-            font-weight: 600;
-            color: #2563eb;
-        }
-
-        /* ========================================
-           테이블 섹션
-           ======================================== */
-        .table-section {
-            background: #ffffff;
-            border: 1px solid #dee2e6;
-            border-radius: 16px;
-            overflow: hidden;
-        }
-
-        .table-header {
-            padding: 16px 24px;
-            border-bottom: 1px solid #dee2e6;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #f8f9fa;
-        }
-
-        .table-title {
-            font-size: 16px;
-            font-weight: 500;
-            color: #212529;
-        }
-
-        /* ========================================
-           발송관리와 동일한 테이블 스타일
-           ======================================== */
-        .order-table-wrapper {
+        .table-wrapper {
             overflow-x: auto;
-            max-height: 600px;
+            max-height: 700px;
             overflow-y: auto;
             position: relative;
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
         }
 
-        .order-table {
+        .shipping-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
         }
 
-        .order-table th {
+        .shipping-table th {
+            background: #f8f9fa;
             padding: 12px 8px;
             text-align: center;
             font-weight: 500;
             color: #495057;
-            background: #f8f9fa;
             border-bottom: 2px solid #dee2e6;
             white-space: nowrap;
             position: sticky;
@@ -289,7 +232,7 @@
             z-index: 10;
         }
 
-        .order-table td {
+        .shipping-table td {
             padding: 6px 8px;
             font-size: 12px;
             font-weight: 300;
@@ -303,27 +246,33 @@
             text-align: center;
         }
 
-        .order-table tbody tr:hover {
+        .shipping-table tbody tr:hover {
             background: #f8f9fa;
         }
 
-        .order-table tbody tr.has-tracking td {
+        .shipping-table tbody tr.has-tracking td {
             background-color: #f0f3f7 !important;
         }
 
         /* 로딩 */
-        .loading-container {
-            display: flex;
-            justify-content: center;
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 9999;
             align-items: center;
-            padding: 60px;
+            justify-content: center;
         }
 
         .loading-spinner {
             width: 40px;
             height: 40px;
-            border: 3px solid #f1f3f5;
-            border-top: 3px solid #2563eb;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2563eb;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -331,36 +280,6 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
-        }
-
-        /* 빈 상태 */
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 60px;
-            color: #6c757d;
-        }
-
-        .empty-icon {
-            width: 64px;
-            height: 64px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-
-        .empty-title {
-            font-size: 16px;
-            font-weight: 400;
-            color: #495057;
-            margin-bottom: 8px;
-        }
-
-        .empty-description {
-            font-size: 14px;
-            font-weight: 300;
-            color: #6c757d;
         }
 
         /* 메시지 */
@@ -386,22 +305,11 @@
             color: #991b1b;
             border: 1px solid #fecaca;
         }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
     </style>
 </head>
 <body>
     <div class="order-search-container">
-        <!-- 검색 섹션 -->
+        <!-- 검색 섹션 (원본) -->
         <div class="search-section">
             <div class="search-header">
                 <h2 class="search-title">주문 검색</h2>
@@ -461,7 +369,7 @@
 
             <!-- 검색 버튼 -->
             <div class="search-button-group">
-                <button class="btn-search secondary" onclick="exportResults()">
+                <button class="btn-search secondary" onclick="exportToExcel()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
@@ -469,7 +377,7 @@
                     </svg>
                     엑셀 다운로드
                 </button>
-                <button class="btn-search primary" onclick="searchOrders()">
+                <button class="btn-search primary" onclick="loadOrders()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="11" cy="11" r="8"></circle>
                         <path d="m21 21-4.35-4.35"></path>
@@ -479,114 +387,38 @@
             </div>
         </div>
 
-        <!-- 결과 요약 -->
-        <div class="result-summary" id="resultSummary" style="display: none;">
-            <div class="result-info">
-                <div class="result-count">
-                    검색 결과: <strong id="totalCount">0</strong>건
-                </div>
-            </div>
-            <div class="table-actions">
-                <button class="btn-action" onclick="selectAll()">전체 선택</button>
-            </div>
+        <!-- 테이블 (이전 코드 스타일) -->
+        <div class="table-wrapper">
+            <table class="shipping-table">
+                <thead id="searchTableHead">
+                    <!-- 헤더는 동적으로 생성됨 -->
+                </thead>
+                <tbody id="searchTableBody">
+                    <!-- 데이터는 동적으로 생성됨 -->
+                </tbody>
+            </table>
         </div>
+    </div>
 
-        <!-- 테이블 섹션 -->
-        <div class="table-section">
-            <div class="table-header">
-                <h3 class="table-title">주문 목록</h3>
-                <div class="table-actions">
-                    <button class="btn-action" onclick="refreshTable()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="23 4 23 10 17 10"></polyline>
-                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                        </svg>
-                        새로고침
-                    </button>
-                </div>
-            </div>
-
-            <div class="order-table-wrapper">
-                <table class="order-table">
-                    <colgroup>
-                        <col style="width: 50px;">
-                        <col style="width: 50px;">
-                        <col style="width: 100px;">
-                        <col style="width: 150px;">
-                        <col style="width: 100px;">
-                        <col style="width: 80px;">
-                        <col style="width: 120px;">
-                        <col style="width: 80px;">
-                        <col style="width: 120px;">
-                        <col style="width: 300px;">
-                        <col style="width: 200px;">
-                        <col style="width: 250px;">
-                        <col style="width: 60px;">
-                        <col style="width: 80px;">
-                        <col style="width: 100px;">
-                        <col style="width: 100px;">
-                        <col style="width: 150px;">
-                        <col style="width: 100px;">
-                    </colgroup>
-                    <thead>
-                        <tr>
-                            <th style="position: sticky; left: 0; z-index: 11; background: #f8f9fa;">
-                                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
-                            </th>
-                            <th style="position: sticky; left: 50px; z-index: 11; background: #f8f9fa;">연번</th>
-                            <th style="position: sticky; left: 100px; z-index: 11; background: #f8f9fa;">마켓명</th>
-                            <th>주문번호</th>
-                            <th>주문일</th>
-                            <th>주문자</th>
-                            <th>주문자연락처</th>
-                            <th>수령인</th>
-                            <th>수령인연락처</th>
-                            <th>주소</th>
-                            <th>배송메시지</th>
-                            <th>옵션명</th>
-                            <th>수량</th>
-                            <th>판매가</th>
-                            <th>정산예정금액</th>
-                            <th>택배사</th>
-                            <th>송장번호</th>
-                            <th>발송일</th>
-                        </tr>
-                    </thead>
-                    <tbody id="orderTableBody">
-                    </tbody>
-                </table>
-
-                <!-- 빈 상태 -->
-                <div class="empty-state" id="emptyState" style="display: none;">
-                    <svg class="empty-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <path d="m21 21-4.35-4.35"></path>
-                    </svg>
-                    <div class="empty-title">검색 결과가 없습니다</div>
-                    <div class="empty-description">다른 조건으로 검색해보세요</div>
-                </div>
-
-                <!-- 로딩 상태 -->
-                <div class="loading-container" id="loadingState" style="display: none;">
-                    <div class="loading-spinner"></div>
-                </div>
-            </div>
-        </div>
+    <!-- 로딩 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
         let currentOrders = [];
+        let currentFilter = 'all';
+        let currentSearch = '';
         let marketColors = {};
-        let selectedItems = new Set();
+        let tableHeaders = [];
 
         // 초기화
         document.addEventListener('DOMContentLoaded', function() {
             initializeFilters();
             const todayBtn = document.querySelector('.quick-filter-btn');
             setQuickFilter('today', todayBtn);
-            loadMarketList();
-            searchOrders();
+            loadOrders();
         });
 
         // 필터 초기화
@@ -604,37 +436,12 @@
             return `${year}-${month}-${day}`;
         }
 
-        // 마켓 목록 로드
-        async function loadMarketList() {
-            try {
-                const response = await fetch('/api/sheets', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'getMarketData', useMainSpreadsheet: false })
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    marketColors = data.colors || {};
-                    const select = document.getElementById('marketFilter');
-                    select.innerHTML = '<option value="">전체</option>';
-                    
-                    Object.keys(marketColors).forEach(market => {
-                        select.innerHTML += `<option value="${market}">${market}</option>`;
-                    });
-                }
-            } catch (error) {
-                console.error('마켓 목록 로드 실패:', error);
-            }
-        }
-
         // 빠른 필터 설정
         function setQuickFilter(type, buttonElement) {
             document.querySelectorAll('.quick-filter-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
 
-            // 버튼 요소가 전달되면 활성화
             if (buttonElement) {
                 buttonElement.classList.add('active');
             }
@@ -685,42 +492,156 @@
             });
         }
 
-        // 주문 검색
-        async function searchOrders() {
+        // 주문 데이터 로드 (동적 테이블)
+        async function loadOrders() {
             showLoading();
-            
             try {
                 const startDate = document.getElementById('startDate').value.replace(/-/g, '');
                 const endDate = document.getElementById('endDate').value.replace(/-/g, '');
-                
+
                 const response = await fetch('/api/sheets', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        action: 'getOrdersByDateRange',
-                        startDate: startDate,
-                        endDate: endDate
+                        action: 'getMarketData',
+                        useMainSpreadsheet: true
                     })
                 });
-                
+
                 const result = await response.json();
                 
                 if (result.success) {
-                    currentOrders = result.orders || [];
-                    applyFilters();
+                    currentOrders = result.data || [];
+                    marketColors = result.colors || {};
+                    
+                    // 헤더 설정
+                    if (currentOrders.length > 0) {
+                        tableHeaders = Object.keys(currentOrders[0]);
+                    }
+                    
+                    updateTable();
                 } else {
                     showMessage('데이터를 불러올 수 없습니다.', 'error');
                 }
             } catch (error) {
-                console.error('검색 오류:', error);
-                showMessage('검색 중 오류가 발생했습니다.', 'error');
+                console.error('로드 오류:', error);
+                showMessage('데이터 로드 중 오류가 발생했습니다.', 'error');
             } finally {
                 hideLoading();
             }
         }
 
-        // 필터 적용
-        function applyFilters() {
+        // 테이블 업데이트 (동적 생성)
+        function updateTable() {
+            const thead = document.getElementById('searchTableHead');
+            const tbody = document.getElementById('searchTableBody');
+            
+            // 헤더 생성
+            thead.innerHTML = '';
+            const headerRow = document.createElement('tr');
+            
+            // 체크박스 컬럼
+            const thCheckbox = document.createElement('th');
+            thCheckbox.style.cssText = 'position: sticky; left: 0; z-index: 11; background: #f8f9fa; width: 50px;';
+            thCheckbox.innerHTML = '<input type="checkbox" id="selectAllSearch" onchange="toggleAllCheckboxes(this)">';
+            headerRow.appendChild(thCheckbox);
+            
+            // 나머지 헤더
+            let leftPos = 50;
+            tableHeaders.forEach((header, index) => {
+                const th = document.createElement('th');
+                
+                if (header === '연번') {
+                    th.style.cssText = `position: sticky; left: ${leftPos}px; z-index: 11; background: #f8f9fa; width: 50px;`;
+                    leftPos += 50;
+                } else if (header === '마켓명') {
+                    th.style.cssText = `position: sticky; left: ${leftPos}px; z-index: 11; background: #f8f9fa; width: 100px;`;
+                    leftPos += 100;
+                } else {
+                    th.style.cssText = 'background: #f8f9fa;';
+                }
+                
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+            
+            thead.appendChild(headerRow);
+            
+            // 필터링된 주문 가져오기
+            const filteredOrders = getFilteredOrders();
+            
+            // 데이터 행 생성
+            tbody.innerHTML = '';
+            
+            if (filteredOrders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="100" style="text-align: center; padding: 40px; color: #6c757d;">조회된 주문이 없습니다.</td></tr>';
+                return;
+            }
+            
+            filteredOrders.forEach((order, index) => {
+                const row = createTableRow(order, index + 1);
+                tbody.appendChild(row);
+            });
+        }
+
+        // 테이블 행 생성 (동적)
+        function createTableRow(order, serialNumber) {
+            const row = document.createElement('tr');
+            const hasTracking = order['송장번호'] && order['송장번호'].trim() !== '';
+            
+            if (hasTracking) {
+                row.classList.add('has-tracking');
+            }
+            
+            const marketName = order['마켓명'] || '';
+            const marketColor = marketColors[marketName] || 'rgb(128,128,128)';
+            const rowBgColor = hasTracking ? '#f0f3f7' : '#ffffff';
+            
+            // 체크박스
+            const tdCheckbox = document.createElement('td');
+            tdCheckbox.style.cssText = `position: sticky; left: 0; z-index: 6; background: ${rowBgColor}; width: 50px; text-align: center;`;
+            tdCheckbox.innerHTML = `<input type="checkbox" class="order-checkbox" data-index="${serialNumber - 1}">`;
+            row.appendChild(tdCheckbox);
+            
+            // 데이터 셀
+            let leftPos = 50;
+            tableHeaders.forEach(header => {
+                const td = document.createElement('td');
+                
+                if (header === '연번') {
+                    td.style.cssText = `position: sticky; left: ${leftPos}px; z-index: 5; background: ${rowBgColor}; width: 50px;`;
+                    td.textContent = serialNumber;
+                    leftPos += 50;
+                } else if (header === '마켓명') {
+                    td.style.cssText = `position: sticky; left: ${leftPos}px; z-index: 5; background: ${rowBgColor}; width: 100px;`;
+                    td.innerHTML = `
+                        <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
+                             color: ${getTextColor(marketColor)}; border-radius: 4px; font-size: 11px; font-weight: 600;">
+                            ${marketName}
+                        </span>
+                    `;
+                    leftPos += 100;
+                } else {
+                    td.style.cssText = `background: ${rowBgColor};`;
+                    const value = order[header] || '';
+                    
+                    // 숫자 필드 처리
+                    if (header.includes('금액') || header.includes('가격') || header === '수량') {
+                        td.style.textAlign = 'right';
+                        td.textContent = formatNumber(value);
+                    } else {
+                        td.textContent = value;
+                    }
+                }
+                
+                row.appendChild(td);
+            });
+            
+            return row;
+        }
+
+        // 필터링
+        function getFilteredOrders() {
             let filtered = [...currentOrders];
             
             // 마켓 필터
@@ -737,7 +658,7 @@
                 filtered = filtered.filter(order => order['송장번호'] && order['송장번호'].trim() !== '');
             }
             
-            // 검색어 필터
+            // 검색 필터
             const keyword = document.getElementById('searchKeyword').value.toLowerCase();
             if (keyword) {
                 filtered = filtered.filter(order => {
@@ -747,68 +668,33 @@
                 });
             }
             
-            displayResults(filtered);
+            return filtered;
         }
 
-        // 결과 표시
-        function displayResults(orders) {
-            const tbody = document.getElementById('orderTableBody');
-            const emptyState = document.getElementById('emptyState');
-            const resultSummary = document.getElementById('resultSummary');
+        // 전체 선택
+        function toggleAllCheckboxes(checkbox) {
+            const checkboxes = document.querySelectorAll('.order-checkbox');
+            checkboxes.forEach(cb => cb.checked = checkbox.checked);
+        }
+
+        // 엑셀 내보내기
+        function exportToExcel() {
+            const filteredOrders = getFilteredOrders();
             
-            if (orders.length === 0) {
-                tbody.innerHTML = '';
-                tbody.style.display = 'none';
-                emptyState.style.display = 'flex';
-                resultSummary.style.display = 'none';
+            if (filteredOrders.length === 0) {
+                showMessage('내보낼 데이터가 없습니다.', 'error');
                 return;
             }
             
-            tbody.style.display = '';
-            emptyState.style.display = 'none';
-            resultSummary.style.display = 'flex';
+            const ws = XLSX.utils.json_to_sheet(filteredOrders);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '주문목록');
             
-            document.getElementById('totalCount').textContent = orders.length;
-            
-            tbody.innerHTML = orders.map((order, index) => {
-                const hasTracking = order['송장번호'] && order['송장번호'].trim() !== '';
-                const marketName = order['마켓명'] || '';
-                const marketColor = marketColors[marketName] || 'rgb(128,128,128)';
-                const rowBgColor = hasTracking ? '#f0f3f7' : '#ffffff';
-                
-                return `
-                    <tr class="${hasTracking ? 'has-tracking' : ''}">
-                        <td style="position: sticky; left: 0; z-index: 6; background: ${rowBgColor};">
-                            <input type="checkbox" class="order-checkbox" data-index="${index}">
-                        </td>
-                        <td style="position: sticky; left: 50px; z-index: 5; background: ${rowBgColor};">${index + 1}</td>
-                        <td style="position: sticky; left: 100px; z-index: 5; background: ${rowBgColor};">
-                            <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
-                                 color: ${getTextColor(marketColor)}; border-radius: 4px; font-size: 11px; font-weight: 600;">
-                                ${marketName}
-                            </span>
-                        </td>
-                        <td>${order['주문번호'] || ''}</td>
-                        <td>${order['주문일'] || ''}</td>
-                        <td>${order['주문자'] || ''}</td>
-                        <td>${order['주문자연락처'] || ''}</td>
-                        <td>${order['수령인'] || ''}</td>
-                        <td>${order['수령인연락처'] || ''}</td>
-                        <td style="text-align: left; max-width: 300px;">${order['주소'] || ''}</td>
-                        <td style="text-align: left; max-width: 200px;">${order['배송메시지'] || ''}</td>
-                        <td style="text-align: left; max-width: 250px;">${order['옵션명'] || ''}</td>
-                        <td>${order['수량'] || ''}</td>
-                        <td style="text-align: right;">${formatNumber(order['판매가'])}</td>
-                        <td style="text-align: right;">${formatNumber(order['정산예정금액'])}</td>
-                        <td>${order['택배사'] || ''}</td>
-                        <td>${order['송장번호'] || ''}</td>
-                        <td>${order['발송일(송장입력일)'] || ''}</td>
-                    </tr>
-                `;
-            }).join('');
+            const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
+            XLSX.writeFile(wb, `주문조회_${date}.xlsx`);
         }
 
-        // 텍스트 색상 계산
+        // 유틸리티 함수들
         function getTextColor(bgColor) {
             const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
             if (match) {
@@ -821,79 +707,59 @@
             return '#fff';
         }
 
-        // 숫자 포맷
         function formatNumber(num) {
             if (!num) return '0';
             return Number(num).toLocaleString('ko-KR');
         }
 
-        // 전체 선택
-        function toggleSelectAll() {
-            const checkbox = document.getElementById('selectAllCheckbox');
-            const checkboxes = document.querySelectorAll('.order-checkbox');
-            
-            checkboxes.forEach(cb => {
-                cb.checked = checkbox.checked;
-            });
-        }
-
-        function selectAll() {
-            document.getElementById('selectAllCheckbox').checked = true;
-            toggleSelectAll();
-        }
-
-        // 테이블 새로고침
-        function refreshTable() {
-            searchOrders();
-        }
-
-        // 엑셀 내보내기
-        function exportResults() {
-            const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
-            let exportData = [];
-            
-            if (checkedBoxes.length > 0) {
-                checkedBoxes.forEach(cb => {
-                    const index = parseInt(cb.dataset.index);
-                    exportData.push(currentOrders[index]);
-                });
-            } else {
-                exportData = currentOrders;
-            }
-            
-            if (exportData.length === 0) {
-                showMessage('내보낼 데이터가 없습니다.', 'error');
-                return;
-            }
-            
-            const ws = XLSX.utils.json_to_sheet(exportData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, '주문목록');
-            
-            const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
-            XLSX.writeFile(wb, `주문조회_${date}.xlsx`);
-        }
-
-        // 로딩 표시
         function showLoading() {
-            document.getElementById('loadingState').style.display = 'flex';
-            document.getElementById('emptyState').style.display = 'none';
-            document.getElementById('orderTableBody').innerHTML = '';
+            document.getElementById('loadingOverlay').style.display = 'flex';
         }
 
         function hideLoading() {
-            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('loadingOverlay').style.display = 'none';
         }
 
-        // 메시지 표시
         function showMessage(message, type = 'info') {
             const div = document.createElement('div');
             div.className = `message ${type}`;
             div.textContent = message;
             document.body.appendChild(div);
             
-            setTimeout(() => div.remove(), 3000);
+            setTimeout(() => {
+                div.remove();
+            }, 3000);
         }
+
+        // 날짜 변경시 재로드
+        document.getElementById('startDate')?.addEventListener('change', loadOrders);
+        document.getElementById('endDate')?.addEventListener('change', loadOrders);
+
+        // 마켓 목록 로드
+        async function loadMarketList() {
+            try {
+                const response = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'getMarketData', useMainSpreadsheet: false })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    const select = document.getElementById('marketFilter');
+                    select.innerHTML = '<option value="">전체</option>';
+                    
+                    Object.keys(data.colors || {}).forEach(market => {
+                        select.innerHTML += `<option value="${market}">${market}</option>`;
+                    });
+                }
+            } catch (error) {
+                console.error('마켓 목록 로드 실패:', error);
+            }
+        }
+
+        // 초기화시 마켓 목록도 로드
+        loadMarketList();
     </script>
 </body>
 </html>
