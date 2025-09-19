@@ -265,7 +265,7 @@ const ManualOrder = (function() {
         const shippingCost = parseFloat(document.getElementById('manualShippingCost').value.replace(/,/g, '')) || 0;
         const extraCost = parseFloat(document.getElementById('manualExtraCost').value.replace(/,/g, '')) || 0;
         
-        return {
+        const orderData = {
             '구분': document.getElementById('manualOrderType').value,
             '옵션명': document.getElementById('manualOptionName').value,
             '단가': unitPrice,
@@ -273,16 +273,39 @@ const ManualOrder = (function() {
             '택배비': shippingCost,
             '기타비용': extraCost,
             '주문번호': 'M' + Date.now(),
-            '주문자': document.getElementById('manualOrderer').value,
-            '주문자전화번호': document.getElementById('manualOrdererPhone').value,
-            '수령인': document.getElementById('manualReceiver').value,
-            '수령인전화번호': document.getElementById('manualReceiverPhone').value,
-            '우편번호': document.getElementById('manualZipcode') ? document.getElementById('manualZipcode').value : '',
-            '수령인주소': document.getElementById('manualAddress').value,
-            '배송메시지': document.getElementById('manualDeliveryMsg').value,
             '정산예정금액': (unitPrice * quantity) + shippingCost + extraCost,
             '셀러': ''
         };
+        
+        // 주문자 정보
+        const ordererName = document.getElementById('manualOrderer').value;
+        const ordererPhone = document.getElementById('manualOrdererPhone').value;
+        orderData['주문자'] = ordererName;
+        orderData['주문자전화번호'] = ordererPhone;
+        orderData['주문자 전화번호'] = ordererPhone;  // 공백 있는 버전도 추가
+        
+        // 수령인 정보 (수취인, 수령인 모두 매핑)
+        const receiverName = document.getElementById('manualReceiver').value;
+        const receiverPhone = document.getElementById('manualReceiverPhone').value;
+        const address = document.getElementById('manualAddress').value;
+        const zipcode = document.getElementById('manualZipcode') ? document.getElementById('manualZipcode').value : '';
+        const deliveryMsg = document.getElementById('manualDeliveryMsg').value;
+        
+        // 수령인 관련 필드 모두 매핑
+        orderData['수령인'] = receiverName;
+        orderData['수취인'] = receiverName;
+        orderData['수령인전화번호'] = receiverPhone;
+        orderData['수령인 전화번호'] = receiverPhone;  // 공백 있는 버전
+        orderData['수취인전화번호'] = receiverPhone;
+        orderData['수취인 전화번호'] = receiverPhone;  // 공백 있는 버전
+        orderData['수령인주소'] = address;
+        orderData['수취인주소'] = address;
+        orderData['주소'] = address;
+        orderData['우편번호'] = zipcode;
+        orderData['배송메시지'] = deliveryMsg;
+        orderData['배송메세지'] = deliveryMsg;  // 다른 표기법도 추가
+        
+        return orderData;
     }
     
     // ===========================
