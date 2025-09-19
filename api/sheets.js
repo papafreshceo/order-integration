@@ -230,7 +230,7 @@ export default async function handler(req, res) {
           });
         }
 
-      case 'getMarketData':
+case 'getMarketData':
         try {
           const { useMainSpreadsheet } = req.body;
           
@@ -271,33 +271,44 @@ export default async function handler(req, res) {
             let colors = {};
             
             try {
-              const mappingData = await getSheetData('매핑!A3:B100'); // A3부터 읽기 (헤더 제외)
+              const mappingData = await getSheetData('매핑!A:D'); // A~D열까지 읽기
               
-              if (mappingData && mappingData.length > 0) {
-                mappingData.forEach(row => {
-                  if (row && row[0]) {
-                    const marketName = row[0].trim();
-                    if (marketName) {
-                      markets.push(marketName);
-                      if (row[1]) {
-                        // 색상 값이 'rgb(255,255,255)' 형식인 경우 처리
-                        const colorValue = row[1].trim();
-                        if (colorValue.startsWith('rgb')) {
-                          colors[marketName] = colorValue;
-                        } else {
-                          // '255,255,255' 형식인 경우 rgb로 변환
-                          colors[marketName] = `rgb(${colorValue})`;
+              if (mappingData && mappingData.length > 2) {
+                // 헤더 위치 찾기
+                let headerRowIndex = -1;
+                for (let i = 0; i < Math.min(5, mappingData.length); i++) {
+                  if (mappingData[i] && mappingData[i][0] === '마켓명') {
+                    headerRowIndex = i;
+                    break;
+                  }
+                }
+                
+                if (headerRowIndex !== -1) {
+                  // 데이터 행 처리 (헤더 다음 행부터)
+                  for (let i = headerRowIndex + 1; i < mappingData.length; i++) {
+                    const row = mappingData[i];
+                    if (row && row[0]) {
+                      const marketName = String(row[0]).trim();
+                      const colorValue = row[2] ? String(row[2]).trim() : ''; // C열이 색상
+                      
+                      if (marketName) {
+                        markets.push(marketName);
+                        
+                        if (colorValue) {
+                          // RGB 값 처리
+                          if (colorValue.match(/^\d+,\s*\d+,\s*\d+$/)) {
+                            colors[marketName] = `rgb(${colorValue})`;
+                          } else if (colorValue.startsWith('rgb(')) {
+                            colors[marketName] = colorValue;
+                          }
                         }
                       }
                     }
                   }
-                });
+                }
               }
             } catch (mappingError) {
               console.log('매핑 데이터 로드 실패:', mappingError.message);
-              // 기본값 설정
-              markets = ['쿠팡', '네이버', '11번가'];
-              colors = {};
             }
             
             return res.status(200).json({ 
@@ -309,28 +320,43 @@ export default async function handler(req, res) {
             
           } else {
             // 기본 동작: 매핑 시트에서만 마켓 정보 읽기
-            const mappingData = await getSheetData('매핑!A3:B100');
+            const mappingData = await getSheetData('매핑!A:D');
             
             const markets = [];
             const colors = {};
             
-            if (mappingData && mappingData.length > 0) {
-              mappingData.forEach(row => {
-                if (row && row[0]) {
-                  const marketName = row[0].trim();
-                  if (marketName) {
-                    markets.push(marketName);
-                    if (row[1]) {
-                      const colorValue = row[1].trim();
-                      if (colorValue.startsWith('rgb')) {
-                        colors[marketName] = colorValue;
-                      } else {
-                        colors[marketName] = `rgb(${colorValue})`;
+            if (mappingData && mappingData.length > 2) {
+              // 헤더 위치 찾기
+              let headerRowIndex = -1;
+              for (let i = 0; i < Math.min(5, mappingData.length); i++) {
+                if (mappingData[i] && mappingData[i][0] === '마켓명') {
+                  headerRowIndex = i;
+                  break;
+                }
+              }
+              
+              if (headerRowIndex !== -1) {
+                // 데이터 행 처리
+                for (let i = headerRowIndex + 1; i < mappingData.length; i++) {
+                  const row = mappingData[i];
+                  if (row && row[0]) {
+                    const marketName = String(row[0]).trim();
+                    const colorValue = row[2] ? String(row[2]).trim() : ''; // C열이 색상
+                    
+                    if (marketName) {
+                      markets.push(marketName);
+                      
+                      if (colorValue) {
+                        if (colorValue.match(/^\d+,\s*\d+,\s*\d+$/)) {
+                          colors[marketName] = `rgb(${colorValue})`;
+                        } else if (colorValue.startsWith('rgb(')) {
+                          colors[marketName] = colorValue;
+                        }
                       }
                     }
                   }
                 }
-              });
+              }
             }
             
             return res.status(200).json({ 
@@ -419,3 +445,4 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
+
