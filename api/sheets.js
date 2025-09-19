@@ -109,6 +109,7 @@ case 'updateTracking':
         try {
           const { sheetName, updates, spreadsheetId } = req.body;
           const { getOrderData } = require('../lib/google-sheets');
+          const { google } = require('googleapis');
           
           // 먼저 시트 데이터 읽기 (SPREADSHEET_ID_ORDERS 사용)
           const orderData = await getOrderData(`${sheetName}!A:ZZ`, spreadsheetId || process.env.SPREADSHEET_ID_ORDERS);
@@ -120,54 +121,84 @@ case 'updateTracking':
           const headers = orderData[0];
           const rows = orderData.slice(1);
           
-          // 주문번호, 택배사, 송장번호 컬럼 인덱스 찾기
+          // 필요한 컬럼 인덱스 찾기
           const orderNumIndex = headers.indexOf('주문번호');
           const carrierIndex = headers.indexOf('택배사');
           const trackingIndex = headers.indexOf('송장번호');
+          const deliveryDateIndex = headers.indexOf('발송일(송장입력일)');
           
           if (orderNumIndex === -1) {
             return res.status(400).json({ success: false, error: '주문번호 컬럼을 찾을 수 없습니다' });
           }
           
-          // 데이터 업데이트
+          // 개별 셀 업데이트를 위한 배치 요청 준비
+          const batchUpdateRequests = [];
           let updatedCount = 0;
+          
+          // 오늘 날짜 (발송일)
+          const today = new Date().toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          }).replace(/\. /g, '-').replace(/\./g, '');
           
           updates.forEach(update => {
             // 주문번호로 행 찾기
             const rowIndex = rows.findIndex(row => row[orderNumIndex] === update.orderNumber);
             
             if (rowIndex >= 0) {
-              // 데이터 업데이트
+              const actualRowIndex = rowIndex + 2; // 헤더 + 1-based index
+              
+              // 택배사 업데이트
               if (update.carrier && carrierIndex >= 0) {
-                rows[rowIndex][carrierIndex] = update.carrier;
+                batchUpdateRequests.push({
+                  range: `${sheetName}!${columnToLetter(carrierIndex + 1)}${actualRowIndex}`,
+                  values: [[update.carrier]]
+                });
                 updatedCount++;
               }
               
+              // 송장번호 업데이트
               if (update.trackingNumber && trackingIndex >= 0) {
-                rows[rowIndex][trackingIndex] = update.trackingNumber;
+                batchUpdateRequests.push({
+                  range: `${sheetName}!${columnToLetter(trackingIndex + 1)}${actualRowIndex}`,
+                  values: [[update.trackingNumber]]
+                });
                 updatedCount++;
+              }
+              
+              // 발송일(송장입력일) 업데이트
+              if (deliveryDateIndex >= 0 && update.trackingNumber) {
+                batchUpdateRequests.push({
+                  range: `${sheetName}!${columnToLetter(deliveryDateIndex + 1)}${actualRowIndex}`,
+                  values: [[today]]
+                });
               }
             }
           });
           
-          // 전체 시트 데이터 다시 저장
-          if (updatedCount > 0) {
-            const { saveOrderData } = require('../lib/google-sheets');
-            const allData = [headers, ...rows];
+          // Google Sheets API로 개별 셀 업데이트
+          if (batchUpdateRequests.length > 0) {
+            const auth = await getAuthClient();
+            const sheets = google.sheets({ version: 'v4', auth });
             
-            await saveOrderData(
-              sheetName,
-              rows,
-              headers,
-              {},
-              spreadsheetId || process.env.SPREADSHEET_ID_ORDERS
-            );
+            // 배치 업데이트 실행
+            for (const request of batchUpdateRequests) {
+              await sheets.spreadsheets.values.update({
+                spreadsheetId: spreadsheetId || process.env.SPREADSHEET_ID_ORDERS,
+                range: request.range,
+                valueInputOption: 'RAW',
+                requestBody: {
+                  values: request.values
+                }
+              });
+            }
           }
           
           return res.status(200).json({ 
             success: true, 
             updated: updatedCount,
-            message: `${updates.length}건 중 ${Math.floor(updatedCount/2)}건 업데이트됨`
+            message: `${updates.length}건의 송장번호가 업데이트되었습니다`
           });
           
         } catch (error) {
@@ -178,6 +209,16 @@ case 'updateTracking':
             details: error.message 
           });
         }
+
+      // getAuthClient 함수가 필요한 경우 추가
+      async function getAuthClient() {
+        const { google } = require('googleapis');
+        const auth = new google.auth.GoogleAuth({
+          keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS || './credentials.json',
+          scopes: ['https://www.googleapis.com/auth/spreadsheets']
+        });
+        return auth.getClient();
+      }
 
       case 'getMarketFormats':
         try {
@@ -446,5 +487,6 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
+
 
 
