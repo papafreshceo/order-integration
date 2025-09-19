@@ -1437,8 +1437,9 @@ for (let i = 0; i < headers.length; i++) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                action: 'getMarketData'  // getMarketList가 아닌 getMarketData
-            })
+    action: 'getMarketData',
+    useMainSpreadsheet: false  // 설정 시트에서 색상 정보만 읽기
+})
         });
                 
                 const marketData = await marketResponse.json();
