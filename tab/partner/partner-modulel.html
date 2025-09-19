@@ -477,4 +477,103 @@
                             <div><strong>구분:</strong> ${partner.type}</div>
                             <div><strong>사업자번호:</strong> ${partner.bizNo || '-'}</div>
                             <div><strong>대표자:</strong> ${partner.ceo || '-'}</div>
-                            <div><strong>연락처
+                            <div><strong>연락처:</strong> ${partner.phone}</div>
+                            <div><strong>이메일:</strong> ${partner.email || '-'}</div>
+                            <div><strong>담당자:</strong> ${partner.manager || '-'}</div>
+                            <div><strong>담당자 연락처:</strong> ${partner.managerPhone || '-'}</div>
+                            <div><strong>거래시작일:</strong> ${partner.startDate || '-'}</div>
+                            <div><strong>결제조건:</strong> ${partner.paymentTerms}</div>
+                            <div><strong>거래상태:</strong> ${this.getStatusBadge(partner.status)}</div>
+                            <div><strong>등록일:</strong> ${partner.registerDate}</div>
+                            <div style="grid-column: 1 / -1;"><strong>주소:</strong> ${partner.address || '-'}</div>
+                            <div style="grid-column: 1 / -1;"><strong>메모:</strong> ${partner.memo || '-'}</div>
+                        </div>
+                    `;
+                    document.getElementById('partnerDetailBody').innerHTML = detailHtml;
+                    document.getElementById('partnerDetailModal').style.display = 'flex';
+                }
+            },
+            
+            closeDetail: function() {
+                document.getElementById('partnerDetailModal').style.display = 'none';
+            },
+            
+            editPartner: function(id) {
+                const partner = this.partners.find(p => p.id === id);
+                if (partner) {
+                    // 폼에 데이터 채우기
+                    document.getElementById('partnerType').value = partner.type;
+                    document.getElementById('partnerName').value = partner.name;
+                    document.getElementById('partnerBizNo').value = partner.bizNo;
+                    document.getElementById('partnerCeo').value = partner.ceo;
+                    document.getElementById('partnerPhone').value = partner.phone;
+                    document.getElementById('partnerEmail').value = partner.email;
+                    document.getElementById('partnerAddress').value = partner.address;
+                    document.getElementById('partnerMemo').value = partner.memo;
+                    document.getElementById('partnerManager').value = partner.manager;
+                    document.getElementById('partnerManagerPhone').value = partner.managerPhone;
+                    document.getElementById('partnerStartDate').value = partner.startDate;
+                    document.getElementById('paymentTerms').value = partner.paymentTerms;
+                    document.getElementById('partnerStatus').value = partner.status;
+                    
+                    // 기존 데이터 삭제
+                    this.partners = this.partners.filter(p => p.id !== id);
+                    
+                    // 스크롤 상단으로
+                    window.scrollTo(0, 0);
+                    alert('수정할 내용을 입력하고 다시 추가해주세요.');
+                }
+            },
+            
+            deletePartner: function(id) {
+                if (confirm('삭제하시겠습니까?')) {
+                    this.partners = this.partners.filter(p => p.id !== id);
+                    this.savePartners();
+                    this.renderTable();
+                    this.updateStatistics();
+                }
+            },
+            
+            applyFilter: function() {
+                const type = document.getElementById('filterType').value;
+                const status = document.getElementById('filterStatus').value;
+                const keyword = document.getElementById('filterKeyword').value.toLowerCase();
+                
+                let filtered = this.partners;
+                
+                if (type) {
+                    filtered = filtered.filter(p => p.type === type);
+                }
+                if (status) {
+                    filtered = filtered.filter(p => p.status === status);
+                }
+                if (keyword) {
+                    filtered = filtered.filter(p => 
+                        p.name.toLowerCase().includes(keyword) ||
+                        (p.ceo && p.ceo.toLowerCase().includes(keyword))
+                    );
+                }
+                
+                this.renderTable(filtered);
+            },
+            
+            resetFilter: function() {
+                document.getElementById('filterType').value = '';
+                document.getElementById('filterStatus').value = '';
+                document.getElementById('filterKeyword').value = '';
+                this.renderTable();
+            },
+            
+            exportExcel: function() {
+                console.log('Export to Excel');
+                // 엑셀 내보내기 로직
+            },
+            
+            refresh: function() {
+                this.loadPartners();
+                this.updateStatistics();
+            }
+        };
+        
+        // 전역 노출
+        window.PartnerModule = PartnerModule;
