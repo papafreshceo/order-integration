@@ -1722,21 +1722,6 @@ if (header === '마켓명' && order[header]) {
                 return;
             }
             
-            // 택배사 코드 매핑
-            const carrierCodes = {
-                'CJ대한통운': '04',
-                '한진택배': '05',
-                '롯데택배': '08',
-                '우체국택배': '01',
-                '로젠택배': '06'
-            };
-            
-            const carrierCode = carrierCodes[carrier];
-            if (!carrierCode) {
-                showMessage('지원하지 않는 택배사입니다.', 'error');
-                return;
-            }
-            
             showLoading();
             try {
                 const response = await fetch('/api/delivery-tracking', {
@@ -1745,7 +1730,7 @@ if (header === '마켓명' && order[header]) {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        carrier: carrierCode,
+                        carrier: carrier,  // 택배사명 그대로 전송
                         trackingNumber: trackingNumber
                     })
                 });
@@ -1774,14 +1759,7 @@ if (header === '마켓명' && order[header]) {
                 existingModal.remove();
             }
             
-            // 배송 상태 한글 변환
-            const statusText = {
-                'ready': '상품준비중',
-                'pickup': '상품인수',
-                'branch': '상품이동중',
-                'delivery': '배송출발',
-                'complete': '배송완료'
-            };
+           
             
             const modal = document.createElement('div');
             modal.id = 'deliveryModal';
@@ -1823,7 +1801,7 @@ if (header === '마켓명' && order[header]) {
                                 <div>
                                     <span style="color: #6c757d; font-size: 12px;">배송상태</span>
                                     <div style="font-weight: 600; color: ${data.complete ? '#10b981' : '#f59e0b'};">
-                                        ${data.complete ? '배송완료' : statusText[data.level] || data.level}
+                                        ${data.status || '조회중'}
                                     </div>
                                 </div>
                             </div>
