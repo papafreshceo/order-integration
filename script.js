@@ -230,7 +230,43 @@ function switchTab(tabName) {
             }, 10);
         }
     }
+    
+    // 설정 탭일 때 설정 모듈 로드
+    if (tabName === 'settings') {
+        loadSettingsTab();
+    }
 }
+
+// 설정 탭 로드
+async function loadSettingsTab() {
+    const container = document.getElementById('settings-container');
+    if (!container) {
+        console.error('settings-container를 찾을 수 없습니다');
+        return;
+    }
+    
+    try {
+        const response = await fetch('tabs/settings/settings-module.html');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const html = await response.text();
+        container.innerHTML = html;
+        
+        console.log('설정 탭 로드 완료');
+        
+    } catch (error) {
+        console.error('설정 탭 로드 오류:', error);
+        container.innerHTML = `
+            <div style="padding: 40px; text-align: center;">
+                <h3>설정 모듈을 로드할 수 없습니다</h3>
+                <p style="color: #6c757d;">tabs/settings/settings-module.html 파일을 확인해주세요</p>
+            </div>
+        `;
+    }
+}
+
 // ===========================
 // 파일 처리 함수들
 // ===========================
@@ -2622,4 +2658,5 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
