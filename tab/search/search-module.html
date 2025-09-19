@@ -554,8 +554,8 @@
                 if (header === '연번') {
                     th.style.cssText = `position: sticky; left: ${leftPos}px; z-index: 11; background: #f8f9fa; width: 50px;`;
                     leftPos += 50;
-                } else if (header === '마켓명') {
-                    th.style.cssText = `position: sticky; left: ${leftPos}px; z-index: 11; background: #f8f9fa; width: 100px;`;
+                 } else if (header === '마켓명') {
+                    th.style.cssText = `position: sticky; left: ${leftPos}px; z-index: 11; background: #f8f9fa;`;
                     leftPos += 100;
                 } else {
                     th.style.cssText = 'background: #f8f9fa;';
@@ -613,7 +613,7 @@
                     td.textContent = serialNumber;
                     leftPos += 50;
                 } else if (header === '마켓명') {
-                    td.style.cssText = `position: sticky; left: ${leftPos}px; z-index: 5; background: ${rowBgColor}; width: 100px;`;
+                    td.style.cssText = `position: sticky; left: ${leftPos}px; z-index: 5; background: ${rowBgColor};`;
                     td.innerHTML = `
                         <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
                              color: ${getTextColor(marketColor)}; border-radius: 4px; font-size: 11px; font-weight: 600;">
