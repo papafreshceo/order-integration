@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>지출관리</title>
+    <style>
+        .expense-container {
+            padding: 20px;
+        }
+        
+        .expense-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .summary-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+        
+        .summary-label {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 8px;
+            font-weight: 300;
+        }
+        
+        .summary-value {
+            font-size: 24px;
+            font-weight: 500;
+            color: #212529;
+        }
+        
+        .expense-chart {
+            height: 300px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fafafa;
+        }
+    </style>
+</head>
+<body>
+    <div class="expense-container">
+        <!-- 지출 등록 섹션 -->
+        <div class="section-container">
+            <h2 class="section-title">
+                <div class="section-title-text">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                    지출 등록
+                </div>
+            </h2>
+            
+            <div class="expense-form">
+                <div class="form-row-custom">
+                    <div class="form-group" style="width: 150px;">
+                        <label>지출일자 <span class="required">*</span></label>
+                        <input type="date" id="expenseDate" class="form-input-direct">
+                    </div>
+                    <div class="form-group" style="width: 150px;">
+                        <label>지출구분 <span class="required">*</span></label>
+                        <select id="expenseType" class="form-input-direct">
+                            <option value="">선택하세요</option>
+                            <option value="사입">사입</option>
+                            <option value="택배비">택배비</option>
+                            <option value="포장재">포장재</option>
+                            <option value="인건비">인건비</option>
+                            <option value="임대료">임대료</option>
+                            <option value="광고비">광고비</option>
+                            <option value="공과금">공과금</option>
+                            <option value="소모품">소모품</option>
+                            <option value="기타">기타</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="width: 200px;">
+                        <label>거래처</label>
+                        <input type="text" id="expenseVendor" class="form-input-direct">
+                    </div>
+                    <div class="form-group" style="width: 300px;">
+                        <label>내용 <span class="required">*</span></label>
+                        <input type="text" id="expenseDesc" class="form-input-direct">
+                    </div>
+                    <div class="form-group" style="width: 120px;">
+                        <label>금액 <span class="required">*</span></label>
+                        <input type="text" id="expenseAmount" class="form-input-direct text-right" onchange="ExpenseModule.formatAmount(this)">
+                    </div>
+                    <div class="form-group" style="width: 150px;">
+                        <label>결제방법</label>
+                        <select id="paymentMethod" class="form-input-direct">
+                            <option value="카드">카드</option>
+                            <option value="현금">현금</option>
+                            <option value="계좌이체">계좌이체</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button class="btn-add-order" onclick="ExpenseModule.addExpense()">지출 추가</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 지출 요약 섹션 -->
+        <div class="section-container">
+            <h2 class="section-title">
+                <div class="section-title-text">
+                    월별 지출 요약
+                </div>
+                <div class="filter-group">
+                    <select id="summaryMonth" class="form-input-direct" style="width: 150px;" onchange="ExpenseModule.updateSummary()">
+                        <!-- 월 옵션들이 동적으로 추가됨 -->
+                    </select>
+                </div>
+            </h2>
+            
+            <div class="expense-summary">
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <div class="summary-label">이번달 총 지출</div>
+                        <div class="summary-value" id="totalExpense" style="color: #dc3545;">0원</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">사입비용</div>
+                        <div class="summary-value" id="purchaseExpense">0원</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">운영비용</div>
+                        <div class="summary-value" id="operatingExpense">0원</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-label">기타비용</div>
+                        <div class="summary-value" id="otherExpense">0원</div>
+                    </div>
+                </div>
+                
+                <!-- 차트 영역 -->
+                <div class="expense-chart">
+                    <canvas id="expenseChart" style="width: 100%; height: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 지출 내역 섹션 -->
+        <div class="section-container">
+            <h2 class="section-title">
+                <div class="section-title-text">
+                    지출 내역
+                </div>
+                <div class="export-buttons">
+                    <button class="export-btn export-excel" onclick="ExpenseModule.exportExcel()">엑셀 다운로드</button>
+                    <button class="export-btn export-sheets" onclick="ExpenseModule.saveToSheets()">구글시트 저장</button>
+                </div>
+            </h2>
+            
+            <!-- 필터 -->
+            <div class="filter-container" style="margin-bottom: 20px; display: flex; gap: 10px;">
+                <input type="date" id="filterFromDate" class="form-input-direct" style="width: 140px;">
+                <input type="date" id="filterToDate" class="form-input-direct" style="width: 140px;">
+                <select id="filterType" class="form-input-direct" style="width: 120px;">
+                    <option value="">전체 구분</option>
+                    <option value="사입">사입</option>
+                    <option value="택배비">택배비</option>
+                    <option value="포장재">포장재</option>
+                    <option value="인건비">인건비</option>
+                    <option value="임대료">임대료</option>
+                    <option value="광고비">광고비</option>
+                    <option value="공과금">공과금</option>
+                    <option value="소모품">소모품</option>
+                    <option value="기타">기타</option>
+                </select>
+                <input type="text" id="filterKeyword" class="form-input-direct" style="width: 200px;" placeholder="거래처, 내용 검색">
+                <button class="btn-verify" onclick="ExpenseModule.applyFilter()">검색</button>
+                <button class="btn-reset" onclick="ExpenseModule.resetFilter()">초기화</button>
+            </div>
+            
+            <div class="table-wrapper">
+                <table class="order-table" id="expenseTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">번호</th>
+                            <th style="width: 100px;">지출일자</th>
+                            <th style="width: 100px;">구분</th>
+                            <th style="width: 150px;">거래처</th>
+                            <th style="width: 300px;">내용</th>
+                            <th style="width: 120px;">금액</th>
+                            <th style="width: 100px;">결제방법</th>
+                            <th style="width: 100px;">영수증</th>
+                            <th style="width: 80px;">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expenseTableBody">
+                        <tr>
+                            <td colspan="9" class="text-center">데이터가 없습니다</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 합계 표시 -->
+            <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: right;">
+                <strong>검색결과 합계: </strong>
+                <span id="filterTotal" style="font-size: 20px; color: #dc3545;">0원</span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const ExpenseModule = {
+            expenses: [],
+            
+            init: function() {
+                console.log('Expense Module initialized');
+                this.setDefaultDate();
+                this.loadExpenses();
+                this.setupMonthSelector();
+                this.updateSummary();
+            },
+            
+            setDefaultDate: function() {
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('expenseDate').value = today;
+            },
+            
+            setupMonthSelector: function() {
+                const select = document.getElementById('summaryMonth');
+                const today = new Date();
+                
+                // 최근 12개월 옵션 생성
+                for (let i = 0; i < 12; i++) {
+                    const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const option = document.createElement('option');
+                    option.value = `${year}-${month}`;
+                    option.textContent = `${year}년 ${month}월`;
+                    if (i === 0) option.selected = true;
+                    select.appendChild(option);
+                }
+            },
+            
+            formatAmount: function(input) {
+                const value = input.value.replace(/[^0-9]/g, '');
+                if (value) {
+                    input.value = parseInt(value).toLocaleString();
+                }
+            },
+            
+            addExpense: function() {
+                const expense = {
+                    id: Date.now(),
+                    date: document.getElementById('expenseDate').value,
+                    type: document.getElementById('expenseType').value,
+                    vendor: document.getElementById('expenseVendor').value,
+                    description: document.getElementById('expenseDesc').value,
+                    amount: parseInt(document.getElementById('expenseAmount').value.replace(/,/g, '')) || 0,
+                    paymentMethod: document.getElementById('paymentMethod').value,
+                    receipt: false
+                };
+                
+                if (!expense.date || !expense.type || !expense.description || !expense.amount) {
+                    alert('필수 항목을 입력해주세요.');
+                    return;
+                }
+                
+                this.expenses.unshift(expense);
+                this.saveExpenses();
+                this.renderTable();
+                this.updateSummary();
+                this.resetForm();
+                
+                alert('지출 내역이 등록되었습니다.');
+            },
+            
+            resetForm: function() {
+                document.getElementById('expenseType').value = '';
+                document.getElementById('expenseVendor').value = '';
+                document.getElementById('expenseDesc').value = '';
+                document.getElementById('expenseAmount').value = '';
+                document.getElementById('paymentMethod').value = '카드';
+            },
+            
+            loadExpenses: function() {
+                const saved = localStorage.getItem('expenses');
+                if (saved) {
+                    this.expenses = JSON.parse(saved);
+                    this.renderTable();
+                }
+            },
+            
+            saveExpenses: function() {
+                localStorage.setItem('expenses', JSON.stringify(this.expenses));
+            },
+            
+            updateSummary: function() {
+                const selectedMonth = document.getElementById('summaryMonth').value;
+                const [year, month] = selectedMonth.split('-');
+                
+                const monthExpenses = this.expenses.filter(e => {
+                    const expenseDate = new Date(e.date);
+                    return expenseDate.getFullYear() == year && 
+                           String(expenseDate.getMonth() + 1).padStart(2, '0') == month;
+                });
+                
+                const total = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
+                const purchase = monthExpenses.filter(e => e.type === '사입')
+                    .reduce((sum, e) => sum + e.amount, 0);
+                const operating = monthExpenses.filter(e => 
+                    ['택배비', '포장재', '인건비', '임대료', '공과금', '소모품'].includes(e.type))
+                    .reduce((sum, e) => sum + e.amount, 0);
+                const other = monthExpenses.filter(e => 
+                    !['사입', '택배비', '포장재', '인건비', '임대료', '공과금', '소모품'].includes(e.type))
+                    .reduce((sum, e) => sum + e.amount, 0);
+                
+                document.getElementById('totalExpense').textContent = total.toLocaleString() + '원';
+                document.getElementById('purchaseExpense').textContent = purchase.toLocaleString() + '원';
+                document.getElementById('operatingExpense').textContent = operating.toLocaleString() + '원';
+                document.getElementById('otherExpense').textContent = other.toLocaleString() + '원';
+                
+                this.updateChart(monthExpenses);
+            },
+            
+            updateChart: function(data) {
+                // 차트 업데이트 로직 (Chart.js 등 사용)
+                const canvas = document.getElementById('expenseChart');
+                const ctx = canvas.getContext('2d');
+                
+                // 간단한 차트 그리기 예시
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#6c757d';
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('지출 분석 차트', canvas.width / 2, canvas.height / 2);
+            },
+            
+            renderTable: function(filteredData = null) {
+                const tbody = document.getElementById('expenseTableBody');
+                const data = filteredData || this.expenses;
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="text-center">데이터가 없습니다</td></tr>';
+                    document.getElementById('filterTotal').textContent = '0원';
+                    return;
+                }
+                
+                tbody.innerHTML = data.map((expense, index) => `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${expense.date}</td>
+                        <td>${expense.type}</td>
+                        <td>${expense.vendor || '-'}</td>
+                        <td>${expense.description}</td>
+                        <td class="text-right">${expense.amount.toLocaleString()}</td>
+                        <td>${expense.paymentMethod}</td>
+                        <td>${expense.receipt ? '있음' : '없음'}</td>
+                        <td>
+                            <button class="btn-sm" onclick="ExpenseModule.editExpense(${expense.id})">수정</button>
+                            <button class="btn-sm btn-danger" onclick="ExpenseModule.deleteExpense(${expense.id})">삭제</button>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                // 합계 계산
+                const total = data.reduce((sum, e) => sum + e.amount, 0);
+                document.getElementById('filterTotal').textContent = total.toLocaleString() + '원';
+            },
+            
+            editExpense: function(id) {
+                const expense = this.expenses.find(e => e.id === id);
+                if (expense) {
+                    const newAmount = prompt('금액을 수정하세요:', expense.amount);
+                    if (newAmount !== null) {
+                        expense.amount = parseInt(newAmount) || 0;
+                        this.saveExpenses();
+                        this.renderTable();
+                        this.updateSummary();
+                    }
+                }
+            },
+            
+            deleteExpense: function(id) {
+                if (confirm('삭제하시겠습니까?')) {
+                    this.expenses = this.expenses.filter(e => e.id !== id);
+                    this.saveExpenses();
+                    this.renderTable();
+                    this.updateSummary();
+                }
+            },
+            
+            applyFilter: function() {
+                const fromDate = document.getElementById('filterFromDate').value;
+                const toDate = document.getElementById('filterToDate').value;
+                const type = document.getElementById('filterType').value;
+                const keyword = document.getElementById('filterKeyword').value.toLowerCase();
+                
+                let filtered = this.expenses;
+                
+                if (fromDate) {
+                    filtered = filtered.filter(e => e.date >= fromDate);
+                }
+                if (toDate) {
+                    filtered = filtered.filter(e => e.date <= toDate);
+                }
+                if (type) {
+                    filtered = filtered.filter(e => e.type === type);
+                }
+                if (keyword) {
+                    filtered = filtered.filter(e => 
+                        (e.vendor && e.vendor.toLowerCase().includes(keyword)) ||
+                        e.description.toLowerCase().includes(keyword)
+                    );
+                }
+                
+                this.renderTable(filtered);
+            },
+            
+            resetFilter: function() {
+                document.getElementById('filterFromDate').value = '';
+                document.getElementById('filterToDate').value = '';
+                document.getElementById('filterType').value = '';
+                document.getElementById('filterKeyword').value = '';
+                this.renderTable();
+            },
+            
+            exportExcel: function() {
+                console.log('Export to Excel');
+                // 엑셀 내보내기 로직
+            },
+            
+            saveToSheets: function() {
+                console.log('Save to Google Sheets');
+                // 구글 시트 저장 로직
+            },
+            
+            refresh: function() {
+                this.loadExpenses();
+                this.updateSummary();
+            }
+        };
+        
+        // 전역 노출
+        window.ExpenseModule = ExpenseModule;
+    </script>
+</body>
+</html>
