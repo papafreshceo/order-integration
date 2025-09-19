@@ -283,47 +283,15 @@
         }
 
         .table-wrapper {
-            overflow-x: auto;
+overflow-x: auto;
             max-height: 600px;
             overflow-y: auto;
             position: relative;
         }
         
-        /* 열 고정 스타일 */
-        .shipping-table {
-            position: relative;
-        }
-        
-        .shipping-table thead th:nth-child(-n+6),
-        .shipping-table tbody td:nth-child(-n+6) {
-            position: sticky;
-            background: #ffffff;
-            z-index: 5;
-        }
-        
-        /* 각 고정 열의 left 위치 */
-        .shipping-table th:nth-child(1),
-        .shipping-table td:nth-child(1) { left: 0px; }
-        .shipping-table th:nth-child(2),
-        .shipping-table td:nth-child(2) { left: 40px; }
-        .shipping-table th:nth-child(3),
-        .shipping-table td:nth-child(3) { left: 90px; }
-        .shipping-table th:nth-child(4),
-        .shipping-table td:nth-child(4) { left: 190px; }
-        .shipping-table th:nth-child(5),
-        .shipping-table td:nth-child(5) { left: 340px; }
-        .shipping-table th:nth-child(6),
-        .shipping-table td:nth-child(6) { left: 480px; }
-        
-        .shipping-table thead th:nth-child(-n+6) {
-            background: #f8f9fa;
-            z-index: 10;
-        }
-
         .shipping-table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
         }
 
         .shipping-table thead {
@@ -1002,112 +970,150 @@ function updateVendorTable() {
 
         // 발송 테이블 업데이트
         function updateShippingTable() {
-    const thead = document.getElementById('shippingTableHead');
-    const tbody = document.getElementById('shippingTableBody');
-    
-    // 컬럼 너비 매핑
-    const columnWidths = {
-        '연번': 50,
-        '마켓명': 100,
-        '마켓': 60,
-        '결제일': 150,
-        '주문번호': 140,
-        '상품주문번호': 140,
-        '주문자': 70,
-        '수취인': 70,
-        '수령인': 70,
-        '주문자전화번호': 120,
-        '수취인전화번호': 120,
-        '수령인전화번호': 120,
-        '주소': 300,
-        '수취인주소': 300,
-        '수령인주소': 300,
-        '배송메세지': 100,
-        '배송메시지': 100,
-        '옵션명': 160,
-        '수량': 60,
-        '확인': 160,
-        '셀러': 80,
-        '셀러공급가': 70,
-        '출고처': 80,
-        '송장주체': 60,
-        '벤더사': 100,
-        '발송지명': 100,
-        '발송지주소': 300,
-        '발송지연락처': 120,
-        '출고비용': 90,
-        '정산예정금액': 90,
-        '정산대상금액': 90,
-        '상품금액': 80,
-        '최종결제금액': 90,
-        '할인금액': 90,
-        '마켓부담할인금액': 120,
-        '판매자할인쿠폰할인': 120,
-        '구매쿠폰적용금액': 120,
-        '쿠폰할인금액': 100,
-        '기타지원금할인금': 120,
-        '수수료1': 70,
-        '수수료2': 70,
-        '판매아이디': 80,
-        '분리배송 Y/N': 100,
-        '택배비': 80,
-        '발송일(송장입력일)': 150,
-        '택배사': 80,
-        '송장번호': 140
-    };
-    
-    if (currentOrders.length === 0) {
-        thead.innerHTML = '';
-        tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 40px;">오늘 날짜의 주문이 없습니다.</td></tr>';
-        return;
-    }
-    
-    // 헤더 생성
-    const headers = Object.keys(currentOrders[0]);
-    thead.innerHTML = `
-        <tr>
-            <th class="checkbox-cell" style="width: 40px;"><input type="checkbox" onchange="toggleSelectAll(this)"></th>
-            ${headers.map(header => {
-                const width = columnWidths[header] || 100;
-                return `<th style="width: ${width}px; min-width: ${width}px;">${header}</th>`;
-            }).join('')}
-        </tr>
-    `;
-    
-    // 바디 생성  
-    tbody.innerHTML = '';
-    currentOrders.forEach((order, index) => {
-        const row = tbody.insertRow();
-        row.innerHTML = `
-            <td class="checkbox-cell" style="width: 40px;"><input type="checkbox" data-index="${index}"></td>
-            ${headers.map(header => {
-                const width = columnWidths[header] || 100;
-                if (header === '택배사') {
-                    return `<td style="width: ${width}px; min-width: ${width}px;">
-                        <select class="carrier-select" data-index="${index}" style="width: 100%;">
-                            <option value="">선택</option>
-                            <option value="CJ대한통운" ${order[header] === 'CJ대한통운' ? 'selected' : ''}>CJ대한통운</option>
-                            <option value="한진택배" ${order[header] === '한진택배' ? 'selected' : ''}>한진택배</option>
-                            <option value="롯데택배" ${order[header] === '롯데택배' ? 'selected' : ''}>롯데택배</option>
-                            <option value="우체국택배" ${order[header] === '우체국택배' ? 'selected' : ''}>우체국택배</option>
-                            <option value="로젠택배" ${order[header] === '로젠택배' ? 'selected' : ''}>로젠택배</option>
-                        </select>
-                    </td>`;
-                } else if (header === '송장번호') {
-                    const hasTracking = order[header] && order['택배사'];
-                    return `<td style="width: ${width}px; min-width: ${width}px;">
-                        <div style="display: flex; gap: 4px; align-items: center;">
-                            <input type="text" class="tracking-input" data-index="${index}" value="${order[header] || ''}" style="flex: 1;">
-                            ${hasTracking ? `<button onclick="checkDeliveryStatus('${order['택배사']}', '${order[header]}', ${index})" class="btn-action" style="padding: 2px 6px; font-size: 11px;">조회</button>` : ''}
-                        </div>
-                    </td>`;
-                } else {
-                    return `<td style="width: ${width}px; min-width: ${width}px;" title="${order[header] || ''}">${order[header] || ''}</td>`;
+            const thead = document.getElementById('shippingTableHead');
+            const tbody = document.getElementById('shippingTableBody');
+            
+            // 컬럼 너비 매핑
+            const columnWidths = {
+                '연번': 50,
+                '마켓명': 100,
+                '마켓': 60,
+                '결제일': 150,
+                '주문번호': 140,
+                '상품주문번호': 140,
+                '주문자': 70,
+                '수취인': 70,
+                '수령인': 70,
+                '주문자전화번호': 120,
+                '수취인전화번호': 120,
+                '수령인전화번호': 120,
+                '주소': 300,
+                '수취인주소': 300,
+                '수령인주소': 300,
+                '배송메세지': 100,
+                '배송메시지': 100,
+                '옵션명': 160,
+                '수량': 60,
+                '확인': 160,
+                '셀러': 80,
+                '셀러공급가': 70,
+                '출고처': 80,
+                '송장주체': 60,
+                '벤더사': 100,
+                '발송지명': 100,
+                '발송지주소': 300,
+                '발송지연락처': 120,
+                '출고비용': 90,
+                '정산예정금액': 90,
+                '정산대상금액': 90,
+                '상품금액': 80,
+                '최종결제금액': 90,
+                '할인금액': 90,
+                '마켓부담할인금액': 120,
+                '판매자할인쿠폰할인': 120,
+                '구매쿠폰적용금액': 120,
+                '쿠폰할인금액': 100,
+                '기타지원금할인금': 120,
+                '수수료1': 70,
+                '수수료2': 70,
+                '판매아이디': 80,
+                '분리배송 Y/N': 100,
+                '택배비': 80,
+                '발송일(송장입력일)': 150,
+                '택배사': 80,
+                '송장번호': 140
+            };
+            
+            if (currentOrders.length === 0) {
+                thead.innerHTML = '';
+                tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 40px;">오늘 날짜의 주문이 없습니다.</td></tr>';
+                return;
+            }
+            
+            // 헤더 생성
+            const headers = Object.keys(currentOrders[0]);
+            
+            // 수령인 전화번호 컬럼 찾기
+            const recipientPhoneColumns = ['수령인전화번호', '수취인전화번호', '수령인연락처', '수취인연락처'];
+            let fixedColIndex = 0;
+            
+            for (let i = 0; i < headers.length; i++) {
+                if (recipientPhoneColumns.includes(headers[i])) {
+                    fixedColIndex = i + 1; // 체크박스 컬럼 때문에 +1
+                    break;
                 }
-            }).join('')}
-        `;
-    });
-}
+            }
+            
+            // 누적 너비 계산
+            let cumulativeWidths = [0, 40]; // 첫 번째는 0, 두 번째는 체크박스(40px)
+            headers.forEach(header => {
+                const width = columnWidths[header] || 100;
+                cumulativeWidths.push(cumulativeWidths[cumulativeWidths.length - 1] + width);
+            });
+            
+            // 헤더 생성
+            thead.innerHTML = `
+                <tr>
+                    <th class="checkbox-cell" style="position: sticky; left: 0px; z-index: 11; background: #f8f9fa; width: 40px;">
+                        <input type="checkbox" onchange="toggleSelectAll(this)">
+                    </th>
+                    ${headers.map((header, index) => {
+                        const width = columnWidths[header] || 100;
+                        const colIndex = index + 1; // 체크박스 때문에 +1
+                        const isFixed = colIndex <= fixedColIndex;
+                        const leftPos = cumulativeWidths[colIndex];
+                        
+                        const fixedStyle = isFixed ? 
+                            `position: sticky; left: ${leftPos}px; z-index: 10; background: #f8f9fa;` : '';
+                        
+                        return `<th style="width: ${width}px; min-width: ${width}px; ${fixedStyle}">${header}</th>`;
+                    }).join('')}
+                </tr>
+            `;
+            
+            // 바디 생성
+            tbody.innerHTML = '';
+            currentOrders.forEach((order, index) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="checkbox-cell" style="position: sticky; left: 0px; z-index: 6; background: #ffffff; width: 40px;">
+                        <input type="checkbox" data-index="${index}">
+                    </td>
+                    ${headers.map((header, colIdx) => {
+                        const width = columnWidths[header] || 100;
+                        const colIndex = colIdx + 1; // 체크박스 때문에 +1
+                        const isFixed = colIndex <= fixedColIndex;
+                        const leftPos = cumulativeWidths[colIndex];
+                        
+                        const fixedStyle = isFixed ? 
+                            `position: sticky; left: ${leftPos}px; z-index: 5; background: #ffffff;` : '';
+                        
+                        if (header === '택배사') {
+                            return `<td style="width: ${width}px; min-width: ${width}px; ${fixedStyle}">
+                                <select class="carrier-select" data-index="${index}" style="width: 100%;">
+                                    <option value="">선택</option>
+                                    <option value="CJ대한통운" ${order[header] === 'CJ대한통운' ? 'selected' : ''}>CJ대한통운</option>
+                                    <option value="한진택배" ${order[header] === '한진택배' ? 'selected' : ''}>한진택배</option>
+                                    <option value="롯데택배" ${order[header] === '롯데택배' ? 'selected' : ''}>롯데택배</option>
+                                    <option value="우체국택배" ${order[header] === '우체국택배' ? 'selected' : ''}>우체국택배</option>
+                                    <option value="로젠택배" ${order[header] === '로젠택배' ? 'selected' : ''}>로젠택배</option>
+                                </select>
+                            </td>`;
+                        } else if (header === '송장번호') {
+                            const hasTracking = order[header] && order['택배사'];
+                            return `<td style="width: ${width}px; min-width: ${width}px; ${fixedStyle}">
+                                <div style="display: flex; gap: 4px; align-items: center;">
+                                    <input type="text" class="tracking-input" data-index="${index}" value="${order[header] || ''}" style="flex: 1;">
+                                    ${hasTracking ? `<button onclick="checkDeliveryStatus('${order['택배사']}', '${order[header]}', ${index})" class="btn-action" style="padding: 2px 6px; font-size: 11px;">조회</button>` : ''}
+                                </div>
+                            </td>`;
+                        } else {
+                            return `<td style="width: ${width}px; min-width: ${width}px; ${fixedStyle}" title="${order[header] || ''}">${order[header] || ''}</td>`;
+                        }
+                    }).join('')}
+                `;
+            });
+        }
 
         // 전체 선택
          function toggleSelectAll(checkbox) {
