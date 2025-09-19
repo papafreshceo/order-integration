@@ -392,12 +392,12 @@
 
             <!-- 빠른 필터 -->
             <div class="quick-filters">
-                <button class="quick-filter-btn active" onclick="setQuickFilter('today')">오늘</button>
-                <button class="quick-filter-btn" onclick="setQuickFilter('yesterday')">어제</button>
-                <button class="quick-filter-btn" onclick="setQuickFilter('week')">이번 주</button>
-                <button class="quick-filter-btn" onclick="setQuickFilter('month')">이번 달</button>
-                <button class="quick-filter-btn" onclick="setQuickFilter('last30')">최근 30일</button>
-                <button class="quick-filter-btn" onclick="setQuickFilter('custom')">직접 설정</button>
+                <button class="quick-filter-btn active" onclick="setQuickFilter('today', this)">오늘</button>
+                <button class="quick-filter-btn" onclick="setQuickFilter('yesterday', this)">어제</button>
+                <button class="quick-filter-btn" onclick="setQuickFilter('week', this)">이번 주</button>
+                <button class="quick-filter-btn" onclick="setQuickFilter('month', this)">이번 달</button>
+                <button class="quick-filter-btn" onclick="setQuickFilter('last30', this)">최근 30일</button>
+                <button class="quick-filter-btn" onclick="setQuickFilter('custom', this)">직접 설정</button>
             </div>
 
             <!-- 검색 필터 -->
@@ -557,11 +557,11 @@
         // 초기화
         document.addEventListener('DOMContentLoaded', function() {
             initializeFilters();
-            setQuickFilter('today');
+            const todayBtn = document.querySelector('.quick-filter-btn');
+            setQuickFilter('today', todayBtn);
             loadMarketList();
             searchOrders();
         });
-
         // 필터 초기화
         function initializeFilters() {
             const today = new Date();
@@ -601,14 +601,15 @@
             }
         }
 
-        // 빠른 필터 설정
-        function setQuickFilter(type) {
+// 빠른 필터 설정
+        function setQuickFilter(type, buttonElement) {
             document.querySelectorAll('.quick-filter-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
 
-            if (event && event.target) {
-                event.target.classList.add('active');
+            // 버튼 요소가 전달되면 활성화
+            if (buttonElement) {
+                buttonElement.classList.add('active');
             }
 
             const today = new Date();
@@ -622,7 +623,7 @@
                     break;
                 case 'yesterday':
                     startDate.setDate(today.getDate() - 1);
-                    endDate = startDate;
+                    endDate = new Date(startDate);
                     break;
                 case 'week':
                     startDate.setDate(today.getDate() - today.getDay());
