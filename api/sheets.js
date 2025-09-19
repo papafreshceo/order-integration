@@ -81,7 +81,7 @@ export default async function handler(req, res) {
           const { sheetName, spreadsheetId } = req.body;
           const { getOrderData } = require('../lib/google-sheets');
           
-          // 주문기록 시트에서 데이터 읽기
+          // 주문기록 시트에서 데이터 읽기 (SPREADSHEET_ID_ORDERS 사용)
           const orderData = await getOrderData(`${sheetName}!A:ZZ`, spreadsheetId || process.env.SPREADSHEET_ID_ORDERS);
           
           if (!orderData || orderData.length < 2) {
@@ -110,7 +110,7 @@ export default async function handler(req, res) {
           const { sheetName, updates, spreadsheetId } = req.body;
           const { getOrderData, batchUpdateSheetData } = require('../lib/google-sheets');
           
-          // 먼저 시트 데이터 읽기
+          // 먼저 시트 데이터 읽기 (SPREADSHEET_ID_ORDERS 사용)
           const orderData = await getOrderData(`${sheetName}!A:ZZ`, spreadsheetId || process.env.SPREADSHEET_ID_ORDERS);
           
           if (!orderData || orderData.length < 2) {
@@ -180,11 +180,8 @@ export default async function handler(req, res) {
 
       case 'getMarketFormats':
         try {
-          const { spreadsheetId } = req.body;
-          const { getSheetData } = require('../lib/google-sheets');
-          
-          // 마켓별송장업로드양식 시트 읽기
-          const formatData = await getSheetData('마켓별송장업로드양식!A:Z', spreadsheetId || process.env.SPREADSHEET_ID);
+          // 마켓별송장업로드양식 시트 읽기 (SPREADSHEET_ID 사용)
+          const formatData = await getSheetData('마켓별송장업로드양식!A:Z');
           
           const formats = {};
           
@@ -232,28 +229,22 @@ export default async function handler(req, res) {
             }
           });
         }
-ccase 'getMarketData':
+
+      case 'getMarketData':
         try {
-          const { getSheetData } = require('../lib/google-sheets');
-          
           // 매핑 시트에서 마켓명과 색상 읽기 (SPREADSHEET_ID 사용)
-          console.log('매핑 시트 읽기 시작, 스프레드시트 ID:', process.env.SPREADSHEET_ID);
-          const mappingData = await getSheetData('매핑!A:B', process.env.SPREADSHEET_ID);
-          console.log('매핑 데이터:', mappingData);
+          const mappingData = await getSheetData('매핑!A:B');
           
           const markets = [];
           const colors = {};
           
-          if (mappingData && mappingData.length > 0) {
-            console.log('매핑 데이터 행 수:', mappingData.length);
-            
-            // 데이터가 A3부터 시작한다고 가정 (A1은 빈칸, A2는 '마켓명' 헤더)
+          if (mappingData && mappingData.length > 2) {
+            // A2가 '마켓명', B2가 '색상' 헤더라고 가정
             for (let i = 2; i < mappingData.length; i++) {
               if (mappingData[i] && mappingData[i][0]) {
                 const marketName = mappingData[i][0].trim();
-                if (marketName && marketName !== '') {
+                if (marketName) {
                   markets.push(marketName);
-                  // B열에 색상이 있으면 저장
                   if (mappingData[i][1]) {
                     colors[marketName] = mappingData[i][1].trim();
                   }
@@ -261,9 +252,6 @@ ccase 'getMarketData':
               }
             }
           }
-          
-          console.log('파싱된 마켓 목록:', markets);
-          console.log('파싱된 색상 매핑:', colors);
           
           return res.status(200).json({ 
             success: true, 
@@ -279,6 +267,7 @@ ccase 'getMarketData':
             colors: {}
           });
         }
+
       case 'saveToSheet':
         // 시트 생성 또는 확인
         const sheetResult = await createOrderSheet(sheetName);
@@ -350,7 +339,3 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
-
-
-
-
