@@ -321,12 +321,24 @@
             text-overflow: ellipsis;
         }
 
-        /* 모든 테이블 호버 효과 - 옅은 분홍색 */
-        .shipping-table tbody tr:hover td,
-        .vendor-table tbody tr:hover td,
-        .preview-table tbody tr:hover td {
-            background-color: #ffe4e6 !important;
-        }
+        /* 송장번호 유무에 따른 행 스타일 */
+.shipping-table tbody tr.no-tracking td {
+    background-color: #fae1f9 !important;
+}
+
+.shipping-table tbody tr.has-tracking td {
+    background-color: #f0f3f7 !important;
+}
+
+/* 호버 효과 - 연한 초록색 */
+.shipping-table tbody tr:hover td {
+    background-color: #b7f7bd !important;
+}
+
+.vendor-table tbody tr:hover td,
+.preview-table tbody tr:hover td {
+    background-color: #ffe4e6 !important;
+}
 
         /* 선택된 행 스타일 */
         .shipping-table tbody tr.selected-row td {
@@ -1085,11 +1097,16 @@
             `;
             
             // 바디 생성
-            tbody.innerHTML = '';
-            currentOrders.forEach((order, rowIndex) => {
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td class="checkbox-cell" style="position: sticky; left: 0px; z-index: 6; background: #ffffff; width: 40px; text-align: center;">
+tbody.innerHTML = '';
+currentOrders.forEach((order, rowIndex) => {
+    const row = tbody.insertRow();
+    
+    // 송장번호 유무에 따른 행 배경색 설정
+    const hasTracking = order['송장번호'] && order['송장번호'].trim() !== '';
+    const rowBgColor = hasTracking ? '#f0f3f7' : '#fae1f9';
+    
+    row.innerHTML = `
+                    <td class="checkbox-cell" style="position: sticky; left: 0px; z-index: 6; background: ${rowBgColor}; width: 40px; text-align: center;">
                         <input type="checkbox" data-index="${rowIndex}">
                     </td>
                     ${headers.map((header, colIdx) => {
@@ -1099,7 +1116,7 @@
                         const leftPos = cumulativeWidths[colIndex];
                         
                         const fixedStyle = isFixed ? 
-                            `position: sticky; left: ${leftPos}px; z-index: 5; background: #ffffff;` : '';
+    `position: sticky; left: ${leftPos}px; z-index: 5; background: ${rowBgColor};` : `background: ${rowBgColor};`;
                         
                         // 텍스트 정렬 결정
                         let textAlign = 'center'; // 기본값
@@ -1183,6 +1200,13 @@ if (header === '마켓명' && order[header]) {
 }
                     }).join('')}
                 `;
+                
+                // 송장번호 유무에 따른 클래스 추가
+                if (hasTracking) {
+                    row.classList.add('has-tracking');
+                } else {
+                    row.classList.add('no-tracking');  
+                }
             });
         }
         
