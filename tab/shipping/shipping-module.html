@@ -851,9 +851,10 @@ overflow-x: auto;
     <script>
         // 전역 변수
         let currentOrders = [];
-        let bulkUploadData = [];
-        let marketFormats = {};
-
+let bulkUploadData = [];
+let marketFormats = {};
+let marketColors = {}; // 추가
+        
         // 페이지 로드 시 실행
         document.addEventListener('DOMContentLoaded', async function() {
             await loadTodayOrders();
@@ -1041,17 +1042,7 @@ function updateVendorTable() {
             // 주소 필드
             const addressFields = ['주소', '수취인주소', '수령인주소', '발송지주소', '배송메세지', '배송메시지'];
             
-            // 마켓 색상 매핑
-            const marketColors = {
-                '쿠팡': '#e53e3e',
-                '네이버': '#10b981',
-                '11번가': '#f59e0b',
-                '지마켓': '#3182ce',
-                '옥션': '#8b5cf6',
-                '인터파크': '#ec4899',
-                '티몬': '#ef4444',
-                '위메프': '#14b8a6'
-            };
+            
             
             if (currentOrders.length === 0) {
                 thead.innerHTML = '';
@@ -1065,13 +1056,14 @@ function updateVendorTable() {
             // 수령인 전화번호 컬럼 찾기
             const recipientPhoneColumns = ['수령인전화번호', '수취인전화번호', '수령인연락처', '수취인연락처'];
             let fixedColIndex = 0;
-            
-            for (let i = 0; i < headers.length; i++) {
-                if (recipientPhoneColumns.includes(headers[i])) {
-                    fixedColIndex = i + 1;
-                    break;
-                }
-            }
+const phoneFields = ['수령인 전화번호', '수취인 전화번호', '수령인전화번호', '수취인전화번호'];
+
+for (let i = 0; i < headers.length; i++) {
+    if (phoneFields.includes(headers[i])) {
+        fixedColIndex = i + 1; // 체크박스 때문에 +1
+        break;
+    }
+}
             
             // 누적 너비 계산
             let cumulativeWidths = [0, 40];
@@ -1425,9 +1417,9 @@ function updateVendorTable() {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        action: 'getMarketList',
-                        spreadsheetId: 'SPREADSHEET_ID_PRODUCTS'
-                    })
+    action: 'getMarketData',  // getMarketList 대신 getMarketData로 변경
+
+})
                 });
                 
                 const marketData = await marketResponse.json();
@@ -1447,9 +1439,11 @@ function updateVendorTable() {
                 marketFormats = formatData.formats || {};
                 
                 // 마켓 목록 저장
-                if (marketData.success && marketData.markets) {
-                    window.marketList = marketData.markets;
-                }
+                if (marketData.success) {
+    window.marketList = marketData.markets || [];
+    window.marketColors = marketData.colors || {};
+    marketColors = marketData.colors || {};
+}
             } catch (error) {
                 console.error('마켓 정보 로드 오류:', error);
                 // 기본값 사용
