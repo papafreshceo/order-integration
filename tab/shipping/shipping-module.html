@@ -585,7 +585,21 @@
 <body>
     <div class="shipping-container">
         <!-- 상단 통계 -->
-        <div class="shipping-stats">
+        <div class="shipping-stats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #fee2e2; color: #ef4444;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">미발송</div>
+                    <div class="stat-value" id="statNotShipped">0</div>
+                </div>
+            </div>
+
             <div class="stat-card">
                 <div class="stat-icon" style="background: #fef3c7; color: #f59e0b;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -620,6 +634,7 @@
                 <thead>
                     <tr>
                         <th>벤더사</th>
+                        <th style="text-align: center;">미발송</th>
                         <th style="text-align: center;">상품 준비중</th>
                         <th style="text-align: center;">발송완료</th>
                         <th style="text-align: center;">합계</th>
@@ -864,33 +879,44 @@
 
         // 통계 업데이트
         function updateStatistics() {
-            const preparing = currentOrders.filter(order => !order['송장번호']).length;
+            // 미발송: 송장번호와 택배사 모두 없는 경우
+            const notShipped = currentOrders.filter(order => !order['송장번호'] && !order['택배사']).length;
+            // 상품 준비중: 택배사는 있지만 송장번호가 없는 경우
+            const preparing = currentOrders.filter(order => order['택배사'] && !order['송장번호']).length;
+            // 발송완료: 송장번호가 있는 경우
             const shipped = currentOrders.filter(order => order['송장번호']).length;
             
+            document.getElementById('statNotShipped').textContent = notShipped;
             document.getElementById('statPreparing').textContent = preparing;
             document.getElementById('statShipped').textContent = shipped;
         }
 
         // 벤더사별 테이블 업데이트
-        function updateVendorTable() {
+function updateVendorTable() {
             const vendorStats = {};
             
             currentOrders.forEach(order => {
                 const vendor = order['벤더사'] || '자사';
                 if (!vendorStats[vendor]) {
-                    vendorStats[vendor] = { preparing: 0, shipped: 0 };
+                    vendorStats[vendor] = { notShipped: 0, preparing: 0, shipped: 0 };
                 }
                 
                 if (order['송장번호']) {
+                    // 발송완료
                     vendorStats[vendor].shipped++;
-                } else {
+                } else if (order['택배사']) {
+                    // 상품 준비중
                     vendorStats[vendor].preparing++;
+                } else {
+                    // 미발송
+                    vendorStats[vendor].notShipped++;
                 }
             });
             
             const tbody = document.getElementById('vendorTableBody');
             tbody.innerHTML = '';
             
+            let totalNotShipped = 0;
             let totalPreparing = 0;
             let totalShipped = 0;
             
@@ -898,11 +924,13 @@
                 const row = tbody.insertRow();
                 row.innerHTML = `
                     <td>${vendor}</td>
-                    <td style="text-align: center;">${stats.preparing}</td>
-                    <td style="text-align: center;">${stats.shipped}</td>
-                    <td style="text-align: center; font-weight: 500;">${stats.preparing + stats.shipped}</td>
+                    <td style="text-align: center; color: #ef4444;">${stats.notShipped}</td>
+                    <td style="text-align: center; color: #f59e0b;">${stats.preparing}</td>
+                    <td style="text-align: center; color: #10b981;">${stats.shipped}</td>
+                    <td style="text-align: center; font-weight: 500;">${stats.notShipped + stats.preparing + stats.shipped}</td>
                 `;
                 
+                totalNotShipped += stats.notShipped;
                 totalPreparing += stats.preparing;
                 totalShipped += stats.shipped;
             });
@@ -912,9 +940,10 @@
             totalRow.className = 'total-row';
             totalRow.innerHTML = `
                 <td>합계</td>
-                <td style="text-align: center;">${totalPreparing}</td>
-                <td style="text-align: center;">${totalShipped}</td>
-                <td style="text-align: center; font-weight: 600;">${totalPreparing + totalShipped}</td>
+                <td style="text-align: center; color: #ef4444; font-weight: 600;">${totalNotShipped}</td>
+                <td style="text-align: center; color: #f59e0b; font-weight: 600;">${totalPreparing}</td>
+                <td style="text-align: center; color: #10b981; font-weight: 600;">${totalShipped}</td>
+                <td style="text-align: center; font-weight: 600;">${totalNotShipped + totalPreparing + totalShipped}</td>
             `;
         }
 
