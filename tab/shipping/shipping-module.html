@@ -1486,6 +1486,7 @@ if (header === '마켓명' && order[header]) {
         }
 
         // 일괄 파일 처리
+// 일괄 파일 처리
         function handleBulkFile(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1497,11 +1498,46 @@ if (header === '마켓명' && order[header]) {
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                     const jsonData = XLSX.utils.sheet_to_json(firstSheet);
                     
-                    bulkUploadData = jsonData.map(row => ({
-                        orderNumber: row['주문번호'] || '',
-                        carrier: row['택배사'] || '',
-                        trackingNumber: row['송장번호'] || ''
-                    })).filter(item => item.orderNumber && item.trackingNumber);
+                    // 파일 형식 자동 감지
+                    bulkUploadData = [];
+                    
+                    jsonData.forEach(row => {
+                        let orderNumber = '';
+                        let carrier = '';
+                        let trackingNumber = '';
+                        
+                        // 택배사 파일 형식 (NO, 배송일, 계정, 송하인명, 수하인명, 주문번호, 운송장번호, 택배사)
+                        if (row['주문번호'] && row['운송장번호'] && row['택배사']) {
+                            orderNumber = String(row['주문번호']).trim();
+                            carrier = String(row['택배사']).trim();
+                            trackingNumber = String(row['운송장번호']).trim();
+                        }
+                        // 일반 형식 (주문번호, 송장번호, 택배사)
+                        else if (row['주문번호'] && row['송장번호']) {
+                            orderNumber = String(row['주문번호']).trim();
+                            carrier = row['택배사'] || '';
+                            trackingNumber = String(row['송장번호']).trim();
+                        }
+                        // 다른 가능한 헤더명들
+                        else if (row['OrderNumber'] || row['주문 번호'] || row['orderNumber']) {
+                            orderNumber = String(row['OrderNumber'] || row['주문 번호'] || row['orderNumber']).trim();
+                            trackingNumber = String(row['TrackingNumber'] || row['송장 번호'] || row['trackingNumber'] || row['운송장번호'] || '').trim();
+                            carrier = row['Carrier'] || row['택배사'] || row['carrier'] || '';
+                        }
+                        
+                        if (orderNumber && trackingNumber) {
+                            bulkUploadData.push({
+                                orderNumber: orderNumber,
+                                carrier: carrier,
+                                trackingNumber: trackingNumber
+                            });
+                        }
+                    });
+                    
+                    if (bulkUploadData.length === 0) {
+                        showMessage('유효한 데이터가 없습니다. 파일 형식을 확인해주세요.', 'error');
+                        return;
+                    }
                     
                     displayBulkPreview();
                     
