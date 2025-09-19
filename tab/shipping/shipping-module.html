@@ -1095,8 +1095,12 @@ function updateVendorTable() {
                         </select>
                     </td>`;
                 } else if (header === '송장번호') {
+                    const hasTracking = order[header] && order['택배사'];
                     return `<td style="width: ${width}px; min-width: ${width}px;">
-                        <input type="text" class="tracking-input" data-index="${index}" value="${order[header] || ''}" style="width: 100%;">
+                        <div style="display: flex; gap: 4px; align-items: center;">
+                            <input type="text" class="tracking-input" data-index="${index}" value="${order[header] || ''}" style="flex: 1;">
+                            ${hasTracking ? `<button onclick="checkDeliveryStatus('${order['택배사']}', '${order[header]}', ${index})" class="btn-action" style="padding: 2px 6px; font-size: 11px;">조회</button>` : ''}
+                        </div>
                     </td>`;
                 } else {
                     return `<td style="width: ${width}px; min-width: ${width}px;" title="${order[header] || ''}">${order[header] || ''}</td>`;
@@ -1487,6 +1491,153 @@ function updateVendorTable() {
             setTimeout(() => {
                 message.classList.remove('show');
             }, 3000);
+        }
+        
+        // 배송 조회
+        async function checkDeliveryStatus(carrier, trackingNumber, index) {
+            if (!carrier || !trackingNumber) {
+                showMessage('택배사와 송장번호가 필요합니다.', 'error');
+                return;
+            }
+            
+            // 택배사 코드 매핑
+            const carrierCodes = {
+                'CJ대한통운': '04',
+                '한진택배': '05',
+                '롯데택배': '08',
+                '우체국택배': '01',
+                '로젠택배': '06'
+            };
+            
+            const carrierCode = carrierCodes[carrier];
+            if (!carrierCode) {
+                showMessage('지원하지 않는 택배사입니다.', 'error');
+                return;
+            }
+            
+            showLoading();
+            try {
+                const response = await fetch('/api/delivery-tracking', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        carrier: carrierCode,
+                        trackingNumber: trackingNumber
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || '조회 실패');
+                }
+                
+                showDeliveryModal(data, carrier, trackingNumber);
+                
+            } catch (error) {
+                console.error('배송 조회 오류:', error);
+                showMessage(error.message || '배송 정보를 조회할 수 없습니다.', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // 배송 정보 모달 표시
+        function showDeliveryModal(data, carrier, trackingNumber) {
+            // 기존 모달 제거
+            const existingModal = document.getElementById('deliveryModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // 배송 상태 한글 변환
+            const statusText = {
+                'ready': '상품준비중',
+                'pickup': '상품인수',
+                'branch': '상품이동중',
+                'delivery': '배송출발',
+                'complete': '배송완료'
+            };
+            
+            const modal = document.createElement('div');
+            modal.id = 'deliveryModal';
+            modal.className = 'modal show';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 700px;">
+                    <div class="modal-header">
+                        <h3 class="modal-title">배송 추적 정보</h3>
+                        <button class="btn-close" onclick="this.closest('.modal').remove()">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div style="padding: 16px; background: #f8f9fa; border-radius: 8px; margin-bottom: 20px;">
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                                <div>
+                                    <span style="color: #6c757d; font-size: 12px;">택배사</span>
+                                    <div style="font-weight: 500;">${carrier}</div>
+                                </div>
+                                <div>
+                                    <span style="color: #6c757d; font-size: 12px;">송장번호</span>
+                                    <div style="font-weight: 500;">${trackingNumber}</div>
+                                </div>
+                                <div>
+                                    <span style="color: #6c757d; font-size: 12px;">보낸사람</span>
+                                    <div style="font-weight: 500;">${data.senderName || '-'}</div>
+                                </div>
+                                <div>
+                                    <span style="color: #6c757d; font-size: 12px;">받는사람</span>
+                                    <div style="font-weight: 500;">${data.receiverName || '-'}</div>
+                                </div>
+                                <div>
+                                    <span style="color: #6c757d; font-size: 12px;">상품명</span>
+                                    <div style="font-weight: 500;">${data.itemName || '-'}</div>
+                                </div>
+                                <div>
+                                    <span style="color: #6c757d; font-size: 12px;">배송상태</span>
+                                    <div style="font-weight: 600; color: ${data.complete ? '#10b981' : '#f59e0b'};">
+                                        ${data.complete ? '배송완료' : statusText[data.level] || data.level}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h4 style="font-size: 14px; font-weight: 500; margin-bottom: 12px;">배송 추적 내역</h4>
+                        <div style="max-height: 400px; overflow-y: auto;">
+                            <table class="preview-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 140px;">시간</th>
+                                        <th style="width: 150px;">현재 위치</th>
+                                        <th>배송 상태</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.trackingDetails && data.trackingDetails.length > 0 ? 
+                                        data.trackingDetails.map(detail => `
+                                            <tr>
+                                                <td>${detail.timeString || ''}</td>
+                                                <td>${detail.where || ''}</td>
+                                                <td>${detail.kind || ''}</td>
+                                            </tr>
+                                        `).join('') : 
+                                        '<tr><td colspan="3" style="text-align: center; padding: 20px; color: #6c757d;">배송 정보가 없습니다.</td></tr>'
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-secondary" onclick="this.closest('.modal').remove()">닫기</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
         }
     </script>
 </body>
