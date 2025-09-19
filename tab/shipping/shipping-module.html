@@ -822,33 +822,45 @@
 
         // 오늘 날짜의 주문 불러오기
         async function loadTodayOrders() {
-            showLoading();
-            try {
-                const response = await fetch('/api/orders/today', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+    showLoading();
+    try {
+        const today = new Date().toLocaleDateString('ko-KR', {
+            timeZone: 'Asia/Seoul',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        }).replace(/\. /g, '').replace(/\./g, '').replace(/-/g, '');
 
-                if (!response.ok) {
-                    throw new Error('주문 데이터를 불러올 수 없습니다.');
-                }
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'getOrdersByDate',
+                sheetName: today
+            })
+        });
 
-                const data = await response.json();
-                currentOrders = data.orders || [];
-                
-                updateStatistics();
-                updateVendorTable();
-                updateShippingTable();
-                
-            } catch (error) {
-                console.error('주문 로드 오류:', error);
-                showMessage('주문 데이터를 불러오는 중 오류가 발생했습니다.', 'error');
-            } finally {
-                hideLoading();
-            }
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error || '주문 데이터를 불러올 수 없습니다.');
         }
+
+        currentOrders = result.data || [];
+        
+        updateStatistics();
+        updateVendorTable();
+        updateShippingTable();
+        
+    } catch (error) {
+        console.error('주문 로드 오류:', error);
+        showMessage('주문 데이터를 불러오는 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+}
 
         // 통계 업데이트
         function updateStatistics() {
@@ -962,53 +974,65 @@
 
         // 송장번호 저장
         async function saveTrackingNumbers() {
-            const updates = [];
-            
-            // 테이블에서 변경된 송장번호 수집
-            document.querySelectorAll('.tracking-input').forEach(input => {
-                const index = parseInt(input.dataset.index);
-                const value = input.value.trim();
-                const carrierSelect = document.querySelector(`.carrier-select[data-index="${index}"]`);
-                const carrier = carrierSelect ? carrierSelect.value : '';
-                
-                if (value || carrier) {
-                    updates.push({
-                        orderNumber: currentOrders[index]['주문번호'],
-                        carrier: carrier,
-                        trackingNumber: value
-                    });
-                }
+    const updates = [];
+    
+    document.querySelectorAll('.tracking-input').forEach(input => {
+        const index = parseInt(input.dataset.index);
+        const value = input.value.trim();
+        const carrierSelect = document.querySelector(`.carrier-select[data-index="${index}"]`);
+        const carrier = carrierSelect ? carrierSelect.value : '';
+        
+        if (value || carrier) {
+            updates.push({
+                orderNumber: currentOrders[index]['주문번호'],
+                carrier: carrier,
+                trackingNumber: value
             });
-            
-            if (updates.length === 0) {
-                showMessage('저장할 송장번호가 없습니다.', 'error');
-                return;
-            }
-            
-            showLoading();
-            try {
-                const response = await fetch('/api/orders/update-tracking', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ updates })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('송장번호 저장에 실패했습니다.');
-                }
-                
-                showMessage(`${updates.length}건의 송장번호가 저장되었습니다.`, 'success');
-                await loadTodayOrders();
-                
-            } catch (error) {
-                console.error('저장 오류:', error);
-                showMessage('저장 중 오류가 발생했습니다.', 'error');
-            } finally {
-                hideLoading();
-            }
         }
+    });
+    
+    if (updates.length === 0) {
+        showMessage('저장할 송장번호가 없습니다.', 'error');
+        return;
+    }
+    
+    showLoading();
+    try {
+        const today = new Date().toLocaleDateString('ko-KR', {
+            timeZone: 'Asia/Seoul',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        }).replace(/\. /g, '').replace(/\./g, '').replace(/-/g, '');
+
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'updateTracking',
+                sheetName: today,
+                updates: updates
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error || '송장번호 저장에 실패했습니다.');
+        }
+        
+        showMessage(`${updates.length}건의 송장번호가 저장되었습니다.`, 'success');
+        await loadTodayOrders();
+        
+    } catch (error) {
+        console.error('저장 오류:', error);
+        showMessage('저장 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+}
 
         // 일괄 업로드 모달
         function openBulkUploadModal() {
@@ -1107,44 +1131,72 @@
 
         // 일괄 송장 저장
         async function saveBulkTracking() {
-            if (bulkUploadData.length === 0) return;
-            
-            showLoading();
-            try {
-                const response = await fetch('/api/orders/update-tracking', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ updates: bulkUploadData })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('송장번호 저장에 실패했습니다.');
-                }
-                
-                showMessage(`${bulkUploadData.length}건의 송장번호가 저장되었습니다.`, 'success');
-                closeBulkUploadModal();
-                await loadTodayOrders();
-                
-            } catch (error) {
-                console.error('저장 오류:', error);
-                showMessage('저장 중 오류가 발생했습니다.', 'error');
-            } finally {
-                hideLoading();
-            }
+    if (bulkUploadData.length === 0) return;
+    
+    showLoading();
+    try {
+        const today = new Date().toLocaleDateString('ko-KR', {
+            timeZone: 'Asia/Seoul',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        }).replace(/\. /g, '').replace(/\./g, '').replace(/-/g, '');
+
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'updateTracking',
+                sheetName: today,
+                updates: bulkUploadData
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error || '송장번호 저장에 실패했습니다.');
         }
+        
+        showMessage(`${bulkUploadData.length}건의 송장번호가 저장되었습니다.`, 'success');
+        closeBulkUploadModal();
+        await loadTodayOrders();
+        
+    } catch (error) {
+        console.error('저장 오류:', error);
+        showMessage('저장 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+}
 
         // 마켓 양식 로드
         async function loadMarketFormats() {
-            try {
-                const response = await fetch('/api/markets/upload-format');
-                const data = await response.json();
-                marketFormats = data.formats || {};
-            } catch (error) {
-                console.error('마켓 양식 로드 오류:', error);
-            }
-        }
+    try {
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'getMarketFormats'
+            })
+        });
+        
+        const result = await response.json();
+        marketFormats = result.formats || {};
+    } catch (error) {
+        console.error('마켓 양식 로드 오류:', error);
+        // 기본값 사용
+        marketFormats = {
+            '쿠팡': ['주문번호', '택배사', '송장번호'],
+            '네이버': ['상품주문번호', '택배사코드', '송장번호'],
+            '11번가': ['배송번호', '택배사', '송장번호']
+        };
+    }
+}
 
         // 내보내기 모달
         function openExportModal() {
