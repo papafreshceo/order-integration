@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>사입관리</title>
+    <style>
+        .purchase-container {
+            padding: 20px;
+        }
+        
+        .purchase-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .form-row-custom {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        
+        .purchase-status-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 400;
+        }
+        
+        .status-ordered { 
+            background: #dbeafe; 
+            color: #2563eb;
+        }
+        
+        .status-received { 
+            background: #d1fae5; 
+            color: #10b981;
+        }
+        
+        .status-delayed { 
+            background: #fee2e2; 
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="purchase-container">
+        <!-- 사입 등록 섹션 -->
+        <div class="section-container">
+            <h2 class="section-title">
+                <div class="section-title-text">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                    사입 등록
+                </div>
+            </h2>
+            
+            <div class="purchase-form">
+                <div class="form-row-custom">
+                    <div class="form-group" style="width: 150px;">
+                        <label>발주일자 <span class="required">*</span></label>
+                        <input type="date" id="purchaseDate" class="form-input-direct">
+                    </div>
+                    <div class="form-group" style="width: 200px;">
+                        <label>거래처 <span class="required">*</span></label>
+                        <select id="purchaseVendor" class="form-input-direct">
+                            <option value="">선택하세요</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="width: 200px;">
+                        <label>상품명 <span class="required">*</span></label>
+                        <div style="position: relative;">
+                            <input type="text" id="purchaseProduct" class="form-input-direct" placeholder="상품 검색...">
+                            <div id="purchaseProductResults" class="search-results"></div>
+                        </div>
+                    </div>
+                    <div class="form-group" style="width: 100px;">
+                        <label>단가</label>
+                        <input type="text" id="purchasePrice" class="form-input-direct text-right" onchange="PurchaseModule.calculateTotal()">
+                    </div>
+                    <div class="form-group" style="width: 80px;">
+                        <label>수량</label>
+                        <input type="number" id="purchaseQty" class="form-input-direct text-center" value="1" onchange="PurchaseModule.calculateTotal()">
+                    </div>
+                    <div class="form-group" style="width: 120px;">
+                        <label>합계</label>
+                        <input type="text" id="purchaseTotal" class="form-input-readonly text-right" readonly>
+                    </div>
+                    <div class="form-group" style="width: 150px;">
+                        <label>입고예정일</label>
+                        <input type="date" id="expectedDate" class="form-input-direct">
+                    </div>
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button class="btn-add-order" onclick="PurchaseModule.addPurchase()">사입 추가</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 사입 현황 섹션 -->
+        <div class="section-container">
+            <h2 class="section-title">
+                <div class="section-title-text">
+                    사입 현황
+                </div>
+                <div class="export-buttons">
+                    <button class="export-btn export-excel" onclick="PurchaseModule.exportExcel()">엑셀 다운로드</button>
+                    <button class="export-btn export-sheets" onclick="PurchaseModule.saveToSheets()">구글시트 저장</button>
+                </div>
+            </h2>
+            
+            <!-- 필터 -->
+            <div class="filter-container" style="margin-bottom: 20px; display: flex; gap: 10px;">
+                <input type="date" id="filterFromDate" class="form-input-direct" style="width: 140px;" placeholder="시작일">
+                <input type="date" id="filterToDate" class="form-input-direct" style="width: 140px;" placeholder="종료일">
+                <select id="filterVendor" class="form-input-direct" style="width: 150px;">
+                    <option value="">전체 거래처</option>
+                </select>
+                <select id="filterStatus" class="form-input-direct" style="width: 120px;">
+                    <option value="">전체 상태</option>
+                    <option value="ordered">발주</option>
+                    <option value="received">입고완료</option>
+                    <option value="delayed">지연</option>
+                </select>
+                <button class="btn-verify" onclick="PurchaseModule.applyFilter()">검색</button>
+                <button class="btn-reset" onclick="PurchaseModule.resetFilter()">초기화</button>
+            </div>
+            
+            <div class="table-wrapper">
+                <table class="order-table" id="purchaseTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">번호</th>
+                            <th style="width: 100px;">발주일자</th>
+                            <th style="width: 150px;">거래처</th>
+                            <th style="width: 200px;">상품명</th>
+                            <th style="width: 80px;">단가</th>
+                            <th style="width: 60px;">수량</th>
+                            <th style="width: 100px;">합계</th>
+                            <th style="width: 100px;">입고예정</th>
+                            <th style="width: 100px;">입고일</th>
+                            <th style="width: 80px;">상태</th>
+                            <th style="width: 100px;">관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="purchaseTableBody">
+                        <tr>
+                            <td colspan="11" class="text-center">데이터가 없습니다</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const PurchaseModule = {
+            purchases: [],
+            vendors: [],
+            products: [],
+            
+            init: function() {
+                console.log('Purchase Module initialized');
+                this.loadVendors();
+                this.loadProducts();
+                this.loadPurchases();
+                this.setupEventListeners();
+                this.setDefaultDate();
+            },
+            
+            setDefaultDate: function() {
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('purchaseDate').value = today;
+            },
+            
+            setupEventListeners: function() {
+                // 상품 검색
+                document.getElementById('purchaseProduct').addEventListener('input', (e) => {
+                    this.searchProducts(e.target.value);
+                });
+                
+                // 클릭 외부 시 검색결과 숨김
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('#purchaseProduct')) {
+                        document.getElementById('purchaseProductResults').style.display = 'none';
+                    }
+                });
+            },
+            
+            loadVendors: async function() {
+                // 거래처 데이터 로드 (API 연동 시)
+                this.vendors = ['도매거래처A', '도매거래처B', '벤더사C'];
+                
+                const vendorSelect = document.getElementById('purchaseVendor');
+                const filterVendorSelect = document.getElementById('filterVendor');
+                
+                vendorSelect.innerHTML = '<option value="">선택하세요</option>';
+                filterVendorSelect.innerHTML = '<option value="">전체 거래처</option>';
+                
+                this.vendors.forEach(vendor => {
+                    vendorSelect.innerHTML += `<option value="${vendor}">${vendor}</option>`;
+                    filterVendorSelect.innerHTML += `<option value="${vendor}">${vendor}</option>`;
+                });
+            },
+            
+            loadProducts: async function() {
+                // 상품 데이터 로드 (API 연동 시)
+                if (window.ProductMatching) {
+                    await window.ProductMatching.loadProductData();
+                    this.products = window.ProductMatching.getProductData();
+                }
+            },
+            
+            searchProducts: function(query) {
+                const resultsDiv = document.getElementById('purchaseProductResults');
+                
+                if (query.length < 2) {
+                    resultsDiv.style.display = 'none';
+                    return;
+                }
+                
+                // 상품 검색 로직
+                const results = Object.keys(this.products || {})
+                    .filter(name => name.toLowerCase().includes(query.toLowerCase()))
+                    .slice(0, 10);
+                
+                if (results.length === 0) {
+                    resultsDiv.innerHTML = '<div class="no-results">검색 결과가 없습니다</div>';
+                } else {
+                    resultsDiv.innerHTML = results.map(name => 
+                        `<div class="search-result-item" onclick="PurchaseModule.selectProduct('${name}')">${name}</div>`
+                    ).join('');
+                }
+                
+                resultsDiv.style.display = 'block';
+            },
+            
+            selectProduct: function(productName) {
+                document.getElementById('purchaseProduct').value = productName;
+                document.getElementById('purchaseProductResults').style.display = 'none';
+                
+                // 상품 정보로 단가 자동 설정
+                if (this.products && this.products[productName]) {
+                    const price = this.products[productName]['원가'] || 0;
+                    document.getElementById('purchasePrice').value = price.toLocaleString();
+                    this.calculateTotal();
+                }
+            },
+            
+            calculateTotal: function() {
+                const price = parseInt(document.getElementById('purchasePrice').value.replace(/,/g, '')) || 0;
+                const qty = parseInt(document.getElementById('purchaseQty').value) || 0;
+                const total = price * qty;
+                document.getElementById('purchaseTotal').value = total.toLocaleString();
+            },
+            
+            addPurchase: function() {
+                const purchase = {
+                    id: Date.now(),
+                    date: document.getElementById('purchaseDate').value,
+                    vendor: document.getElementById('purchaseVendor').value,
+                    product: document.getElementById('purchaseProduct').value,
+                    price: parseInt(document.getElementById('purchasePrice').value.replace(/,/g, '')) || 0,
+                    qty: parseInt(document.getElementById('purchaseQty').value) || 0,
+                    expectedDate: document.getElementById('expectedDate').value,
+                    receivedDate: '',
+                    status: 'ordered'
+                };
+                
+                if (!purchase.date || !purchase.vendor || !purchase.product) {
+                    alert('필수 항목을 입력해주세요.');
+                    return;
+                }
+                
+                purchase.total = purchase.price * purchase.qty;
+                
+                this.purchases.unshift(purchase);
+                this.savePurchases();
+                this.renderTable();
+                this.resetForm();
+                
+                alert('사입 정보가 등록되었습니다.');
+            },
+            
+            resetForm: function() {
+                document.getElementById('purchaseVendor').value = '';
+                document.getElementById('purchaseProduct').value = '';
+                document.getElementById('purchasePrice').value = '';
+                document.getElementById('purchaseQty').value = '1';
+                document.getElementById('purchaseTotal').value = '';
+                document.getElementById('expectedDate').value = '';
+            },
+            
+            loadPurchases: function() {
+                // localStorage에서 데이터 로드
+                const saved = localStorage.getItem('purchases');
+                if (saved) {
+                    this.purchases = JSON.parse(saved);
+                    this.renderTable();
+                }
+            },
+            
+            savePurchases: function() {
+                localStorage.setItem('purchases', JSON.stringify(this.purchases));
+            },
+            
+            renderTable: function(filteredData = null) {
+                const tbody = document.getElementById('purchaseTableBody');
+                const data = filteredData || this.purchases;
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="11" class="text-center">데이터가 없습니다</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = data.map((purchase, index) => {
+                    const statusBadge = this.getStatusBadge(purchase.status);
+                    return `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${purchase.date}</td>
+                            <td>${purchase.vendor}</td>
+                            <td>${purchase.product}</td>
+                            <td class="text-right">${purchase.price.toLocaleString()}</td>
+                            <td class="text-center">${purchase.qty}</td>
+                            <td class="text-right">${purchase.total.toLocaleString()}</td>
+                            <td>${purchase.expectedDate || '-'}</td>
+                            <td>${purchase.receivedDate || '-'}</td>
+                            <td>${statusBadge}</td>
+                            <td>
+                                <button class="btn-sm" onclick="PurchaseModule.confirmReceive(${purchase.id})">입고확인</button>
+                                <button class="btn-sm btn-danger" onclick="PurchaseModule.deletePurchase(${purchase.id})">삭제</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            },
+            
+            getStatusBadge: function(status) {
+                const badges = {
+                    'ordered': '<span class="purchase-status-badge status-ordered">발주</span>',
+                    'received': '<span class="purchase-status-badge status-received">입고완료</span>',
+                    'delayed': '<span class="purchase-status-badge status-delayed">지연</span>'
+                };
+                return badges[status] || '';
+            },
+            
+            confirmReceive: function(id) {
+                const purchase = this.purchases.find(p => p.id === id);
+                if (purchase) {
+                    purchase.receivedDate = new Date().toISOString().split('T')[0];
+                    purchase.status = 'received';
+                    this.savePurchases();
+                    this.renderTable();
+                    alert('입고 확인되었습니다.');
+                }
+            },
+            
+            deletePurchase: function(id) {
+                if (confirm('삭제하시겠습니까?')) {
+                    this.purchases = this.purchases.filter(p => p.id !== id);
+                    this.savePurchases();
+                    this.renderTable();
+                }
+            },
+            
+            applyFilter: function() {
+                const fromDate = document.getElementById('filterFromDate').value;
+                const toDate = document.getElementById('filterToDate').value;
+                const vendor = document.getElementById('filterVendor').value;
+                const status = document.getElementById('filterStatus').value;
+                
+                let filtered = this.purchases;
+                
+                if (fromDate) {
+                    filtered = filtered.filter(p => p.date >= fromDate);
+                }
+                if (toDate) {
+                    filtered = filtered.filter(p => p.date <= toDate);
+                }
+                if (vendor) {
+                    filtered = filtered.filter(p => p.vendor === vendor);
+                }
+                if (status) {
+                    filtered = filtered.filter(p => p.status === status);
+                }
+                
+                this.renderTable(filtered);
+            },
+            
+            resetFilter: function() {
+                document.getElementById('filterFromDate').value = '';
+                document.getElementById('filterToDate').value = '';
+                document.getElementById('filterVendor').value = '';
+                document.getElementById('filterStatus').value = '';
+                this.renderTable();
+            },
+            
+            exportExcel: function() {
+                console.log('Export to Excel');
+                // 엑셀 내보내기 로직
+            },
+            
+            saveToSheets: function() {
+                console.log('Save to Google Sheets');
+                // 구글 시트 저장 로직
+            },
+            
+            refresh: function() {
+                this.loadPurchases();
+            }
+        };
+        
+        // 전역 노출
+        window.PurchaseModule = PurchaseModule;
+    </script>
+</body>
+</html>
