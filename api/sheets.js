@@ -181,22 +181,88 @@ export default async function handler(req, res) {
           });
         }
 
-      case 'getOrdersByDateRange':
+case 'getOrdersByDateRange':
         try {
           const { startDate, endDate } = req.body;
           const { getOrderData } = require('../lib/google-sheets');
           const targetSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
           
           if (!startDate || !endDate) {
-            return res.status(400).json({ 
-              success: false, 
-              error: '날짜를 입력해주세요' 
+            // 날짜가 없으면 오늘 날짜 사용
+            const today = new Date().toLocaleDateString('ko-KR', {
+              timeZone: 'Asia/Seoul',
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            }).replace(/\. /g, '').replace(/\./g, '').replace(/-/g, '');
+            
+            const orderData = await getOrderData(`${today}!A:ZZ`, targetSpreadsheetId);
+            
+            if (!orderData || orderData.length < 2) {
+              return res.status(200).json({ 
+                success: true, 
+                orders: [],
+                colors: {},
+                headers: []
+              });
+            }
+            
+            const headers = orderData[0];
+            const rows = orderData.slice(1);
+            
+            const formattedData = rows.map((row, index) => {
+              const obj = { '연번': index + 1 };
+              headers.forEach((header, idx) => {
+                obj[header] = row[idx] || '';
+              });
+              return obj;
+            });
+            
+            // 매핑에서 마켓 색상
+            const mappingData = await getSheetData('매핑!A:D');
+            const colors = {};
+            
+            if (mappingData && mappingData.length > 2) {
+              let headerRowIndex = -1;
+              for (let i = 0; i < 5 && i < mappingData.length; i++) {
+                if (mappingData[i] && mappingData[i][0] === '마켓명') {
+                  headerRowIndex = i;
+                  break;
+                }
+              }
+              
+              if (headerRowIndex !== -1) {
+                for (let i = headerRowIndex + 1; i < mappingData.length; i++) {
+                  const row = mappingData[i];
+                  if (row && row[0]) {
+                    const marketName = String(row[0]).trim();
+                    const colorValue = row[2] ? String(row[2]).trim() : '';
+                    
+                    if (marketName && colorValue) {
+                      if (colorValue.match(/^\d+,\s*\d+,\s*\d+$/)) {
+                        colors[marketName] = `rgb(${colorValue})`;
+                      } else if (colorValue.startsWith('rgb(')) {
+                        colors[marketName] = colorValue;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            
+            return res.status(200).json({ 
+              success: true, 
+              orders: formattedData,
+              colors: colors,
+              headers: headers,
+              totalCount: formattedData.length
             });
           }
           
+          // 날짜 범위가 있는 경우
           const orders = [];
+          let allHeaders = new Set(['연번']);
           
-          // 시작일부터 종료일까지 각 날짜의 시트 읽기
           const start = new Date(startDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'));
           const end = new Date(endDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'));
           
@@ -208,6 +274,7 @@ export default async function handler(req, res) {
               
               if (dayData && dayData.length > 1) {
                 const headers = dayData[0];
+                headers.forEach(h => allHeaders.add(h));
                 
                 for (let i = 1; i < dayData.length; i++) {
                   const row = dayData[i];
@@ -225,13 +292,18 @@ export default async function handler(req, res) {
             }
           }
           
-          // 마켓 색상 정보
+          // 연번 추가
+          orders.forEach((order, index) => {
+            order['연번'] = index + 1;
+          });
+          
+          // 마켓 색상
           const mappingData = await getSheetData('매핑!A:D');
           const colors = {};
           
           if (mappingData && mappingData.length > 2) {
             let headerRowIndex = -1;
-            for (let i = 0; i < Math.min(5, mappingData.length); i++) {
+            for (let i = 0; i < 5 && i < mappingData.length; i++) {
               if (mappingData[i] && mappingData[i][0] === '마켓명') {
                 headerRowIndex = i;
                 break;
@@ -261,6 +333,7 @@ export default async function handler(req, res) {
             success: true, 
             orders: orders,
             colors: colors,
+            headers: Array.from(allHeaders),
             totalCount: orders.length
           });
           
@@ -624,3 +697,4 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
+
