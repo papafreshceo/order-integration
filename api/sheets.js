@@ -127,8 +127,18 @@ case 'updateTracking':
             return res.status(400).json({ success: false, error: '주문번호 컬럼을 찾을 수 없습니다' });
           }
           
+          // 컬럼 인덱스를 문자로 변환하는 함수
+          const getColumnLetter = (index) => {
+            let letter = '';
+            while (index >= 0) {
+              letter = String.fromCharCode((index % 26) + 65) + letter;
+              index = Math.floor(index / 26) - 1;
+            }
+            return letter;
+          };
+          
           // 주문번호 컬럼만 읽어서 행 번호 찾기
-          const orderColumnLetter = String.fromCharCode(65 + orderNumIndex); // A, B, C...
+          const orderColumnLetter = getColumnLetter(orderNumIndex);
           const orderNumbers = await getOrderData(`'${sheetName}'!${orderColumnLetter}2:${orderColumnLetter}`, targetSpreadsheetId);
           
           // 오늘 날짜
@@ -154,7 +164,7 @@ case 'updateTracking':
             if (rowIndex > 0) {
               // 택배사 업데이트
               if (carrierIndex >= 0 && update.carrier) {
-                const carrierLetter = String.fromCharCode(65 + carrierIndex);
+                const carrierLetter = getColumnLetter(carrierIndex);
                 await updateSheetData(
                   `'${sheetName}'!${carrierLetter}${rowIndex}`,
                   [[update.carrier]],
@@ -164,7 +174,7 @@ case 'updateTracking':
               
               // 송장번호 업데이트
               if (trackingIndex >= 0 && update.trackingNumber) {
-                const trackingLetter = String.fromCharCode(65 + trackingIndex);
+                const trackingLetter = getColumnLetter(trackingIndex);
                 await updateSheetData(
                   `'${sheetName}'!${trackingLetter}${rowIndex}`,
                   [[update.trackingNumber]],
@@ -174,7 +184,7 @@ case 'updateTracking':
               
               // 발송일 업데이트
               if (dateIndex >= 0 && update.trackingNumber) {
-                const dateLetter = String.fromCharCode(65 + dateIndex);
+                const dateLetter = getColumnLetter(dateIndex);
                 await updateSheetData(
                   `'${sheetName}'!${dateLetter}${rowIndex}`,
                   [[today]],
@@ -477,6 +487,7 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
+
 
 
 
