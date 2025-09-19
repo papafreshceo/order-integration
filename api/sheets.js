@@ -232,13 +232,13 @@ export default async function handler(req, res) {
             }
           });
         }
-case 'getMarketData':
+ccase 'getMarketData':
         try {
           const { getSheetData } = require('../lib/google-sheets');
           
-          // 매핑 시트에서 마켓명과 색상 읽기
-          console.log('매핑 시트 읽기 시작');
-          const mappingData = await getSheetData('매핑!A:B');
+          // 매핑 시트에서 마켓명과 색상 읽기 (SPREADSHEET_ID 사용)
+          console.log('매핑 시트 읽기 시작, 스프레드시트 ID:', process.env.SPREADSHEET_ID);
+          const mappingData = await getSheetData('매핑!A:B', process.env.SPREADSHEET_ID);
           console.log('매핑 데이터:', mappingData);
           
           const markets = [];
@@ -350,6 +350,7 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
+
 
 
 
