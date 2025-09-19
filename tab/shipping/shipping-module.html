@@ -369,6 +369,15 @@
         }
 
         .checkbox-cell {
+            width: 50px;
+        }
+
+        .checkbox-cell input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
         /* 입력 필드 스타일 */
         .tracking-input {
             width: 100%;
@@ -1104,11 +1113,7 @@
                         const width = columnWidths[header] || 100;
                         const colIndex = index + 1;
                         const isFixed = colIndex <= fixedColIndex;
-                        let cumulativeWidths = [0, 50];
-headers.forEach(header => {
-    const width = columnWidths[header] || 100;
-    cumulativeWidths.push(cumulativeWidths[cumulativeWidths.length - 1] + width);
-});
+                        const leftPos = cumulativeWidths[colIndex];
                         
                         const fixedStyle = isFixed ? 
                             `position: sticky; left: ${leftPos}px; z-index: 10; background: #f8f9fa;` : '';
