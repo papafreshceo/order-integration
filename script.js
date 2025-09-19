@@ -246,7 +246,7 @@ async function loadSettingsTab() {
     }
     
     try {
-        const response = await fetch('tabs/settings/settings-module.html');
+        const response = await fetch('tab/settings/settings-module.html');
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -2658,5 +2658,6 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
 
 
