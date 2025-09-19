@@ -297,7 +297,9 @@
 
         .table-wrapper {
             overflow-x: auto;
-            max-height: 600px;
+            height: calc(100vh - 400px);
+            min-height: 600px;
+            max-height: 900px;
             overflow-y: auto;
             position: relative;
         }
@@ -328,7 +330,7 @@
         }
 
         .shipping-table td {
-            padding: 8px;
+            padding: 6px 8px;
             font-size: 12px;
             font-weight: 300;
             color: #212529;
@@ -336,8 +338,9 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            height: 32px;
+            line-height: 20px;
         }
-
         /* 송장번호 유무에 따른 행 스타일 */
 .shipping-table tbody tr.no-tracking td {
     background-color: #f8f0fa !important;
