@@ -542,25 +542,12 @@
             
             // 체크박스 컬럼
             const thCheckbox = document.createElement('th');
-            thCheckbox.style.cssText = 'position: sticky; left: 0; z-index: 11; background: #f8f9fa; width: 50px;';
             thCheckbox.innerHTML = '<input type="checkbox" id="selectAllSearch" onchange="toggleAllCheckboxes(this)">';
             headerRow.appendChild(thCheckbox);
             
             // 나머지 헤더
-            let leftPos = 50;
             tableHeaders.forEach((header, index) => {
                 const th = document.createElement('th');
-                
-                if (header === '연번') {
-                    th.style.cssText = `position: sticky; left: ${leftPos}px; z-index: 11; background: #f8f9fa; width: 50px;`;
-                    leftPos += 50;
-                 } else if (header === '마켓명') {
-                    th.style.cssText = `position: sticky; left: ${leftPos}px; z-index: 11; background: #f8f9fa;`;
-                    leftPos += 100;
-                } else {
-                    th.style.cssText = 'background: #f8f9fa;';
-                }
-                
                 th.textContent = header;
                 headerRow.appendChild(th);
             });
@@ -584,7 +571,7 @@
             });
         }
 
-        // 테이블 행 생성 (동적)
+// 테이블 행 생성 (동적)
         function createTableRow(order, serialNumber) {
             const row = document.createElement('tr');
             const hasTracking = order['송장번호'] && order['송장번호'].trim() !== '';
@@ -599,30 +586,25 @@
             
             // 체크박스
             const tdCheckbox = document.createElement('td');
-            tdCheckbox.style.cssText = `position: sticky; left: 0; z-index: 6; background: ${rowBgColor}; width: 50px; text-align: center;`;
+            tdCheckbox.style.cssText = `text-align: center; background: ${rowBgColor};`;
             tdCheckbox.innerHTML = `<input type="checkbox" class="order-checkbox" data-index="${serialNumber - 1}">`;
             row.appendChild(tdCheckbox);
             
             // 데이터 셀
-            let leftPos = 50;
             tableHeaders.forEach(header => {
                 const td = document.createElement('td');
+                td.style.cssText = `background: ${rowBgColor};`;
                 
                 if (header === '연번') {
-                    td.style.cssText = `position: sticky; left: ${leftPos}px; z-index: 5; background: ${rowBgColor}; width: 50px;`;
                     td.textContent = serialNumber;
-                    leftPos += 50;
                 } else if (header === '마켓명') {
-                    td.style.cssText = `position: sticky; left: ${leftPos}px; z-index: 5; background: ${rowBgColor};`;
                     td.innerHTML = `
                         <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
                              color: ${getTextColor(marketColor)}; border-radius: 4px; font-size: 11px; font-weight: 600;">
                             ${marketName}
                         </span>
                     `;
-                    leftPos += 100;
                 } else {
-                    td.style.cssText = `background: ${rowBgColor};`;
                     const value = order[header] || '';
                     
                     // 숫자 필드 처리
@@ -639,7 +621,6 @@
             
             return row;
         }
-
         // 필터링
         function getFilteredOrders() {
             let filtered = [...currentOrders];
