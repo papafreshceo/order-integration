@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <title>발송관리</title>
     <style>
-        /* ========================================
-           발송관리 레이아웃
-           ======================================== */
+        /* 기존 스타일 유지 */
         .shipping-container {
             padding: 40px;
             background: #fafafa;
@@ -19,14 +17,12 @@
             }
         }
 
-        /* ========================================
-           상단 통계
-           ======================================== */
+        /* 상단 통계 - 2개 카드로 변경 */
         .shipping-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 20px;
-            margin-bottom: 32px;
+            margin-bottom: 24px;
         }
 
         .stat-card {
@@ -66,9 +62,55 @@
             color: #212529;
         }
 
-        /* ========================================
-           필터 섹션
-           ======================================== */
+        /* 벤더사별 집계 테이블 */
+        .vendor-stats-section {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .vendor-stats-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #212529;
+            margin-bottom: 16px;
+        }
+
+        .vendor-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .vendor-table th {
+            background: #f8f9fa;
+            padding: 10px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 400;
+            color: #6c757d;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .vendor-table td {
+            padding: 10px;
+            font-size: 14px;
+            font-weight: 300;
+            color: #212529;
+            border-bottom: 1px solid #f1f3f5;
+        }
+
+        .vendor-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .vendor-table .total-row {
+            font-weight: 500;
+            background: #f8f9fa;
+        }
+
+        /* 필터 섹션 */
         .filter-section {
             background: #ffffff;
             border: 1px solid #dee2e6;
@@ -88,37 +130,6 @@
             font-size: 18px;
             font-weight: 500;
             color: #212529;
-        }
-
-        .quick-filters {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .quick-filter-btn {
-            padding: 6px 14px;
-            border: 1px solid #dee2e6;
-            border-radius: 20px;
-            background: #ffffff;
-            color: #495057;
-            font-size: 12px;
-            font-weight: 300;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .quick-filter-btn:hover {
-            border-color: #2563eb;
-            color: #2563eb;
-            background: #f8f9fa;
-        }
-
-        .quick-filter-btn.active {
-            background: #2563eb;
-            color: #ffffff;
-            border-color: #2563eb;
         }
 
         .filter-controls {
@@ -204,9 +215,7 @@
             border-color: #adb5bd;
         }
 
-        /* ========================================
-           테이블 섹션
-           ======================================== */
+        /* 테이블 섹션 */
         .table-section {
             background: #ffffff;
             border: 1px solid #dee2e6;
@@ -254,6 +263,25 @@
             border-color: #adb5bd;
         }
 
+        .btn-success {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            background: #10b981;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 300;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
         .table-wrapper {
             overflow-x: auto;
             max-height: 600px;
@@ -263,6 +291,7 @@
         .shipping-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
 
         .shipping-table thead {
@@ -273,21 +302,26 @@
         }
 
         .shipping-table th {
-            padding: 12px 16px;
+            padding: 12px 8px;
             text-align: left;
             font-size: 12px;
             font-weight: 400;
             color: #6c757d;
             border-bottom: 2px solid #dee2e6;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .shipping-table td {
-            padding: 12px 16px;
-            font-size: 14px;
+            padding: 8px;
+            font-size: 12px;
             font-weight: 300;
             color: #212529;
             border-bottom: 1px solid #f1f3f5;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .shipping-table tbody tr:hover {
@@ -298,51 +332,35 @@
             width: 40px;
         }
 
-        /* ========================================
-           상태 배지
-           ======================================== */
-        .status-badge {
-            display: inline-block;
+        /* 입력 필드 스타일 */
+        .tracking-input {
+            width: 100%;
             padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 400;
-            white-space: nowrap;
-        }
-
-        .status-badge.ready {
-            background: #fef3c7;
-            color: #f59e0b;
-        }
-
-        .status-badge.shipping {
-            background: #dbeafe;
-            color: #2563eb;
-        }
-
-        .status-badge.delivered {
-            background: #d1fae5;
-            color: #10b981;
-        }
-
-        .status-badge.returned {
-            background: #fee2e2;
-            color: #ef4444;
-        }
-
-        .carrier-tag {
-            display: inline-block;
-            padding: 3px 8px;
+            border: 1px solid #dee2e6;
             border-radius: 4px;
-            font-size: 11px;
-            font-weight: 500;
-            background: #2563eb;
-            color: #ffffff;
+            font-size: 12px;
         }
 
-        /* ========================================
-           모달
-           ======================================== */
+        .tracking-input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .carrier-select {
+            width: 100%;
+            padding: 4px 8px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 12px;
+            background: #ffffff;
+        }
+
+        .carrier-select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        /* 모달 스타일 */
         .modal {
             display: none;
             position: fixed;
@@ -404,44 +422,163 @@
             padding: 24px;
         }
 
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 12px;
-            font-weight: 300;
-            color: #6c757d;
-            margin-bottom: 8px;
-        }
-
-        .form-input,
-        .form-select {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 300;
-            color: #212529;
-            background: #ffffff;
-            transition: all 0.2s;
-        }
-
-        .form-input:focus,
-        .form-select:focus {
-            outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
         .modal-footer {
             padding: 24px;
             border-top: 1px solid #dee2e6;
             display: flex;
             justify-content: flex-end;
             gap: 12px;
+        }
+
+        /* 파일 업로드 영역 */
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upload-area:hover {
+            border-color: #2563eb;
+            background: #f8f9fa;
+        }
+
+        .upload-area.dragover {
+            border-color: #2563eb;
+            background: #e7f3ff;
+        }
+
+        /* 마켓 카드 */
+        .market-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .market-card {
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .market-card:hover {
+            border-color: #2563eb;
+            background: #f8f9fa;
+            transform: translateY(-2px);
+        }
+
+        .market-card-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 12px;
+            background: #2563eb;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .market-card-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #212529;
+        }
+
+        /* 미리보기 테이블 */
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .preview-table th {
+            background: #f8f9fa;
+            padding: 8px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 400;
+            border: 1px solid #dee2e6;
+        }
+
+        .preview-table td {
+            padding: 8px;
+            font-size: 12px;
+            border: 1px solid #dee2e6;
+        }
+
+        /* 로딩 스피너 */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 메시지 */
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 400;
+            z-index: 10000;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.success {
+            background: #10b981;
+            color: #ffffff;
+        }
+
+        .message.error {
+            background: #ef4444;
+            color: #ffffff;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
     </style>
 </head>
@@ -454,25 +591,11 @@
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="1" y="3" width="15" height="13"></rect>
                         <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                        <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                        <circle cx="18.5" cy="18.5" r="2.5"></circle>
                     </svg>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-label">발송 대기</div>
-                    <div class="stat-value">234</div>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-icon" style="background: #dbeafe; color: #2563eb;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M5 12l5 5L20 7"></path>
-                    </svg>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-label">배송 중</div>
-                    <div class="stat-value">156</div>
+                    <div class="stat-label">상품 준비중</div>
+                    <div class="stat-value" id="statPreparing">0</div>
                 </div>
             </div>
 
@@ -484,51 +607,34 @@
                     </svg>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-label">배송 완료</div>
-                    <div class="stat-value">892</div>
+                    <div class="stat-label">발송완료</div>
+                    <div class="stat-value" id="statShipped">0</div>
                 </div>
             </div>
+        </div>
 
-            <div class="stat-card">
-                <div class="stat-icon" style="background: #fee2e2; color: #ef4444;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 7 3 3 7 3"></polyline>
-                        <line x1="21" y1="3" x2="3" y2="21"></line>
-                        <polyline points="21 17 21 21 17 21"></polyline>
-                    </svg>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-label">반품/교환</div>
-                    <div class="stat-value">23</div>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-icon" style="background: #ede9fe; color: #7c3aed;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-label">오늘 발송</div>
-                    <div class="stat-value">89</div>
-                </div>
-            </div>
+        <!-- 벤더사별 집계 테이블 -->
+        <div class="vendor-stats-section">
+            <h3 class="vendor-stats-title">벤더사별 발송 현황</h3>
+            <table class="vendor-table">
+                <thead>
+                    <tr>
+                        <th>벤더사</th>
+                        <th style="text-align: center;">상품 준비중</th>
+                        <th style="text-align: center;">발송완료</th>
+                        <th style="text-align: center;">합계</th>
+                    </tr>
+                </thead>
+                <tbody id="vendorTableBody">
+                    <!-- 동적 생성 -->
+                </tbody>
+            </table>
         </div>
 
         <!-- 필터 섹션 -->
         <div class="filter-section">
             <div class="filter-header">
                 <h2 class="filter-title">발송 관리</h2>
-            </div>
-
-            <div class="quick-filters">
-                <button class="quick-filter-btn active" onclick="filterStatus('all')">전체</button>
-                <button class="quick-filter-btn" onclick="filterStatus('ready')">발송대기</button>
-                <button class="quick-filter-btn" onclick="filterStatus('shipping')">배송중</button>
-                <button class="quick-filter-btn" onclick="filterStatus('delivered')">배송완료</button>
-                <button class="quick-filter-btn" onclick="filterStatus('returned')">반품/교환</button>
             </div>
 
             <div class="filter-controls">
@@ -545,11 +651,11 @@
                     <label class="filter-label">택배사</label>
                     <select class="filter-select" id="carrierFilter">
                         <option value="">전체</option>
-                        <option value="cj">CJ대한통운</option>
-                        <option value="hanjin">한진택배</option>
-                        <option value="lotte">롯데택배</option>
-                        <option value="post">우체국택배</option>
-                        <option value="logen">로젠택배</option>
+                        <option value="CJ대한통운">CJ대한통운</option>
+                        <option value="한진택배">한진택배</option>
+                        <option value="롯데택배">롯데택배</option>
+                        <option value="우체국택배">우체국택배</option>
+                        <option value="로젠택배">로젠택배</option>
                     </select>
                 </div>
 
@@ -582,14 +688,22 @@
             <div class="table-header">
                 <h3 class="table-title">발송 목록</h3>
                 <div class="table-actions">
-                    <button class="btn-action" onclick="bulkUpdateTracking()">
+                    <button class="btn-success" onclick="saveTrackingNumbers()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        저장
+                    </button>
+                    <button class="btn-action" onclick="openBulkUploadModal()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 20h9"></path>
                             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
                         </svg>
                         일괄 등록
                     </button>
-                    <button class="btn-action" onclick="exportShipping()">
+                    <button class="btn-action" onclick="openExportModal()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="7 10 12 15 17 10"></polyline>
@@ -601,70 +715,23 @@
             </div>
 
             <div class="table-wrapper">
-                <table class="shipping-table">
-                    <thead>
-                        <tr>
-                            <th class="checkbox-cell">
-                                <input type="checkbox" onchange="toggleSelectAll()">
-                            </th>
-                            <th>주문번호</th>
-                            <th>주문일시</th>
-                            <th>수령인</th>
-                            <th>연락처</th>
-                            <th>배송지</th>
-                            <th>상품정보</th>
-                            <th>택배사</th>
-                            <th>송장번호</th>
-                            <th>상태</th>
-                            <th>관리</th>
-                        </tr>
+                <table class="shipping-table" id="shippingTable">
+                    <thead id="shippingTableHead">
+                        <!-- 동적 생성 -->
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td class="checkbox-cell">
-                                <input type="checkbox">
-                            </td>
-                            <td>202501150001</td>
-                            <td>2025-01-15 14:23</td>
-                            <td>홍길동</td>
-                            <td>010-1234-5678</td>
-                            <td>서울시 강남구 역삼동</td>
-                            <td>티셔츠 외 2건</td>
-                            <td><span class="carrier-tag">CJ대한통운</span></td>
-                            <td>123456789012</td>
-                            <td><span class="status-badge shipping">배송중</span></td>
-                            <td>
-                                <button class="btn-action" onclick="updateTracking('202501150001')">수정</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="checkbox-cell">
-                                <input type="checkbox">
-                            </td>
-                            <td>202501150002</td>
-                            <td>2025-01-15 15:45</td>
-                            <td>김철수</td>
-                            <td>010-9876-5432</td>
-                            <td>경기도 성남시 분당구</td>
-                            <td>무선 이어폰</td>
-                            <td>-</td>
-                            <td>-</td>
-                            <td><span class="status-badge ready">발송대기</span></td>
-                            <td>
-                                <button class="btn-action" onclick="updateTracking('202501150002')">등록</button>
-                            </td>
-                        </tr>
+                    <tbody id="shippingTableBody">
+                        <!-- 동적 생성 -->
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- 송장 등록 모달 -->
-        <div class="modal" id="trackingModal">
+        <!-- 일괄 등록 모달 -->
+        <div class="modal" id="bulkUploadModal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3 class="modal-title">송장번호 등록</h3>
-                    <button class="btn-close" onclick="closeModal()">
+                    <h3 class="modal-title">송장번호 일괄 등록</h3>
+                    <button class="btn-close" onclick="closeBulkUploadModal()">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
                             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -672,47 +739,480 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label class="form-label">주문번호</label>
-                        <input type="text" class="form-input" id="orderNumber" readonly>
+                    <div class="upload-area" onclick="document.getElementById('bulkFile').click()" 
+                         ondrop="handleDrop(event)" 
+                         ondragover="handleDragOver(event)" 
+                         ondragleave="handleDragLeave(event)">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#6c757d" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p style="margin-top: 12px; color: #6c757d;">엑셀 파일을 드래그하거나 클릭하여 업로드</p>
+                        <p style="margin-top: 4px; font-size: 12px; color: #adb5bd;">주문번호와 송장번호가 포함된 엑셀 파일</p>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">택배사</label>
-                        <select class="form-select" id="carrier">
-                            <option value="">선택</option>
-                            <option value="cj">CJ대한통운</option>
-                            <option value="hanjin">한진택배</option>
-                            <option value="lotte">롯데택배</option>
-                            <option value="post">우체국택배</option>
-                            <option value="logen">로젠택배</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">송장번호</label>
-                        <input type="text" class="form-input" id="trackingNumber" placeholder="송장번호 입력">
+                    <input type="file" id="bulkFile" accept=".xlsx,.xls" style="display: none;" onchange="handleBulkFile(event)">
+                    
+                    <div id="bulkPreview" style="display: none; margin-top: 20px;">
+                        <h4 style="font-size: 16px; margin-bottom: 12px;">미리보기</h4>
+                        <div id="bulkSummary" style="padding: 12px; background: #f8f9fa; border-radius: 8px; margin-bottom: 12px;"></div>
+                        <div style="max-height: 300px; overflow-y: auto;">
+                            <table class="preview-table" id="bulkPreviewTable">
+                                <thead>
+                                    <tr>
+                                        <th>주문번호</th>
+                                        <th>택배사</th>
+                                        <th>송장번호</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn-secondary" onclick="closeModal()">취소</button>
-                    <button class="btn-primary" onclick="saveTracking()">저장</button>
+                    <button class="btn-secondary" onclick="closeBulkUploadModal()">취소</button>
+                    <button class="btn-primary" onclick="saveBulkTracking()" id="saveBulkBtn" style="display: none;">저장</button>
                 </div>
             </div>
         </div>
+
+        <!-- 내보내기 모달 -->
+        <div class="modal" id="exportModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">마켓별 송장 양식으로 내보내기</h3>
+                    <button class="btn-close" onclick="closeExportModal()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p style="color: #6c757d; margin-bottom: 20px;">마켓을 선택하면 해당 마켓의 송장 업로드 양식에 맞춰 다운로드됩니다.</p>
+                    <div class="market-cards" id="marketCards">
+                        <!-- 동적 생성 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 로딩 -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- 메시지 -->
+        <div class="message" id="message"></div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
-        // 상태 필터
-        function filterStatus(status) {
-            document.querySelectorAll('.quick-filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            console.log('필터 상태:', status);
+        // 전역 변수
+        let currentOrders = [];
+        let bulkUploadData = [];
+        let marketFormats = {};
+
+        // 페이지 로드 시 실행
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadTodayOrders();
+            await loadMarketFormats();
+        });
+
+        // 오늘 날짜의 주문 불러오기
+        async function loadTodayOrders() {
+            showLoading();
+            try {
+                const response = await fetch('/api/orders/today', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('주문 데이터를 불러올 수 없습니다.');
+                }
+
+                const data = await response.json();
+                currentOrders = data.orders || [];
+                
+                updateStatistics();
+                updateVendorTable();
+                updateShippingTable();
+                
+            } catch (error) {
+                console.error('주문 로드 오류:', error);
+                showMessage('주문 데이터를 불러오는 중 오류가 발생했습니다.', 'error');
+            } finally {
+                hideLoading();
+            }
         }
 
-        // 검색
-        function searchShipping() {
-            console.log('발송 검색');
+        // 통계 업데이트
+        function updateStatistics() {
+            const preparing = currentOrders.filter(order => !order['송장번호']).length;
+            const shipped = currentOrders.filter(order => order['송장번호']).length;
+            
+            document.getElementById('statPreparing').textContent = preparing;
+            document.getElementById('statShipped').textContent = shipped;
+        }
+
+        // 벤더사별 테이블 업데이트
+        function updateVendorTable() {
+            const vendorStats = {};
+            
+            currentOrders.forEach(order => {
+                const vendor = order['벤더사'] || '자사';
+                if (!vendorStats[vendor]) {
+                    vendorStats[vendor] = { preparing: 0, shipped: 0 };
+                }
+                
+                if (order['송장번호']) {
+                    vendorStats[vendor].shipped++;
+                } else {
+                    vendorStats[vendor].preparing++;
+                }
+            });
+            
+            const tbody = document.getElementById('vendorTableBody');
+            tbody.innerHTML = '';
+            
+            let totalPreparing = 0;
+            let totalShipped = 0;
+            
+            Object.entries(vendorStats).forEach(([vendor, stats]) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${vendor}</td>
+                    <td style="text-align: center;">${stats.preparing}</td>
+                    <td style="text-align: center;">${stats.shipped}</td>
+                    <td style="text-align: center; font-weight: 500;">${stats.preparing + stats.shipped}</td>
+                `;
+                
+                totalPreparing += stats.preparing;
+                totalShipped += stats.shipped;
+            });
+            
+            // 합계 행 추가
+            const totalRow = tbody.insertRow();
+            totalRow.className = 'total-row';
+            totalRow.innerHTML = `
+                <td>합계</td>
+                <td style="text-align: center;">${totalPreparing}</td>
+                <td style="text-align: center;">${totalShipped}</td>
+                <td style="text-align: center; font-weight: 600;">${totalPreparing + totalShipped}</td>
+            `;
+        }
+
+        // 발송 테이블 업데이트
+        function updateShippingTable() {
+            const thead = document.getElementById('shippingTableHead');
+            const tbody = document.getElementById('shippingTableBody');
+            
+            if (currentOrders.length === 0) {
+                thead.innerHTML = '';
+                tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 40px;">오늘 날짜의 주문이 없습니다.</td></tr>';
+                return;
+            }
+            
+            // 헤더 생성
+            const headers = Object.keys(currentOrders[0]);
+            thead.innerHTML = `
+                <tr>
+                    <th class="checkbox-cell"><input type="checkbox" onchange="toggleSelectAll(this)"></th>
+                    ${headers.map(header => `<th>${header}</th>`).join('')}
+                </tr>
+            `;
+            
+            // 바디 생성
+            tbody.innerHTML = '';
+            currentOrders.forEach((order, index) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="checkbox-cell"><input type="checkbox" data-index="${index}"></td>
+                    ${headers.map(header => {
+                        if (header === '택배사') {
+                            return `<td>
+                                <select class="carrier-select" data-index="${index}">
+                                    <option value="">선택</option>
+                                    <option value="CJ대한통운" ${order[header] === 'CJ대한통운' ? 'selected' : ''}>CJ대한통운</option>
+                                    <option value="한진택배" ${order[header] === '한진택배' ? 'selected' : ''}>한진택배</option>
+                                    <option value="롯데택배" ${order[header] === '롯데택배' ? 'selected' : ''}>롯데택배</option>
+                                    <option value="우체국택배" ${order[header] === '우체국택배' ? 'selected' : ''}>우체국택배</option>
+                                    <option value="로젠택배" ${order[header] === '로젠택배' ? 'selected' : ''}>로젠택배</option>
+                                </select>
+                            </td>`;
+                        } else if (header === '송장번호') {
+                            return `<td><input type="text" class="tracking-input" data-index="${index}" value="${order[header] || ''}"></td>`;
+                        } else {
+                            return `<td title="${order[header] || ''}">${order[header] || ''}</td>`;
+                        }
+                    }).join('')}
+                `;
+            });
+        }
+
+        // 전체 선택
+        function toggleSelectAll(checkbox) {
+            const checkboxes = document.querySelectorAll('#shippingTableBody input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = checkbox.checked);
+        }
+
+        // 송장번호 저장
+        async function saveTrackingNumbers() {
+            const updates = [];
+            
+            // 테이블에서 변경된 송장번호 수집
+            document.querySelectorAll('.tracking-input').forEach(input => {
+                const index = parseInt(input.dataset.index);
+                const value = input.value.trim();
+                const carrierSelect = document.querySelector(`.carrier-select[data-index="${index}"]`);
+                const carrier = carrierSelect ? carrierSelect.value : '';
+                
+                if (value || carrier) {
+                    updates.push({
+                        orderNumber: currentOrders[index]['주문번호'],
+                        carrier: carrier,
+                        trackingNumber: value
+                    });
+                }
+            });
+            
+            if (updates.length === 0) {
+                showMessage('저장할 송장번호가 없습니다.', 'error');
+                return;
+            }
+            
+            showLoading();
+            try {
+                const response = await fetch('/api/orders/update-tracking', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ updates })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('송장번호 저장에 실패했습니다.');
+                }
+                
+                showMessage(`${updates.length}건의 송장번호가 저장되었습니다.`, 'success');
+                await loadTodayOrders();
+                
+            } catch (error) {
+                console.error('저장 오류:', error);
+                showMessage('저장 중 오류가 발생했습니다.', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 일괄 업로드 모달
+        function openBulkUploadModal() {
+            document.getElementById('bulkUploadModal').classList.add('show');
+            document.getElementById('bulkPreview').style.display = 'none';
+            document.getElementById('saveBulkBtn').style.display = 'none';
+            bulkUploadData = [];
+        }
+
+        function closeBulkUploadModal() {
+            document.getElementById('bulkUploadModal').classList.remove('show');
+            document.getElementById('bulkFile').value = '';
+        }
+
+        // 파일 드래그 앤 드롭
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleBulkFile({ target: { files: files } });
+            }
+        }
+
+        // 일괄 파일 처리
+        function handleBulkFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const workbook = XLSX.read(e.target.result, { type: 'binary' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    bulkUploadData = jsonData.map(row => ({
+                        orderNumber: row['주문번호'] || '',
+                        carrier: row['택배사'] || '',
+                        trackingNumber: row['송장번호'] || ''
+                    })).filter(item => item.orderNumber && item.trackingNumber);
+                    
+                    displayBulkPreview();
+                    
+                } catch (error) {
+                    console.error('파일 파싱 오류:', error);
+                    showMessage('파일을 읽을 수 없습니다.', 'error');
+                }
+            };
+            reader.readAsBinaryString(file);
+        }
+
+        // 일괄 업로드 미리보기
+        function displayBulkPreview() {
+            if (bulkUploadData.length === 0) {
+                showMessage('유효한 데이터가 없습니다.', 'error');
+                return;
+            }
+            
+            document.getElementById('bulkPreview').style.display = 'block';
+            document.getElementById('saveBulkBtn').style.display = 'inline-flex';
+            
+            // 요약 정보
+            document.getElementById('bulkSummary').innerHTML = `
+                <strong>총 ${bulkUploadData.length}건</strong>의 송장번호를 등록합니다.
+            `;
+            
+            // 미리보기 테이블
+            const tbody = document.querySelector('#bulkPreviewTable tbody');
+            tbody.innerHTML = '';
+            
+            bulkUploadData.slice(0, 10).forEach(item => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${item.orderNumber}</td>
+                    <td>${item.carrier}</td>
+                    <td>${item.trackingNumber}</td>
+                `;
+            });
+            
+            if (bulkUploadData.length > 10) {
+                const row = tbody.insertRow();
+                row.innerHTML = `<td colspan="3" style="text-align: center; color: #6c757d;">... 외 ${bulkUploadData.length - 10}건</td>`;
+            }
+        }
+
+        // 일괄 송장 저장
+        async function saveBulkTracking() {
+            if (bulkUploadData.length === 0) return;
+            
+            showLoading();
+            try {
+                const response = await fetch('/api/orders/update-tracking', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ updates: bulkUploadData })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('송장번호 저장에 실패했습니다.');
+                }
+                
+                showMessage(`${bulkUploadData.length}건의 송장번호가 저장되었습니다.`, 'success');
+                closeBulkUploadModal();
+                await loadTodayOrders();
+                
+            } catch (error) {
+                console.error('저장 오류:', error);
+                showMessage('저장 중 오류가 발생했습니다.', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 마켓 양식 로드
+        async function loadMarketFormats() {
+            try {
+                const response = await fetch('/api/markets/upload-format');
+                const data = await response.json();
+                marketFormats = data.formats || {};
+            } catch (error) {
+                console.error('마켓 양식 로드 오류:', error);
+            }
+        }
+
+        // 내보내기 모달
+        function openExportModal() {
+            document.getElementById('exportModal').classList.add('show');
+            
+            // 마켓 카드 생성
+            const container = document.getElementById('marketCards');
+            container.innerHTML = '';
+            
+            const markets = ['쿠팡', '네이버', '11번가', '지마켓', '옥션', '인터파크', '티몬', '위메프'];
+            
+            markets.forEach(market => {
+                const card = document.createElement('div');
+                card.className = 'market-card';
+                card.onclick = () => exportByMarket(market);
+                card.innerHTML = `
+                    <div class="market-card-icon">${market[0]}</div>
+                    <div class="market-card-name">${market}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.remove('show');
+        }
+
+        // 마켓별 내보내기
+        async function exportByMarket(marketName) {
+            showLoading();
+            try {
+                // 해당 마켓의 주문만 필터링
+                const marketOrders = currentOrders.filter(order => order['마켓명'] === marketName);
+                
+                if (marketOrders.length === 0) {
+                    showMessage(`${marketName}의 주문이 없습니다.`, 'error');
+                    hideLoading();
+                    return;
+                }
+                
+                // 마켓 양식에 맞춰 데이터 변환
+                const format = marketFormats[marketName] || [];
+                const exportData = marketOrders.map(order => {
+                    const row = {};
+                    format.forEach(column => {
+                        row[column] = order[column] || '';
+                    });
+                    return row;
+                });
+                
+                // 엑셀 생성
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, '송장업로드');
+                
+                // 파일 다운로드
+                const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+                XLSX.writeFile(wb, `${marketName}_송장업로드_${today}.xlsx`);
+                
+                showMessage(`${marketName} 송장 파일이 다운로드되었습니다.`, 'success');
+                closeExportModal();
+                
+            } catch (error) {
+                console.error('내보내기 오류:', error);
+                showMessage('내보내기 중 오류가 발생했습니다.', 'error');
+            } finally {
+                hideLoading();
+            }
         }
 
         // 필터 초기화
@@ -723,42 +1223,29 @@
             document.getElementById('searchKeyword').value = '';
         }
 
-        // 전체 선택
-        function toggleSelectAll() {
-            const checkboxes = document.querySelectorAll('.shipping-table tbody input[type="checkbox"]');
-            const isChecked = event.target.checked;
-            checkboxes.forEach(cb => cb.checked = isChecked);
+        // 검색 (추후 구현)
+        function searchShipping() {
+            console.log('검색 기능은 추후 구현 예정');
         }
 
-        // 송장 등록/수정
-        function updateTracking(orderNumber) {
-            document.getElementById('orderNumber').value = orderNumber;
-            document.getElementById('trackingModal').classList.add('show');
+        // 로딩 표시
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
         }
 
-        // 일괄 등록
-        function bulkUpdateTracking() {
-            console.log('일괄 송장 등록');
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
         }
 
-        // 내보내기
-        function exportShipping() {
-            console.log('발송 목록 내보내기');
-        }
-
-        // 모달 닫기
-        function closeModal() {
-            document.getElementById('trackingModal').classList.remove('show');
-        }
-
-        // 송장 저장
-        function saveTracking() {
-            const orderNumber = document.getElementById('orderNumber').value;
-            const carrier = document.getElementById('carrier').value;
-            const trackingNumber = document.getElementById('trackingNumber').value;
+        // 메시지 표시
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.className = `message ${type} show`;
             
-            console.log('송장 저장:', { orderNumber, carrier, trackingNumber });
-            closeModal();
+            setTimeout(() => {
+                message.classList.remove('show');
+            }, 3000);
         }
     </script>
 </body>
