@@ -1326,12 +1326,17 @@ function displayResults(result) {
     if (!spacer) {
         spacer = document.createElement('div');
         spacer.id = 'resultSpacer';
-        spacer.style.height = '20px';  // 원하는 높이로 조정
+        spacer.style.height = '20px';
         spacer.style.backgroundColor = 'transparent';
         resultSection.parentNode.insertBefore(spacer, resultSection);
     }
     
+    // show 클래스 추가 및 display 강제 설정
     resultSection.classList.add('show');
+    resultSection.style.display = 'block';  // 강제 설정 추가
+    
+    // 테이블 표시 전 로그
+    console.log('displayResults 실행: 데이터 개수 =', result.data.length);
     
     displayResultTable(result.data);
     displayStatistics(result.statistics);
@@ -2605,3 +2610,4 @@ function calculateValue(data, valueField) {
 function formatValue(value, valueField) {
     return value.toLocaleString('ko-KR');
 }
+
