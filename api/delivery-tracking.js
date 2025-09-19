@@ -2,8 +2,7 @@ const axios = require('axios');
 
 // 스마트택배 API 설정
 const SMART_DELIVERY_API = 'https://info.sweettracker.co.kr/api/v1/trackingInfo';
-const API_KEY = process.env.SMART_DELIVERY_API_KEY || 'YOUR_API_KEY_HERE'; // 환경변수에 추가 필요
-
+const API_KEY = process.env.SMART_DELIVERY_API_KEY;
 // 택배사 코드 매핑
 const CARRIER_CODES = {
   'CJ대한통운': '04',
@@ -35,8 +34,12 @@ module.exports = async (req, res) => {
     // 스마트택배 API 키 확인
     const API_KEY = process.env.SMART_DELIVERY_API_KEY;
     
-    if (!API_KEY || API_KEY === 'your_smart_delivery_api_key_here') {
-      console.log('스마트택배 API 키가 설정되지 않았습니다. 기본 응답 반환');
+     if (!API_KEY) {
+      console.error('SMART_DELIVERY_API_KEY 환경변수가 설정되지 않았습니다.');
+      return res.status(500).json({ 
+        error: 'API 키가 설정되지 않았습니다.' 
+      });
+    }
       
       // API 키가 없을 때 기본 응답 반환
       return res.status(200).json({
