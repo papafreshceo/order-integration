@@ -1715,14 +1715,33 @@ if (header === '마켓명' && order[header]) {
                 card.className = 'market-card';
                 card.onclick = () => exportByMarket(market);
                 
-                // 마켓 색상 적용 (없으면 기본 파란색)
-                const marketColor = colors[market] || '#2563eb';
+                const marketColor = colors[market] || 'rgb(37, 99, 235)';
+                
+                // RGB 값 추출 및 밝기 계산
+                let textColor = '#fff';
+                const match = marketColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+                if (match) {
+                    const r = parseInt(match[1]);
+                    const g = parseInt(match[2]);
+                    const b = parseInt(match[3]);
+                    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                    textColor = brightness > 128 ? '#000' : '#fff';
+                }
                 
                 card.innerHTML = `
-                    <div class="market-card-icon" style="background: ${marketColor};">
-                        ${market[0]}
-                    </div>
-                    <div class="market-card-name" style="color: ${marketColor}; font-weight: 500;">
+                    <div style="
+                        padding: 12px 16px;
+                        background: ${marketColor};
+                        color: ${textColor};
+                        border-radius: 12px;
+                        font-size: 14px;
+                        font-weight: 600;
+                        text-align: center;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)'"
+                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'">
                         ${market}
                     </div>
                 `;
@@ -1813,14 +1832,34 @@ if (header === '마켓명' && order[header]) {
                     return codes[carrierName] || carrierName;
                 }
                 
-                // 엑셀 생성
+                // 송장번호 '-' 제거 및 텍스트 처리
+                exportData.forEach(row => {
+                    Object.keys(row).forEach(key => {
+                        if (key.includes('송장') || key.includes('운송장')) {
+                            // '-' 제거
+                            if (row[key] === '-' || row[key] === '') {
+                                row[key] = '';
+                            }
+                            // 숫자를 텍스트로 (앞에 ' 추가)
+                            else if (row[key]) {
+                                row[key] = "'" + String(row[key]).replace(/^'/, '');
+                            }
+                        }
+                    });
+                });
+                
                 const ws = XLSX.utils.json_to_sheet(exportData);
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, '송장업로드');
+                XLSX.utils.book_append_sheet(wb, ws, '발송처리');  // 시트명 변경
                 
-                // 파일 다운로드
-                const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
-                XLSX.writeFile(wb, `${marketName}_송장업로드_${today}.xlsx`);
+                // 파일명 날짜 형식 변경 (YYYYMMDD)
+                const today = new Date();
+                const dateStr = today.getFullYear() + 
+                               String(today.getMonth() + 1).padStart(2, '0') + 
+                               String(today.getDate()).padStart(2, '0');
+                
+                // 파일명 형식: (송장등록)_마켓명_날짜
+                XLSX.writeFile(wb, `(송장등록)_${marketName}_${dateStr}.xlsx`);
                 
                 showMessage(`${marketName} 송장 파일이 다운로드되었습니다.`, 'success');
                 closeExportModal();
