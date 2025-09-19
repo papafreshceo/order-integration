@@ -451,9 +451,6 @@
             line-height: 20px;
         }
         /* 송장번호 유무에 따른 행 스타일 */
-.shipping-table tbody tr.no-tracking td {
-    background-color: #f8f0fa !important;
-}
 
 .shipping-table tbody tr.has-tracking td {
     background-color: #f0f3f7 !important;
@@ -1252,9 +1249,9 @@ tbody.innerHTML = '';
 currentOrders.forEach((order, rowIndex) => {
     const row = tbody.insertRow();
     
-    // 송장번호 유무에 따른 행 배경색 설정
+    // 송장번호 유무 확인
     const hasTracking = order['송장번호'] && order['송장번호'].trim() !== '';
-    const rowBgColor = hasTracking ? '#f0f3f7' : '#f8f0fa';
+    const rowBgColor = hasTracking ? '#f0f3f7' : '#ffffff';
     
     row.innerHTML = `
                     <td class="checkbox-cell" style="position: sticky; left: 0px; z-index: 6; background: ${rowBgColor}; width: 50px; text-align: center; padding: 8px;">
@@ -1352,11 +1349,9 @@ if (header === '마켓명' && order[header]) {
                     }).join('')}
                 `;
                 
-                // 송장번호 유무에 따른 클래스 추가
+                // 송장번호가 있는 경우만 클래스 추가
                 if (hasTracking) {
                     row.classList.add('has-tracking');
-                } else {
-                    row.classList.add('no-tracking');  
                 }
             });
         }
