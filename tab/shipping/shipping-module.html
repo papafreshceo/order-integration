@@ -621,61 +621,46 @@ overflow-x: auto;
 <body>
     <div class="shipping-container">
         <!-- 상단 통계 -->
- <div class="shipping-stats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
-            <div class="stat-card">
-                <div class="stat-icon" style="background: #fef3c7; color: #f59e0b;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="1" y="3" width="15" height="13"></rect>
-                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                    </svg>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-label">상품 준비중</div>
-                    <div class="stat-value" id="statPreparing">0</div>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-icon" style="background: #d1fae5; color: #10b981;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                    </svg>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-label">발송완료</div>
-                    <div class="stat-value" id="statShipped">0</div>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-icon" style="background: #fee2e2; color: #ef4444;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-label">미발송</div>
-                    <div class="stat-value" id="statNotShipped">0</div>
-                </div>
-            </div>
+<div class="shipping-stats" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #fef3c7; color: #f59e0b;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="1" y="3" width="15" height="13"></rect>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+            </svg>
         </div>
+        <div class="stat-content">
+            <div class="stat-label">상품 준비중</div>
+            <div class="stat-value" id="statPreparing">0</div>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #d1fae5; color: #10b981;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+        </div>
+        <div class="stat-content">
+            <div class="stat-label">발송완료</div>
+            <div class="stat-value" id="statShipped">0</div>
+        </div>
+    </div>
+</div>
 
         <!-- 벤더사별 집계 테이블 -->
         <div class="vendor-stats-section">
             <h3 class="vendor-stats-title">벤더사별 발송 현황</h3>
             <table class="vendor-table">
                 <thead>
-                    <tr>
-                        <th>벤더사</th>
-                        <th style="text-align: center;">합계</th>
-                        <th style="text-align: center;">상품 준비중</th>
-                        <th style="text-align: center;">발송완료</th>
-                        <th style="text-align: center;">미발송</th>
-                    </tr>
-                </thead>
+    <tr>
+        <th>벤더사</th>
+        <th style="text-align: center;">합계</th>
+        <th style="text-align: center;">상품 준비중</th>
+        <th style="text-align: center;">발송완료</th>
+    </tr>
+</thead>
                 <tbody id="vendorTableBody">
                     <!-- 동적 생성 -->
                 </tbody>
@@ -934,40 +919,34 @@ let marketColors = {}; // 추가
 }
 
         // 통계 업데이트
-        function updateStatistics() {
-            // 미발송: 송장번호와 택배사 모두 없는 경우
-            const notShipped = currentOrders.filter(order => !order['송장번호'] && !order['택배사']).length;
-            // 상품 준비중: 택배사는 있지만 송장번호가 없는 경우
-            const preparing = currentOrders.filter(order => order['택배사'] && !order['송장번호']).length;
-            // 발송완료: 송장번호가 있는 경우
-            const shipped = currentOrders.filter(order => order['송장번호']).length;
-            
-            document.getElementById('statNotShipped').textContent = notShipped;
-            document.getElementById('statPreparing').textContent = preparing;
-            document.getElementById('statShipped').textContent = shipped;
-        }
+function updateStatistics() {
+    // 상품 준비중: 송장번호가 없는 경우
+    const preparing = currentOrders.filter(order => !order['송장번호']).length;
+    // 발송완료: 송장번호가 있는 경우  
+    const shipped = currentOrders.filter(order => order['송장번호']).length;
+    
+    document.getElementById('statPreparing').textContent = preparing;
+    document.getElementById('statShipped').textContent = shipped;
+}
 
         // 벤더사별 테이블 업데이트
 function updateVendorTable() {
-            const vendorStats = {};
-            
-            currentOrders.forEach(order => {
-                const vendor = order['벤더사'] || '자사';
-                if (!vendorStats[vendor]) {
-                    vendorStats[vendor] = { notShipped: 0, preparing: 0, shipped: 0 };
-                }
-                
-                if (order['송장번호']) {
-                    // 발송완료
-                    vendorStats[vendor].shipped++;
-                } else if (order['택배사']) {
-                    // 상품 준비중
-                    vendorStats[vendor].preparing++;
-                } else {
-                    // 미발송
-                    vendorStats[vendor].notShipped++;
-                }
-            });
+    const vendorStats = {};
+    
+    currentOrders.forEach(order => {
+        const vendor = order['벤더사'] || '자사';
+        if (!vendorStats[vendor]) {
+            vendorStats[vendor] = { preparing: 0, shipped: 0 };
+        }
+        
+        if (order['송장번호']) {
+            // 발송완료
+            vendorStats[vendor].shipped++;
+        } else {
+            // 상품 준비중 (송장번호가 없는 모든 경우)
+            vendorStats[vendor].preparing++;
+        }
+    });
             
             const tbody = document.getElementById('vendorTableBody');
             tbody.innerHTML = '';
@@ -976,16 +955,15 @@ function updateVendorTable() {
             let totalPreparing = 0;
             let totalShipped = 0;
             
-            Object.entries(vendorStats).forEach(([vendor, stats]) => {
-                const row = tbody.insertRow();
-                const total = stats.notShipped + stats.preparing + stats.shipped;
-                row.innerHTML = `
-                    <td>${vendor}</td>
-                    <td style="text-align: center; font-weight: 500;">${total}</td>
-                    <td style="text-align: center; color: #f59e0b;">${stats.preparing}</td>
-                    <td style="text-align: center; color: #10b981;">${stats.shipped}</td>
-                    <td style="text-align: center; color: #ef4444;">${stats.notShipped}</td>
-                `;
+             Object.entries(vendorStats).forEach(([vendor, stats]) => {
+        const row = tbody.insertRow();
+        const total = stats.preparing + stats.shipped;
+        row.innerHTML = `
+            <td>${vendor}</td>
+            <td style="text-align: center; font-weight: 500;">${total}</td>
+            <td style="text-align: center; color: #f59e0b;">${stats.preparing}</td>
+            <td style="text-align: center; color: #10b981;">${stats.shipped}</td>
+        `;
                 
                 totalNotShipped += stats.notShipped;
                 totalPreparing += stats.preparing;
@@ -993,16 +971,15 @@ function updateVendorTable() {
             });
             
             // 합계 행 추가
-           const totalRow = tbody.insertRow();
-            totalRow.className = 'total-row';
-            const grandTotal = totalNotShipped + totalPreparing + totalShipped;
-            totalRow.innerHTML = `
-                <td>합계</td>
-                <td style="text-align: center; font-weight: 600;">${grandTotal}</td>
-                <td style="text-align: center; color: #f59e0b; font-weight: 600;">${totalPreparing}</td>
-                <td style="text-align: center; color: #10b981; font-weight: 600;">${totalShipped}</td>
-                <td style="text-align: center; color: #ef4444; font-weight: 600;">${totalNotShipped}</td>>
-            `;
+            const totalRow = tbody.insertRow();
+    totalRow.className = 'total-row';
+    const grandTotal = totalPreparing + totalShipped;
+    totalRow.innerHTML = `
+        <td>합계</td>
+        <td style="text-align: center; font-weight: 600;">${grandTotal}</td>
+        <td style="text-align: center; color: #f59e0b; font-weight: 600;">${totalPreparing}</td>
+        <td style="text-align: center; color: #10b981; font-weight: 600;">${totalShipped}</td>
+    `;
         }
 
         // 발송 테이블 업데이트
