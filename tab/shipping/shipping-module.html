@@ -1956,11 +1956,8 @@ if (header === '마켓명' && order[header]) {
         // 필터와 검색 통합 적용
         function applyFilters() {
             const rows = document.querySelectorAll('#shippingTableBody tr');
-            const trackingIndex = Array.from(document.querySelectorAll('#shippingTableHead th'))
-                .findIndex(th => th.textContent === '송장번호');
             
             rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
                 const trackingInput = row.querySelector('.tracking-input');
                 const hasTracking = trackingInput && trackingInput.value.trim() !== '';
                 
@@ -1979,7 +1976,7 @@ if (header === '마켓명' && order[header]) {
                     searchMatch = text.includes(currentSearch.toLowerCase());
                 }
                 
-                // 둘 다 만족하는 경우만 표시
+                // 두 조건 모두 만족하는 경우만 표시
                 if (statusMatch && searchMatch) {
                     row.style.display = '';
                 } else {
@@ -1988,7 +1985,7 @@ if (header === '마켓명' && order[header]) {
             });
         }
         
-        로딩 표시
+        //로딩 표시
         function showLoading() {
             document.getElementById('loading').classList.add('show');
         }
