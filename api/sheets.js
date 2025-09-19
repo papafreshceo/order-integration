@@ -232,33 +232,113 @@ export default async function handler(req, res) {
 
       case 'getMarketData':
         try {
-          // 매핑 시트에서 마켓명과 색상 읽기 (SPREADSHEET_ID 사용)
-          const mappingData = await getSheetData('매핑!A:B');
+          const { useMainSpreadsheet } = req.body;
           
-          const markets = [];
-          const colors = {};
-          
-          if (mappingData && mappingData.length > 2) {
-            // A2가 '마켓명', B2가 '색상' 헤더라고 가정
-            for (let i = 2; i < mappingData.length; i++) {
-              if (mappingData[i] && mappingData[i][0]) {
-                const marketName = mappingData[i][0].trim();
-                if (marketName) {
-                  markets.push(marketName);
-                  if (mappingData[i][1]) {
-                    colors[marketName] = mappingData[i][1].trim();
+          // 발송관리 탭에서 호출시: 주문 데이터와 마켓 색상 둘 다 반환
+          if (useMainSpreadsheet) {
+            // 1. 오늘 날짜의 주문 데이터 가져오기
+            const today = new Date().toLocaleDateString('ko-KR', {
+              timeZone: 'Asia/Seoul',
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            }).replace(/\. /g, '').replace(/\./g, '').replace(/-/g, '');
+            
+            const { getOrderData } = require('../lib/google-sheets');
+            let orderData = [];
+            
+            try {
+              const rawOrderData = await getOrderData(`${today}!A:ZZ`, process.env.SPREADSHEET_ID_ORDERS);
+              
+              if (rawOrderData && rawOrderData.length >= 2) {
+                const headers = rawOrderData[0];
+                const rows = rawOrderData.slice(1);
+                
+                orderData = rows.map(row => {
+                  const obj = {};
+                  headers.forEach((header, index) => {
+                    obj[header] = row[index] || '';
+                  });
+                  return obj;
+                });
+              }
+            } catch (orderError) {
+              console.log('주문 데이터 로드 실패:', orderError.message);
+            }
+            
+            // 2. 매핑 시트에서 마켓 색상 정보 가져오기
+            let markets = [];
+            let colors = {};
+            
+            try {
+              const mappingData = await getSheetData('매핑!A3:B100'); // A3부터 읽기 (헤더 제외)
+              
+              if (mappingData && mappingData.length > 0) {
+                mappingData.forEach(row => {
+                  if (row && row[0]) {
+                    const marketName = row[0].trim();
+                    if (marketName) {
+                      markets.push(marketName);
+                      if (row[1]) {
+                        // 색상 값이 'rgb(255,255,255)' 형식인 경우 처리
+                        const colorValue = row[1].trim();
+                        if (colorValue.startsWith('rgb')) {
+                          colors[marketName] = colorValue;
+                        } else {
+                          // '255,255,255' 형식인 경우 rgb로 변환
+                          colors[marketName] = `rgb(${colorValue})`;
+                        }
+                      }
+                    }
+                  }
+                });
+              }
+            } catch (mappingError) {
+              console.log('매핑 데이터 로드 실패:', mappingError.message);
+              // 기본값 설정
+              markets = ['쿠팡', '네이버', '11번가'];
+              colors = {};
+            }
+            
+            return res.status(200).json({ 
+              success: true,
+              data: orderData,
+              markets: markets,
+              colors: colors
+            });
+            
+          } else {
+            // 기본 동작: 매핑 시트에서만 마켓 정보 읽기
+            const mappingData = await getSheetData('매핑!A3:B100');
+            
+            const markets = [];
+            const colors = {};
+            
+            if (mappingData && mappingData.length > 0) {
+              mappingData.forEach(row => {
+                if (row && row[0]) {
+                  const marketName = row[0].trim();
+                  if (marketName) {
+                    markets.push(marketName);
+                    if (row[1]) {
+                      const colorValue = row[1].trim();
+                      if (colorValue.startsWith('rgb')) {
+                        colors[marketName] = colorValue;
+                      } else {
+                        colors[marketName] = `rgb(${colorValue})`;
+                      }
+                    }
                   }
                 }
-              }
+              });
             }
+            
+            return res.status(200).json({ 
+              success: true, 
+              markets: markets.length > 0 ? markets : ['쿠팡', '네이버', '11번가'],
+              colors: colors
+            });
           }
-          
-          return res.status(200).json({ 
-            success: true, 
-            markets: markets.length > 0 ? markets : ['쿠팡', '네이버', '11번가'],
-            colors: colors
-          });
-          
         } catch (error) {
           console.error('getMarketData 오류:', error);
           return res.status(200).json({ 
