@@ -1322,14 +1322,17 @@ if (header === '마켓명' && order[header]) {
                 if (value && carrier) {
                     const order = currentOrders[index];
                     const existingTracking = order['송장번호'];
+                    const existingCarrier = order['택배사'];
                     
-                    if (existingTracking && existingTracking !== value) {
-                        // 기존 송장번호가 있는 경우
+                    // 송장번호나 택배사가 변경된 경우
+                    if ((existingTracking && existingTracking !== value) || 
+                        (existingCarrier && existingCarrier !== carrier)) {
                         overwrites.push({
                             orderNumber: order['주문번호'],
                             carrier: carrier,
                             trackingNumber: value,
-                            oldTracking: existingTracking
+                            oldTracking: existingTracking,
+                            oldCarrier: existingCarrier
                         });
                     } else if (!existingTracking) {
                         // 새로운 송장번호
@@ -1350,10 +1353,17 @@ if (header === '마켓명' && order[header]) {
             // 덮어쓰기 확인
             let proceedWithOverwrites = true;
             if (overwrites.length > 0) {
-                const message = `${overwrites.length}건의 기존 송장번호를 변경하시겠습니까?\n\n` + 
-                    overwrites.slice(0, 5).map(o => 
-                        `주문번호: ${o.orderNumber}\n기존: ${o.oldTracking} → 신규: ${o.trackingNumber}`
-                    ).join('\n\n') +
+                const message = `${overwrites.length}건의 기존 정보를 변경하시겠습니까?\n\n` + 
+                    overwrites.slice(0, 5).map(o => {
+                        let changeInfo = `주문번호: ${o.orderNumber}\n`;
+                        if (o.oldCarrier !== o.carrier) {
+                            changeInfo += `택배사: ${o.oldCarrier || '없음'} → ${o.carrier}\n`;
+                        }
+                        if (o.oldTracking !== o.trackingNumber) {
+                            changeInfo += `송장번호: ${o.oldTracking || '없음'} → ${o.trackingNumber}`;
+                        }
+                        return changeInfo;
+                    }).join('\n\n') +
                     (overwrites.length > 5 ? `\n\n... 외 ${overwrites.length - 5}건` : '');
                     
                 proceedWithOverwrites = confirm(message);
