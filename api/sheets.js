@@ -237,18 +237,23 @@ case 'getMarketData':
           const { getSheetData } = require('../lib/google-sheets');
           
           // 매핑 시트에서 마켓명과 색상 읽기
+          console.log('매핑 시트 읽기 시작');
           const mappingData = await getSheetData('매핑!A:B');
+          console.log('매핑 데이터:', mappingData);
           
           const markets = [];
           const colors = {};
           
-          if (mappingData && mappingData.length > 2) {
-            // A2가 '마켓명', B2가 '색상' 헤더라고 가정
+          if (mappingData && mappingData.length > 0) {
+            console.log('매핑 데이터 행 수:', mappingData.length);
+            
+            // 데이터가 A3부터 시작한다고 가정 (A1은 빈칸, A2는 '마켓명' 헤더)
             for (let i = 2; i < mappingData.length; i++) {
               if (mappingData[i] && mappingData[i][0]) {
                 const marketName = mappingData[i][0].trim();
-                if (marketName) {
+                if (marketName && marketName !== '') {
                   markets.push(marketName);
+                  // B열에 색상이 있으면 저장
                   if (mappingData[i][1]) {
                     colors[marketName] = mappingData[i][1].trim();
                   }
@@ -256,6 +261,9 @@ case 'getMarketData':
               }
             }
           }
+          
+          console.log('파싱된 마켓 목록:', markets);
+          console.log('파싱된 색상 매핑:', colors);
           
           return res.status(200).json({ 
             success: true, 
@@ -342,5 +350,6 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
+
 
 
