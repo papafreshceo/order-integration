@@ -1429,18 +1429,17 @@ for (let i = 0; i < headers.length; i++) {
 
         // 마켓 양식 로드
         async function loadMarketFormats() {
-            try {
-                // 마켓 목록 가져오기
-                const marketResponse = await fetch('/api/sheets', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-    action: 'getMarketData',  // getMarketList 대신 getMarketData로 변경
-
-})
-                });
+    try {
+        // 마켓 목록과 색상 가져오기
+        const marketResponse = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'getMarketData'  // getMarketList가 아닌 getMarketData
+            })
+        });
                 
                 const marketData = await marketResponse.json();
                 
@@ -1463,8 +1462,12 @@ for (let i = 0; i < headers.length; i++) {
     window.marketList = marketData.markets || [];
     window.marketColors = marketData.colors || {};
     marketColors = marketData.colors || {};
+    console.log('로드된 마켓 색상:', marketColors); // 디버깅용
 }
-            } catch (error) {
+
+
+        
+             catch (error) {
                 console.error('마켓 정보 로드 오류:', error);
                 // 기본값 사용
                 window.marketList = ['쿠팡', '네이버', '11번가', '지마켓', '옥션'];
