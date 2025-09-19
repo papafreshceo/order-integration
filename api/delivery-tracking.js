@@ -1,22 +1,3 @@
-const axios = require('axios');
-
-// 스마트택배 API 설정
-const SMART_DELIVERY_API = 'https://info.sweettracker.co.kr/api/v1/trackingInfo';
-const API_KEY = process.env.SMART_DELIVERY_API_KEY;
-// 택배사 코드 매핑
-const CARRIER_CODES = {
-  'CJ대한통운': '04',
-  '한진택배': '05', 
-  '롯데택배': '08',
-  '우체국택배': '01',
-  '로젠택배': '06',
-  '쿠팡': '99',  // 쿠팡 로켓배송
-  'GS25편의점택배': '24',
-  'CU편의점택배': '46',
-  '경동택배': '23',
-  '대신택배': '22'
-};
-
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -31,53 +12,18 @@ module.exports = async (req, res) => {
       });
     }
 
-    // 스마트택배 API 키 확인
+    // 환경변수에서 API 키 가져오기
     const API_KEY = process.env.SMART_DELIVERY_API_KEY;
     
-     if (!API_KEY) {
+    if (!API_KEY) {
       console.error('SMART_DELIVERY_API_KEY 환경변수가 설정되지 않았습니다.');
       return res.status(500).json({ 
         error: 'API 키가 설정되지 않았습니다.' 
       });
     }
-      
-      // API 키가 없을 때 기본 응답 반환
-      return res.status(200).json({
-        invoiceNo: trackingNumber,
-        itemName: '상품',
-        senderName: '판매자',
-        receiverName: '구매자',
-        receiverAddr: '-',
-        level: 3,
-        complete: false,
-        completeYN: 'N',
-        status: '배송중',
-        statusCode: 3,
-        trackingDetails: [
-          {
-            timeString: new Date().toLocaleString('ko-KR'),
-            where: '확인중',
-            kind: '스마트택배 API 키가 필요합니다'
-          }
-        ],
-        estimate: null,
-        productInfo: null,
-        zipCode: null,
-        lastDetail: null,
-        lastStateTime: null
-      });
-    }
 
-    // axios 동적 import
-    let axios;
-    try {
-      axios = require('axios');
-    } catch (e) {
-      console.error('axios가 설치되지 않았습니다');
-      return res.status(500).json({ 
-        error: 'axios 라이브러리가 설치되지 않았습니다.' 
-      });
-    }
+    // axios 가져오기
+    const axios = require('axios');
 
     // 택배사 코드 매핑
     const CARRIER_CODES = {
@@ -85,15 +31,16 @@ module.exports = async (req, res) => {
       '한진택배': '05', 
       '롯데택배': '08',
       '우체국택배': '01',
-      '로젠택배': '06',
-      '쿠팡': '99',
-      'GS25편의점택배': '24',
-      'CU편의점택배': '46',
-      '경동택배': '23',
-      '대신택배': '22'
+      '로젠택배': '06'
     };
 
-    const carrierCode = CARRIER_CODES[carrier] || carrier;
+    const carrierCode = CARRIER_CODES[carrier];
+    
+    if (!carrierCode) {
+      return res.status(400).json({ 
+        error: '지원하지 않는 택배사입니다.' 
+      });
+    }
     
     // 스마트택배 API 호출
     const response = await axios.get('https://info.sweettracker.co.kr/api/v1/trackingInfo', {
@@ -112,9 +59,19 @@ module.exports = async (req, res) => {
       });
     }
 
-    // 응답 데이터 정제
+    // 배송 상태 텍스트
+    const statusMap = {
+      1: '배송준비중',
+      2: '집하완료',
+      3: '배송중',
+      4: '지점도착',
+      5: '배송출발',
+      6: '배송완료'
+    };
+
+    // 응답 데이터
     const result = {
-      invoiceNo: data.invoiceNo,
+      invoiceNo: data.invoiceNo || trackingNumber,
       itemName: data.itemName || '상품',
       senderName: data.senderName || '-',
       receiverName: data.receiverName || '-',
@@ -122,14 +79,9 @@ module.exports = async (req, res) => {
       level: data.level || 1,
       complete: data.complete || false,
       completeYN: data.completeYN || 'N',
-      status: getStatusText(data.level),
-      statusCode: data.level,
-      trackingDetails: data.trackingDetails || [],
-      estimate: data.estimate || null,
-      productInfo: data.productInfo || null,
-      zipCode: data.zipCode || null,
-      lastDetail: data.lastDetail || null,
-      lastStateTime: data.lastStateTime || null
+      status: statusMap[data.level] || '알 수 없음',
+      statusCode: data.level || 0,
+      trackingDetails: data.trackingDetails || []
     };
 
     return res.status(200).json(result);
@@ -137,29 +89,15 @@ module.exports = async (req, res) => {
   } catch (error) {
     console.error('배송 조회 오류:', error.message);
     
-    // axios 오류인 경우
-    if (error.response?.status === 401) {
+    if (error.response && error.response.status === 401) {
       return res.status(401).json({ 
-        error: 'API 인증 실패. API 키를 확인해주세요.' 
+        error: 'API 인증 실패' 
       });
     }
     
     return res.status(500).json({ 
-      error: '배송 조회 중 오류가 발생했습니다.',
-      details: error.message 
+      error: '배송 조회 실패',
+      message: error.message 
     });
   }
 };
-
-// 배송 상태 텍스트 변환
-function getStatusText(level) {
-  const statusMap = {
-    1: '배송준비중',
-    2: '집하완료',
-    3: '배송중',
-    4: '지점도착',
-    5: '배송출발',
-    6: '배송완료'
-  };
-  return statusMap[level] || '알 수 없음';
-}
