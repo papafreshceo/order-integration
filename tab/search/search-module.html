@@ -4,206 +4,253 @@
     <meta charset="UTF-8">
     <title>주문조회</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* ========================================
+           주문조회 레이아웃
+           ======================================== */
+        .order-search-container {
+            padding: 40px;
+            background: #fafafa;
+            min-height: 100vh;
         }
 
-        body {
-            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f5f6fa;
-            color: #212529;
+        @media (max-width: 768px) {
+            .order-search-container {
+                padding: 20px;
+            }
         }
 
-        .container {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-        }
-
-        /* 필터 섹션 */
-        .filter-section-compact {
+        /* ========================================
+           검색 섹션
+           ======================================== */
+        .search-section {
             background: #ffffff;
             border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 8px 16px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            height: 40px;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
         }
 
-        .filter-title-compact {
-            font-size: 16px;
+        .search-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .search-title {
+            font-size: 18px;
             font-weight: 500;
             color: #212529;
-            margin: 0;
-            white-space: nowrap;
         }
 
-        .filter-tags {
+        .search-actions {
             display: flex;
             gap: 8px;
-            margin-right: 16px;
         }
 
-        .filter-tag {
-            padding: 4px 12px;
-            border: 1px solid #dee2e6;
-            border-radius: 20px;
-            background: #ffffff;
-            color: #6c757d;
-            font-size: 12px;
-            font-weight: 400;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-
-        .filter-tag:hover {
-            border-color: #2563eb;
-            color: #2563eb;
-        }
-
-        .filter-tag.active {
-            background: #2563eb;
-            color: #ffffff;
-            border-color: #2563eb;
-        }
-
-        .search-box-compact {
-            flex: 1;
-            max-width: 400px;
-            display: flex;
-            align-items: center;
-            position: relative;
-        }
-
-        .search-input-compact {
-            width: 100%;
-            padding: 4px 32px 4px 12px;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            font-size: 13px;
-            height: 28px;
-            transition: all 0.2s;
-        }
-
-        .search-input-compact:focus {
-            outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-        }
-
-        .search-btn-compact {
-            position: absolute;
-            right: 4px;
-            padding: 4px 8px;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            color: #6c757d;
-            transition: all 0.2s;
-        }
-
-        .search-btn-compact:hover {
-            color: #2563eb;
-        }
-
-        /* 통계 카드 */
-        .order-stats {
+        /* ========================================
+           검색 필터
+           ======================================== */
+        .search-filters {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 16px;
             margin-bottom: 20px;
         }
 
-        .stat-card {
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 12px;
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            font-weight: 300;
+            color: #6c757d;
+        }
+
+        .filter-input,
+        .filter-select {
+            padding: 8px 12px;
             border: 1px solid #dee2e6;
-            display: flex;
-            align-items: center;
-            gap: 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 300;
+            color: #212529;
+            background: #ffffff;
+            transition: all 0.2s;
         }
 
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .filter-input:focus,
+        .filter-select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
-        .stat-content {
+        .date-range-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .date-input {
             flex: 1;
         }
 
-        .stat-label {
-            font-size: 12px;
+        .date-separator {
             color: #6c757d;
-            margin-bottom: 4px;
+            font-weight: 300;
         }
 
-        .stat-value {
-            font-size: 24px;
-            font-weight: 600;
-            color: #212529;
-        }
-
-        /* 버튼 영역 */
-        .action-buttons {
+        /* ========================================
+           빠른 필터 버튼
+           ======================================== */
+        .quick-filters {
             display: flex;
             gap: 8px;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
-        .btn-primary {
-            padding: 8px 16px;
-            background: #2563eb;
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 400;
+        .quick-filter-btn {
+            padding: 6px 14px;
+            border: 1px solid #dee2e6;
+            border-radius: 20px;
+            background: #ffffff;
+            color: #495057;
+            font-size: 12px;
+            font-weight: 300;
             cursor: pointer;
             transition: all 0.2s;
         }
 
-        .btn-primary:hover {
+        .quick-filter-btn:hover {
+            border-color: #2563eb;
+            color: #2563eb;
+            background: #f8f9fa;
+        }
+
+        .quick-filter-btn.active {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+        }
+
+        /* ========================================
+           검색 버튼
+           ======================================== */
+        .search-button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .btn-search {
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 300;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-search.primary {
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+        }
+
+        .btn-search.primary:hover {
             background: #1d4ed8;
         }
 
-        /* 테이블 스타일 */
-        .table-wrapper {
-            overflow-x: auto;
-            height: calc(100vh - 350px);
-            min-height: 400px;
-            max-height: 700px;
-            overflow-y: auto;
-            position: relative;
+        .btn-search.secondary {
             background: #ffffff;
+            color: #495057;
             border: 1px solid #dee2e6;
-            border-radius: 8px;
         }
 
-        .shipping-table {
+        .btn-search.secondary:hover {
+            background: #f8f9fa;
+            border-color: #adb5bd;
+        }
+
+        /* ========================================
+           결과 요약
+           ======================================== */
+        .result-summary {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 16px;
+            padding: 16px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .result-info {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .result-count {
+            font-size: 14px;
+            color: #212529;
+        }
+
+        .result-count strong {
+            font-weight: 600;
+            color: #2563eb;
+        }
+
+        /* ========================================
+           테이블 섹션
+           ======================================== */
+        .table-section {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+        }
+
+        /* ========================================
+           발송관리와 동일한 테이블 스타일
+           ======================================== */
+        .order-table-wrapper {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .order-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 12px;
         }
 
-        .shipping-table th {
-            background: #f8f9fa;
+        .order-table th {
             padding: 12px 8px;
             text-align: center;
             font-weight: 500;
             color: #495057;
+            background: #f8f9fa;
             border-bottom: 2px solid #dee2e6;
             white-space: nowrap;
             position: sticky;
@@ -211,7 +258,7 @@
             z-index: 10;
         }
 
-        .shipping-table td {
+        .order-table td {
             padding: 6px 8px;
             font-size: 12px;
             font-weight: 300;
@@ -225,33 +272,27 @@
             text-align: center;
         }
 
-        .shipping-table tbody tr:hover {
+        .order-table tbody tr:hover {
             background: #f8f9fa;
         }
 
-        .shipping-table tbody tr.has-tracking td {
+        .order-table tbody tr.has-tracking td {
             background-color: #f0f3f7 !important;
         }
 
         /* 로딩 */
-        .loading-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.3);
-            z-index: 9999;
-            align-items: center;
+        .loading-container {
+            display: flex;
             justify-content: center;
+            align-items: center;
+            padding: 60px;
         }
 
         .loading-spinner {
             width: 40px;
             height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #2563eb;
+            border: 3px solid #f1f3f5;
+            border-top: 3px solid #2563eb;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -259,6 +300,16 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        /* 빈 상태 */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            color: #6c757d;
         }
 
         /* 메시지 */
@@ -295,190 +346,202 @@
                 opacity: 1;
             }
         }
-
-        /* 날짜 선택 */
-        .date-filter {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .date-input {
-            padding: 4px 8px;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            font-size: 12px;
-            height: 28px;
-        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- 필터 섹션 -->
-        <div class="filter-section-compact">
-            <h2 class="filter-title-compact">주문조회</h2>
-            
-            <div class="date-filter">
-                <input type="date" id="startDate" class="date-input">
-                <span style="color: #6c757d; font-size: 12px;">~</span>
-                <input type="date" id="endDate" class="date-input">
+    <div class="order-search-container">
+        <!-- 검색 섹션 -->
+        <div class="search-section">
+            <div class="search-header">
+                <h2 class="search-title">주문 검색</h2>
+                <div class="search-actions">
+                    <button class="btn-action" onclick="resetFilters()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                        초기화
+                    </button>
+                </div>
             </div>
-            
-            <div class="filter-tags">
-                <button class="filter-tag active" data-filter="all" onclick="filterByStatus('all')">
-                    전체
-                </button>
-                <button class="filter-tag" data-filter="preparing" onclick="filterByStatus('preparing')">
-                    상품 준비중
-                </button>
-                <button class="filter-tag" data-filter="shipped" onclick="filterByStatus('shipped')">
-                    발송완료
-                </button>
+
+            <!-- 빠른 필터 -->
+            <div class="quick-filters">
+                <button class="quick-filter-btn active" onclick="setQuickFilter('today')">오늘</button>
+                <button class="quick-filter-btn" onclick="setQuickFilter('yesterday')">어제</button>
+                <button class="quick-filter-btn" onclick="setQuickFilter('week')">이번 주</button>
+                <button class="quick-filter-btn" onclick="setQuickFilter('month')">이번 달</button>
+                <button class="quick-filter-btn" onclick="setQuickFilter('last30')">최근 30일</button>
+                <button class="quick-filter-btn" onclick="setQuickFilter('custom')">직접 설정</button>
             </div>
-            
-            <div class="search-box-compact">
-                <input type="text" class="search-input-compact" id="searchKeyword" 
-                       placeholder="주문번호, 수령인, 송장번호 검색" 
-                       onkeyup="searchOrders(event)">
-                <button class="search-btn-compact" onclick="searchOrders()">
+
+            <!-- 검색 필터 -->
+            <div class="search-filters">
+                <div class="filter-group">
+                    <label class="filter-label">기간</label>
+                    <div class="date-range-container">
+                        <input type="date" class="filter-input date-input" id="startDate">
+                        <span class="date-separator">~</span>
+                        <input type="date" class="filter-input date-input" id="endDate">
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">마켓</label>
+                    <select class="filter-select" id="marketFilter">
+                        <option value="">전체</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">주문 상태</label>
+                    <select class="filter-select" id="statusFilter">
+                        <option value="">전체</option>
+                        <option value="preparing">상품준비중</option>
+                        <option value="shipped">발송완료</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">검색어</label>
+                    <input type="text" class="filter-input" id="searchKeyword" placeholder="주문번호, 수령인, 송장번호">
+                </div>
+            </div>
+
+            <!-- 검색 버튼 -->
+            <div class="search-button-group">
+                <button class="btn-search secondary" onclick="exportResults()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    엑셀 다운로드
+                </button>
+                <button class="btn-search primary" onclick="searchOrders()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="11" cy="11" r="8"></circle>
                         <path d="m21 21-4.35-4.35"></path>
                     </svg>
+                    검색
                 </button>
             </div>
         </div>
 
-        <!-- 통계 카드 -->
-        <div class="order-stats">
-            <div class="stat-card">
-                <div class="stat-icon" style="background: #e0e7ff; color: #4f46e5;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    </svg>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-label">전체 주문</div>
-                    <div class="stat-value" id="statTotal">0</div>
+        <!-- 결과 요약 -->
+        <div class="result-summary" id="resultSummary" style="display: none;">
+            <div class="result-info">
+                <div class="result-count">
+                    검색 결과: <strong id="totalCount">0</strong>건
                 </div>
             </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon" style="background: #fef3c7; color: #f59e0b;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="1" y="3" width="15" height="13"></rect>
-                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                    </svg>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-label">상품 준비중</div>
-                    <div class="stat-value" id="statPreparing">0</div>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-icon" style="background: #d1fae5; color: #10b981;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                    </svg>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-label">발송완료</div>
-                    <div class="stat-value" id="statShipped">0</div>
-                </div>
+            <div class="table-actions">
+                <button class="btn-action" onclick="selectAll()">전체 선택</button>
             </div>
         </div>
 
-        <!-- 액션 버튼 -->
-        <div class="action-buttons">
-            <button class="btn-primary" onclick="exportToExcel()">엑셀 다운로드</button>
-            <button class="btn-primary" onclick="refreshOrders()">새로고침</button>
-        </div>
+        <!-- 테이블 섹션 -->
+        <div class="table-section">
+            <div class="table-header">
+                <h3 class="table-title">주문 목록</h3>
+                <div class="table-actions">
+                    <button class="btn-action" onclick="refreshTable()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                        새로고침
+                    </button>
+                </div>
+            </div>
 
-        <!-- 테이블 -->
-        <div class="table-wrapper">
-            <table class="shipping-table">
-                <colgroup>
-                    <col style="width: 50px;">
-                    <col style="width: 50px;">
-                    <col style="width: 100px;">
-                    <col style="width: 150px;">
-                    <col style="width: 100px;">
-                    <col style="width: 80px;">
-                    <col style="width: 120px;">
-                    <col style="width: 80px;">
-                    <col style="width: 120px;">
-                    <col style="width: 300px;">
-                    <col style="width: 200px;">
-                    <col style="width: 250px;">
-                    <col style="width: 60px;">
-                    <col style="width: 80px;">
-                    <col style="width: 100px;">
-                    <col style="width: 100px;">
-                    <col style="width: 150px;">
-                    <col style="width: 100px;">
-                </colgroup>
-                <thead id="searchTableHead">
-                    <tr>
-                        <th style="position: sticky; left: 0; z-index: 11; background: #f8f9fa;">
-                            <input type="checkbox" id="selectAllSearch" onchange="toggleAllCheckboxes(this)">
-                        </th>
-                        <th style="position: sticky; left: 50px; z-index: 11; background: #f8f9fa;">연번</th>
-                        <th style="position: sticky; left: 100px; z-index: 11; background: #f8f9fa;">마켓명</th>
-                        <th>주문번호</th>
-                        <th>주문일</th>
-                        <th>주문자</th>
-                        <th>주문자연락처</th>
-                        <th>수령인</th>
-                        <th>수령인연락처</th>
-                        <th>주소</th>
-                        <th>배송메시지</th>
-                        <th>옵션명</th>
-                        <th>수량</th>
-                        <th>판매가</th>
-                        <th>정산예정금액</th>
-                        <th>택배사</th>
-                        <th>송장번호</th>
-                        <th>발송일</th>
-                    </tr>
-                </thead>
-                <tbody id="searchTableBody">
-                </tbody>
-            </table>
-        </div>
-    </div>
+            <div class="order-table-wrapper">
+                <table class="order-table">
+                    <colgroup>
+                        <col style="width: 50px;">
+                        <col style="width: 50px;">
+                        <col style="width: 100px;">
+                        <col style="width: 150px;">
+                        <col style="width: 100px;">
+                        <col style="width: 80px;">
+                        <col style="width: 120px;">
+                        <col style="width: 80px;">
+                        <col style="width: 120px;">
+                        <col style="width: 300px;">
+                        <col style="width: 200px;">
+                        <col style="width: 250px;">
+                        <col style="width: 60px;">
+                        <col style="width: 80px;">
+                        <col style="width: 100px;">
+                        <col style="width: 100px;">
+                        <col style="width: 150px;">
+                        <col style="width: 100px;">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th style="position: sticky; left: 0; z-index: 11; background: #f8f9fa;">
+                                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                            </th>
+                            <th style="position: sticky; left: 50px; z-index: 11; background: #f8f9fa;">연번</th>
+                            <th style="position: sticky; left: 100px; z-index: 11; background: #f8f9fa;">마켓명</th>
+                            <th>주문번호</th>
+                            <th>주문일</th>
+                            <th>주문자</th>
+                            <th>주문자연락처</th>
+                            <th>수령인</th>
+                            <th>수령인연락처</th>
+                            <th>주소</th>
+                            <th>배송메시지</th>
+                            <th>옵션명</th>
+                            <th>수량</th>
+                            <th>판매가</th>
+                            <th>정산예정금액</th>
+                            <th>택배사</th>
+                            <th>송장번호</th>
+                            <th>발송일</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderTableBody">
+                    </tbody>
+                </table>
 
-    <!-- 로딩 -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner"></div>
+                <!-- 빈 상태 -->
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <svg class="empty-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <div class="empty-title">검색 결과가 없습니다</div>
+                    <div class="empty-description">다른 조건으로 검색해보세요</div>
+                </div>
+
+                <!-- 로딩 상태 -->
+                <div class="loading-container" id="loadingState" style="display: none;">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
         let currentOrders = [];
-        let currentFilter = 'all';
-        let currentSearch = '';
         let marketColors = {};
+        let selectedItems = new Set();
 
         // 초기화
         document.addEventListener('DOMContentLoaded', function() {
-            setDateRange();
-            loadOrders();
+            initializeFilters();
+            setQuickFilter('today');
+            loadMarketList();
+            searchOrders();
         });
 
-        // 날짜 범위 설정 (기본: 오늘)
-        function setDateRange() {
+        // 필터 초기화
+        function initializeFilters() {
             const today = new Date();
-            const startDate = document.getElementById('startDate');
-            const endDate = document.getElementById('endDate');
-            
-            if (startDate) {
-                startDate.value = formatDate(today);
-            }
-            if (endDate) {
-                endDate.value = formatDate(today);
-            }
+            document.getElementById('endDate').value = formatDate(today);
+            document.getElementById('startDate').value = formatDate(today);
         }
 
         // 날짜 포맷
@@ -489,22 +552,101 @@
             return `${year}-${month}-${day}`;
         }
 
-        // 주문 데이터 로드
-        async function loadOrders() {
-            showLoading();
+        // 마켓 목록 로드
+        async function loadMarketList() {
             try {
-                const startDate = document.getElementById('startDate').value;
-                const endDate = document.getElementById('endDate').value;
+                const response = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'getMarketData', useMainSpreadsheet: false })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    marketColors = data.colors || {};
+                    const select = document.getElementById('marketFilter');
+                    select.innerHTML = '<option value="">전체</option>';
+                    
+                    Object.keys(marketColors).forEach(market => {
+                        select.innerHTML += `<option value="${market}">${market}</option>`;
+                    });
+                }
+            } catch (error) {
+                console.error('마켓 목록 로드 실패:', error);
+            }
+        }
+
+        // 빠른 필터 설정
+        function setQuickFilter(type) {
+            document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+
+            const today = new Date();
+            let startDate = new Date();
+            let endDate = new Date();
+
+            switch(type) {
+                case 'today':
+                    startDate = today;
+                    endDate = today;
+                    break;
+                case 'yesterday':
+                    startDate.setDate(today.getDate() - 1);
+                    endDate = startDate;
+                    break;
+                case 'week':
+                    startDate.setDate(today.getDate() - today.getDay());
+                    endDate = today;
+                    break;
+                case 'month':
+                    startDate.setDate(1);
+                    endDate = today;
+                    break;
+                case 'last30':
+                    startDate.setDate(today.getDate() - 30);
+                    endDate = today;
+                    break;
+                case 'custom':
+                    return;
+            }
+
+            document.getElementById('startDate').value = formatDate(startDate);
+            document.getElementById('endDate').value = formatDate(endDate);
+        }
+
+        // 필터 초기화
+        function resetFilters() {
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            document.getElementById('marketFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('searchKeyword').value = '';
+            
+            document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+        }
+
+        // 주문 검색
+        async function searchOrders() {
+            showLoading();
+            
+            try {
+                const startDate = document.getElementById('startDate').value.replace(/-/g, '');
+                const endDate = document.getElementById('endDate').value.replace(/-/g, '');
                 
                 const response = await fetch('/api/sheets', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         action: 'getOrdersByDateRange',
-                        startDate: startDate.replace(/-/g, ''),
-                        endDate: endDate.replace(/-/g, '')
+                        startDate: startDate,
+                        endDate: endDate
                     })
                 });
                 
@@ -512,163 +654,105 @@
                 
                 if (result.success) {
                     currentOrders = result.orders || [];
-                    marketColors = result.colors || {};
-                    updateTable();
-                    updateStatistics();
+                    applyFilters();
                 } else {
                     showMessage('데이터를 불러올 수 없습니다.', 'error');
                 }
             } catch (error) {
-                console.error('로드 오류:', error);
-                showMessage('데이터 로드 중 오류가 발생했습니다.', 'error');
+                console.error('검색 오류:', error);
+                showMessage('검색 중 오류가 발생했습니다.', 'error');
             } finally {
                 hideLoading();
             }
         }
 
-        // 테이블 업데이트
-        function updateTable() {
-            const tbody = document.getElementById('searchTableBody');
-            tbody.innerHTML = '';
-            
-            const filteredOrders = getFilteredOrders();
-            
-            filteredOrders.forEach((order, index) => {
-                const row = createTableRow(order, index + 1);
-                tbody.appendChild(row);
-            });
-            
-            if (filteredOrders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="18" style="text-align: center; padding: 40px; color: #6c757d;">조회된 주문이 없습니다.</td></tr>';
-            }
-        }
-
-        // 테이블 행 생성
-        function createTableRow(order, serialNumber) {
-            const row = document.createElement('tr');
-            const hasTracking = order['송장번호'] && order['송장번호'].trim() !== '';
-            
-            if (hasTracking) {
-                row.classList.add('has-tracking');
-            }
-            
-            const marketName = order['마켓명'] || '';
-            const marketColor = marketColors[marketName] || 'rgb(128,128,128)';
-            const rowBgColor = hasTracking ? '#f0f3f7' : '#ffffff';
-            
-            row.innerHTML = `
-                <td style="position: sticky; left: 0; z-index: 6; background: ${rowBgColor}; text-align: center;">
-                    <input type="checkbox" class="order-checkbox" data-index="${serialNumber - 1}">
-                </td>
-                <td style="position: sticky; left: 50px; z-index: 5; background: ${rowBgColor};">${serialNumber}</td>
-                <td style="position: sticky; left: 100px; z-index: 5; background: ${rowBgColor};">
-                    <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
-                         color: ${getTextColor(marketColor)}; border-radius: 4px; font-size: 11px; font-weight: 600;">
-                        ${marketName}
-                    </span>
-                </td>
-                <td>${order['주문번호'] || ''}</td>
-                <td>${order['주문일'] || ''}</td>
-                <td>${order['주문자'] || ''}</td>
-                <td>${order['주문자연락처'] || ''}</td>
-                <td>${order['수령인'] || ''}</td>
-                <td>${order['수령인연락처'] || ''}</td>
-                <td style="text-align: left; max-width: 300px;">${order['주소'] || ''}</td>
-                <td style="text-align: left; max-width: 200px;">${order['배송메시지'] || ''}</td>
-                <td style="text-align: left; max-width: 250px;">${order['옵션명'] || ''}</td>
-                <td>${order['수량'] || ''}</td>
-                <td>${formatNumber(order['판매가'] || 0)}</td>
-                <td>${formatNumber(order['정산예정금액'] || 0)}</td>
-                <td>${order['택배사'] || ''}</td>
-                <td>${order['송장번호'] || ''}</td>
-                <td>${order['발송일(송장입력일)'] || ''}</td>
-            `;
-            
-            return row;
-        }
-
-        // 필터링된 주문 가져오기
-        function getFilteredOrders() {
+        // 필터 적용
+        function applyFilters() {
             let filtered = [...currentOrders];
             
+            // 마켓 필터
+            const marketFilter = document.getElementById('marketFilter').value;
+            if (marketFilter) {
+                filtered = filtered.filter(order => order['마켓명'] === marketFilter);
+            }
+            
             // 상태 필터
-            if (currentFilter === 'preparing') {
+            const statusFilter = document.getElementById('statusFilter').value;
+            if (statusFilter === 'preparing') {
                 filtered = filtered.filter(order => !order['송장번호'] || order['송장번호'].trim() === '');
-            } else if (currentFilter === 'shipped') {
+            } else if (statusFilter === 'shipped') {
                 filtered = filtered.filter(order => order['송장번호'] && order['송장번호'].trim() !== '');
             }
             
-            // 검색 필터
-            if (currentSearch) {
-                const search = currentSearch.toLowerCase();
+            // 검색어 필터
+            const keyword = document.getElementById('searchKeyword').value.toLowerCase();
+            if (keyword) {
                 filtered = filtered.filter(order => {
                     return Object.values(order).some(value => 
-                        String(value).toLowerCase().includes(search)
+                        String(value).toLowerCase().includes(keyword)
                     );
                 });
             }
             
-            return filtered;
+            displayResults(filtered);
         }
 
-        // 통계 업데이트
-        function updateStatistics() {
-            const total = currentOrders.length;
-            const preparing = currentOrders.filter(order => !order['송장번호'] || order['송장번호'].trim() === '').length;
-            const shipped = currentOrders.filter(order => order['송장번호'] && order['송장번호'].trim() !== '').length;
+        // 결과 표시
+        function displayResults(orders) {
+            const tbody = document.getElementById('orderTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const resultSummary = document.getElementById('resultSummary');
             
-            document.getElementById('statTotal').textContent = total;
-            document.getElementById('statPreparing').textContent = preparing;
-            document.getElementById('statShipped').textContent = shipped;
-        }
-
-        // 상태별 필터
-        function filterByStatus(status) {
-            document.querySelectorAll('.filter-tag').forEach(tag => {
-                tag.classList.remove('active');
-            });
-            document.querySelector(`[data-filter="${status}"]`).classList.add('active');
-            
-            currentFilter = status;
-            updateTable();
-        }
-
-        // 검색
-        function searchOrders(event) {
-            if (event && event.type === 'keyup' && event.key !== 'Enter') {
+            if (orders.length === 0) {
+                tbody.innerHTML = '';
+                tbody.style.display = 'none';
+                emptyState.style.display = 'flex';
+                resultSummary.style.display = 'none';
                 return;
             }
             
-            currentSearch = document.getElementById('searchKeyword').value;
-            updateTable();
-        }
-
-        // 전체 선택
-        function toggleAllCheckboxes(checkbox) {
-            const checkboxes = document.querySelectorAll('.order-checkbox');
-            checkboxes.forEach(cb => cb.checked = checkbox.checked);
-        }
-
-        // 엑셀 내보내기
-        function exportToExcel() {
-            const filteredOrders = getFilteredOrders();
+            tbody.style.display = '';
+            emptyState.style.display = 'none';
+            resultSummary.style.display = 'flex';
             
-            if (filteredOrders.length === 0) {
-                showMessage('내보낼 데이터가 없습니다.', 'error');
-                return;
-            }
+            document.getElementById('totalCount').textContent = orders.length;
             
-            const ws = XLSX.utils.json_to_sheet(filteredOrders);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, '주문목록');
-            
-            const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
-            XLSX.writeFile(wb, `주문조회_${date}.xlsx`);
-        }
-
-        // 새로고침
-        function refreshOrders() {
-            loadOrders();
+            tbody.innerHTML = orders.map((order, index) => {
+                const hasTracking = order['송장번호'] && order['송장번호'].trim() !== '';
+                const marketName = order['마켓명'] || '';
+                const marketColor = marketColors[marketName] || 'rgb(128,128,128)';
+                const rowBgColor = hasTracking ? '#f0f3f7' : '#ffffff';
+                
+                return `
+                    <tr class="${hasTracking ? 'has-tracking' : ''}">
+                        <td style="position: sticky; left: 0; z-index: 6; background: ${rowBgColor};">
+                            <input type="checkbox" class="order-checkbox" data-index="${index}">
+                        </td>
+                        <td style="position: sticky; left: 50px; z-index: 5; background: ${rowBgColor};">${index + 1}</td>
+                        <td style="position: sticky; left: 100px; z-index: 5; background: ${rowBgColor};">
+                            <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
+                                 color: ${getTextColor(marketColor)}; border-radius: 4px; font-size: 11px; font-weight: 600;">
+                                ${marketName}
+                            </span>
+                        </td>
+                        <td>${order['주문번호'] || ''}</td>
+                        <td>${order['주문일'] || ''}</td>
+                        <td>${order['주문자'] || ''}</td>
+                        <td>${order['주문자연락처'] || ''}</td>
+                        <td>${order['수령인'] || ''}</td>
+                        <td>${order['수령인연락처'] || ''}</td>
+                        <td style="text-align: left; max-width: 300px;">${order['주소'] || ''}</td>
+                        <td style="text-align: left; max-width: 200px;">${order['배송메시지'] || ''}</td>
+                        <td style="text-align: left; max-width: 250px;">${order['옵션명'] || ''}</td>
+                        <td>${order['수량'] || ''}</td>
+                        <td style="text-align: right;">${formatNumber(order['판매가'])}</td>
+                        <td style="text-align: right;">${formatNumber(order['정산예정금액'])}</td>
+                        <td>${order['택배사'] || ''}</td>
+                        <td>${order['송장번호'] || ''}</td>
+                        <td>${order['발송일(송장입력일)'] || ''}</td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         // 텍스트 색상 계산
@@ -686,16 +770,66 @@
 
         // 숫자 포맷
         function formatNumber(num) {
-            return Number(num).toLocaleString();
+            if (!num) return '0';
+            return Number(num).toLocaleString('ko-KR');
+        }
+
+        // 전체 선택
+        function toggleSelectAll() {
+            const checkbox = document.getElementById('selectAllCheckbox');
+            const checkboxes = document.querySelectorAll('.order-checkbox');
+            
+            checkboxes.forEach(cb => {
+                cb.checked = checkbox.checked;
+            });
+        }
+
+        function selectAll() {
+            document.getElementById('selectAllCheckbox').checked = true;
+            toggleSelectAll();
+        }
+
+        // 테이블 새로고침
+        function refreshTable() {
+            searchOrders();
+        }
+
+        // 엑셀 내보내기
+        function exportResults() {
+            const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
+            let exportData = [];
+            
+            if (checkedBoxes.length > 0) {
+                checkedBoxes.forEach(cb => {
+                    const index = parseInt(cb.dataset.index);
+                    exportData.push(currentOrders[index]);
+                });
+            } else {
+                exportData = currentOrders;
+            }
+            
+            if (exportData.length === 0) {
+                showMessage('내보낼 데이터가 없습니다.', 'error');
+                return;
+            }
+            
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '주문목록');
+            
+            const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
+            XLSX.writeFile(wb, `주문조회_${date}.xlsx`);
         }
 
         // 로딩 표시
         function showLoading() {
-            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.getElementById('loadingState').style.display = 'flex';
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('orderTableBody').innerHTML = '';
         }
 
         function hideLoading() {
-            document.getElementById('loadingOverlay').style.display = 'none';
+            document.getElementById('loadingState').style.display = 'none';
         }
 
         // 메시지 표시
@@ -705,14 +839,8 @@
             div.textContent = message;
             document.body.appendChild(div);
             
-            setTimeout(() => {
-                div.remove();
-            }, 3000);
+            setTimeout(() => div.remove(), 3000);
         }
-
-        // 날짜 변경시 재로드
-        document.getElementById('startDate')?.addEventListener('change', loadOrders);
-        document.getElementById('endDate')?.addEventListener('change', loadOrders);
     </script>
 </body>
 </html>
