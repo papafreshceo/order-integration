@@ -1741,9 +1741,21 @@ if (header === '마켓명' && order[header]) {
             }
         }
 
-        // 일괄 송장 저장
+// 일괄 송장 저장
         async function saveBulkTracking() {
             if (bulkUploadData.length === 0) return;
+            
+            // 실제로 매칭된 주문만 필터링
+            const matchedUpdates = bulkUploadData.filter(uploadItem => {
+                return currentOrders.some(order => 
+                    order['주문번호'] === uploadItem.orderNumber
+                );
+            });
+            
+            if (matchedUpdates.length === 0) {
+                showMessage('매칭된 주문이 없습니다.', 'error');
+                return;
+            }
             
             showLoading();
             try {
@@ -1762,7 +1774,7 @@ if (header === '마켓명' && order[header]) {
                     body: JSON.stringify({
                         action: 'updateTracking',
                         sheetName: today,
-                        updates: bulkUploadData
+                        updates: matchedUpdates  // 매칭된 것만 전송
                     })
                 });
                 
@@ -1772,7 +1784,16 @@ if (header === '마켓명' && order[header]) {
                     throw new Error(result.error || '송장번호 저장에 실패했습니다.');
                 }
                 
-                showMessage(`${bulkUploadData.length}건의 송장번호가 저장되었습니다.`, 'success');
+                // 실제 업데이트된 건수 표시
+                const actualUpdated = result.updated || matchedUpdates.length;
+                const unmatchedCount = bulkUploadData.length - matchedUpdates.length;
+                
+                let message = `${actualUpdated}건의 송장번호가 등록되었습니다.`;
+                if (unmatchedCount > 0) {
+                    message += ` (매칭 실패: ${unmatchedCount}건)`;
+                }
+                
+                showMessage(message, 'success');
                 closeBulkUploadModal();
                 await loadTodayOrders();
                 
