@@ -232,7 +232,41 @@ export default async function handler(req, res) {
             }
           });
         }
-
+case 'getMarketList':
+        try {
+          const { spreadsheetId } = req.body;
+          const { getProductSheetData } = require('../lib/google-sheets');
+          
+          // 매핑 시트에서 마켓명 읽기
+          const mappingData = await getProductSheetData(
+            spreadsheetId || process.env.SPREADSHEET_ID_PRODUCTS, 
+            '매핑!A3:A100'
+          );
+          
+          const markets = [];
+          if (mappingData && mappingData.length > 0) {
+            mappingData.forEach(row => {
+              if (row[0] && row[0].trim()) {
+                markets.push(row[0].trim());
+              }
+            });
+          }
+          
+          // 중복 제거
+          const uniqueMarkets = [...new Set(markets)];
+          
+          return res.status(200).json({ 
+            success: true, 
+            markets: uniqueMarkets.length > 0 ? uniqueMarkets : ['쿠팡', '네이버', '11번가']
+          });
+          
+        } catch (error) {
+          console.error('getMarketList 오류:', error);
+          return res.status(200).json({ 
+            success: true, 
+            markets: ['쿠팡', '네이버', '11번가']
+          });
+        }
       case 'saveToSheet':
         // 시트 생성 또는 확인
         const sheetResult = await createOrderSheet(sheetName);
@@ -304,3 +338,4 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
+
