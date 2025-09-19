@@ -466,12 +466,12 @@ body {
    ======================================== */
 .result-section {
     margin-top: 60px;
-    padding-top: 100;
+    padding-top: 100px;  /* px 단위 추가 */
     display: none;
 }
 
 .result-section.show {
-    display: block;
+    display: block !important;  /* !important 추가 */
 }
 
 .result-header {
