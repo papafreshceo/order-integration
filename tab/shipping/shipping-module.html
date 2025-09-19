@@ -1110,22 +1110,37 @@
                         }
                         
                         // 마켓명 색상 적용
-                        let colorStyle = '';
-                        let bgColorStyle = '';
-                        if (header === '마켓명' && marketColors[order[header]]) {
-                            const colorValue = marketColors[order[header]];
-                            // rgb(r,g,b) 형식에서 숫자 추출
-                            const match = colorValue.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-                            if (match) {
-                                const r = parseInt(match[1]);
-                                const g = parseInt(match[2]);
-                                const b = parseInt(match[3]);
-                                // 밝기 계산
-                                const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-                                bgColorStyle = `background-color: ${colorValue};`;
-                                colorStyle = `color: ${brightness > 128 ? '#000' : '#fff'}; font-weight: 600;`;
-                            }
-                        }
+                        // 마켓명 배지 처리
+let marketBadge = '';
+if (header === '마켓명' && order[header]) {
+    const marketName = order[header];
+    const colorValue = marketColors[marketName] || 'rgb(128,128,128)';
+    
+    // rgb(r,g,b) 형식에서 숫자 추출
+    const match = colorValue.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    let textColor = '#fff';
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        // 밝기 계산
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        textColor = brightness > 128 ? '#000' : '#fff';
+    }
+    
+    marketBadge = `
+        <span style="
+            display: inline-block;
+            padding: 4px 10px;
+            background: ${colorValue};
+            color: ${textColor};
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        ">${marketName}</span>
+    `;
+}
                         
                         // 값 포맷팅
                         let displayValue = order[header] || '';
@@ -1156,10 +1171,16 @@
                                 </div>
                             </td>`;
                         } else {
-                            return `<td style="width: ${width}px; min-width: ${width}px; text-align: ${textAlign}; ${colorStyle}${bgColorStyle}${fixedStyle}" 
-                                    title="${order[header] || ''}" 
-                                    onclick="selectRow(${rowIndex})">${displayValue}</td>`;
-                        }
+    // 마켓명인 경우 배지로 표시
+    if (header === '마켓명' && marketBadge) {
+        return `<td style="width: ${width}px; min-width: ${width}px; text-align: center; ${fixedStyle}" 
+                onclick="selectRow(${rowIndex})">${marketBadge}</td>`;
+    } else {
+        return `<td style="width: ${width}px; min-width: ${width}px; text-align: ${textAlign}; ${fixedStyle}" 
+                title="${order[header] || ''}" 
+                onclick="selectRow(${rowIndex})">${displayValue}</td>`;
+    }
+}
                     }).join('')}
                 `;
             });
