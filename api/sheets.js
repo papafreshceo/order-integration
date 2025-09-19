@@ -8,7 +8,8 @@ const {
   createOrderSheet,
   clearOrderSheet,
   saveOrderData,
-  mergeAndSaveOrderData
+  mergeAndSaveOrderData,
+  getOrderData
 } = require('../lib/google-sheets');
 
 export default async function handler(req, res) {
@@ -105,7 +106,173 @@ export default async function handler(req, res) {
           return res.status(200).json({ success: true, data: [] });
         }
 
-case 'updateTracking':
+      case 'getTodayOrders':
+        try {
+          const today = new Date().toLocaleDateString('ko-KR', {
+            timeZone: 'Asia/Seoul',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          }).replace(/\. /g, '').replace(/\./g, '').replace(/-/g, '');
+          
+          const { getOrderData } = require('../lib/google-sheets');
+          const targetSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
+          
+          const orderData = await getOrderData(`${today}!A:ZZ`, targetSpreadsheetId);
+          
+          if (!orderData || orderData.length < 2) {
+            return res.status(200).json({ success: true, data: [] });
+          }
+          
+          const headers = orderData[0];
+          const rows = orderData.slice(1);
+          
+          const formattedData = rows.map(row => {
+            const obj = {};
+            headers.forEach((header, index) => {
+              obj[header] = row[index] || '';
+            });
+            return obj;
+          });
+          
+          // 매핑에서 마켓 색상 가져오기
+          const mappingData = await getSheetData('매핑!A:D');
+          const colors = {};
+          
+          if (mappingData && mappingData.length > 2) {
+            let headerRowIndex = -1;
+            for (let i = 0; i < Math.min(5, mappingData.length); i++) {
+              if (mappingData[i] && mappingData[i][0] === '마켓명') {
+                headerRowIndex = i;
+                break;
+              }
+            }
+            
+            if (headerRowIndex !== -1) {
+              for (let i = headerRowIndex + 1; i < mappingData.length; i++) {
+                const row = mappingData[i];
+                if (row && row[0]) {
+                  const marketName = String(row[0]).trim();
+                  const colorValue = row[2] ? String(row[2]).trim() : '';
+                  
+                  if (marketName && colorValue) {
+                    if (colorValue.match(/^\d+,\s*\d+,\s*\d+$/)) {
+                      colors[marketName] = `rgb(${colorValue})`;
+                    } else if (colorValue.startsWith('rgb(')) {
+                      colors[marketName] = colorValue;
+                    }
+                  }
+                }
+              }
+            }
+          }
+          
+          return res.status(200).json({ 
+            success: true, 
+            data: formattedData,
+            colors: colors
+          });
+          
+        } catch (error) {
+          console.error('getTodayOrders 오류:', error);
+          return res.status(500).json({ 
+            success: false, 
+            error: error.message 
+          });
+        }
+
+      case 'getOrdersByDateRange':
+        try {
+          const { startDate, endDate } = req.body;
+          const { getOrderData } = require('../lib/google-sheets');
+          const targetSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
+          
+          if (!startDate || !endDate) {
+            return res.status(400).json({ 
+              success: false, 
+              error: '날짜를 입력해주세요' 
+            });
+          }
+          
+          const orders = [];
+          
+          // 시작일부터 종료일까지 각 날짜의 시트 읽기
+          const start = new Date(startDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'));
+          const end = new Date(endDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'));
+          
+          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            const dateStr = d.toISOString().split('T')[0].replace(/-/g, '');
+            
+            try {
+              const dayData = await getOrderData(`${dateStr}!A:ZZ`, targetSpreadsheetId);
+              
+              if (dayData && dayData.length > 1) {
+                const headers = dayData[0];
+                
+                for (let i = 1; i < dayData.length; i++) {
+                  const row = dayData[i];
+                  const order = {};
+                  
+                  headers.forEach((header, index) => {
+                    order[header] = row[index] || '';
+                  });
+                  
+                  orders.push(order);
+                }
+              }
+            } catch (err) {
+              console.log(`날짜 ${dateStr} 시트 없음`);
+            }
+          }
+          
+          // 마켓 색상 정보
+          const mappingData = await getSheetData('매핑!A:D');
+          const colors = {};
+          
+          if (mappingData && mappingData.length > 2) {
+            let headerRowIndex = -1;
+            for (let i = 0; i < Math.min(5, mappingData.length); i++) {
+              if (mappingData[i] && mappingData[i][0] === '마켓명') {
+                headerRowIndex = i;
+                break;
+              }
+            }
+            
+            if (headerRowIndex !== -1) {
+              for (let i = headerRowIndex + 1; i < mappingData.length; i++) {
+                const row = mappingData[i];
+                if (row && row[0]) {
+                  const marketName = String(row[0]).trim();
+                  const colorValue = row[2] ? String(row[2]).trim() : '';
+                  
+                  if (marketName && colorValue) {
+                    if (colorValue.match(/^\d+,\s*\d+,\s*\d+$/)) {
+                      colors[marketName] = `rgb(${colorValue})`;
+                    } else if (colorValue.startsWith('rgb(')) {
+                      colors[marketName] = colorValue;
+                    }
+                  }
+                }
+              }
+            }
+          }
+          
+          return res.status(200).json({ 
+            success: true, 
+            orders: orders,
+            colors: colors,
+            totalCount: orders.length
+          });
+          
+        } catch (error) {
+          console.error('getOrdersByDateRange 오류:', error);
+          return res.status(500).json({ 
+            success: false, 
+            error: error.message 
+          });
+        }
+
+      case 'updateTracking':
         try {
           const { sheetName, updates } = req.body;
           const { getOrderData, updateOrderCell } = require('../lib/google-sheets');
@@ -190,16 +357,6 @@ case 'updateTracking':
           });
         }
 
-      // getAuthClient 함수가 필요한 경우 추가
-      async function getAuthClient() {
-        const { google } = require('googleapis');
-        const auth = new google.auth.GoogleAuth({
-          keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS || './credentials.json',
-          scopes: ['https://www.googleapis.com/auth/spreadsheets']
-        });
-        return auth.getClient();
-      }
-
       case 'getMarketFormats':
         try {
           // 마켓별송장업로드양식 시트 읽기 (SPREADSHEET_ID 사용)
@@ -252,7 +409,7 @@ case 'updateTracking':
           });
         }
 
-case 'getMarketData':
+      case 'getMarketData':
         try {
           const { useMainSpreadsheet } = req.body;
           
@@ -467,80 +624,3 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
-case 'getOrdersByDateRange':
-        try {
-          const { startDate, endDate } = req.body;
-          const { getOrderData } = require('../lib/google-sheets');
-          const targetSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
-          
-          const orders = [];
-          const colors = {};
-          
-          // 날짜 범위 계산
-          const start = startDate ? new Date(startDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3')) : new Date();
-          const end = endDate ? new Date(endDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3')) : new Date();
-          
-          // 각 날짜의 시트 읽기
-          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-            const sheetName = d.toISOString().split('T')[0].replace(/-/g, '');
-            
-            try {
-              const dayData = await getOrderData(`${sheetName}!A:ZZ`, targetSpreadsheetId);
-              
-              if (dayData && dayData.length > 1) {
-                const headers = dayData[0];
-                
-                for (let i = 1; i < dayData.length; i++) {
-                  const row = dayData[i];
-                  const order = {};
-                  
-                  headers.forEach((header, index) => {
-                    order[header] = row[index] || '';
-                  });
-                  
-                  // 연번 추가
-                  order['연번'] = orders.length + 1;
-                  orders.push(order);
-                }
-              }
-            } catch (error) {
-              console.log(`시트 ${sheetName} 읽기 실패:`, error.message);
-              // 해당 날짜의 시트가 없으면 건너뛰기
-              continue;
-            }
-          }
-          
-          // 마켓 색상 정보 가져오기
-          const marketData = await getSheetData('매핑!A:Z');
-          if (marketData && marketData.length > 0) {
-            for (let i = 1; i < marketData.length; i++) {
-              if (marketData[i][0]) {
-                const marketName = marketData[i][0];
-                const color = marketData[i][1] || 'rgb(128,128,128)';
-                colors[marketName] = color;
-              }
-            }
-          }
-          
-          return res.status(200).json({ 
-            success: true, 
-            orders: orders,
-            colors: colors,
-            totalCount: orders.length
-          });
-          
-        } catch (error) {
-          console.error('주문 조회 오류:', error);
-          return res.status(500).json({ 
-            success: false, 
-            error: error.message 
-          });
-        }
-
-
-
-
-
-
-
-
