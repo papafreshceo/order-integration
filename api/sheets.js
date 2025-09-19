@@ -232,39 +232,43 @@ export default async function handler(req, res) {
             }
           });
         }
-case 'getMarketList':
+case 'getMarketData':
         try {
-          const { spreadsheetId } = req.body;
-          const { getProductSheetData } = require('../lib/google-sheets');
+          const { getSheetData } = require('../lib/google-sheets');
           
-          // 매핑 시트에서 마켓명 읽기
-          const mappingData = await getProductSheetData(
-            spreadsheetId || process.env.SPREADSHEET_ID_PRODUCTS, 
-            '매핑!A3:A100'
-          );
+          // 매핑 시트에서 마켓명과 색상 읽기
+          const mappingData = await getSheetData('매핑!A:B');
           
           const markets = [];
-          if (mappingData && mappingData.length > 0) {
-            mappingData.forEach(row => {
-              if (row[0] && row[0].trim()) {
-                markets.push(row[0].trim());
-              }
-            });
-          }
+          const colors = {};
           
-          // 중복 제거
-          const uniqueMarkets = [...new Set(markets)];
+          if (mappingData && mappingData.length > 2) {
+            // A2가 '마켓명', B2가 '색상' 헤더라고 가정
+            for (let i = 2; i < mappingData.length; i++) {
+              if (mappingData[i] && mappingData[i][0]) {
+                const marketName = mappingData[i][0].trim();
+                if (marketName) {
+                  markets.push(marketName);
+                  if (mappingData[i][1]) {
+                    colors[marketName] = mappingData[i][1].trim();
+                  }
+                }
+              }
+            }
+          }
           
           return res.status(200).json({ 
             success: true, 
-            markets: uniqueMarkets.length > 0 ? uniqueMarkets : ['쿠팡', '네이버', '11번가']
+            markets: markets.length > 0 ? markets : ['쿠팡', '네이버', '11번가'],
+            colors: colors
           });
           
         } catch (error) {
-          console.error('getMarketList 오류:', error);
+          console.error('getMarketData 오류:', error);
           return res.status(200).json({ 
             success: true, 
-            markets: ['쿠팡', '네이버', '11번가']
+            markets: ['쿠팡', '네이버', '11번가'],
+            colors: {}
           });
         }
       case 'saveToSheet':
@@ -338,4 +342,5 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
+
 
