@@ -105,10 +105,10 @@ export default async function handler(req, res) {
           return res.status(200).json({ success: true, data: [] });
         }
 
-      case 'updateTracking':
+case 'updateTracking':
         try {
           const { sheetName, updates, spreadsheetId } = req.body;
-          const { getOrderData, batchUpdateSheetData } = require('../lib/google-sheets');
+          const { getOrderData } = require('../lib/google-sheets');
           
           // 먼저 시트 데이터 읽기 (SPREADSHEET_ID_ORDERS 사용)
           const orderData = await getOrderData(`${sheetName}!A:ZZ`, spreadsheetId || process.env.SPREADSHEET_ID_ORDERS);
@@ -129,8 +129,7 @@ export default async function handler(req, res) {
             return res.status(400).json({ success: false, error: '주문번호 컬럼을 찾을 수 없습니다' });
           }
           
-          // 업데이트할 데이터 준비
-          const updateRequests = [];
+          // 데이터 업데이트
           let updatedCount = 0;
           
           updates.forEach(update => {
@@ -138,35 +137,37 @@ export default async function handler(req, res) {
             const rowIndex = rows.findIndex(row => row[orderNumIndex] === update.orderNumber);
             
             if (rowIndex >= 0) {
-              const actualRowIndex = rowIndex + 2; // 헤더 + 1-based index
-              
+              // 데이터 업데이트
               if (update.carrier && carrierIndex >= 0) {
-                updateRequests.push({
-                  range: `${sheetName}!${columnToLetter(carrierIndex + 1)}${actualRowIndex}`,
-                  values: [[update.carrier]]
-                });
+                rows[rowIndex][carrierIndex] = update.carrier;
                 updatedCount++;
               }
               
               if (update.trackingNumber && trackingIndex >= 0) {
-                updateRequests.push({
-                  range: `${sheetName}!${columnToLetter(trackingIndex + 1)}${actualRowIndex}`,
-                  values: [[update.trackingNumber]]
-                });
+                rows[rowIndex][trackingIndex] = update.trackingNumber;
                 updatedCount++;
               }
             }
           });
           
-          // 배치 업데이트 실행
-          if (updateRequests.length > 0) {
-            await batchUpdateSheetData(updateRequests, spreadsheetId || process.env.SPREADSHEET_ID_ORDERS);
+          // 전체 시트 데이터 다시 저장
+          if (updatedCount > 0) {
+            const { saveOrderData } = require('../lib/google-sheets');
+            const allData = [headers, ...rows];
+            
+            await saveOrderData(
+              sheetName,
+              rows,
+              headers,
+              {},
+              spreadsheetId || process.env.SPREADSHEET_ID_ORDERS
+            );
           }
           
           return res.status(200).json({ 
             success: true, 
             updated: updatedCount,
-            message: `${updates.length}건 중 ${updatedCount}건 업데이트됨`
+            message: `${updates.length}건 중 ${Math.floor(updatedCount/2)}건 업데이트됨`
           });
           
         } catch (error) {
@@ -445,4 +446,5 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
+
 
