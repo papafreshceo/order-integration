@@ -1137,10 +1137,22 @@ for (let i = 0; i < headers.length; i++) {
                             textAlign = 'left';
                         }
                         
-                        // 마켓명 색상
+                        // 마켓명 색상 적용
                         let colorStyle = '';
+                        let bgColorStyle = '';
                         if (header === '마켓명' && marketColors[order[header]]) {
-                            colorStyle = `color: ${marketColors[order[header]]};`;
+                            const colorValue = marketColors[order[header]];
+                            // rgb(r,g,b) 형식에서 숫자 추출
+                            const match = colorValue.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+                            if (match) {
+                                const r = parseInt(match[1]);
+                                const g = parseInt(match[2]);
+                                const b = parseInt(match[3]);
+                                // 밝기 계산
+                                const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                                bgColorStyle = `background-color: ${colorValue};`;
+                                colorStyle = `color: ${brightness > 128 ? '#000' : '#fff'}; font-weight: 600;`;
+                            }
                         }
                         
                         // 값 포맷팅
@@ -1172,7 +1184,7 @@ for (let i = 0; i < headers.length; i++) {
                                 </div>
                             </td>`;
                         } else {
-                            return `<td style="width: ${width}px; min-width: ${width}px; text-align: ${textAlign}; ${colorStyle}${fixedStyle}" 
+                            return `<td style="width: ${width}px; min-width: ${width}px; text-align: ${textAlign}; ${colorStyle}${bgColorStyle}${fixedStyle}" 
                                     title="${order[header] || ''}" 
                                     onclick="selectRow(${rowIndex})">${displayValue}</td>`;
                         }
