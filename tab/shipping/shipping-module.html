@@ -923,7 +923,7 @@
                     <div id="bulkPreview" style="display: none; margin-top: 20px;">
                         <h4 style="font-size: 16px; margin-bottom: 12px;">미리보기</h4>
                         <div id="bulkSummary" style="padding: 12px; background: #f8f9fa; border-radius: 8px; margin-bottom: 12px;"></div>
-                        <div style="max-height: 300px; overflow-y: auto;">
+                        <div style="max-height: 400px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px;">
                             <table class="preview-table" id="bulkPreviewTable">
                                 <thead>
                                     <tr>
@@ -1619,7 +1619,7 @@ if (header === '마켓명' && order[header]) {
             reader.readAsBinaryString(file);
         }
 
-        // 일괄 업로드 미리보기
+// 일괄 업로드 미리보기
         function displayBulkPreview() {
             if (bulkUploadData.length === 0) {
                 showMessage('유효한 데이터가 없습니다.', 'error');
@@ -1629,27 +1629,115 @@ if (header === '마켓명' && order[header]) {
             document.getElementById('bulkPreview').style.display = 'block';
             document.getElementById('saveBulkBtn').style.display = 'inline-flex';
             
+            // 현재 주문과 매칭
+            const matchedOrders = [];
+            const unmatchedTrackings = [];
+            
+            bulkUploadData.forEach(uploadItem => {
+                const matchedOrder = currentOrders.find(order => 
+                    order['주문번호'] === uploadItem.orderNumber
+                );
+                
+                if (matchedOrder) {
+                    matchedOrders.push({
+                        marketName: matchedOrder['마켓명'] || '-',
+                        orderNumber: uploadItem.orderNumber,
+                        trackingNumber: uploadItem.trackingNumber,
+                        carrier: uploadItem.carrier
+                    });
+                } else {
+                    unmatchedTrackings.push(uploadItem);
+                }
+            });
+            
             // 요약 정보
             document.getElementById('bulkSummary').innerHTML = `
-                <strong>총 ${bulkUploadData.length}건</strong>의 송장번호를 등록합니다.
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                    <div>
+                        <span style="color: #6c757d; font-size: 12px;">업로드 송장</span>
+                        <div style="font-size: 18px; font-weight: 600; color: #2563eb;">${bulkUploadData.length}건</div>
+                    </div>
+                    <div>
+                        <span style="color: #6c757d; font-size: 12px;">매칭 성공</span>
+                        <div style="font-size: 18px; font-weight: 600; color: #10b981;">${matchedOrders.length}건</div>
+                    </div>
+                    <div>
+                        <span style="color: #6c757d; font-size: 12px;">매칭 실패</span>
+                        <div style="font-size: 18px; font-weight: 600; color: #ef4444;">${unmatchedTrackings.length}건</div>
+                    </div>
+                </div>
             `;
             
-            // 미리보기 테이블
+            // 미리보기 테이블 헤더 변경
+            document.querySelector('#bulkPreviewTable thead').innerHTML = `
+                <tr>
+                    <th style="width: 100px;">마켓명</th>
+                    <th style="width: 150px;">주문번호</th>
+                    <th style="width: 150px;">송장번호</th>
+                </tr>
+            `;
+            
+            // 매칭된 주문 전체 표시
             const tbody = document.querySelector('#bulkPreviewTable tbody');
             tbody.innerHTML = '';
             
-            bulkUploadData.slice(0, 10).forEach(item => {
+            if (matchedOrders.length > 0) {
+                matchedOrders.forEach(item => {
+                    const row = tbody.insertRow();
+                    
+                    // 마켓명에 색상 적용
+                    const marketColor = marketColors[item.marketName] || 'rgb(128,128,128)';
+                    let textColor = '#fff';
+                    const match = marketColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+                    if (match) {
+                        const r = parseInt(match[1]);
+                        const g = parseInt(match[2]);
+                        const b = parseInt(match[3]);
+                        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                        textColor = brightness > 128 ? '#000' : '#fff';
+                    }
+                    
+                    row.innerHTML = `
+                        <td>
+                            <span style="
+                                display: inline-block;
+                                padding: 2px 8px;
+                                background: ${marketColor};
+                                color: ${textColor};
+                                border-radius: 4px;
+                                font-size: 11px;
+                                font-weight: 600;
+                            ">${item.marketName}</span>
+                        </td>
+                        <td>${item.orderNumber}</td>
+                        <td>${item.trackingNumber}</td>
+                    `;
+                });
+            } else {
                 const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td>${item.orderNumber}</td>
-                    <td>${item.carrier}</td>
-                    <td>${item.trackingNumber}</td>
-                `;
-            });
+                row.innerHTML = `<td colspan="3" style="text-align: center; padding: 20px; color: #6c757d;">매칭된 주문이 없습니다.</td>`;
+            }
             
-            if (bulkUploadData.length > 10) {
-                const row = tbody.insertRow();
-                row.innerHTML = `<td colspan="3" style="text-align: center; color: #6c757d;">... 외 ${bulkUploadData.length - 10}건</td>`;
+            // 매칭 실패 목록 표시
+            if (unmatchedTrackings.length > 0) {
+                const unmatchedInfo = document.createElement('div');
+                unmatchedInfo.style.marginTop = '20px';
+                unmatchedInfo.innerHTML = `
+                    <h4 style="font-size: 14px; color: #ef4444; margin-bottom: 8px;">
+                        매칭 실패 (${unmatchedTrackings.length}건) - 주문번호를 찾을 수 없음
+                    </h4>
+                    <div style="max-height: 100px; overflow-y: auto; background: #fef2f2; padding: 8px; border-radius: 4px; font-size: 12px; color: #991b1b;">
+                        ${unmatchedTrackings.map(item => `${item.orderNumber} (송장: ${item.trackingNumber})`).join(', ')}
+                    </div>
+                `;
+                
+                const previewDiv = document.getElementById('bulkPreview');
+                const existingUnmatched = previewDiv.querySelector('.unmatched-info');
+                if (existingUnmatched) {
+                    existingUnmatched.remove();
+                }
+                unmatchedInfo.className = 'unmatched-info';
+                previewDiv.appendChild(unmatchedInfo);
             }
         }
 
