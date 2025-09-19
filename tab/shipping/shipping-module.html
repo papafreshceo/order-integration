@@ -685,53 +685,18 @@
         </div>
 
         <!-- 필터 섹션 -->
-        <div class="filter-section">
-            <div class="filter-header">
-                <h2 class="filter-title">발송 관리</h2>
-            </div>
-
-            <div class="filter-controls">
-                <div class="filter-group">
-                    <label class="filter-label">기간</label>
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <input type="date" class="filter-input" id="startDate">
-                        <span style="color: #6c757d;">~</span>
-                        <input type="date" class="filter-input" id="endDate">
-                    </div>
-                </div>
-
-                <div class="filter-group">
-                    <label class="filter-label">택배사</label>
-                    <select class="filter-select" id="carrierFilter">
-                        <option value="">전체</option>
-                        <option value="CJ대한통운">CJ대한통운</option>
-                        <option value="한진택배">한진택배</option>
-                        <option value="롯데택배">롯데택배</option>
-                        <option value="우체국택배">우체국택배</option>
-                        <option value="로젠택배">로젠택배</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label class="filter-label">검색</label>
-                    <input type="text" class="filter-input" id="searchKeyword" placeholder="주문번호, 수령인, 송장번호">
-                </div>
-            </div>
-
-            <div class="filter-actions">
-                <button class="btn-secondary" onclick="resetFilters()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="23 4 23 10 17 10"></polyline>
-                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                    </svg>
-                    초기화
-                </button>
-                <button class="btn-primary" onclick="searchShipping()">
+       <!-- 필터 섹션 -->
+        <div class="filter-section-compact">
+            <h2 class="filter-title-compact">발송 관리</h2>
+            <div class="search-box-compact">
+                <input type="text" class="search-input-compact" id="searchKeyword" 
+                       placeholder="주문번호, 수령인, 송장번호 검색" 
+                       onkeyup="searchShipping(event)">
+                <button class="search-btn-compact" onclick="searchShipping()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="11" cy="11" r="8"></circle>
                         <path d="m21 21-4.35-4.35"></path>
                     </svg>
-                    검색
                 </button>
             </div>
         </div>
