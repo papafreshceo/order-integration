@@ -467,6 +467,75 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
+case 'getOrdersByDateRange':
+        try {
+          const { startDate, endDate } = req.body;
+          const { getOrderData } = require('../lib/google-sheets');
+          const targetSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
+          
+          const orders = [];
+          const colors = {};
+          
+          // 날짜 범위 계산
+          const start = startDate ? new Date(startDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3')) : new Date();
+          const end = endDate ? new Date(endDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3')) : new Date();
+          
+          // 각 날짜의 시트 읽기
+          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            const sheetName = d.toISOString().split('T')[0].replace(/-/g, '');
+            
+            try {
+              const dayData = await getOrderData(`${sheetName}!A:ZZ`, targetSpreadsheetId);
+              
+              if (dayData && dayData.length > 1) {
+                const headers = dayData[0];
+                
+                for (let i = 1; i < dayData.length; i++) {
+                  const row = dayData[i];
+                  const order = {};
+                  
+                  headers.forEach((header, index) => {
+                    order[header] = row[index] || '';
+                  });
+                  
+                  // 연번 추가
+                  order['연번'] = orders.length + 1;
+                  orders.push(order);
+                }
+              }
+            } catch (error) {
+              console.log(`시트 ${sheetName} 읽기 실패:`, error.message);
+              // 해당 날짜의 시트가 없으면 건너뛰기
+              continue;
+            }
+          }
+          
+          // 마켓 색상 정보 가져오기
+          const marketData = await getSheetData('매핑!A:Z');
+          if (marketData && marketData.length > 0) {
+            for (let i = 1; i < marketData.length; i++) {
+              if (marketData[i][0]) {
+                const marketName = marketData[i][0];
+                const color = marketData[i][1] || 'rgb(128,128,128)';
+                colors[marketName] = color;
+              }
+            }
+          }
+          
+          return res.status(200).json({ 
+            success: true, 
+            orders: orders,
+            colors: colors,
+            totalCount: orders.length
+          });
+          
+        } catch (error) {
+          console.error('주문 조회 오류:', error);
+          return res.status(500).json({ 
+            success: false, 
+            error: error.message 
+          });
+        }
 
 
 
