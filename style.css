@@ -1281,7 +1281,7 @@ tbody tr:nth-child(even) {
 /* 주문 추가 버튼 스타일 */
 .btn-add-order {
     height: 34px;
-    padding: 20px 20px;
+    padding: 0 20px;
     background: #2563eb;
     color: white;
     border: none;
@@ -1290,7 +1290,7 @@ tbody tr:nth-child(even) {
     font-size: 14px;
     font-weight: 400;
     white-space: nowrap;
-    width: 300px;
+    width: 200px;
 }
 
 .btn-add-order:hover {
@@ -1555,4 +1555,3 @@ tbody tr:nth-child(even) {
         flex: 1;
     }
 }
-
