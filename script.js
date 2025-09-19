@@ -217,8 +217,20 @@ function switchTab(tabName) {
     if (tabName === 'dashboard') {
         loadDashboard();
     }
+    
+    // 발송관리 탭일 때 iframe 새로고침
+    if (tabName === 'shipping') {
+        const shippingIframe = document.querySelector('#shipping-tab iframe');
+        if (shippingIframe) {
+            // iframe의 src를 다시 설정하여 새로고침
+            const currentSrc = shippingIframe.src;
+            shippingIframe.src = '';
+            setTimeout(() => {
+                shippingIframe.src = currentSrc;
+            }, 10);
+        }
+    }
 }
-
 // ===========================
 // 파일 처리 함수들
 // ===========================
