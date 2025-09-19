@@ -1306,29 +1306,66 @@ if (header === '마켓명' && order[header]) {
             }
         }
 
-        // 송장번호 저장
+
+// 송장번호 저장
         async function saveTrackingNumbers() {
             const updates = [];
+            const overwrites = [];
             
+            // 입력된 송장번호 수집
             document.querySelectorAll('.tracking-input').forEach(input => {
                 const index = parseInt(input.dataset.index);
                 const value = input.value.trim();
                 const carrierSelect = document.querySelector(`.carrier-select[data-index="${index}"]`);
                 const carrier = carrierSelect ? carrierSelect.value : '';
                 
-                if (value || carrier) {
-                    updates.push({
-                        orderNumber: currentOrders[index]['주문번호'],
-                        carrier: carrier,
-                        trackingNumber: value
-                    });
+                if (value && carrier) {
+                    const order = currentOrders[index];
+                    const existingTracking = order['송장번호'];
+                    
+                    if (existingTracking && existingTracking !== value) {
+                        // 기존 송장번호가 있는 경우
+                        overwrites.push({
+                            orderNumber: order['주문번호'],
+                            carrier: carrier,
+                            trackingNumber: value,
+                            oldTracking: existingTracking
+                        });
+                    } else if (!existingTracking) {
+                        // 새로운 송장번호
+                        updates.push({
+                            orderNumber: order['주문번호'],
+                            carrier: carrier,
+                            trackingNumber: value
+                        });
+                    }
                 }
             });
             
-            if (updates.length === 0) {
+            if (updates.length === 0 && overwrites.length === 0) {
                 showMessage('저장할 송장번호가 없습니다.', 'error');
                 return;
             }
+            
+            // 덮어쓰기 확인
+            let proceedWithOverwrites = true;
+            if (overwrites.length > 0) {
+                const message = `${overwrites.length}건의 기존 송장번호를 변경하시겠습니까?\n\n` + 
+                    overwrites.slice(0, 5).map(o => 
+                        `주문번호: ${o.orderNumber}\n기존: ${o.oldTracking} → 신규: ${o.trackingNumber}`
+                    ).join('\n\n') +
+                    (overwrites.length > 5 ? `\n\n... 외 ${overwrites.length - 5}건` : '');
+                    
+                proceedWithOverwrites = confirm(message);
+            }
+            
+            if (!proceedWithOverwrites) {
+                showMessage('송장번호 변경이 취소되었습니다.', 'info');
+                return;
+            }
+            
+            // 전체 업데이트 목록
+            const allUpdates = [...updates, ...overwrites];
             
             showLoading();
             try {
@@ -1347,7 +1384,7 @@ if (header === '마켓명' && order[header]) {
                     body: JSON.stringify({
                         action: 'updateTracking',
                         sheetName: today,
-                        updates: updates
+                        updates: allUpdates
                     })
                 });
                 
@@ -1357,7 +1394,17 @@ if (header === '마켓명' && order[header]) {
                     throw new Error(result.error || '송장번호 저장에 실패했습니다.');
                 }
                 
-                showMessage(`${updates.length}건의 송장번호가 저장되었습니다.`, 'success');
+                let message = '';
+                if (updates.length > 0) {
+                    message += `신규 ${updates.length}건`;
+                }
+                if (overwrites.length > 0) {
+                    if (message) message += ', ';
+                    message += `수정 ${overwrites.length}건`;
+                }
+                message += '의 송장번호가 저장되었습니다.';
+                
+                showMessage(message, 'success');
                 await loadTodayOrders();
                 
             } catch (error) {
