@@ -733,23 +733,28 @@
         <!-- 테이블 섹션 -->
         <div class="table-section">
             <div class="table-header">
-                <h3 class="table-title">발송 목록</h3>
+                <div class="table-header">
+                <div style="display: flex; align-items: center; flex: 1;">
+                    <h3 class="table-title">발송 목록</h3>
+                    <div style="margin-left: 100px; display: flex; align-items: center; gap: 8px;">
+                        <select id="bulkCarrier" class="filter-select" style="width: 150px;">
+                            <option value="">택배사 일괄선택</option>
+                            <option value="CJ대한통운">CJ대한통운</option>
+                            <option value="한진택배">한진택배</option>
+                            <option value="롯데택배">롯데택배</option>
+                            <option value="우체국택배">우체국택배</option>
+                            <option value="로젠택배">로젠택배</option>
+                        </select>
+                        <button class="btn-action" onclick="applyBulkCarrier()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 20h9"></path>
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                            </svg>
+                            적용
+                        </button>
+                    </div>
+                </div>
                 <div class="table-actions">
-                    <select id="bulkCarrier" class="filter-select" style="width: 150px; margin-right: 8px;">
-                        <option value="">택배사 일괄선택</option>
-                        <option value="CJ대한통운">CJ대한통운</option>
-                        <option value="한진택배">한진택배</option>
-                        <option value="롯데택배">롯데택배</option>
-                        <option value="우체국택배">우체국택배</option>
-                        <option value="로젠택배">로젠택배</option>
-                    </select>
-                    <button class="btn-action" onclick="applyBulkCarrier()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 20h9"></path>
-                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                        </svg>
-                        적용
-                    </button>
                     <button class="btn-success" onclick="saveTrackingNumbers()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
