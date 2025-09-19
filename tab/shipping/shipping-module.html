@@ -34,12 +34,27 @@
     }
 }
 
-/* 상단 통계 - 2개 카드로 변경 */
+/* 상단 통계 - 3개 카드 */
 .shipping-stats {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
     margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .shipping-stats {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+    
+    .stat-card {
+        padding: 12px;
+    }
+    
+    .stat-value {
+        font-size: 18px;
+    }
 }
 
         .stat-card {
@@ -694,8 +709,22 @@
     <div class="shipping-container">
     <!-- 상단 고정 영역 시작 -->
     <div class="fixed-header-section">
-        <!-- 상단 통계 -->
+<!-- 상단 통계 -->
         <div class="shipping-stats">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #e0e7ff; color: #4f46e5;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="9" y1="9" x2="15" y2="9"></line>
+                        <line x1="9" y1="15" x2="15" y2="15"></line>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">전체</div>
+                    <div class="stat-value" id="statTotal">0</div>
+                </div>
+            </div>
+            
             <div class="stat-card">
                 <div class="stat-icon" style="background: #fef3c7; color: #f59e0b;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -967,13 +996,14 @@
 
         // 통계 업데이트
         function updateStatistics() {
+            const total = currentOrders.length;
             const preparing = currentOrders.filter(order => !order['송장번호']).length;
             const shipped = currentOrders.filter(order => order['송장번호']).length;
             
+            document.getElementById('statTotal').textContent = total;
             document.getElementById('statPreparing').textContent = preparing;
             document.getElementById('statShipped').textContent = shipped;
         }
-
         // 벤더사별 테이블 업데이트
         function updateVendorTable() {
             const vendorStats = {};
