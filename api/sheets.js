@@ -25,8 +25,6 @@ export default async function handler(req, res) {
     const { action, sheetName, range, values } = req.body || req.query;
 
     switch (action) {
-
-
       case 'getProductData':
         try {
           // 제품 정보 조회 (SPREADSHEET_ID_PRODUCTS 사용)
@@ -65,7 +63,7 @@ export default async function handler(req, res) {
               }
           }
           
-           return res.status(200).json({
+          return res.status(200).json({
               productData: productInfo,
               priceData: productInfo  // productInfo에 이미 셀러공급가 포함
           });
@@ -80,28 +78,159 @@ export default async function handler(req, res) {
 
       case 'getOrdersByDate':
         try {
-          const { sheetName } = req.body;
-          const orderData = await getOrderData(`${sheetName}!A:ZZ`);
+          const { sheetName, spreadsheetId } = req.body;
+          const { getOrderData } = require('../lib/google-sheets');
           
-          if (orderData.length < 2) {
-            return res.status(200).json({ data: [] });
+          // 주문기록 시트에서 데이터 읽기
+          const orderData = await getOrderData(`${sheetName}!A:ZZ`, spreadsheetId || process.env.SPREADSHEET_ID_ORDERS);
+          
+          if (!orderData || orderData.length < 2) {
+            return res.status(200).json({ success: true, data: [] });
           }
           
           const headers = orderData[0];
           const rows = orderData.slice(1);
           
           const formattedData = rows.map(row => {
-            const obj = { _sheetName: sheetName };
+            const obj = {};
             headers.forEach((header, index) => {
               obj[header] = row[index] || '';
             });
             return obj;
           });
           
-          return res.status(200).json({ data: formattedData });
+          return res.status(200).json({ success: true, data: formattedData });
         } catch (error) {
           console.error('getOrdersByDate 오류:', error);
-          return res.status(200).json({ data: [] });
+          return res.status(200).json({ success: true, data: [] });
+        }
+
+      case 'updateTracking':
+        try {
+          const { sheetName, updates, spreadsheetId } = req.body;
+          const { getOrderData, batchUpdateSheetData } = require('../lib/google-sheets');
+          
+          // 먼저 시트 데이터 읽기
+          const orderData = await getOrderData(`${sheetName}!A:ZZ`, spreadsheetId || process.env.SPREADSHEET_ID_ORDERS);
+          
+          if (!orderData || orderData.length < 2) {
+            return res.status(400).json({ success: false, error: '시트 데이터가 없습니다' });
+          }
+          
+          const headers = orderData[0];
+          const rows = orderData.slice(1);
+          
+          // 주문번호, 택배사, 송장번호 컬럼 인덱스 찾기
+          const orderNumIndex = headers.indexOf('주문번호');
+          const carrierIndex = headers.indexOf('택배사');
+          const trackingIndex = headers.indexOf('송장번호');
+          
+          if (orderNumIndex === -1) {
+            return res.status(400).json({ success: false, error: '주문번호 컬럼을 찾을 수 없습니다' });
+          }
+          
+          // 업데이트할 데이터 준비
+          const updateRequests = [];
+          let updatedCount = 0;
+          
+          updates.forEach(update => {
+            // 주문번호로 행 찾기
+            const rowIndex = rows.findIndex(row => row[orderNumIndex] === update.orderNumber);
+            
+            if (rowIndex >= 0) {
+              const actualRowIndex = rowIndex + 2; // 헤더 + 1-based index
+              
+              if (update.carrier && carrierIndex >= 0) {
+                updateRequests.push({
+                  range: `${sheetName}!${columnToLetter(carrierIndex + 1)}${actualRowIndex}`,
+                  values: [[update.carrier]]
+                });
+                updatedCount++;
+              }
+              
+              if (update.trackingNumber && trackingIndex >= 0) {
+                updateRequests.push({
+                  range: `${sheetName}!${columnToLetter(trackingIndex + 1)}${actualRowIndex}`,
+                  values: [[update.trackingNumber]]
+                });
+                updatedCount++;
+              }
+            }
+          });
+          
+          // 배치 업데이트 실행
+          if (updateRequests.length > 0) {
+            await batchUpdateSheetData(updateRequests, spreadsheetId || process.env.SPREADSHEET_ID_ORDERS);
+          }
+          
+          return res.status(200).json({ 
+            success: true, 
+            updated: updatedCount,
+            message: `${updates.length}건 중 ${updatedCount}건 업데이트됨`
+          });
+          
+        } catch (error) {
+          console.error('updateTracking 오류:', error);
+          return res.status(500).json({ 
+            success: false, 
+            error: '송장번호 업데이트 실패',
+            details: error.message 
+          });
+        }
+
+      case 'getMarketFormats':
+        try {
+          const { spreadsheetId } = req.body;
+          const { getSheetData } = require('../lib/google-sheets');
+          
+          // 마켓별송장업로드양식 시트 읽기
+          const formatData = await getSheetData('마켓별송장업로드양식!A:Z', spreadsheetId || process.env.SPREADSHEET_ID);
+          
+          const formats = {};
+          
+          if (formatData && formatData.length > 0) {
+            // 첫 행이 마켓명
+            const markets = formatData[0].filter(cell => cell);
+            
+            // 각 마켓별로 필드 수집
+            markets.forEach((market, colIndex) => {
+              formats[market] = [];
+              for (let rowIndex = 1; rowIndex < formatData.length; rowIndex++) {
+                const field = formatData[rowIndex][colIndex];
+                if (field) {
+                  formats[market].push(field);
+                }
+              }
+            });
+          }
+          
+          // 기본값 제공
+          if (Object.keys(formats).length === 0) {
+            formats['쿠팡'] = ['주문번호', '택배사', '송장번호'];
+            formats['네이버'] = ['상품주문번호', '택배사코드', '송장번호'];
+            formats['11번가'] = ['배송번호', '택배사', '송장번호'];
+            formats['지마켓'] = ['주문번호', '택배사', '운송장번호'];
+            formats['옥션'] = ['주문번호', '택배사', '운송장번호'];
+            formats['인터파크'] = ['주문번호', '택배사', '송장번호'];
+            formats['티몬'] = ['주문번호', '택배사', '송장번호'];
+            formats['위메프'] = ['주문번호', '택배사', '송장번호'];
+          }
+          
+          return res.status(200).json({ 
+            success: true, 
+            formats: formats 
+          });
+          
+        } catch (error) {
+          console.error('getMarketFormats 오류:', error);
+          return res.status(200).json({ 
+            success: true, 
+            formats: {
+              '쿠팡': ['주문번호', '택배사', '송장번호'],
+              '네이버': ['상품주문번호', '택배사코드', '송장번호'],
+              '11번가': ['배송번호', '택배사', '송장번호']
+            }
+          });
         }
 
       case 'saveToSheet':
@@ -149,6 +278,17 @@ export default async function handler(req, res) {
   }
 }
 
+// 컬럼 번호를 알파벳으로 변환하는 헬퍼 함수
+function columnToLetter(column) {
+  let temp, letter = '';
+  while (column > 0) {
+    temp = (column - 1) % 26;
+    letter = String.fromCharCode(temp + 65) + letter;
+    column = (column - temp - 1) / 26;
+  }
+  return letter;
+}
+
 function parseNumber(value) {
   if (value === null || value === undefined || value === '') {
     return 0;
@@ -163,10 +303,4 @@ function parseNumber(value) {
   }
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
-
 }
-
-
-
-
-
