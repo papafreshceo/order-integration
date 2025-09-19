@@ -1069,8 +1069,30 @@
                 return;
             }
             
-            // 헤더 생성
-            const headers = Object.keys(currentOrders[0]);
+            // 헤더 생성 및 순서 재배열
+            const originalHeaders = Object.keys(currentOrders[0]);
+            const headers = [];
+            
+            // 주문번호까지 추가
+            for (let h of originalHeaders) {
+                headers.push(h);
+                if (h === '주문번호') {
+                    // 택배사와 송장번호를 주문번호 다음에 추가
+                    if (originalHeaders.includes('택배사') && !headers.includes('택배사')) {
+                        headers.push('택배사');
+                    }
+                    if (originalHeaders.includes('송장번호') && !headers.includes('송장번호')) {
+                        headers.push('송장번호');
+                    }
+                }
+            }
+            
+            // 나머지 헤더 추가 (택배사, 송장번호 제외)
+            for (let h of originalHeaders) {
+                if (h !== '택배사' && h !== '송장번호' && !headers.includes(h)) {
+                    headers.push(h);
+                }
+            }
 
             // 테이블 전체 너비 계산
             let totalWidth = 50; // 체크박스 너비
