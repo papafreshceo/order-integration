@@ -586,6 +586,23 @@ overflow-x: auto;
                 opacity: 1;
             }
         }
+
+
+        .shipping-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed; /* 중요: 고정 테이블 레이아웃 */
+}
+
+.shipping-table th,
+.shipping-table td {
+    box-sizing: border-box;
+    padding: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+        
     </style>
 </head>
 <body>
@@ -1051,7 +1068,20 @@ function updateVendorTable() {
             }
             
             // 헤더 생성
-            const headers = Object.keys(currentOrders[0]);
+const headers = Object.keys(currentOrders[0]);
+
+// 테이블 전체 너비 계산
+let totalWidth = 40; // 체크박스 너비
+headers.forEach(header => {
+    const width = columnWidths[header] || 100;
+    totalWidth += width;
+});
+
+// 테이블에 전체 너비 설정
+const table = document.getElementById('shippingTable');
+if (table) {
+    table.style.minWidth = `${totalWidth}px`;
+}
             
             // 수령인 전화번호 컬럼 찾기
             const recipientPhoneColumns = ['수령인전화번호', '수취인전화번호', '수령인연락처', '수취인연락처'];
