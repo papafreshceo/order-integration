@@ -111,14 +111,25 @@ case 'updateTracking':
           const { getOrderData, updateSheetData } = require('../lib/google-sheets');
           const targetSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
           
-          // 시트 데이터 읽기
-          const orderData = await getOrderData(`${sheetName}!A:ZZ`, targetSpreadsheetId);
-          
-          if (!orderData || orderData.length < 2) {
-            return res.status(400).json({ success: false, error: '시트 데이터가 없습니다' });
+          // 시트 헤더만 읽기
+          const headerData = await getOrderData(`'${sheetName}'!A1:ZZ1`, targetSpreadsheetId);
+          if (!headerData || headerData.length === 0) {
+            return res.status(400).json({ success: false, error: '시트 헤더를 찾을 수 없습니다' });
           }
           
-          const headers = orderData[0];
+          const headers = headerData[0];
+          const orderNumIndex = headers.indexOf('주문번호');
+          const carrierIndex = headers.indexOf('택배사');
+          const trackingIndex = headers.indexOf('송장번호');
+          const dateIndex = headers.indexOf('발송일(송장입력일)');
+          
+          if (orderNumIndex === -1) {
+            return res.status(400).json({ success: false, error: '주문번호 컬럼을 찾을 수 없습니다' });
+          }
+          
+          // 주문번호 컬럼만 읽어서 행 번호 찾기
+          const orderColumnLetter = String.fromCharCode(65 + orderNumIndex); // A, B, C...
+          const orderNumbers = await getOrderData(`'${sheetName}'!${orderColumnLetter}2:${orderColumnLetter}`, targetSpreadsheetId);
           
           // 오늘 날짜
           const today = new Date().toLocaleDateString('ko-KR', {
@@ -127,38 +138,52 @@ case 'updateTracking':
             day: '2-digit'
           }).replace(/\. /g, '-').replace(/\./g, '');
           
-          // 업데이트할 행 수정
           let updateCount = 0;
-          for (let i = 1; i < orderData.length; i++) {
-            const row = orderData[i];
-            const orderNumber = row[headers.indexOf('주문번호')];
+          
+          // 각 업데이트 개별 처리
+          for (const update of updates) {
+            // 주문번호로 행 찾기
+            let rowIndex = -1;
+            for (let i = 0; i < orderNumbers.length; i++) {
+              if (orderNumbers[i] && orderNumbers[i][0] === update.orderNumber) {
+                rowIndex = i + 2; // +2는 헤더(1) + 0-based to 1-based
+                break;
+              }
+            }
             
-            const updateItem = updates.find(u => u.orderNumber === orderNumber);
-            if (updateItem) {
-              const carrierIndex = headers.indexOf('택배사');
-              const trackingIndex = headers.indexOf('송장번호');
-              const dateIndex = headers.indexOf('발송일(송장입력일)');
+            if (rowIndex > 0) {
+              // 택배사 업데이트
+              if (carrierIndex >= 0 && update.carrier) {
+                const carrierLetter = String.fromCharCode(65 + carrierIndex);
+                await updateSheetData(
+                  `'${sheetName}'!${carrierLetter}${rowIndex}`,
+                  [[update.carrier]],
+                  targetSpreadsheetId
+                );
+              }
               
-              if (carrierIndex >= 0 && updateItem.carrier) {
-                orderData[i][carrierIndex] = updateItem.carrier;
+              // 송장번호 업데이트
+              if (trackingIndex >= 0 && update.trackingNumber) {
+                const trackingLetter = String.fromCharCode(65 + trackingIndex);
+                await updateSheetData(
+                  `'${sheetName}'!${trackingLetter}${rowIndex}`,
+                  [[update.trackingNumber]],
+                  targetSpreadsheetId
+                );
               }
-              if (trackingIndex >= 0 && updateItem.trackingNumber) {
-                orderData[i][trackingIndex] = updateItem.trackingNumber;
+              
+              // 발송일 업데이트
+              if (dateIndex >= 0 && update.trackingNumber) {
+                const dateLetter = String.fromCharCode(65 + dateIndex);
+                await updateSheetData(
+                  `'${sheetName}'!${dateLetter}${rowIndex}`,
+                  [[today]],
+                  targetSpreadsheetId
+                );
               }
-              if (dateIndex >= 0 && updateItem.trackingNumber) {
-                orderData[i][dateIndex] = today;
-              }
+              
               updateCount++;
             }
-          }
-          
-          // 전체 시트 업데이트
-          if (updateCount > 0) {
-            await updateSheetData(
-              `${sheetName}!A1:ZZ${orderData.length}`,
-              orderData,
-              targetSpreadsheetId
-            );
           }
           
           return res.status(200).json({ 
@@ -452,6 +477,7 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
+
 
 
 
