@@ -286,6 +286,38 @@
             overflow-x: auto;
             max-height: 600px;
             overflow-y: auto;
+            position: relative;
+        }
+        
+        /* 열 고정 스타일 */
+        .shipping-table {
+            position: relative;
+        }
+        
+        .shipping-table thead th:nth-child(-n+6),
+        .shipping-table tbody td:nth-child(-n+6) {
+            position: sticky;
+            background: #ffffff;
+            z-index: 5;
+        }
+        
+        /* 각 고정 열의 left 위치 */
+        .shipping-table th:nth-child(1),
+        .shipping-table td:nth-child(1) { left: 0px; }
+        .shipping-table th:nth-child(2),
+        .shipping-table td:nth-child(2) { left: 40px; }
+        .shipping-table th:nth-child(3),
+        .shipping-table td:nth-child(3) { left: 90px; }
+        .shipping-table th:nth-child(4),
+        .shipping-table td:nth-child(4) { left: 190px; }
+        .shipping-table th:nth-child(5),
+        .shipping-table td:nth-child(5) { left: 340px; }
+        .shipping-table th:nth-child(6),
+        .shipping-table td:nth-child(6) { left: 480px; }
+        
+        .shipping-table thead th:nth-child(-n+6) {
+            background: #f8f9fa;
+            z-index: 10;
         }
 
         .shipping-table {
@@ -703,6 +735,21 @@
             <div class="table-header">
                 <h3 class="table-title">발송 목록</h3>
                 <div class="table-actions">
+                    <select id="bulkCarrier" class="filter-select" style="width: 150px; margin-right: 8px;">
+                        <option value="">택배사 일괄선택</option>
+                        <option value="CJ대한통운">CJ대한통운</option>
+                        <option value="한진택배">한진택배</option>
+                        <option value="롯데택배">롯데택배</option>
+                        <option value="우체국택배">우체국택배</option>
+                        <option value="로젠택배">로젠택배</option>
+                    </select>
+                    <button class="btn-action" onclick="applyBulkCarrier()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 20h9"></path>
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                        </svg>
+                        적용
+                    </button>
                     <button class="btn-success" onclick="saveTrackingNumbers()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
@@ -1053,11 +1100,38 @@ function updateVendorTable() {
 }
 
         // 전체 선택
-        function toggleSelectAll(checkbox) {
+         function toggleSelectAll(checkbox) {
             const checkboxes = document.querySelectorAll('#shippingTableBody input[type="checkbox"]');
             checkboxes.forEach(cb => cb.checked = checkbox.checked);
         }
-
+        
+        // 택배사 일괄 적용
+        function applyBulkCarrier() {
+            const selectedCarrier = document.getElementById('bulkCarrier').value;
+            if (!selectedCarrier) {
+                showMessage('택배사를 선택해주세요.', 'error');
+                return;
+            }
+            
+            // 체크된 행의 택배사만 변경
+            const checkedBoxes = document.querySelectorAll('#shippingTableBody input[type="checkbox"]:checked');
+            let updatedCount = 0;
+            
+            checkedBoxes.forEach(checkbox => {
+                const index = checkbox.dataset.index;
+                const carrierSelect = document.querySelector(`.carrier-select[data-index="${index}"]`);
+                if (carrierSelect) {
+                    carrierSelect.value = selectedCarrier;
+                    updatedCount++;
+                }
+            });
+            
+            if (updatedCount > 0) {
+                showMessage(`${updatedCount}건에 택배사를 적용했습니다.`, 'success');
+            } else {
+                showMessage('선택된 주문이 없습니다.', 'error');
+            }
+        }
         // 송장번호 저장
         async function saveTrackingNumbers() {
     const updates = [];
@@ -1260,29 +1334,50 @@ function updateVendorTable() {
 
         // 마켓 양식 로드
         async function loadMarketFormats() {
-    try {
-        const response = await fetch('/api/sheets', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                action: 'getMarketFormats'
-            })
-        });
-        
-        const result = await response.json();
-        marketFormats = result.formats || {};
-    } catch (error) {
-        console.error('마켓 양식 로드 오류:', error);
-        // 기본값 사용
-        marketFormats = {
-            '쿠팡': ['주문번호', '택배사', '송장번호'],
-            '네이버': ['상품주문번호', '택배사코드', '송장번호'],
-            '11번가': ['배송번호', '택배사', '송장번호']
-        };
-    }
-}
+            try {
+                // 마켓 목록 가져오기
+                const marketResponse = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'getMarketList',
+                        spreadsheetId: 'SPREADSHEET_ID_PRODUCTS'
+                    })
+                });
+                
+                const marketData = await marketResponse.json();
+                
+                // 양식 정보 가져오기
+                const formatResponse = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'getMarketFormats'
+                    })
+                });
+                
+                const formatData = await formatResponse.json();
+                marketFormats = formatData.formats || {};
+                
+                // 마켓 목록 저장
+                if (marketData.success && marketData.markets) {
+                    window.marketList = marketData.markets;
+                }
+            } catch (error) {
+                console.error('마켓 정보 로드 오류:', error);
+                // 기본값 사용
+                window.marketList = ['쿠팡', '네이버', '11번가', '지마켓', '옥션'];
+                marketFormats = {
+                    '쿠팡': ['주문번호', '택배사', '송장번호'],
+                    '네이버': ['상품주문번호', '택배사코드', '송장번호'],
+                    '11번가': ['배송번호', '택배사', '송장번호']
+                };
+            }
+        }
 
         // 내보내기 모달
         function openExportModal() {
@@ -1292,7 +1387,8 @@ function updateVendorTable() {
             const container = document.getElementById('marketCards');
             container.innerHTML = '';
             
-            const markets = ['쿠팡', '네이버', '11번가', '지마켓', '옥션', '인터파크', '티몬', '위메프'];
+            // 매핑 시트에서 가져온 마켓 목록 사용
+            const markets = window.marketList || ['쿠팡', '네이버', '11번가', '지마켓', '옥션'];
             
             markets.forEach(market => {
                 const card = document.createElement('div');
