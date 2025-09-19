@@ -177,21 +177,17 @@ case 'updateTracking':
             }
           });
           
-          // Google Sheets API로 개별 셀 업데이트
+          / Google Sheets API로 개별 셀 업데이트
           if (batchUpdateRequests.length > 0) {
-            const auth = await getAuthClient();
-            const sheets = google.sheets({ version: 'v4', auth });
+            const { updateSheetData } = require('../lib/google-sheets');
             
-            // 배치 업데이트 실행
+            // 각 업데이트 요청 처리
             for (const request of batchUpdateRequests) {
-              await sheets.spreadsheets.values.update({
-                spreadsheetId: spreadsheetId || process.env.SPREADSHEET_ID_ORDERS,
-                range: request.range,
-                valueInputOption: 'RAW',
-                requestBody: {
-                  values: request.values
-                }
-              });
+              await updateSheetData(
+                request.range,
+                request.values,
+                spreadsheetId || process.env.SPREADSHEET_ID_ORDERS
+              );
             }
           }
           
@@ -487,6 +483,7 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
+
 
 
 
