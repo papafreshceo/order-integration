@@ -1501,26 +1501,35 @@ for (let i = 0; i < headers.length; i++) {
 
         // 내보내기 모달
         function openExportModal() {
-            document.getElementById('exportModal').classList.add('show');
-            
-            // 마켓 카드 생성
-            const container = document.getElementById('marketCards');
-            container.innerHTML = '';
-            
-            // 매핑 시트에서 가져온 마켓 목록 사용
-            const markets = window.marketList || ['쿠팡', '네이버', '11번가', '지마켓', '옥션'];
-            
-            markets.forEach(market => {
-                const card = document.createElement('div');
-                card.className = 'market-card';
-                card.onclick = () => exportByMarket(market);
-                card.innerHTML = `
-                    <div class="market-card-icon">${market[0]}</div>
-                    <div class="market-card-name">${market}</div>
-                `;
-                container.appendChild(card);
-            });
-        }
+    document.getElementById('exportModal').classList.add('show');
+    
+    // 마켓 카드 생성
+    const container = document.getElementById('marketCards');
+    container.innerHTML = '';
+    
+    // 매핑 시트에서 가져온 마켓 목록 사용
+    const markets = window.marketList || ['쿠팡', '네이버', '11번가', '지마켓', '옥션'];
+    const colors = window.marketColors || {};
+    
+    markets.forEach(market => {
+        const card = document.createElement('div');
+        card.className = 'market-card';
+        card.onclick = () => exportByMarket(market);
+        
+        // 마켓 색상 적용 (없으면 기본 파란색)
+        const marketColor = colors[market] || '#2563eb';
+        
+        card.innerHTML = `
+            <div class="market-card-icon" style="background: ${marketColor};">
+                ${market[0]}
+            </div>
+            <div class="market-card-name" style="color: ${marketColor}; font-weight: 500;">
+                ${market}
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
 
         function closeExportModal() {
             document.getElementById('exportModal').classList.remove('show');
