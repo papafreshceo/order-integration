@@ -122,7 +122,66 @@
             font-weight: 500;
             background: #f8f9fa;
         }
+/* 컴팩트 필터 섹션 */
+        .filter-section-compact {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 8px 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            height: 40px;
+        }
 
+        .filter-title-compact {
+            font-size: 16px;
+            font-weight: 500;
+            color: #212529;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .search-box-compact {
+            flex: 1;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .search-input-compact {
+            width: 100%;
+            padding: 4px 32px 4px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 13px;
+            height: 28px;
+            transition: all 0.2s;
+        }
+
+        .search-input-compact:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        .search-btn-compact {
+            position: absolute;
+            right: 4px;
+            padding: 4px 8px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: #6c757d;
+            transition: all 0.2s;
+        }
+
+        .search-btn-compact:hover {
+            color: #2563eb;
+        }
+        
         /* 필터 섹션 */
         .filter-section {
             background: #ffffff;
@@ -1668,9 +1727,29 @@ if (header === '마켓명' && order[header]) {
             document.getElementById('searchKeyword').value = '';
         }
 
-        // 검색 (추후 구현)
-        function searchShipping() {
-            console.log('검색 기능은 추후 구현 예정');
+        // 검색
+        function searchShipping(event) {
+            // 엔터키 또는 버튼 클릭시만 실행
+            if (event && event.type === 'keyup' && event.key !== 'Enter') {
+                return;
+            }
+            
+            const keyword = document.getElementById('searchKeyword').value.toLowerCase();
+            const rows = document.querySelectorAll('#shippingTableBody tr');
+            
+            rows.forEach(row => {
+                if (!keyword) {
+                    row.style.display = '';
+                    return;
+                }
+                
+                const text = row.textContent.toLowerCase();
+                if (text.includes(keyword)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
         }
 
         // 로// 로딩 표시
