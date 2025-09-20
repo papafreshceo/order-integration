@@ -737,54 +737,135 @@
         });
 
         // 대시보드 데이터 로드 (서버 API 사용)
-        async function loadDashboardData() {
-            console.log('대시보드 데이터 로딩 중...');
-            showLoading();
-            
-            try {
-                const response = await fetch('/api/sheets', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'getMarketData',
-                        useMainSpreadsheet: true
-                    })
-                });
+async function loadDashboardData() {
+    console.log('대시보드 데이터 로딩 중...');
+    showLoading();
+    
+    try {
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'getMarketData',
+                useMainSpreadsheet: true
+            })
+        });
 
-                const result = await response.json();
-                
-                if (result.success) {
-                    dashboardState.orderData = result.data || [];
-                    dashboardState.marketColors = result.colors || {};
-                    
-                    console.log('로드된 주문 데이터:', dashboardState.orderData.length, '건');
-                    
-                    // 통계 계산 및 업데이트
-                    calculateStatistics();
-                    updateCharts();
-                    updateCalendarData();
-                } else {
-                    console.error('데이터 로드 실패:', result.error);
-                    showMessage('데이터를 불러올 수 없습니다.', 'error');
-                }
-            } catch (error) {
-                console.error('로드 오류:', error);
-                showMessage('데이터 로드 중 오류가 발생했습니다.', 'error');
-            } finally {
-                hideLoading();
+        const result = await response.json();
+        console.log('API 전체 응답:', result);
+        
+        if (result.success) {
+            // 다양한 응답 구조 처리
+            let orderData = [];
+            
+            // result.data가 직접 배열인 경우
+            if (Array.isArray(result.data)) {
+                orderData = result.data;
             }
+            // result.values가 있는 경우 (구글시트 형식)
+            else if (result.values && Array.isArray(result.values)) {
+                // 첫 행이 헤더인 경우
+                if (result.values.length > 1) {
+                    const headers = result.values[0];
+                    orderData = result.values.slice(1).map(row => {
+                        const obj = {};
+                        headers.forEach((header, index) => {
+                            obj[header] = row[index] || '';
+                        });
+                        return obj;
+                    });
+                }
+            }
+            // result.orders가 있는 경우
+            else if (result.orders && Array.isArray(result.orders)) {
+                orderData = result.orders;
+            }
+            
+            dashboardState.orderData = orderData;
+            dashboardState.marketColors = result.colors || {};
+            
+            console.log('처리된 주문 데이터:', orderData.length, '건');
+            if (orderData.length > 0) {
+                console.log('첫 번째 주문 샘플:', orderData[0]);
+            }
+            
+            // 통계 계산 및 업데이트
+            calculateStatistics();
+            updateCharts();
+            updateCalendarData();
+        } else {
+            console.error('데이터 로드 실패:', result.error);
+            
+            // 대체 방법: 직접 주문 시트에서 가져오기
+            loadOrdersDirectly();
         }
+    } catch (error) {
+        console.error('로드 오류:', error);
+        showMessage('데이터 로드 중 오류가 발생했습니다.', 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+// 대체 방법: 오늘 날짜 시트에서 직접 가져오기
+async function loadOrdersDirectly() {
+    try {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const sheetName = `${year}${month}${day}`;
+        
+        console.log('직접 로드 시도:', sheetName);
+        
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'getOrdersByDate',
+                sheetName: sheetName
+            })
+        });
+        
+        const result = await response.json();
+        console.log('직접 로드 결과:', result);
+        
+        if (result.success && result.data) {
+            dashboardState.orderData = result.data;
+            console.log('직접 로드 성공:', result.data.length, '건');
+            
+            calculateStatistics();
+            updateCharts();
+            updateCalendarData();
+        }
+    } catch (error) {
+        console.error('직접 로드 실패:', error);
+    }
+}
+
 
 // 통계 계산
 function calculateStatistics() {
-    const orders = dashboardState.orderData;
+    const orders = dashboardState.orderData || [];
     console.log('통계 계산 시작, 주문 수:', orders.length);
     
-    // 첫 번째 주문 데이터 확인
-    if (orders.length > 0) {
-        console.log('첫 번째 주문 데이터:', orders[0]);
-        console.log('사용 가능한 컬럼:', Object.keys(orders[0]));
+    if (orders.length === 0) {
+        console.log('주문 데이터가 없습니다. 기본값 설정');
+        updateStatCards({
+            todayOrders: 0,
+            todayChange: 0,
+            completedShipping: 0,
+            pendingOrders: 0,
+            monthOrders: 0,
+            monthlyChange: 0,
+            processingOrders: 0
+        });
+        return;
     }
+    
+    // 첫 번째 주문 데이터 구조 확인
+    console.log('첫 번째 주문 데이터:', orders[0]);
+    console.log('사용 가능한 컬럼:', Object.keys(orders[0]));
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -800,22 +881,23 @@ function calculateStatistics() {
     let pendingOrders = 0;
     let processingOrders = 0;
     
-    orders.forEach(order => {
-        // 날짜 필드 찾기 - 다양한 컬럼명 시도
-        let orderDateStr = order['주문일시'] || order['날짜'] || order['주문일'] || order['결제일'];
-        console.log('원본 날짜 데이터:', orderDateStr);
+    orders.forEach((order, index) => {
+        // 날짜 필드 찾기
+        let orderDateStr = order['주문일시'] || order['날짜'] || order['주문일'] || order['결제일'] || '';
+        
+        if (index < 5) {
+            console.log(`주문 ${index} 날짜:`, orderDateStr);
+        }
         
         const orderDate = parseDate(orderDateStr);
-        console.log('파싱된 날짜:', orderDate);
         
-        // 송장번호 체크 - 다양한 컬럼명 시도
-        const hasTracking = (order['송장번호'] && order['송장번호'].trim() !== '' && order['송장번호'] !== '-') ||
-                           (order['운송장번호'] && order['운송장번호'].trim() !== '' && order['운송장번호'] !== '-');
+        // 송장번호 체크
+        const hasTracking = (order['송장번호'] && String(order['송장번호']).trim() !== '' && order['송장번호'] !== '-') ||
+                           (order['운송장번호'] && String(order['운송장번호']).trim() !== '' && order['운송장번호'] !== '-');
         
         // 오늘 주문
         if (isSameDay(orderDate, today)) {
             todayOrders++;
-            console.log('오늘 주문 발견:', order);
         }
         
         // 어제 주문
@@ -855,22 +937,6 @@ function calculateStatistics() {
     const todayChange = yesterdayOrders > 0 ? 
         ((todayOrders - yesterdayOrders) / yesterdayOrders * 100).toFixed(0) : 0;
     
-    // 전월 대비 계산
-    const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const lastMonthToday = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
-    let lastMonthOrders = 0;
-    
-    orders.forEach(order => {
-        const orderDateStr = order['주문일시'] || order['날짜'] || order['주문일'] || order['결제일'];
-        const orderDate = parseDate(orderDateStr);
-        if (orderDate >= lastMonthStart && orderDate <= lastMonthToday) {
-            lastMonthOrders++;
-        }
-    });
-    
-    const monthlyChange = lastMonthOrders > 0 ?
-        ((monthOrders - lastMonthOrders) / lastMonthOrders * 100).toFixed(0) : 0;
-    
     // UI 업데이트
     updateStatCards({
         todayOrders,
@@ -878,7 +944,7 @@ function calculateStatistics() {
         completedShipping,
         pendingOrders,
         monthOrders,
-        monthlyChange,
+        monthlyChange: 0,
         processingOrders
     });
 }
