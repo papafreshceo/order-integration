@@ -658,17 +658,27 @@
     </div>
 
     <script>
+        <script>
         // 대시보드 상태 관리
         const dashboardState = {
             currentDate: new Date(),
-            selectedDate: null
+            selectedDate: null,
+            orderData: []
         };
+
+        // Google Sheets API 설정
+        const SPREADSHEET_ID_ORDERS = '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
+        const API_KEY = 'AIzaSyBmla88O94sXJNMSgVuz6xxGAG2VcbSz7I';
+        const SHEET_NAME = 'Sheet1';
 
         // 페이지 로드 시 초기화
         document.addEventListener('DOMContentLoaded', function() {
             renderCalendar();
             initCharts();
             loadDashboardData();
+            
+            // 5분마다 자동 새로고침
+            setInterval(loadDashboardData, 5 * 60 * 1000);
         });
 
         // 캘린더 렌더링
@@ -771,13 +781,224 @@
         }
 
         // 대시보드 데이터 로드
-        function loadDashboardData() {
-            // API 호출 또는 로컬 데이터 로드
-            // 여기서는 예시 데이터 사용
-            console.log('대시보드 데이터 로딩...');
+        async function loadDashboardData() {
+            console.log('구글시트 데이터 로딩 중...');
             
-            // 통계 카드 애니메이션
-            animateNumbers();
+            try {
+                // Google Sheets API 호출
+                const range = `${SHEET_NAME}!A:AZ`;
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID_ORDERS}/values/${range}?key=${API_KEY}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.values && data.values.length > 0) {
+                    dashboardState.orderData = data.values;
+                    
+                    // 헤더 찾기
+                    const headers = data.values[0];
+                    const dateIndex = headers.indexOf('주문일시') !== -1 ? headers.indexOf('주문일시') : headers.indexOf('날짜');
+                    const marketIndex = headers.indexOf('마켓명') !== -1 ? headers.indexOf('마켓명') : headers.indexOf('마켓');
+                    const statusIndex = headers.indexOf('송장번호') !== -1 ? headers.indexOf('송장번호') : headers.indexOf('상태');
+                    const amountIndex = headers.indexOf('정산예정금액') !== -1 ? headers.indexOf('정산예정금액') : headers.indexOf('금액');
+                    
+                    // 오늘 날짜
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    
+                    // 이번 달 시작
+                    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+                    
+                    // 전일
+                    const yesterday = new Date(today);
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    
+                    // 통계 계산
+                    let todayOrders = 0;
+                    let yesterdayOrders = 0;
+                    let monthOrders = 0;
+                    let completedShipping = 0;
+                    let pendingOrders = 0;
+                    let marketStats = {};
+                    
+                    for (let i = 1; i < data.values.length; i++) {
+                        const row = data.values[i];
+                        if (!row[dateIndex]) continue;
+                        
+                        const orderDate = parseDate(row[dateIndex]);
+                        const hasTracking = row[statusIndex] && row[statusIndex] !== '-' && row[statusIndex] !== '';
+                        const market = row[marketIndex] || '기타';
+                        
+                        // 오늘 주문
+                        if (isSameDay(orderDate, today)) {
+                            todayOrders++;
+                        }
+                        
+                        // 어제 주문
+                        if (isSameDay(orderDate, yesterday)) {
+                            yesterdayOrders++;
+                        }
+                        
+                        // 이번 달 주문
+                        if (orderDate >= monthStart && orderDate <= today) {
+                            monthOrders++;
+                            
+                            // 마켓별 통계
+                            if (!marketStats[market]) {
+                                marketStats[market] = 0;
+                            }
+                            marketStats[market]++;
+                        }
+                        
+                        // 발송 상태
+                        if (hasTracking) {
+                            completedShipping++;
+                        } else if (orderDate >= monthStart) {
+                            pendingOrders++;
+                        }
+                    }
+                    
+                    // 전일 대비 계산
+                    const todayChange = yesterdayOrders > 0 ? 
+                        ((todayOrders - yesterdayOrders) / yesterdayOrders * 100).toFixed(0) : 0;
+                    
+                    // 통계 업데이트
+                    updateDashboardStats({
+                        todayOrders,
+                        todayChange,
+                        completedShipping,
+                        pendingOrders,
+                        monthOrders,
+                        marketStats
+                    });
+                    
+                    // 차트 업데이트
+                    updateChartsWithData(data.values, headers);
+                    
+                    console.log('구글시트 데이터 로드 완료');
+                } else {
+                    console.log('구글시트에 데이터가 없습니다.');
+                }
+            } catch (error) {
+                console.error('구글시트 데이터 로드 실패:', error);
+                // 에러 시 기본값 표시
+                animateNumbers();
+            }
+        }
+        
+        // 날짜 파싱 함수
+        function parseDate(dateStr) {
+            if (!dateStr) return new Date(0);
+            
+            const str = String(dateStr).trim();
+            
+            // YYYY-MM-DD 형식
+            if (str.match(/^\d{4}-\d{2}-\d{2}/)) {
+                return new Date(str.split(' ')[0] + 'T00:00:00');
+            }
+            
+            // MM/DD/YYYY 형식
+            if (str.match(/^\d{1,2}\/\d{1,2}\/\d{4}/)) {
+                const parts = str.split('/');
+                return new Date(parts[2], parseInt(parts[0]) - 1, parts[1]);
+            }
+            
+            return new Date(str);
+        }
+        
+        // 날짜 비교 함수
+        function isSameDay(date1, date2) {
+            return date1.getFullYear() === date2.getFullYear() &&
+                   date1.getMonth() === date2.getMonth() &&
+                   date1.getDate() === date2.getDate();
+        }
+        
+        // 대시보드 통계 업데이트
+        function updateDashboardStats(stats) {
+            // 오늘 주문
+            const todayOrdersEl = document.getElementById('todayOrders');
+            if (todayOrdersEl) {
+                animateNumber(todayOrdersEl, 0, stats.todayOrders, 1000);
+            }
+            
+            // 발송 완료
+            const completedEl = document.getElementById('completedShipping');
+            if (completedEl) {
+                animateNumber(completedEl, 0, stats.completedShipping, 1000);
+            }
+            
+            // 처리 대기
+            const pendingEl = document.getElementById('pendingOrders');
+            if (pendingEl) {
+                animateNumber(pendingEl, 0, stats.pendingOrders, 1000);
+            }
+            
+            // 월간 주문
+            const monthlyEl = document.getElementById('monthlyOrders');
+            if (monthlyEl) {
+                animateNumber(monthlyEl, 0, stats.monthOrders, 1000);
+            }
+            
+            // 전일 대비 변화율
+            const changeEls = document.querySelectorAll('.stats-change');
+            if (changeEls[0] && stats.todayChange !== undefined) {
+                const changeText = stats.todayChange >= 0 ? 
+                    `+${stats.todayChange}% 전일 대비` : 
+                    `${stats.todayChange}% 전일 대비`;
+                changeEls[0].textContent = changeText;
+                changeEls[0].className = stats.todayChange >= 0 ? 
+                    'stats-change positive' : 'stats-change negative';
+            }
+        }
+        
+        // 차트 데이터 업데이트
+        function updateChartsWithData(data, headers) {
+            const dateIndex = headers.indexOf('주문일시') !== -1 ? headers.indexOf('주문일시') : headers.indexOf('날짜');
+            const marketIndex = headers.indexOf('마켓명') !== -1 ? headers.indexOf('마켓명') : headers.indexOf('마켓');
+            
+            // 최근 7일 데이터
+            const last7Days = [];
+            const today = new Date();
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                date.setHours(0, 0, 0, 0);
+                last7Days.push({
+                    date: date,
+                    count: 0,
+                    label: ['일', '월', '화', '수', '목', '금', '토'][date.getDay()]
+                });
+            }
+            
+            // 마켓별 통계
+            const marketStats = {};
+            
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (!row[dateIndex]) continue;
+                
+                const orderDate = parseDate(row[dateIndex]);
+                const market = row[marketIndex] || '기타';
+                
+                // 최근 7일 집계
+                last7Days.forEach(day => {
+                    if (isSameDay(orderDate, day.date)) {
+                        day.count++;
+                    }
+                });
+                
+                // 마켓별 집계
+                if (!marketStats[market]) {
+                    marketStats[market] = 0;
+                }
+                marketStats[market]++;
+            }
+            
+            // 주간 차트 업데이트
+            renderWeeklyChartWithData(last7Days);
+            
+            // 마켓 차트 업데이트
+            renderMarketChartWithData(marketStats);
         }
 
         // 배송 데이터 로드
@@ -941,6 +1162,100 @@
                 legendY += 20;
             });
         }
+
+        // 주간 차트 렌더링 (데이터 연동)
+        function renderWeeklyChartWithData(weekData) {
+            const canvas = document.getElementById('weeklyOrderChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            const data = weekData.map(d => d.count);
+            const labels = weekData.map(d => d.label);
+            const maxValue = Math.max(...data, 10);
+            
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = 200;
+            
+            const barWidth = canvas.width / (data.length * 2);
+            const barSpacing = barWidth;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            data.forEach((value, index) => {
+                const barHeight = (value / maxValue) * (canvas.height - 40);
+                const x = (index * (barWidth + barSpacing)) + barSpacing;
+                const y = canvas.height - barHeight - 20;
+                
+                ctx.fillStyle = '#2563eb';
+                ctx.fillRect(x, y, barWidth, barHeight);
+                
+                ctx.fillStyle = '#6c757d';
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(labels[index], x + barWidth / 2, canvas.height - 5);
+                ctx.fillText(value, x + barWidth / 2, y - 5);
+            });
+        }
+        
+        // 마켓 차트 렌더링 (데이터 연동)
+        function renderMarketChartWithData(marketData) {
+            const canvas = document.getElementById('marketShareChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // 마켓 데이터 정렬 및 색상 할당
+            const total = Object.values(marketData).reduce((a, b) => a + b, 0);
+            const colors = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#6c757d'];
+            
+            const data = Object.entries(marketData)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .map((entry, index) => ({
+                    name: entry[0],
+                    value: Math.round(entry[1] / total * 100),
+                    color: colors[index]
+                }));
+            
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = 200;
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 60;
+            const innerRadius = 35;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            let currentAngle = -Math.PI / 2;
+            
+            data.forEach((segment, index) => {
+                const angle = (segment.value / 100) * Math.PI * 2;
+                
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + angle);
+                ctx.arc(centerX, centerY, innerRadius, currentAngle + angle, currentAngle, true);
+                ctx.closePath();
+                ctx.fillStyle = segment.color;
+                ctx.fill();
+                
+                currentAngle += angle;
+            });
+            
+            let legendY = 20;
+            data.forEach((segment, index) => {
+                ctx.fillStyle = segment.color;
+                ctx.fillRect(10, legendY - 8, 12, 12);
+                
+                ctx.fillStyle = '#495057';
+                ctx.font = '12px sans-serif';
+                ctx.fillText(`${segment.name} ${segment.value}%`, 30, legendY);
+                
+                legendY += 20;
+            });
+        }
+        
     </script>
 </body>
 </html>
