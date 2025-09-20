@@ -417,21 +417,43 @@ async function processExcelData(jsonData, file, isSmartStore) {
     let headerRowIndex = 0;
     const fileName = file.name.toLowerCase();
     
+    // 토스 파일 체크 추가
+    const isToss = fileName.includes('토스') || fileName.includes('toss');
+    
+    // 마켓별 헤더 위치 결정
     if (fileName.includes('전화주문') || fileName.includes('cs재발송') || fileName.includes('cs 재발송')) {
+        // 전화주문, CS재발송은 2행이 헤더
         headerRowIndex = 1;
+        console.log(`${file.name}: 전화주문/CS재발송 - 2행 헤더 사용`);
+    } else if (isToss && rawRows.length > 1) {
+        // 토스는 항상 2행이 헤더
+        headerRowIndex = 1;
+        console.log(`${file.name}: 토스 마켓 - 2행 헤더 사용`);
     } else if (isSmartStore && rawRows.length > 2) {
+        // 스마트스토어는 내용 확인 후 결정
         const secondRow = rawRows[1];
         const smartStoreHeaders = ['상품주문번호', '주문번호', '구매자명', '구매자연락처', '수취인명'];
         const hasHeaderInSecondRow = secondRow && 
             secondRow.some(cell => smartStoreHeaders.includes(String(cell).trim()));
         if (hasHeaderInSecondRow) {
             headerRowIndex = 1;
+            console.log(`${file.name}: 스마트스토어 - 2행 헤더 확인됨`);
+        } else {
+            console.log(`${file.name}: 스마트스토어 - 1행 헤더 사용`);
         }
+    } else {
+        // 기본적으로 1행이 헤더
+        console.log(`${file.name}: 기본 - 1행 헤더 사용`);
     }
     
+    // 헤더와 데이터 추출
     const headers = rawRows[headerRowIndex].map(h => String(h || '').trim());
     const dataRows = rawRows.slice(headerRowIndex + 1);
     
+    console.log(`${file.name}: 헤더 ${headers.length}개, 데이터 ${dataRows.length}개 행`);
+    console.log(`헤더 샘플: ${headers.slice(0, 5).join(', ')}...`);
+    
+    // 마켓 감지 및 파일 추가
     await detectMarketAndAdd(file, headers, dataRows, rawRows, headerRowIndex);
 }
 
@@ -462,26 +484,34 @@ async function detectMarketAndAdd(file, headers, dataRows, rawRows, provisionalH
     let finalDataRows = dataRows;
     
     // 마켓별 헤더행 조정
-    try {
-        if (marketName === '11번가') {
-            const idx = 1;
+try {
+    // 토스는 항상 2행이 헤더
+    if (marketName === '토스') {
+        const idx = 1; // 0-based index이므로 1이 2행
+        if (rawRows[idx]) {
+            finalHeaders = (rawRows[idx] || []).map(h => String(h || '').trim());
+            finalDataRows = rawRows.slice(idx + 1);
+            console.log(`토스 헤더 2행 적용: ${finalHeaders.slice(0, 5).join(', ')}...`);
+        }
+    } else if (marketName === '11번가') {
+        const idx = 1;
+        if (rawRows[idx]) {
+            finalHeaders = (rawRows[idx] || []).map(h => String(h || '').trim());
+            finalDataRows = rawRows.slice(idx + 1);
+        }
+    } else if (mappingData && mappingData.markets && mappingData.markets[marketName]) {
+        const market = mappingData.markets[marketName];
+        if (market.headerRow != null) {
+            const idx = Math.max(0, market.headerRow - 1);
             if (rawRows[idx]) {
                 finalHeaders = (rawRows[idx] || []).map(h => String(h || '').trim());
                 finalDataRows = rawRows.slice(idx + 1);
             }
-        } else if (mappingData && mappingData.markets && mappingData.markets[marketName]) {
-            const market = mappingData.markets[marketName];
-            if (market.headerRow != null) {
-                const idx = Math.max(0, market.headerRow - 1);
-                if (rawRows[idx]) {
-                    finalHeaders = (rawRows[idx] || []).map(h => String(h || '').trim());
-                    finalDataRows = rawRows.slice(idx + 1);
-                }
-            }
         }
-    } catch (e) {
-        console.warn('헤더행 적용 실패, 임시 헤더 유지:', e);
     }
+} catch (e) {
+    console.warn('헤더행 적용 실패, 임시 헤더 유지:', e);
+}
     
     // 데이터 정리
     const cleaned = (finalDataRows || []).filter(r => 
