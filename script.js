@@ -731,20 +731,26 @@ async function processOrderFiles(filesData) {
                 mergedRow['셀러공급가'] = '';
                 
                 // 정산예정금액 계산
-                let settlementAmount = 0;
-                
-                if (market.settlementFormula) {
-                    settlementAmount = calculateSettlementAmount(mergedRow, market.settlementFormula, marketName);
-                }
-                
-                if (settlementAmount === 0 && optionName && salesInfo[optionName]) {
-                    settlementAmount = salesInfo[optionName].sellingPrice || 0;
-                }
-                
-                if (settlementAmount === 0 && mergedRow['상품금액']) {
-                    settlementAmount = typeof mergedRow['상품금액'] === 'number' ? 
-                                      mergedRow['상품금액'] : parseNumber(mergedRow['상품금액']);
-                }
+let settlementAmount = 0;
+
+// 1. 정산공식이 있으면 우선 적용
+if (market.settlementFormula) {
+    settlementAmount = calculateSettlementAmount(mergedRow, market.settlementFormula, marketName);
+}
+
+// 2. 정산공식 결과가 0이고 상품금액이 있으면 상품금액 사용
+if (settlementAmount === 0 && mergedRow['상품금액']) {
+    settlementAmount = typeof mergedRow['상품금액'] === 'number' ? 
+                      mergedRow['상품금액'] : parseNumber(mergedRow['상품금액']);
+}
+
+// 3. 그래도 0이면 최종결제금액 사용
+if (settlementAmount === 0 && mergedRow['최종결제금액']) {
+    settlementAmount = typeof mergedRow['최종결제금액'] === 'number' ? 
+                      mergedRow['최종결제금액'] : parseNumber(mergedRow['최종결제금액']);
+}
+
+mergedRow['정산예정금액'] = settlementAmount;
                 
                 mergedRow['정산예정금액'] = settlementAmount;
                 
