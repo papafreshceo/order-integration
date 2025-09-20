@@ -2661,3 +2661,251 @@ function formatValue(value, valueField) {
 
 
 
+// ===========================
+// 옵션명 일괄수정 기능
+// ===========================
+let batchEditData = {};
+
+function openBatchEditModal() {
+    if (!processedData || !processedData.data || processedData.data.length === 0) {
+        showCenterMessage('처리된 데이터가 없습니다. 먼저 주문을 통합해주세요.', 'error');
+        return;
+    }
+    
+    // 매칭 실패한 옵션명 수집
+    const unmatchedOptions = {};
+    const modifiedOptions = {};
+    
+    processedData.data.forEach(row => {
+        const optionName = row['옵션명'];
+        const matchStatus = row['_matchStatus'];
+        
+        if (matchStatus === 'unmatched') {
+            if (!unmatchedOptions[optionName]) {
+                unmatchedOptions[optionName] = 0;
+            }
+            unmatchedOptions[optionName]++;
+        } else if (matchStatus === 'modified' || matchStatus === 'modified-matched') {
+            if (!modifiedOptions[optionName]) {
+                modifiedOptions[optionName] = 0;
+            }
+            modifiedOptions[optionName]++;
+        }
+    });
+    
+    // 리스트 생성
+    const listContainer = document.getElementById('batchEditList');
+    listContainer.innerHTML = '';
+    
+    // 초기화
+    batchEditData = {};
+    
+    const unmatchedCount = Object.keys(unmatchedOptions).length;
+    const modifiedCount = Object.keys(modifiedOptions).length;
+    
+    document.getElementById('unmatchedCount').textContent = unmatchedCount;
+    document.getElementById('modifiedCount').textContent = modifiedCount;
+    
+    if (unmatchedCount === 0 && modifiedCount === 0) {
+        document.getElementById('batchEditList').style.display = 'none';
+        document.getElementById('noUnmatchedMessage').style.display = 'block';
+    } else {
+        document.getElementById('batchEditList').style.display = 'flex';
+        document.getElementById('noUnmatchedMessage').style.display = 'none';
+        
+        // 매칭 실패 항목 추가
+        Object.entries(unmatchedOptions).forEach(([optionName, count]) => {
+            const item = createEditItem(optionName, count, 'unmatched');
+            listContainer.appendChild(item);
+        });
+        
+        // 수정된 항목 추가
+        Object.entries(modifiedOptions).forEach(([optionName, count]) => {
+            const item = createEditItem(optionName, count, 'modified');
+            listContainer.appendChild(item);
+        });
+    }
+    
+    document.getElementById('batchEditModal').style.display = 'flex';
+}
+
+function createEditItem(optionName, count, status) {
+    const div = document.createElement('div');
+    div.className = 'edit-item';
+    div.dataset.optionName = optionName;
+    
+    const statusColor = status === 'unmatched' ? '#dc3545' : '#f59e0b';
+    const statusBg = status === 'unmatched' ? '#fee2e2' : '#fff8e1';
+    
+    div.innerHTML = `
+        <div class="original-option" style="background: ${statusBg}; color: ${statusColor};">
+            <span>${optionName}</span>
+            <span class="occurrence-badge">${count}개</span>
+        </div>
+        <span class="arrow-icon">→</span>
+        <input type="text" 
+               class="replacement-input" 
+               placeholder="대체할 옵션명 입력" 
+               data-original="${optionName}"
+               onchange="onReplacementChange(this)">
+    `;
+    
+    return div;
+}
+
+function onReplacementChange(input) {
+    const original = input.dataset.original;
+    const replacement = input.value.trim();
+    
+    if (replacement) {
+        batchEditData[original] = replacement;
+        input.classList.add('has-value');
+        input.closest('.edit-item').classList.add('modified');
+    } else {
+        delete batchEditData[original];
+        input.classList.remove('has-value');
+        input.closest('.edit-item').classList.remove('modified');
+    }
+}
+
+function autoMatchOptions() {
+    // ProductMatching의 데이터를 활용한 자동 매칭
+    const inputs = document.querySelectorAll('.replacement-input');
+    let matchedCount = 0;
+    
+    inputs.forEach(input => {
+        const original = input.dataset.original;
+        
+        // 유사도 기반 자동 매칭 시도
+        const bestMatch = findBestMatch(original);
+        if (bestMatch && bestMatch.similarity > 0.7) {
+            input.value = bestMatch.option;
+            onReplacementChange(input);
+            matchedCount++;
+        }
+    });
+    
+    if (matchedCount > 0) {
+        showCenterMessage(`${matchedCount}개의 옵션명을 자동 매칭했습니다.`, 'success');
+    } else {
+        showCenterMessage('자동 매칭 가능한 옵션명이 없습니다.', 'info');
+    }
+}
+
+function findBestMatch(optionName) {
+    if (!window.productData) return null;
+    
+    const normalized = optionName.toLowerCase().replace(/\s/g, '');
+    let bestMatch = null;
+    let bestSimilarity = 0;
+    
+    Object.keys(window.productData).forEach(productOption => {
+        const normalizedProduct = productOption.toLowerCase().replace(/\s/g, '');
+        const similarity = calculateSimilarity(normalized, normalizedProduct);
+        
+        if (similarity > bestSimilarity) {
+            bestSimilarity = similarity;
+            bestMatch = {
+                option: productOption,
+                similarity: similarity
+            };
+        }
+    });
+    
+    return bestMatch;
+}
+
+function calculateSimilarity(str1, str2) {
+    const longer = str1.length > str2.length ? str1 : str2;
+    const shorter = str1.length > str2.length ? str2 : str1;
+    
+    if (longer.length === 0) return 1.0;
+    
+    const distance = levenshteinDistance(longer, shorter);
+    return (longer.length - distance) / parseFloat(longer.length);
+}
+
+function levenshteinDistance(str1, str2) {
+    const matrix = [];
+    
+    for (let i = 0; i <= str2.length; i++) {
+        matrix[i] = [i];
+    }
+    
+    for (let j = 0; j <= str1.length; j++) {
+        matrix[0][j] = j;
+    }
+    
+    for (let i = 1; i <= str2.length; i++) {
+        for (let j = 1; j <= str1.length; j++) {
+            if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1
+                );
+            }
+        }
+    }
+    
+    return matrix[str2.length][str1.length];
+}
+
+function applyBatchEdit() {
+    if (Object.keys(batchEditData).length === 0) {
+        showCenterMessage('수정할 항목이 없습니다.', 'error');
+        return;
+    }
+    
+    let modifiedCount = 0;
+    
+    // processedData 수정
+    processedData.data.forEach(row => {
+        const currentOption = row['옵션명'];
+        if (batchEditData[currentOption]) {
+            row['옵션명'] = batchEditData[currentOption];
+            row['_matchStatus'] = 'modified-matched';
+            row['_originalOption'] = currentOption;
+            modifiedCount++;
+        }
+    });
+    
+    // 테이블 다시 그리기
+    displayResultTable(processedData.data);
+    
+    // 통계 업데이트
+    if (processedData.statistics) {
+        displayStatistics(processedData.statistics);
+    }
+    
+    showCenterMessage(`${modifiedCount}개 주문의 옵션명을 일괄 수정했습니다.`, 'success');
+    closeBatchEditModal();
+    
+    // 제품 정보 재적용
+    setTimeout(async () => {
+        showLoading();
+        try {
+            processedData.data = await ProductMatching.applyProductInfo(processedData.data);
+            displayResultTable(processedData.data);
+            showCenterMessage('제품 정보가 재적용되었습니다.', 'success');
+        } catch (error) {
+            console.error('제품 정보 재적용 오류:', error);
+        } finally {
+            hideLoading();
+        }
+    }, 500);
+}
+
+function closeBatchEditModal() {
+    document.getElementById('batchEditModal').style.display = 'none';
+    batchEditData = {};
+}
+
+// ESC 키로 모달 닫기
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeBatchEditModal();
+    }
+});
