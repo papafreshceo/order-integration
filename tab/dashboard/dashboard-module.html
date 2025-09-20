@@ -775,86 +775,113 @@
             }
         }
 
-        // 통계 계산
-        function calculateStatistics() {
-            const orders = dashboardState.orderData;
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-            
-            let todayOrders = 0;
-            let yesterdayOrders = 0;
-            let monthOrders = 0;
-            let completedShipping = 0;
-            let pendingOrders = 0;
-            let processingOrders = 0;
-            
-            orders.forEach(order => {
-                const orderDate = parseDate(order['주문일시'] || order['날짜']);
-                const hasTracking = order['송장번호'] && order['송장번호'].trim() !== '' && order['송장번호'] !== '-';
-                
-                // 오늘 주문
-                if (isSameDay(orderDate, today)) {
-                    todayOrders++;
-                }
-                
-                // 어제 주문
-                if (isSameDay(orderDate, yesterday)) {
-                    yesterdayOrders++;
-                }
-                
-                // 이번 달 주문
-                if (orderDate >= monthStart && orderDate <= today) {
-                    monthOrders++;
-                    
-                    if (hasTracking) {
-                        completedShipping++;
-                    } else {
-                        pendingOrders++;
-                    }
-                }
-                
-                // 처리 중 (최근 3일 내 주문 중 송장 없음)
-                const threeDaysAgo = new Date(today);
-                threeDaysAgo.setDate(today.getDate() - 3);
-                if (orderDate >= threeDaysAgo && orderDate <= today && !hasTracking) {
-                    processingOrders++;
-                }
-            });
-            
-            // 전일 대비 계산
-            const todayChange = yesterdayOrders > 0 ? 
-                ((todayOrders - yesterdayOrders) / yesterdayOrders * 100).toFixed(0) : 0;
-            
-            // 전월 대비 계산
-            const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-            const lastMonthToday = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
-            let lastMonthOrders = 0;
-            
-            orders.forEach(order => {
-                const orderDate = parseDate(order['주문일시'] || order['날짜']);
-                if (orderDate >= lastMonthStart && orderDate <= lastMonthToday) {
-                    lastMonthOrders++;
-                }
-            });
-            
-            const monthlyChange = lastMonthOrders > 0 ?
-                ((monthOrders - lastMonthOrders) / lastMonthOrders * 100).toFixed(0) : 0;
-            
-            // UI 업데이트
-            updateStatCards({
-                todayOrders,
-                todayChange,
-                completedShipping,
-                pendingOrders,
-                monthOrders,
-                monthlyChange,
-                processingOrders
-            });
+// 통계 계산
+function calculateStatistics() {
+    const orders = dashboardState.orderData;
+    console.log('통계 계산 시작, 주문 수:', orders.length);
+    
+    // 첫 번째 주문 데이터 확인
+    if (orders.length > 0) {
+        console.log('첫 번째 주문 데이터:', orders[0]);
+        console.log('사용 가능한 컬럼:', Object.keys(orders[0]));
+    }
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    let todayOrders = 0;
+    let yesterdayOrders = 0;
+    let monthOrders = 0;
+    let completedShipping = 0;
+    let pendingOrders = 0;
+    let processingOrders = 0;
+    
+    orders.forEach(order => {
+        // 날짜 필드 찾기 - 다양한 컬럼명 시도
+        let orderDateStr = order['주문일시'] || order['날짜'] || order['주문일'] || order['결제일'];
+        console.log('원본 날짜 데이터:', orderDateStr);
+        
+        const orderDate = parseDate(orderDateStr);
+        console.log('파싱된 날짜:', orderDate);
+        
+        // 송장번호 체크 - 다양한 컬럼명 시도
+        const hasTracking = (order['송장번호'] && order['송장번호'].trim() !== '' && order['송장번호'] !== '-') ||
+                           (order['운송장번호'] && order['운송장번호'].trim() !== '' && order['운송장번호'] !== '-');
+        
+        // 오늘 주문
+        if (isSameDay(orderDate, today)) {
+            todayOrders++;
+            console.log('오늘 주문 발견:', order);
         }
+        
+        // 어제 주문
+        if (isSameDay(orderDate, yesterday)) {
+            yesterdayOrders++;
+        }
+        
+        // 이번 달 주문
+        if (orderDate >= monthStart && orderDate <= today) {
+            monthOrders++;
+            
+            if (hasTracking) {
+                completedShipping++;
+            } else {
+                pendingOrders++;
+            }
+        }
+        
+        // 처리 중 (최근 3일 내 주문 중 송장 없음)
+        const threeDaysAgo = new Date(today);
+        threeDaysAgo.setDate(today.getDate() - 3);
+        if (orderDate >= threeDaysAgo && orderDate <= today && !hasTracking) {
+            processingOrders++;
+        }
+    });
+    
+    console.log('계산 결과:', {
+        todayOrders,
+        yesterdayOrders,
+        monthOrders,
+        completedShipping,
+        pendingOrders,
+        processingOrders
+    });
+    
+    // 전일 대비 계산
+    const todayChange = yesterdayOrders > 0 ? 
+        ((todayOrders - yesterdayOrders) / yesterdayOrders * 100).toFixed(0) : 0;
+    
+    // 전월 대비 계산
+    const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const lastMonthToday = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+    let lastMonthOrders = 0;
+    
+    orders.forEach(order => {
+        const orderDateStr = order['주문일시'] || order['날짜'] || order['주문일'] || order['결제일'];
+        const orderDate = parseDate(orderDateStr);
+        if (orderDate >= lastMonthStart && orderDate <= lastMonthToday) {
+            lastMonthOrders++;
+        }
+    });
+    
+    const monthlyChange = lastMonthOrders > 0 ?
+        ((monthOrders - lastMonthOrders) / lastMonthOrders * 100).toFixed(0) : 0;
+    
+    // UI 업데이트
+    updateStatCards({
+        todayOrders,
+        todayChange,
+        completedShipping,
+        pendingOrders,
+        monthOrders,
+        monthlyChange,
+        processingOrders
+    });
+}
 
         // 통계 카드 업데이트
         function updateStatCards(stats) {
@@ -1150,31 +1177,50 @@
 
         // 유틸리티 함수들
         function parseDate(dateStr) {
-            if (!dateStr) return new Date(0);
-            
-            const str = String(dateStr).trim();
-            
-            // 엑셀 시리얼 날짜 처리
-            if (!isNaN(str) && str.length <= 6) {
-                const excelDate = parseInt(str);
-                const date = new Date((excelDate - 25569) * 86400 * 1000);
-                return date;
-            }
-            
-            // YYYY-MM-DD 형식
-            if (str.match(/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/)) {
-                const cleanStr = str.split(' ')[0].replace(/\//g, '-');
-                return new Date(cleanStr + 'T00:00:00');
-            }
-            
-            // MM/DD/YYYY 형식
-            if (str.match(/^\d{1,2}\/\d{1,2}\/\d{4}/)) {
-                const parts = str.split('/');
-                return new Date(parts[2], parseInt(parts[0]) - 1, parseInt(parts[1]));
-            }
-            
-            return new Date(str);
-        }
+    if (!dateStr) return new Date(0);
+    
+    const str = String(dateStr).trim();
+    console.log('parseDate 입력:', str);
+    
+    // YYYYMMDD 형식 (예: 20250120)
+    if (str.match(/^\d{8}$/)) {
+        const year = str.substring(0, 4);
+        const month = str.substring(4, 6);
+        const day = str.substring(6, 8);
+        const result = new Date(year, parseInt(month) - 1, parseInt(day));
+        console.log('YYYYMMDD 형식 파싱:', result);
+        return result;
+    }
+    
+    // 엑셀 시리얼 날짜 처리
+    if (!isNaN(str) && str.length <= 6) {
+        const excelDate = parseInt(str);
+        const date = new Date((excelDate - 25569) * 86400 * 1000);
+        console.log('엑셀 시리얼 파싱:', date);
+        return date;
+    }
+    
+    // YYYY-MM-DD 또는 YYYY/MM/DD 형식
+    if (str.match(/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/)) {
+        const cleanStr = str.split(' ')[0].replace(/\//g, '-');
+        const result = new Date(cleanStr + 'T00:00:00');
+        console.log('YYYY-MM-DD 형식 파싱:', result);
+        return result;
+    }
+    
+    // MM/DD/YYYY 형식
+    if (str.match(/^\d{1,2}\/\d{1,2}\/\d{4}/)) {
+        const parts = str.split('/');
+        const result = new Date(parts[2], parseInt(parts[0]) - 1, parseInt(parts[1]));
+        console.log('MM/DD/YYYY 형식 파싱:', result);
+        return result;
+    }
+    
+    // 기본 파싱 시도
+    const parsed = new Date(str);
+    console.log('기본 파싱:', parsed);
+    return isNaN(parsed.getTime()) ? new Date(0) : parsed;
+}
 
         function isSameDay(date1, date2) {
             return date1.getFullYear() === date2.getFullYear() &&
