@@ -771,23 +771,55 @@
 
         // 구글시트에서 대시보드 데이터 로드
         async function loadDashboardData() {
-            console.log('구글시트 데이터 로딩 중...');
+            console.log('구글시트 데이터 로딩 시작...');
             
             try {
                 const range = `${SHEET_NAME}!A:AZ`;
                 const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID_ORDERS}/values/${range}?key=${API_KEY}`;
                 
+                console.log('요청 URL:', url);
+                
                 const response = await fetch(url);
+                
+                if (!response.ok) {
+                    console.error('API 응답 오류:', response.status, response.statusText);
+                    return;
+                }
+                
                 const data = await response.json();
+                console.log('API 응답 데이터:', data);
                 
                 if (data.values && data.values.length > 0) {
                     dashboardState.orderData = data.values;
                     
                     const headers = data.values[0];
-                    const dateIndex = headers.indexOf('주문일시') !== -1 ? headers.indexOf('주문일시') : headers.indexOf('날짜');
-                    const marketIndex = headers.indexOf('마켓명') !== -1 ? headers.indexOf('마켓명') : headers.indexOf('마켓');
-                    const statusIndex = headers.indexOf('송장번호') !== -1 ? headers.indexOf('송장번호') : headers.indexOf('상태');
-                    const amountIndex = headers.indexOf('정산예정금액') !== -1 ? headers.indexOf('정산예정금액') : headers.indexOf('금액');
+                    console.log('헤더 컬럼:', headers);
+                    
+                    // 다양한 컬럼명 매칭
+                    const dateIndex = headers.findIndex(h => 
+                        h && (h.includes('주문일시') || h.includes('날짜') || h.includes('주문일') || h === '일시')
+                    );
+                    const marketIndex = headers.findIndex(h => 
+                        h && (h.includes('마켓명') || h.includes('마켓') || h === '판매처')
+                    );
+                    const statusIndex = headers.findIndex(h => 
+                        h && (h.includes('송장번호') || h.includes('송장') || h.includes('운송장'))
+                    );
+                    const amountIndex = headers.findIndex(h => 
+                        h && (h.includes('정산예정금액') || h.includes('금액') || h.includes('정산금'))
+                    );
+                    
+                    console.log('컬럼 인덱스:', {
+                        dateIndex,
+                        marketIndex,
+                        statusIndex,
+                        amountIndex
+                    });
+                    
+                    if (dateIndex === -1) {
+                        console.error('날짜 컬럼을 찾을 수 없습니다.');
+                        return;
+                    }
                     
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
@@ -803,13 +835,17 @@
                     let pendingOrders = 0;
                     let marketStats = {};
                     
+                    console.log('총 데이터 행 수:', data.values.length - 1);
+                    
                     for (let i = 1; i < data.values.length; i++) {
                         const row = data.values[i];
-                        if (!row[dateIndex]) continue;
+                        if (!row || !row[dateIndex]) continue;
                         
                         const orderDate = parseDate(row[dateIndex]);
-                        const hasTracking = row[statusIndex] && row[statusIndex] !== '-' && row[statusIndex] !== '';
-                        const market = row[marketIndex] || '기타';
+                        const hasTracking = statusIndex !== -1 && row[statusIndex] && 
+                                          row[statusIndex] !== '-' && row[statusIndex] !== '' && 
+                                          row[statusIndex] !== '0';
+                        const market = marketIndex !== -1 ? (row[marketIndex] || '기타') : '기타';
                         
                         if (isSameDay(orderDate, today)) {
                             todayOrders++;
@@ -838,6 +874,15 @@
                     const todayChange = yesterdayOrders > 0 ? 
                         ((todayOrders - yesterdayOrders) / yesterdayOrders * 100).toFixed(0) : 0;
                     
+                    console.log('계산된 통계:', {
+                        todayOrders,
+                        yesterdayOrders,
+                        monthOrders,
+                        completedShipping,
+                        pendingOrders,
+                        todayChange
+                    });
+                    
                     updateDashboardStats({
                         todayOrders,
                         todayChange,
@@ -862,16 +907,34 @@
             
             const str = String(dateStr).trim();
             
-            if (str.match(/^\d{4}-\d{2}-\d{2}/)) {
-                return new Date(str.split(' ')[0] + 'T00:00:00');
+            // 엑셀 시리얼 날짜 처리 (숫자인 경우)
+            if (!isNaN(str) && str.length <= 6) {
+                const excelDate = parseInt(str);
+                const date = new Date((excelDate - 25569) * 86400 * 1000);
+                return date;
             }
             
+            // YYYY-MM-DD 또는 YYYY/MM/DD 형식
+            if (str.match(/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/)) {
+                const cleanStr = str.split(' ')[0].replace(/\//g, '-');
+                return new Date(cleanStr + 'T00:00:00');
+            }
+            
+            // DD/MM/YYYY 또는 DD-MM-YYYY 형식
+            if (str.match(/^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}/)) {
+                const parts = str.split(/[-\/]/);
+                return new Date(parts[2], parseInt(parts[1]) - 1, parseInt(parts[0]));
+            }
+            
+            // MM/DD/YYYY 형식
             if (str.match(/^\d{1,2}\/\d{1,2}\/\d{4}/)) {
                 const parts = str.split('/');
-                return new Date(parts[2], parseInt(parts[0]) - 1, parts[1]);
+                return new Date(parts[2], parseInt(parts[0]) - 1, parseInt(parts[1]));
             }
             
-            return new Date(str);
+            // 기본 파싱 시도
+            const parsed = new Date(str);
+            return isNaN(parsed.getTime()) ? new Date(0) : parsed;
         }
 
         function isSameDay(date1, date2) {
@@ -1002,8 +1065,12 @@
         }
 
         function updateChartsWithData(data, headers) {
-            const dateIndex = headers.indexOf('주문일시') !== -1 ? headers.indexOf('주문일시') : headers.indexOf('날짜');
-            const marketIndex = headers.indexOf('마켓명') !== -1 ? headers.indexOf('마켓명') : headers.indexOf('마켓');
+            const dateIndex = headers.findIndex(h => 
+                h && (h.includes('주문일시') || h.includes('날짜') || h.includes('주문일') || h === '일시')
+            );
+            const marketIndex = headers.findIndex(h => 
+                h && (h.includes('마켓명') || h.includes('마켓') || h === '판매처')
+            );
             
             const last7Days = [];
             const today = new Date();
@@ -1022,10 +1089,10 @@
             
             for (let i = 1; i < data.length; i++) {
                 const row = data[i];
-                if (!row[dateIndex]) continue;
+                if (!row || !row[dateIndex]) continue;
                 
                 const orderDate = parseDate(row[dateIndex]);
-                const market = row[marketIndex] || '기타';
+                const market = marketIndex !== -1 ? (row[marketIndex] || '기타') : '기타';
                 
                 last7Days.forEach(day => {
                     if (isSameDay(orderDate, day.date)) {
