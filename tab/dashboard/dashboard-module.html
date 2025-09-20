@@ -441,24 +441,67 @@
         }
 
         /* ========================================
-           애니메이션
+           로딩 & 메시지
            ======================================== */
-        @keyframes spin {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
         }
 
         .loading-spinner {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #2563eb;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2563eb;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
             animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
     </style>
 </head>
@@ -589,10 +632,10 @@
                 <div class="delivery-summary">
                     <div class="summary-row">
                         <span class="summary-label">전체 진행률</span>
-                        <span class="summary-value">0%</span>
+                        <span class="summary-value" id="progressPercent">0%</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: 0%;"></div>
+                        <div class="progress-fill" id="progressBar" style="width: 0%;"></div>
                     </div>
                 </div>
             </div>
@@ -637,13 +680,13 @@
             <div class="chart-card">
                 <div class="card-header">
                     <h3 class="card-title">주간 주문 추이</h3>
-                    <select class="chart-filter">
-                        <option>최근 7일</option>
-                        <option>최근 30일</option>
-                        <option>최근 3개월</option>
+                    <select class="chart-filter" id="weeklyChartFilter">
+                        <option value="7">최근 7일</option>
+                        <option value="30">최근 30일</option>
+                        <option value="90">최근 3개월</option>
                     </select>
                 </div>
-                <div class="chart-content" id="weeklyChart">
+                <div class="chart-content">
                     <canvas id="weeklyOrderChart"></canvas>
                 </div>
             </div>
@@ -651,19 +694,23 @@
             <div class="chart-card">
                 <div class="card-header">
                     <h3 class="card-title">마켓별 주문 비율</h3>
-                    <button class="btn-icon">
+                    <button class="btn-icon" onclick="refreshMarketChart()">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="1"></circle>
-                            <circle cx="12" cy="5" r="1"></circle>
-                            <circle cx="12" cy="19" r="1"></circle>
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                         </svg>
                     </button>
                 </div>
-                <div class="chart-content" id="marketChart">
+                <div class="chart-content">
                     <canvas id="marketShareChart"></canvas>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- 로딩 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
     </div>
 
     <script>
@@ -671,23 +718,315 @@
         const dashboardState = {
             currentDate: new Date(),
             selectedDate: null,
-            orderData: []
+            orderData: [],
+            marketColors: {}
         };
-
-        // Google Sheets API 설정
-        const SPREADSHEET_ID_ORDERS = '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
-        const API_KEY = 'AIzaSyBmla88O94sXJNMSgVuz6xxGAG2VcbSz7I';
-        const SHEET_NAME = 'Sheet1';
 
         // 페이지 로드 시 초기화
         document.addEventListener('DOMContentLoaded', function() {
             renderCalendar();
-            initCharts();
             loadDashboardData();
             
             // 5분마다 자동 새로고침
             setInterval(loadDashboardData, 5 * 60 * 1000);
+            
+            // 차트 필터 이벤트
+            document.getElementById('weeklyChartFilter').addEventListener('change', function() {
+                updateWeeklyChart(parseInt(this.value));
+            });
         });
+
+        // 대시보드 데이터 로드 (search-module 방식 활용)
+        async function loadDashboardData() {
+            showLoading();
+            try {
+                const response = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'getMarketData',
+                        useMainSpreadsheet: true
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    dashboardState.orderData = result.data || [];
+                    dashboardState.marketColors = result.colors || {};
+                    
+                    console.log('로드된 주문 데이터:', dashboardState.orderData.length, '건');
+                    
+                    // 통계 계산 및 업데이트
+                    calculateStatistics();
+                    updateCharts();
+                    updateCalendarData();
+                } else {
+                    showMessage('데이터를 불러올 수 없습니다.', 'error');
+                }
+            } catch (error) {
+                console.error('로드 오류:', error);
+                showMessage('데이터 로드 중 오류가 발생했습니다.', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 통계 계산
+        function calculateStatistics() {
+            const orders = dashboardState.orderData;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            let todayOrders = 0;
+            let yesterdayOrders = 0;
+            let monthOrders = 0;
+            let completedShipping = 0;
+            let pendingOrders = 0;
+            let processingOrders = 0;
+            
+            orders.forEach(order => {
+                const orderDate = parseDate(order['주문일시'] || order['날짜']);
+                const hasTracking = order['송장번호'] && order['송장번호'].trim() !== '' && order['송장번호'] !== '-';
+                
+                // 오늘 주문
+                if (isSameDay(orderDate, today)) {
+                    todayOrders++;
+                }
+                
+                // 어제 주문
+                if (isSameDay(orderDate, yesterday)) {
+                    yesterdayOrders++;
+                }
+                
+                // 이번 달 주문
+                if (orderDate >= monthStart && orderDate <= today) {
+                    monthOrders++;
+                    
+                    if (hasTracking) {
+                        completedShipping++;
+                    } else {
+                        pendingOrders++;
+                    }
+                }
+                
+                // 처리 중 (최근 3일 내 주문 중 송장 없음)
+                const threeDaysAgo = new Date(today);
+                threeDaysAgo.setDate(today.getDate() - 3);
+                if (orderDate >= threeDaysAgo && orderDate <= today && !hasTracking) {
+                    processingOrders++;
+                }
+            });
+            
+            // 전일 대비 계산
+            const todayChange = yesterdayOrders > 0 ? 
+                ((todayOrders - yesterdayOrders) / yesterdayOrders * 100).toFixed(0) : 0;
+            
+            // 전월 대비 계산 (이전 달 같은 기간)
+            const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            const lastMonthToday = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+            let lastMonthOrders = 0;
+            
+            orders.forEach(order => {
+                const orderDate = parseDate(order['주문일시'] || order['날짜']);
+                if (orderDate >= lastMonthStart && orderDate <= lastMonthToday) {
+                    lastMonthOrders++;
+                }
+            });
+            
+            const monthlyChange = lastMonthOrders > 0 ?
+                ((monthOrders - lastMonthOrders) / lastMonthOrders * 100).toFixed(0) : 0;
+            
+            // UI 업데이트
+            updateStatCards({
+                todayOrders,
+                todayChange,
+                completedShipping,
+                pendingOrders,
+                monthOrders,
+                monthlyChange,
+                processingOrders
+            });
+        }
+
+        // 통계 카드 업데이트
+        function updateStatCards(stats) {
+            // 오늘 주문
+            document.getElementById('todayOrders').textContent = stats.todayOrders.toLocaleString('ko-KR');
+            const todayChangeEl = document.getElementById('todayChange');
+            todayChangeEl.textContent = stats.todayChange >= 0 ? 
+                `+${stats.todayChange}% 전일 대비` : `${stats.todayChange}% 전일 대비`;
+            todayChangeEl.className = stats.todayChange >= 0 ? 'stats-change positive' : 'stats-change negative';
+            
+            // 발송 완료
+            document.getElementById('completedShipping').textContent = stats.completedShipping.toLocaleString('ko-KR');
+            
+            // 처리 대기
+            document.getElementById('pendingOrders').textContent = stats.pendingOrders.toLocaleString('ko-KR');
+            
+            // 월간 주문
+            document.getElementById('monthlyOrders').textContent = stats.monthOrders.toLocaleString('ko-KR');
+            const monthlyChangeEl = document.getElementById('monthlyChange');
+            monthlyChangeEl.textContent = stats.monthlyChange >= 0 ? 
+                `+${stats.monthlyChange}% 전월 대비` : `${stats.monthlyChange}% 전월 대비`;
+            monthlyChangeEl.className = stats.monthlyChange >= 0 ? 'stats-change positive' : 'stats-change negative';
+            
+            // 배송 현황
+            document.getElementById('deliveryReceived').textContent = stats.pendingOrders;
+            document.getElementById('deliveryProcessing').textContent = stats.processingOrders;
+            document.getElementById('deliveryShipping').textContent = '0'; // 실제 배송중 데이터 필요
+            document.getElementById('deliveryCompleted').textContent = stats.completedShipping;
+            
+            // 진행률
+            const total = stats.pendingOrders + stats.completedShipping;
+            const percent = total > 0 ? Math.round((stats.completedShipping / total) * 100) : 0;
+            document.getElementById('progressPercent').textContent = `${percent}%`;
+            document.getElementById('progressBar').style.width = `${percent}%`;
+        }
+
+        // 차트 업데이트
+        function updateCharts() {
+            updateWeeklyChart(7);
+            updateMarketChart();
+        }
+
+        // 주간 차트 업데이트
+        function updateWeeklyChart(days = 7) {
+            const canvas = document.getElementById('weeklyOrderChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const orders = dashboardState.orderData;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const dailyData = [];
+            const labels = [];
+            
+            for (let i = days - 1; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                
+                const dayOrders = orders.filter(order => {
+                    const orderDate = parseDate(order['주문일시'] || order['날짜']);
+                    return isSameDay(orderDate, date);
+                }).length;
+                
+                dailyData.push(dayOrders);
+                
+                if (days <= 7) {
+                    labels.push(['일', '월', '화', '수', '목', '금', '토'][date.getDay()]);
+                } else {
+                    labels.push(`${date.getMonth() + 1}/${date.getDate()}`);
+                }
+            }
+            
+            // 차트 그리기
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = 200;
+            
+            const maxValue = Math.max(...dailyData, 10);
+            const barWidth = canvas.width / (dailyData.length * 2);
+            const barSpacing = barWidth;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            dailyData.forEach((value, index) => {
+                const barHeight = (value / maxValue) * (canvas.height - 40);
+                const x = (index * (barWidth + barSpacing)) + barSpacing;
+                const y = canvas.height - barHeight - 20;
+                
+                ctx.fillStyle = '#2563eb';
+                ctx.fillRect(x, y, barWidth, barHeight);
+                
+                ctx.fillStyle = '#6c757d';
+                ctx.font = '11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(labels[index], x + barWidth / 2, canvas.height - 5);
+                ctx.fillText(value, x + barWidth / 2, y - 5);
+            });
+        }
+
+        // 마켓 차트 업데이트
+        function updateMarketChart() {
+            const canvas = document.getElementById('marketShareChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const orders = dashboardState.orderData;
+            
+            // 마켓별 집계
+            const marketStats = {};
+            orders.forEach(order => {
+                const market = order['마켓명'] || '기타';
+                marketStats[market] = (marketStats[market] || 0) + 1;
+            });
+            
+            const total = Object.values(marketStats).reduce((a, b) => a + b, 0);
+            if (total === 0) {
+                canvas.width = canvas.parentElement.offsetWidth;
+                canvas.height = 200;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#6c757d';
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('데이터 없음', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+            
+            // 상위 5개 마켓만 표시
+            const sortedMarkets = Object.entries(marketStats)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            
+            const colors = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+            
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = 200;
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 60;
+            const innerRadius = 35;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            let currentAngle = -Math.PI / 2;
+            
+            sortedMarkets.forEach(([market, count], index) => {
+                const percentage = (count / total) * 100;
+                const angle = (percentage / 100) * Math.PI * 2;
+                
+                // 도넛 차트 그리기
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + angle);
+                ctx.arc(centerX, centerY, innerRadius, currentAngle + angle, currentAngle, true);
+                ctx.closePath();
+                ctx.fillStyle = colors[index];
+                ctx.fill();
+                
+                currentAngle += angle;
+            });
+            
+            // 범례
+            let legendY = 20;
+            sortedMarkets.forEach(([market, count], index) => {
+                const percentage = ((count / total) * 100).toFixed(1);
+                
+                ctx.fillStyle = colors[index];
+                ctx.fillRect(10, legendY - 8, 12, 12);
+                
+                ctx.fillStyle = '#495057';
+                ctx.font = '12px sans-serif';
+                ctx.fillText(`${market} ${percentage}%`, 30, legendY);
+                
+                legendY += 20;
+            });
+        }
 
         // 캘린더 렌더링
         function renderCalendar() {
@@ -703,12 +1042,14 @@
             const calendarGrid = document.getElementById('calendarGrid');
             calendarGrid.innerHTML = '';
             
+            // 빈 칸
             for (let i = 0; i < firstDay; i++) {
                 const emptyDay = document.createElement('div');
                 emptyDay.className = 'calendar-day empty';
                 calendarGrid.appendChild(emptyDay);
             }
             
+            // 날짜
             for (let date = 1; date <= lastDate; date++) {
                 const dayElement = document.createElement('div');
                 dayElement.className = 'calendar-day';
@@ -728,13 +1069,36 @@
                     dayElement.classList.add('saturday');
                 }
                 
-                dayElement.innerHTML = `
-                    <div class="calendar-date">${date}</div>
-                `;
+                const dateDiv = document.createElement('div');
+                dateDiv.className = 'calendar-date';
+                dateDiv.textContent = date;
+                dayElement.appendChild(dateDiv);
+                
+                // 해당 날짜의 주문 수 표시
+                if (dashboardState.orderData.length > 0) {
+                    const dayOrders = dashboardState.orderData.filter(order => {
+                        const orderDate = parseDate(order['주문일시'] || order['날짜']);
+                        return orderDate.getFullYear() === year && 
+                               orderDate.getMonth() === month && 
+                               orderDate.getDate() === date;
+                    }).length;
+                    
+                    if (dayOrders > 0) {
+                        const countDiv = document.createElement('div');
+                        countDiv.className = 'calendar-delivery-count';
+                        countDiv.textContent = `${dayOrders}건`;
+                        dayElement.appendChild(countDiv);
+                    }
+                }
                 
                 dayElement.onclick = () => selectDate(year, month, date);
                 calendarGrid.appendChild(dayElement);
             }
+        }
+
+        // 캘린더 데이터 업데이트
+        function updateCalendarData() {
+            renderCalendar();
         }
 
         function selectDate(year, month, date) {
@@ -745,6 +1109,14 @@
             });
             
             event.target.closest('.calendar-day').classList.add('selected');
+            
+            // 선택한 날짜의 주문 표시
+            const selectedOrders = dashboardState.orderData.filter(order => {
+                const orderDate = parseDate(order['주문일시'] || order['날짜']);
+                return isSameDay(orderDate, dashboardState.selectedDate);
+            });
+            
+            console.log(`${year}년 ${month + 1}월 ${date}일 주문:`, selectedOrders.length, '건');
         }
 
         function previousMonth() {
@@ -766,164 +1138,30 @@
                 }, 1000);
             }
             
-            loadDeliveryData();
+            loadDashboardData();
         }
 
-        // 구글시트에서 대시보드 데이터 로드
-        async function loadDashboardData() {
-            console.log('구글시트 데이터 로딩 시작...');
-            
-            try {
-                const range = `${SHEET_NAME}!A:AZ`;
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID_ORDERS}/values/${range}?key=${API_KEY}`;
-                
-                console.log('요청 URL:', url);
-                
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    console.error('API 응답 오류:', response.status, response.statusText);
-                    return;
-                }
-                
-                const data = await response.json();
-                console.log('API 응답 데이터:', data);
-                
-                if (data.values && data.values.length > 0) {
-                    dashboardState.orderData = data.values;
-                    
-                    const headers = data.values[0];
-                    console.log('헤더 컬럼:', headers);
-                    
-                    // 다양한 컬럼명 매칭
-                    const dateIndex = headers.findIndex(h => 
-                        h && (h.includes('주문일시') || h.includes('날짜') || h.includes('주문일') || h === '일시')
-                    );
-                    const marketIndex = headers.findIndex(h => 
-                        h && (h.includes('마켓명') || h.includes('마켓') || h === '판매처')
-                    );
-                    const statusIndex = headers.findIndex(h => 
-                        h && (h.includes('송장번호') || h.includes('송장') || h.includes('운송장'))
-                    );
-                    const amountIndex = headers.findIndex(h => 
-                        h && (h.includes('정산예정금액') || h.includes('금액') || h.includes('정산금'))
-                    );
-                    
-                    console.log('컬럼 인덱스:', {
-                        dateIndex,
-                        marketIndex,
-                        statusIndex,
-                        amountIndex
-                    });
-                    
-                    if (dateIndex === -1) {
-                        console.error('날짜 컬럼을 찾을 수 없습니다.');
-                        return;
-                    }
-                    
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    
-                    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-                    const yesterday = new Date(today);
-                    yesterday.setDate(yesterday.getDate() - 1);
-                    
-                    let todayOrders = 0;
-                    let yesterdayOrders = 0;
-                    let monthOrders = 0;
-                    let completedShipping = 0;
-                    let pendingOrders = 0;
-                    let marketStats = {};
-                    
-                    console.log('총 데이터 행 수:', data.values.length - 1);
-                    
-                    for (let i = 1; i < data.values.length; i++) {
-                        const row = data.values[i];
-                        if (!row || !row[dateIndex]) continue;
-                        
-                        const orderDate = parseDate(row[dateIndex]);
-                        const hasTracking = statusIndex !== -1 && row[statusIndex] && 
-                                          row[statusIndex] !== '-' && row[statusIndex] !== '' && 
-                                          row[statusIndex] !== '0';
-                        const market = marketIndex !== -1 ? (row[marketIndex] || '기타') : '기타';
-                        
-                        if (isSameDay(orderDate, today)) {
-                            todayOrders++;
-                        }
-                        
-                        if (isSameDay(orderDate, yesterday)) {
-                            yesterdayOrders++;
-                        }
-                        
-                        if (orderDate >= monthStart && orderDate <= today) {
-                            monthOrders++;
-                            
-                            if (!marketStats[market]) {
-                                marketStats[market] = 0;
-                            }
-                            marketStats[market]++;
-                        }
-                        
-                        if (hasTracking) {
-                            completedShipping++;
-                        } else if (orderDate >= monthStart) {
-                            pendingOrders++;
-                        }
-                    }
-                    
-                    const todayChange = yesterdayOrders > 0 ? 
-                        ((todayOrders - yesterdayOrders) / yesterdayOrders * 100).toFixed(0) : 0;
-                    
-                    console.log('계산된 통계:', {
-                        todayOrders,
-                        yesterdayOrders,
-                        monthOrders,
-                        completedShipping,
-                        pendingOrders,
-                        todayChange
-                    });
-                    
-                    updateDashboardStats({
-                        todayOrders,
-                        todayChange,
-                        completedShipping,
-                        pendingOrders,
-                        monthOrders,
-                        marketStats
-                    });
-                    
-                    updateChartsWithData(data.values, headers);
-                    updateDeliveryStatus(completedShipping, pendingOrders);
-                    
-                    console.log('구글시트 데이터 로드 완료');
-                }
-            } catch (error) {
-                console.error('구글시트 데이터 로드 실패:', error);
-            }
+        function refreshMarketChart() {
+            updateMarketChart();
         }
 
+        // 유틸리티 함수들
         function parseDate(dateStr) {
             if (!dateStr) return new Date(0);
             
             const str = String(dateStr).trim();
             
-            // 엑셀 시리얼 날짜 처리 (숫자인 경우)
+            // 엑셀 시리얼 날짜 처리
             if (!isNaN(str) && str.length <= 6) {
                 const excelDate = parseInt(str);
                 const date = new Date((excelDate - 25569) * 86400 * 1000);
                 return date;
             }
             
-            // YYYY-MM-DD 또는 YYYY/MM/DD 형식
+            // YYYY-MM-DD 형식
             if (str.match(/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/)) {
                 const cleanStr = str.split(' ')[0].replace(/\//g, '-');
                 return new Date(cleanStr + 'T00:00:00');
-            }
-            
-            // DD/MM/YYYY 또는 DD-MM-YYYY 형식
-            if (str.match(/^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}/)) {
-                const parts = str.split(/[-\/]/);
-                return new Date(parts[2], parseInt(parts[1]) - 1, parseInt(parts[0]));
             }
             
             // MM/DD/YYYY 형식
@@ -932,9 +1170,7 @@
                 return new Date(parts[2], parseInt(parts[0]) - 1, parseInt(parts[1]));
             }
             
-            // 기본 파싱 시도
-            const parsed = new Date(str);
-            return isNaN(parsed.getTime()) ? new Date(0) : parsed;
+            return new Date(str);
         }
 
         function isSameDay(date1, date2) {
@@ -943,272 +1179,23 @@
                    date1.getDate() === date2.getDate();
         }
 
-        function updateDashboardStats(stats) {
-            const todayOrdersEl = document.getElementById('todayOrders');
-            if (todayOrdersEl) {
-                animateNumber(todayOrdersEl, 0, stats.todayOrders, 1000);
-            }
-            
-            const completedEl = document.getElementById('completedShipping');
-            if (completedEl) {
-                animateNumber(completedEl, 0, stats.completedShipping, 1000);
-            }
-            
-            const pendingEl = document.getElementById('pendingOrders');
-            if (pendingEl) {
-                animateNumber(pendingEl, 0, stats.pendingOrders, 1000);
-            }
-            
-            const monthlyEl = document.getElementById('monthlyOrders');
-            if (monthlyEl) {
-                animateNumber(monthlyEl, 0, stats.monthOrders, 1000);
-            }
-            
-            const todayChangeEl = document.getElementById('todayChange');
-            if (todayChangeEl && stats.todayChange !== undefined) {
-                const changeText = stats.todayChange >= 0 ? 
-                    `+${stats.todayChange}% 전일 대비` : 
-                    `${stats.todayChange}% 전일 대비`;
-                todayChangeEl.textContent = changeText;
-                todayChangeEl.className = stats.todayChange >= 0 ? 
-                    'stats-change positive' : 'stats-change negative';
-            }
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
         }
 
-        function updateDeliveryStatus(completed, pending) {
-            document.getElementById('deliveryCompleted').textContent = completed;
-            document.getElementById('deliveryReceived').textContent = pending;
-            
-            const total = completed + pending;
-            if (total > 0) {
-                const percent = Math.round((completed / total) * 100);
-                document.querySelector('.summary-value').textContent = `${percent}%`;
-                document.querySelector('.progress-fill').style.width = `${percent}%`;
-            }
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
         }
 
-        function loadDeliveryData() {
-            loadDashboardData();
-        }
-
-        function animateNumbers() {
-            // 샘플값 제거 - 실제 데이터만 사용
-        }
-
-        function animateNumber(element, start, end, duration) {
-            const range = end - start;
-            const increment = range / (duration / 16);
-            let current = start;
+        function showMessage(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            div.textContent = message;
+            document.body.appendChild(div);
             
-            const timer = setInterval(() => {
-                current += increment;
-                if (current >= end) {
-                    current = end;
-                    clearInterval(timer);
-                }
-                element.textContent = Math.round(current).toLocaleString('ko-KR');
-            }, 16);
-        }
-
-        function initCharts() {
-            renderWeeklyChart();
-            renderMarketChart();
-        }
-
-        function renderWeeklyChart() {
-            const canvas = document.getElementById('weeklyOrderChart');
-            if (!canvas) return;
-            
-            const ctx = canvas.getContext('2d');
-            const data = [0, 0, 0, 0, 0, 0, 0];
-            const labels = ['월', '화', '수', '목', '금', '토', '일'];
-            const maxValue = Math.max(...data, 10);
-            
-            canvas.width = canvas.parentElement.offsetWidth;
-            canvas.height = 200;
-            
-            const barWidth = canvas.width / (data.length * 2);
-            const barSpacing = barWidth;
-            
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            data.forEach((value, index) => {
-                const barHeight = (value / maxValue) * (canvas.height - 40);
-                const x = (index * (barWidth + barSpacing)) + barSpacing;
-                const y = canvas.height - barHeight - 20;
-                
-                ctx.fillStyle = '#2563eb';
-                ctx.fillRect(x, y, barWidth, barHeight);
-                
-                ctx.fillStyle = '#6c757d';
-                ctx.font = '12px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(labels[index], x + barWidth / 2, canvas.height - 5);
-                ctx.fillText(value, x + barWidth / 2, y - 5);
-            });
-        }
-
-        function renderMarketChart() {
-            const canvas = document.getElementById('marketShareChart');
-            if (!canvas) return;
-            
-            const ctx = canvas.getContext('2d');
-            canvas.width = canvas.parentElement.offsetWidth;
-            canvas.height = 200;
-            
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.fillStyle = '#6c757d';
-            ctx.font = '14px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('데이터 로딩 중...', canvas.width / 2, canvas.height / 2);
-        }
-
-        function updateChartsWithData(data, headers) {
-            const dateIndex = headers.findIndex(h => 
-                h && (h.includes('주문일시') || h.includes('날짜') || h.includes('주문일') || h === '일시')
-            );
-            const marketIndex = headers.findIndex(h => 
-                h && (h.includes('마켓명') || h.includes('마켓') || h === '판매처')
-            );
-            
-            const last7Days = [];
-            const today = new Date();
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date(today);
-                date.setDate(date.getDate() - i);
-                date.setHours(0, 0, 0, 0);
-                last7Days.push({
-                    date: date,
-                    count: 0,
-                    label: ['일', '월', '화', '수', '목', '금', '토'][date.getDay()]
-                });
-            }
-            
-            const marketStats = {};
-            
-            for (let i = 1; i < data.length; i++) {
-                const row = data[i];
-                if (!row || !row[dateIndex]) continue;
-                
-                const orderDate = parseDate(row[dateIndex]);
-                const market = marketIndex !== -1 ? (row[marketIndex] || '기타') : '기타';
-                
-                last7Days.forEach(day => {
-                    if (isSameDay(orderDate, day.date)) {
-                        day.count++;
-                    }
-                });
-                
-                if (!marketStats[market]) {
-                    marketStats[market] = 0;
-                }
-                marketStats[market]++;
-            }
-            
-            renderWeeklyChartWithData(last7Days);
-            renderMarketChartWithData(marketStats);
-        }
-
-        function renderWeeklyChartWithData(weekData) {
-            const canvas = document.getElementById('weeklyOrderChart');
-            if (!canvas) return;
-            
-            const ctx = canvas.getContext('2d');
-            
-            const data = weekData.map(d => d.count);
-            const labels = weekData.map(d => d.label);
-            const maxValue = Math.max(...data, 10);
-            
-            canvas.width = canvas.parentElement.offsetWidth;
-            canvas.height = 200;
-            
-            const barWidth = canvas.width / (data.length * 2);
-            const barSpacing = barWidth;
-            
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            data.forEach((value, index) => {
-                const barHeight = (value / maxValue) * (canvas.height - 40);
-                const x = (index * (barWidth + barSpacing)) + barSpacing;
-                const y = canvas.height - barHeight - 20;
-                
-                ctx.fillStyle = '#2563eb';
-                ctx.fillRect(x, y, barWidth, barHeight);
-                
-                ctx.fillStyle = '#6c757d';
-                ctx.font = '12px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(labels[index], x + barWidth / 2, canvas.height - 5);
-                ctx.fillText(value, x + barWidth / 2, y - 5);
-            });
-        }
-
-        function renderMarketChartWithData(marketData) {
-            const canvas = document.getElementById('marketShareChart');
-            if (!canvas) return;
-            
-            const ctx = canvas.getContext('2d');
-            
-            const total = Object.values(marketData).reduce((a, b) => a + b, 0);
-            if (total === 0) {
-                canvas.width = canvas.parentElement.offsetWidth;
-                canvas.height = 200;
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#6c757d';
-                ctx.font = '14px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('데이터 없음', canvas.width / 2, canvas.height / 2);
-                return;
-            }
-            
-            const colors = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#6c757d'];
-            
-            const data = Object.entries(marketData)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 5)
-                .map((entry, index) => ({
-                    name: entry[0],
-                    value: Math.round(entry[1] / total * 100),
-                    color: colors[index]
-                }));
-            
-            canvas.width = canvas.parentElement.offsetWidth;
-            canvas.height = 200;
-            
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            const radius = 60;
-            const innerRadius = 35;
-            
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            let currentAngle = -Math.PI / 2;
-            
-            data.forEach((segment, index) => {
-                const angle = (segment.value / 100) * Math.PI * 2;
-                
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + angle);
-                ctx.arc(centerX, centerY, innerRadius, currentAngle + angle, currentAngle, true);
-                ctx.closePath();
-                ctx.fillStyle = segment.color;
-                ctx.fill();
-                
-                currentAngle += angle;
-            });
-            
-            let legendY = 20;
-            data.forEach((segment, index) => {
-                ctx.fillStyle = segment.color;
-                ctx.fillRect(10, legendY - 8, 12, 12);
-                
-                ctx.fillStyle = '#495057';
-                ctx.font = '12px sans-serif';
-                ctx.fillText(`${segment.name} ${segment.value}%`, 30, legendY);
-                
-                legendY += 20;
-            });
+            setTimeout(() => {
+                div.remove();
+            }, 3000);
         }
     </script>
 </body>
