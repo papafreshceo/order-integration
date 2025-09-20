@@ -314,6 +314,7 @@ function readFile(file) {
     
     const isCsv = filename.endsWith('.csv');
     const isXls = filename.endsWith('.xls') && !filename.endsWith('.xlsx');
+    const isXlsx = filename.endsWith('.xlsx');
     
     const reader = new FileReader();
     
@@ -322,21 +323,46 @@ function readFile(file) {
             let workbook;
             
             if (isCsv) {
+                // CSV 처리
                 const csvText = e.target.result;
                 workbook = XLSX.read(csvText, { type: 'string' });
+                
             } else if (isXls) {
-                const arrayBuffer = e.target.result;
-                const u8 = new Uint8Array(arrayBuffer);
-                workbook = XLSX.read(u8, {
-                    type: 'array',
-                    cellDates: true,
-                    cellNF: true,
-                    cellText: false,
-                    dateNF: 'YYYY-MM-DD HH:mm:ss'
-                });
-            } else {
+                // .xls 파일 처리 (97-2003 형식)
                 const data = e.target.result;
+                const arr = new Uint8Array(data);
+                
+                // 11번가 등 .xls 파일 처리
                 try {
+                    workbook = XLSX.read(arr, {
+                        type: 'array',
+                        cellDates: true,
+                        cellNF: true,
+                        cellText: false,
+                        dateNF: 'YYYY-MM-DD HH:mm:ss',
+                        codepage: 949  // 한글 인코딩 지원
+                    });
+                    console.log(`${file.name}: .xls 파일 읽기 성공`);
+                } catch (xlsError) {
+                    console.error('.xls 읽기 실패, 대체 방법 시도:', xlsError);
+                    
+                    // 대체 방법: binary string으로 시도
+                    const binaryString = Array.from(arr, byte => String.fromCharCode(byte)).join('');
+                    workbook = XLSX.read(binaryString, {
+                        type: 'binary',
+                        cellDates: true,
+                        cellNF: true,
+                        cellText: false,
+                        codepage: 949
+                    });
+                }
+                
+            } else if (isXlsx) {
+                // .xlsx 파일 처리
+                const data = e.target.result;
+                
+                try {
+                    // 일반 xlsx 파일 시도
                     workbook = XLSX.read(data, {
                         type: 'binary',
                         cellDates: true,
@@ -345,6 +371,7 @@ function readFile(file) {
                         dateNF: 'YYYY-MM-DD HH:mm:ss'
                     });
                 } catch (readError) {
+                    // 암호화된 스마트스토어 파일 처리
                     if (isSmartStore) {
                         try {
                             const uint8Array = new Uint8Array(data.length);
@@ -358,6 +385,7 @@ function readFile(file) {
                                 cellNF: true,
                                 cellText: false
                             });
+                            console.log('암호화된 스마트스토어 파일 처리 성공');
                         } catch (pwdError) {
                             showErrorPersistent(`${file.name}: 암호화된 파일입니다.\n암호를 확인해주세요.`);
                             return;
@@ -366,6 +394,9 @@ function readFile(file) {
                         throw readError;
                     }
                 }
+            } else {
+                showErrorPersistent(`${file.name}: 지원하지 않는 파일 형식입니다.`);
+                return;
             }
             
             if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
@@ -373,6 +404,7 @@ function readFile(file) {
                 return;
             }
             
+            // 첫 번째 시트 읽기
             const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
             const rawRows = XLSX.utils.sheet_to_json(firstSheet, {
                 header: 1,
@@ -382,6 +414,9 @@ function readFile(file) {
                 dateNF: 'YYYY-MM-DD HH:mm:ss'
             });
             
+            console.log(`${file.name}: ${rawRows.length}개 행 읽기 완료`);
+            
+            // processExcelData로 전달
             processExcelData(rawRows, file, isSmartStore);
             
         } catch (error) {
@@ -395,11 +430,14 @@ function readFile(file) {
         showErrorPersistent(`${file.name}: 파일을 읽을 수 없습니다.`);
     };
     
+    // 파일 타입에 따라 적절한 읽기 방법 선택
     if (isCsv) {
         reader.readAsText(file, 'utf-8');
     } else if (isXls) {
+        // .xls는 ArrayBuffer로 읽기
         reader.readAsArrayBuffer(file);
-    } else {
+    } else if (isXlsx) {
+        // .xlsx는 BinaryString으로 읽기
         reader.readAsBinaryString(file);
     }
 }
