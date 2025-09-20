@@ -6,32 +6,9 @@
     <style>
         /* 기존 스타일 유지 */
 .shipping-container {
-    padding: 40px;
-    padding-top: 200px; /* 고정 영역 높이만큼 상단 여백 */
+    padding: 20px;
     background: #fafafa;
     min-height: 100vh;
-}
-
-/* 상단 고정 영역 */
-.fixed-header-section {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: #fafafa;
-    z-index: 100;
-    padding: 40px 40px 20px 40px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-@media (max-width: 768px) {
-    .shipping-container {
-        padding: 20px;
-        padding-top: 180px;
-    }
-    .fixed-header-section {
-        padding: 20px 20px 10px 20px;
-    }
 }
 
 /* 상단 통계 - 3개 카드 */
@@ -39,7 +16,13 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 16px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+    .shipping-container {
+        padding: 20px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -61,10 +44,10 @@
             background: #ffffff;
             border: 1px solid #dee2e6;
             border-radius: 16px;
-            padding: 20px;
+            padding: 12px 16px;
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
         }
 
         .stat-icon {
@@ -739,10 +722,8 @@
 </head>
 <body>
     <div class="shipping-container">
-    <!-- 상단 고정 영역 시작 -->
-    <div class="fixed-header-section">
-<!-- 상단 통계 -->
-        <div class="shipping-stats">
+    <!-- 상단 통계 -->
+    <div class="shipping-stats">
             <div class="stat-card">
                 <div class="stat-icon" style="background: #e0e7ff; color: #4f46e5;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -782,7 +763,7 @@
                     <div class="stat-value" id="statShipped">0</div>
                 </div>
             </div>
-        </div>
+
     </div>
     <!-- 상단 고정 영역 끝 -->
 
