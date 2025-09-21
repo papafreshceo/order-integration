@@ -62,7 +62,7 @@ body {
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
-
+}
 .om-tab-btn:hover {
     background: #f8f9fa;
     border-color: #adb5bd;

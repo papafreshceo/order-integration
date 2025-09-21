@@ -16,6 +16,8 @@ window.OrderSearchHandler = {
     
     render() {
         const container = document.getElementById('om-panel-search');
+        if (!container) return;
+        
         container.innerHTML = `
             <style>
                 .search-container {
@@ -253,23 +255,6 @@ window.OrderSearchHandler = {
                     white-space: nowrap;
                 }
 
-                /* 발송목록과 동일한 열 너비 */
-                .search-table th:nth-child(1) { width: 50px; }  /* 체크박스 */
-                .search-table th:nth-child(2) { width: 60px; }  /* 연번 */
-                .search-table th:nth-child(3) { width: 120px; } /* 마켓명 */
-                .search-table th:nth-child(4) { width: 100px; } /* 결제일 */
-                .search-table th:nth-child(5) { width: 150px; } /* 주문번호 */
-                .search-table th:nth-child(6) { width: 200px; } /* 옵션명 */
-                .search-table th:nth-child(7) { width: 60px; }  /* 수량 */
-                .search-table th:nth-child(8) { width: 100px; } /* 주문자 */
-                .search-table th:nth-child(9) { width: 100px; } /* 수령인 */
-                .search-table th:nth-child(10) { width: 120px; } /* 전화번호 */
-                .search-table th:nth-child(11) { width: 300px; } /* 주소 */
-                .search-table th:nth-child(12) { width: 200px; } /* 배송메세지 */
-                .search-table th:nth-child(13) { width: 100px; } /* 택배사 */
-                .search-table th:nth-child(14) { width: 150px; } /* 송장번호 */
-                .search-table th:nth-child(15) { width: 80px; }  /* 상태 */
-
                 .search-table td {
                     padding: 6px 8px;
                     font-size: 12px;
@@ -281,18 +266,6 @@ window.OrderSearchHandler = {
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
-                }
-
-                /* 텍스트 정렬 - 발송목록과 동일 */
-                .search-table td:nth-child(6),  /* 옵션명 */
-                .search-table td:nth-child(11), /* 주소 */
-                .search-table td:nth-child(12) { /* 배송메세지 */
-                    text-align: left;
-                }
-
-                .search-table td:nth-child(7) { /* 수량 */
-                    text-align: right;
-                    padding-right: 12px;
                 }
 
                 .search-table tbody tr:hover {
@@ -522,11 +495,13 @@ window.OrderSearchHandler = {
             
             if (data.success) {
                 const select = document.getElementById('searchMarketFilter');
-                select.innerHTML = '<option value="">전체</option>';
-                
-                Object.keys(data.colors || {}).forEach(market => {
-                    select.innerHTML += `<option value="${market}">${market}</option>`;
-                });
+                if (select) {
+                    select.innerHTML = '<option value="">전체</option>';
+                    
+                    Object.keys(data.colors || {}).forEach(market => {
+                        select.innerHTML += `<option value="${market}">${market}</option>`;
+                    });
+                }
                 
                 this.marketColors = data.colors || {};
             }
@@ -576,7 +551,9 @@ window.OrderSearchHandler = {
         const thead = document.getElementById('searchTableHead');
         const tbody = document.getElementById('searchTableBody');
         
-        // 헤더 생성 - 매핑시트의 모든 컬럼 사용
+        if (!thead || !tbody) return;
+        
+        // 헤더 생성
         thead.innerHTML = '';
         const headerRow = document.createElement('tr');
         
@@ -668,19 +645,19 @@ window.OrderSearchHandler = {
     getFilteredOrders() {
         let filtered = [...this.currentOrders];
         
-        const marketFilter = document.getElementById('searchMarketFilter').value;
+        const marketFilter = document.getElementById('searchMarketFilter')?.value;
         if (marketFilter) {
             filtered = filtered.filter(order => order['마켓명'] === marketFilter);
         }
         
-        const statusFilter = document.getElementById('searchStatusFilter').value;
+        const statusFilter = document.getElementById('searchStatusFilter')?.value;
         if (statusFilter === 'preparing') {
             filtered = filtered.filter(order => !order['송장번호'] || order['송장번호'].trim() === '');
         } else if (statusFilter === 'shipped') {
             filtered = filtered.filter(order => order['송장번호'] && order['송장번호'].trim() !== '');
         }
         
-        const keyword = document.getElementById('searchKeywordInput').value.toLowerCase();
+        const keyword = document.getElementById('searchKeywordInput')?.value?.toLowerCase();
         if (keyword) {
             filtered = filtered.filter(order => {
                 return Object.values(order).some(value => 
@@ -697,7 +674,7 @@ window.OrderSearchHandler = {
         checkboxes.forEach(cb => cb.checked = checkbox.checked);
     },
 
-    exportToExcel() {
+    async exportToExcel() {
         const filteredOrders = this.getFilteredOrders();
         
         if (filteredOrders.length === 0) {
