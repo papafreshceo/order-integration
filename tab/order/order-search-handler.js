@@ -18,7 +18,6 @@ window.OrderSearchHandler = {
         const container = document.getElementById('om-panel-search');
         container.innerHTML = `
             <style>
-                /* 기존 스타일 유지 */
                 .search-container {
                     padding: 0;
                     background: transparent;
@@ -37,7 +36,7 @@ window.OrderSearchHandler = {
                 .panel-title {
                     font-size: 18px;
                     font-weight: 500;
-                    color: #212529;
+                    color: #042848;
                     margin: 0;
                 }
 
@@ -62,7 +61,7 @@ window.OrderSearchHandler = {
                     border: 1px solid #dee2e6;
                     border-radius: 20px;
                     background: #ffffff;
-                    color: #495057;
+                    color: #042848;
                     font-size: 12px;
                     font-weight: 300;
                     cursor: pointer;
@@ -71,7 +70,7 @@ window.OrderSearchHandler = {
 
                 .quick-filter-btn:hover {
                     border-color: #2563eb;
-                    color: #2563eb;
+                    background: #f0f8ff;
                 }
 
                 .quick-filter-btn.active {
@@ -106,7 +105,7 @@ window.OrderSearchHandler = {
                     border-radius: 6px;
                     font-size: 14px;
                     font-weight: 300;
-                    color: #212529;
+                    color: #042848;
                     background: #ffffff;
                     transition: all 0.2s;
                 }
@@ -163,12 +162,12 @@ window.OrderSearchHandler = {
 
                 .btn-search.secondary {
                     background: #ffffff;
-                    color: #495057;
+                    color: #042848;
                     border: 1px solid #dee2e6;
                 }
 
                 .btn-search.secondary:hover {
-                    background: #f8f9fa;
+                    background: #f0f8ff;
                 }
 
                 .btn-action {
@@ -176,7 +175,7 @@ window.OrderSearchHandler = {
                     border: 1px solid #dee2e6;
                     border-radius: 6px;
                     background: #ffffff;
-                    color: #495057;
+                    color: #042848;
                     font-size: 12px;
                     font-weight: 300;
                     cursor: pointer;
@@ -187,7 +186,7 @@ window.OrderSearchHandler = {
                 }
 
                 .btn-action:hover {
-                    background: #f8f9fa;
+                    background: #f0f8ff;
                 }
 
                 .table-section {
@@ -215,7 +214,7 @@ window.OrderSearchHandler = {
                 .table-title {
                     font-size: 16px;
                     font-weight: 500;
-                    color: #212529;
+                    color: #042848;
                 }
 
                 .table-actions {
@@ -249,22 +248,51 @@ window.OrderSearchHandler = {
                     text-align: center;
                     font-size: 12px;
                     font-weight: 400;
-                    color: #6c757d;
+                    color: #042848;
                     border-bottom: 2px solid #dee2e6;
                     white-space: nowrap;
                 }
+
+                /* 발송목록과 동일한 열 너비 */
+                .search-table th:nth-child(1) { width: 50px; }  /* 체크박스 */
+                .search-table th:nth-child(2) { width: 60px; }  /* 연번 */
+                .search-table th:nth-child(3) { width: 120px; } /* 마켓명 */
+                .search-table th:nth-child(4) { width: 100px; } /* 결제일 */
+                .search-table th:nth-child(5) { width: 150px; } /* 주문번호 */
+                .search-table th:nth-child(6) { width: 200px; } /* 옵션명 */
+                .search-table th:nth-child(7) { width: 60px; }  /* 수량 */
+                .search-table th:nth-child(8) { width: 100px; } /* 주문자 */
+                .search-table th:nth-child(9) { width: 100px; } /* 수령인 */
+                .search-table th:nth-child(10) { width: 120px; } /* 전화번호 */
+                .search-table th:nth-child(11) { width: 300px; } /* 주소 */
+                .search-table th:nth-child(12) { width: 200px; } /* 배송메세지 */
+                .search-table th:nth-child(13) { width: 100px; } /* 택배사 */
+                .search-table th:nth-child(14) { width: 150px; } /* 송장번호 */
+                .search-table th:nth-child(15) { width: 80px; }  /* 상태 */
 
                 .search-table td {
                     padding: 6px 8px;
                     font-size: 12px;
                     font-weight: 300;
-                    color: #212529;
+                    color: #042848;
                     border-bottom: 1px solid #f1f3f5;
                     text-align: center;
                     height: 32px;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
+                }
+
+                /* 텍스트 정렬 - 발송목록과 동일 */
+                .search-table td:nth-child(6),  /* 옵션명 */
+                .search-table td:nth-child(11), /* 주소 */
+                .search-table td:nth-child(12) { /* 배송메세지 */
+                    text-align: left;
+                }
+
+                .search-table td:nth-child(7) { /* 수량 */
+                    text-align: right;
+                    padding-right: 12px;
                 }
 
                 .search-table tbody tr:hover {
@@ -564,14 +592,9 @@ window.OrderSearchHandler = {
             this.tableHeaders.forEach(header => {
                 const th = document.createElement('th');
                 th.textContent = header;
-                if (header === '주소' || header === '수령인주소') {
-                    th.style.width = '300px';
-                }
                 headerRow.appendChild(th);
             });
         }
-        
-        thead.appendChild(headerRow);
         
         thead.appendChild(headerRow);
         
@@ -629,6 +652,11 @@ window.OrderSearchHandler = {
                 } else {
                     td.textContent = value;
                 }
+                
+                // 텍스트 정렬
+                if (header === '옵션명' || header === '주소' || header === '배송메세지') {
+                    td.style.textAlign = 'left';
+                }
             }
             
             row.appendChild(td);
@@ -674,6 +702,16 @@ window.OrderSearchHandler = {
         
         if (filteredOrders.length === 0) {
             this.showMessage('내보낼 데이터가 없습니다.', 'error');
+            return;
+        }
+        
+        // XLSX 라이브러리 확인
+        if (typeof XLSX === 'undefined') {
+            this.showMessage('엑셀 라이브러리를 로드하는 중입니다...', 'info');
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+            script.onload = () => this.exportToExcel();
+            document.head.appendChild(script);
             return;
         }
         
