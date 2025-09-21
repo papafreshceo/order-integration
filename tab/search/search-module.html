@@ -35,7 +35,8 @@
             border-bottom: 1px solid #dee2e6;
         }
 
-        .module-header-content {
+        .module-header-inner {
+            padding: 0 40px;
             display: flex;
             align-items: center;
             gap: 12px;
@@ -71,7 +72,8 @@
             margin-bottom: 24px;
         }
 
-        .inner-tabs {
+        .inner-tabs-inner {
+            padding: 0 40px;
             display: flex;
             gap: 16px;
         }
@@ -453,7 +455,7 @@
     <div class="order-search-container">
         <!-- 섹션 1: 상단 헤더 -->
         <div class="module-header">
-            <div class="module-header-content">
+            <div class="module-header-inner">
                 <div class="module-title-wrapper">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -469,8 +471,8 @@
         </div>
 
         <!-- 섹션 2: 내부 탭 -->
-        <div class="inner-tabs-section">
-            <div class="inner-tabs">
+         <div class="inner-tabs-section">
+            <div class="inner-tabs-inner">
                 <button class="inner-tab active" data-tab="order-search">주문조회</button>
                 <button class="inner-tab" data-tab="order-input">주문입력</button>
                 <button class="inner-tab" data-tab="order-excel">주문통합(Excel)</button>
