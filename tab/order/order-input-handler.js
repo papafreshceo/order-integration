@@ -1100,3 +1100,4 @@ loadFromCache() {
 clearCache() {
     localStorage.removeItem('orderInputHandler_orders');
 }
+};
