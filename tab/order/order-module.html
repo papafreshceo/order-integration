@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>주문통합관리</title>
+    <link rel="stylesheet" href="order-common.css">
+</head>
+<body>
+    <div class="om-container">
+        <!-- 헤더 -->
+        <div class="om-header">
+            <div class="om-title-wrapper">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <h1 class="om-title">주문통합관리</h1>
+                <span class="om-subtitle">통합 주문 관리 시스템</span>
+            </div>
+        </div>
+        
+        <!-- 탭 -->
+        <div class="om-tabs">
+            <button class="om-tab-btn active" data-tab="search">주문조회</button>
+            <button class="om-tab-btn" data-tab="input">주문입력</button>
+            <button class="om-tab-btn" data-tab="excel">주문통합(Excel)</button>
+            <button class="om-tab-btn" data-tab="shipping">발송관리</button>
+            <button class="om-tab-btn" data-tab="cs">CS</button>
+            <button class="om-tab-btn" data-tab="etc">기타</button>
+        </div>
+        
+        <!-- 콘텐츠 -->
+        <div class="om-content">
+            <div class="om-panel active" id="om-panel-search"></div>
+            <div class="om-panel" id="om-panel-input"></div>
+            <div class="om-panel" id="om-panel-excel"></div>
+            <div class="om-panel" id="om-panel-shipping"></div>
+            <div class="om-panel" id="om-panel-cs"></div>
+            <div class="om-panel" id="om-panel-etc"></div>
+        </div>
+        
+        <!-- 로딩 -->
+        <div class="om-loading" id="om-loading">
+            <div class="om-spinner"></div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        // 모듈 로더
+        window.OrderManage = {
+            currentTab: 'search',
+            modules: {},
+            
+            init() {
+                this.setupTabs();
+                this.loadModule('search');
+            },
+            
+            setupTabs() {
+                document.querySelectorAll('.om-tab-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.switchTab(btn.dataset.tab);
+                    });
+                });
+            },
+            
+            switchTab(tab) {
+                document.querySelectorAll('.om-tab-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.tab === tab);
+                });
+                
+                document.querySelectorAll('.om-panel').forEach(panel => {
+                    panel.classList.remove('active');
+                });
+                document.getElementById(`om-panel-${tab}`).classList.add('active');
+                
+                this.currentTab = tab;
+                this.loadModule(tab);
+            },
+            
+            loadModule(tab) {
+                if (this.modules[tab]) {
+                    this.modules[tab].init();
+                } else {
+                    const script = document.createElement('script');
+                    script.src = `order-${tab}-handler.js`;
+                    script.onload = () => {
+                        if (window[`Order${tab.charAt(0).toUpperCase() + tab.slice(1)}Handler`]) {
+                            this.modules[tab] = window[`Order${tab.charAt(0).toUpperCase() + tab.slice(1)}Handler`];
+                            this.modules[tab].init();
+                        }
+                    };
+                    document.head.appendChild(script);
+                }
+            },
+            
+            showLoading(show) {
+                document.getElementById('om-loading').classList.toggle('show', show);
+            }
+        };
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            OrderManage.init();
+        });
+    </script>
+</body>
+</html>
