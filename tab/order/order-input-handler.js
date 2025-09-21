@@ -4,11 +4,12 @@ window.OrderInputHandler = {
     productData: {},
     
     async init() {
-        this.render();
-        await this.loadProductData();
-        this.setupEventListeners();
-        console.log('OrderInputHandler 초기화 완료');
-    },
+    this.render();
+    await this.loadProductData();
+    this.setupEventListeners();
+    this.loadFromCache(); // 캐시에서 주문 로드
+    console.log('OrderInputHandler 초기화 완료');
+},
     
     render() {
         const container = document.getElementById('om-panel-input');
@@ -880,9 +881,10 @@ searchProduct() {
         orderData['상품금액'] = (orderData.단가 * orderData.수량) + orderData.택배비;
         
         this.manualOrders.push(orderData);
-        this.updateOrderList();
-        this.resetForm();
-        this.showMessage(`주문이 추가되었습니다. (총 ${this.manualOrders.length}건)`, 'success');
+this.updateOrderList();
+this.resetForm();
+this.saveToCache(); // 캐시에 저장
+this.showMessage(`주문이 추가되었습니다. (총 ${this.manualOrders.length}건)`, 'success');
     },
     
     updateOrderList() {
@@ -918,10 +920,11 @@ searchProduct() {
 },
     
     removeOrder(index) {
-        this.manualOrders.splice(index, 1);
-        this.updateOrderList();
-        this.showMessage(`주문이 삭제되었습니다. (남은 주문: ${this.manualOrders.length}건)`, 'success');
-    },
+    this.manualOrders.splice(index, 1);
+    this.updateOrderList();
+    this.saveToCache(); // 캐시 업데이트
+    this.showMessage(`주문이 삭제되었습니다. (남은 주문: ${this.manualOrders.length}건)`, 'success');
+},
     
     resetForm() {
         document.getElementById('inputOrderForm').reset();
@@ -949,8 +952,8 @@ searchProduct() {
     if (totalPriceInput) {
         totalPriceInput.value = totalPrice.toLocaleString('ko-KR');
     }
-}
-};
+},
+
 
 async saveOrders() {
     if (this.manualOrders.length === 0) {
@@ -958,30 +961,144 @@ async saveOrders() {
         return;
     }
     
+    // 로딩 표시
+    const saveButton = document.querySelector('.btn-save');
+    if (saveButton) {
+        saveButton.textContent = '저장 중...';
+        saveButton.disabled = true;
+    }
+    
     try {
-        // 구글 시트 저장 로직
+        // 오늘 날짜로 시트명 생성
+        const today = new Date();
+        const sheetName = today.getFullYear() + 
+                         String(today.getMonth() + 1).padStart(2, '0') + 
+                         String(today.getDate()).padStart(2, '0');
+        
+        // 표준 필드 가져오기 (전체 43개 필드 사용)
+        const headers = window.mappingData?.standardFields;
+        if (!headers) {
+            this.showMessage('매핑 데이터를 찾을 수 없습니다.', 'error');
+            return;
+        }
+        
+        // 데이터 행 생성
+        const values = [headers]; // 헤더 행
+        
+        // 마켓별 카운터
+        const marketCounters = {};
+        
+        this.manualOrders.forEach((order, index) => {
+            const marketName = order.마켓명;
+            
+            // 마켓 카운터 초기화 및 증가
+            if (!marketCounters[marketName]) {
+                marketCounters[marketName] = 0;
+            }
+            marketCounters[marketName]++;
+            
+            const row = headers.map(header => {
+                // 특별 처리가 필요한 필드
+                if (header === '연번') return index + 1;
+                
+                if (header === '마켓') {
+                    // 매핑 시트에서 로드된 마켓 이니셜 사용
+                    let initial = marketName.charAt(0); // 기본값: 마켓명 첫글자
+                    
+                    if (window.mappingData?.markets?.[marketName]?.initial) {
+                        initial = window.mappingData.markets[marketName].initial;
+                    }
+                    
+                    return initial + String(marketCounters[marketName]).padStart(3, '0');
+                }
+                
+                if (header === '결제일') return new Date().toISOString().split('T')[0] + ' 00:00:00';
+                if (header === '주문번호') return 'M' + Date.now() + index;
+                if (header === '상품주문번호') return 'M' + Date.now() + index;
+                
+                // 일반 필드 매핑
+                const value = order[header];
+                return value !== undefined && value !== null ? String(value) : '';
+            });
+            values.push(row);
+        });
+        
+        // 마켓 색상 정보 가져오기
+        const marketColors = {};
+        if (window.mappingData?.markets) {
+            Object.entries(window.mappingData.markets).forEach(([marketName, market]) => {
+                if (market.color) {
+                    const rgb = market.color.split(',').map(Number);
+                    const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+                    marketColors[marketName] = {
+                        color: market.color,
+                        textColor: brightness > 128 ? '#000' : '#fff'
+                    };
+                }
+            });
+        }
+        
+        // API 호출
         const response = await fetch('/api/sheets', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                action: 'saveManualOrders',
-                orders: this.manualOrders
+                action: 'saveToSheet',
+                sheetName: sheetName,
+                values: values,
+                marketColors: marketColors,
+                spreadsheetId: 'orders'  // 주문기록 시트 지정
             })
         });
         
         const result = await response.json();
+        
         if (result.success) {
-            this.showMessage(`${this.manualOrders.length}건의 주문이 저장되었습니다.`, 'success');
-            // 저장 후 목록 초기화
-            if (confirm('저장이 완료되었습니다. 목록을 초기화하시겠습니까?')) {
-                this.manualOrders = [];
-                this.updateOrderList();
-            }
+    this.showMessage(`${this.manualOrders.length}건의 주문이 저장되었습니다.`, 'success');
+    
+    // 저장 성공 시 캐시와 목록 모두 초기화
+    this.manualOrders = [];
+    this.updateOrderList();
+    this.resetForm();
+    this.clearCache(); // 캐시 완전 삭제
+}
         } else {
-            this.showMessage('저장 실패: ' + result.error, 'error');
+            throw new Error(result.error || '저장 실패');
         }
+        
     } catch (error) {
         console.error('저장 오류:', error);
-        this.showMessage('저장 중 오류가 발생했습니다.', 'error');
+        this.showMessage('저장 중 오류가 발생했습니다: ' + error.message, 'error');
+    } finally {
+        // 버튼 상태 복구
+        const saveButton = document.querySelector('.btn-save');
+        if (saveButton) {
+            saveButton.textContent = '저장';
+            saveButton.disabled = false;
+        }
     }
 },
+
+saveToCache() {
+    localStorage.setItem('orderInputHandler_orders', JSON.stringify(this.manualOrders));
+},
+
+// 로컬 스토리지에서 주문 로드
+loadFromCache() {
+    const cached = localStorage.getItem('orderInputHandler_orders');
+    if (cached) {
+        try {
+            this.manualOrders = JSON.parse(cached);
+            this.updateOrderList();
+            console.log(`캐시에서 ${this.manualOrders.length}건의 주문 로드됨`);
+        } catch (error) {
+            console.error('캐시 로드 실패:', error);
+        }
+    }
+},
+
+// 캐시 삭제
+clearCache() {
+    localStorage.removeItem('orderInputHandler_orders');
+}
+};
