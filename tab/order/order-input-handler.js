@@ -434,7 +434,7 @@ input[type="number"] {
     
     <div class="form-group" style="width: 100px;">
     <label class="form-label">택배비</label>
-    <input type="text" class="form-input" id="inputShipping" value="0" style="text-align: right;">
+    <input type="text" class="form-input" id="inputShipping" placeholder="0" style="text-align: right;">
 </div>
 
     <div class="form-group" style="width: 120px;">
