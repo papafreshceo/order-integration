@@ -743,14 +743,16 @@ window.OrderSearchHandler = {
         const endDate = document.getElementById('searchEndDate')?.value;
         
         if (startDate && endDate) {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999);
+            const startStr = startDate.replace(/-/g, '');
+            const endStr = endDate.replace(/-/g, '');
             
             filtered = filtered.filter(order => {
-                const orderDate = this.parseDate(order['결제일'] || order['주문일']);
-                if (orderDate) {
-                    return orderDate >= start && orderDate <= end;
+                // 결제일 필드에서 날짜 추출 (YYYYMMDD 형식)
+                const orderDateStr = order['결제일'] || order['주문일'] || '';
+                const dateOnly = orderDateStr.toString().replace(/[^0-9]/g, '').substring(0, 8);
+                
+                if (dateOnly.length === 8) {
+                    return dateOnly >= startStr && dateOnly <= endStr;
                 }
                 return false;
             });
