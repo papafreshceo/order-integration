@@ -500,9 +500,11 @@ window.OrderSearchHandler = {
             const response = await fetch('/api/sheets', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    action: 'getMarketData', 
-                    useMainSpreadsheet: false 
+                body: JSON.stringify({
+                    action: 'getMarketData',
+                    useMainSpreadsheet: true,
+                    startDate: startDate,
+                    endDate: endDate
                 })
             });
             const data = await response.json();
