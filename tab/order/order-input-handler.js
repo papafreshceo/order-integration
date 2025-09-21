@@ -79,19 +79,20 @@ window.OrderInputHandler = {
                     height: 32px;
                 }
 
-                .form-input:focus {
+.form-input:focus {
     outline: none;
     border-color: #2563eb;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-/* 단가 입력란 스핀버튼 제거 - 여기에 추가 */
-#inputUnitPrice::-webkit-outer-spin-button,
-#inputUnitPrice::-webkit-inner-spin-button {
+/* 숫자 입력란 스핀버튼 제거 */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
-#inputUnitPrice {
+
+input[type="number"] {
     -moz-appearance: textfield;
 }
 
@@ -99,19 +100,20 @@ window.OrderInputHandler = {
     background: #f8f9fa;
     cursor: not-allowed;
 }
-                .required {
-                    color: #dc3545;
-                }
 
-                .quantity-control {
-                    display: flex;
-                    align-items: center;
-                    border: 1px solid #dee2e6;
-                    border-radius: 6px;
-                    overflow: hidden;
-                    background: #ffffff;
-                    height: 32px;
-                }
+.required {
+    color: #dc3545;
+}
+
+.quantity-control {
+    display: flex;
+    align-items: center;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #ffffff;
+    height: 32px;
+}
 
                 .qty-btn {
                     width: 30px;
@@ -431,9 +433,9 @@ window.OrderInputHandler = {
     </div>
     
     <div class="form-group" style="width: 100px;">
-        <label class="form-label">택배비</label>
-        <input type="number" class="form-input" id="inputShipping" value="0" style="text-align: right;">
-    </div>
+    <label class="form-label">택배비</label>
+    <input type="text" class="form-input" id="inputShipping" value="0" style="text-align: right;">
+</div>
 
     <div class="form-group" style="width: 120px;">
     <label class="form-label">판매가</label>
