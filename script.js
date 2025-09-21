@@ -464,9 +464,16 @@ async function processExcelData(jsonData, file, isSmartStore) {
         headerRowIndex = 1;
         console.log(`${file.name}: 전화주문/CS재발송 - 2행 헤더 사용`);
     } else if (isToss && rawRows.length > 1) {
-        // 토스는 항상 2행이 헤더
-        headerRowIndex = 1;
-        console.log(`${file.name}: 토스 마켓 - 2행 헤더 사용`);
+    // 토스는 항상 2행이 헤더
+    headerRowIndex = 1;
+    console.log(`${file.name}: 토스 마켓 - 2행 헤더 사용`);
+    
+    // 토스 헤더 내용 확인
+    const tossHeaders = rawRows[1].map(h => String(h || '').trim());
+    console.log('토스 헤더:', tossHeaders);
+    if (rawRows[2]) {
+        console.log('토스 첫 데이터 행:', rawRows[2]);
+    }
     } else if (isSmartStore && rawRows.length > 2) {
         // 스마트스토어는 내용 확인 후 결정
         const secondRow = rawRows[1];
@@ -728,36 +735,67 @@ async function processOrderFiles(filesData) {
             console.log(`${marketName} 처리 시작: ${fileData.data.length}개 행`);
             
             for (const row of fileData.data) {
-                marketCounters[marketName]++;
-                globalCounter++;
+    marketCounters[marketName]++;
+    globalCounter++;
+    
+    const mergedRow = {};
+    
+    // 토스 디버깅
+    if (marketName === '토스' && marketCounters[marketName] === 1) {
+        console.log('토스 첫 번째 행 원본 데이터:', row);
+        console.log('토스 원본 키 목록:', Object.keys(row));
+        console.log('토스 매핑 정보:', market.mappings);
+    }
+    
+    // 표준필드 매핑
+    for (const standardField of mappingData.standardFields) {
+        if (standardField === '마켓명') {
+            mergedRow['마켓명'] = marketName;
+        } else if (standardField === '연번') {
+            mergedRow['연번'] = globalCounter;
+        } else if (standardField === '마켓') {
+            const marketInitial = market.initial || marketName.charAt(0);
+            mergedRow['마켓'] = marketInitial + String(marketCounters[marketName]).padStart(3, '0');
+        } else {
+            // 매핑된 필드명 가져오기
+            const mappedField = market.mappings[standardField];
+            
+            if (mappedField) {
+                let fieldValue = row[mappedField];
                 
-                const mergedRow = {};
+                // 토스 디버깅
+                if (marketName === '토스' && marketCounters[marketName] === 1 && !fieldValue) {
+                    console.log(`토스 매핑 실패: ${standardField} → ${mappedField} (값 없음)`);
+                }
                 
-                // 표준필드 매핑
-                for (const standardField of mappingData.standardFields) {
-                    if (standardField === '마켓명') {
-                        mergedRow['마켓명'] = marketName;
-                    } else if (standardField === '연번') {
-                        mergedRow['연번'] = globalCounter;
-                    } else if (standardField === '마켓') {
-                        const marketInitial = market.initial || marketName.charAt(0);
-                        mergedRow['마켓'] = marketInitial + String(marketCounters[marketName]).padStart(3, '0');
-                    } else {
-                        // 매핑된 필드명 가져오기
-                        const mappedField = market.mappings[standardField];
-                        
-                        if (mappedField) {
-                            let fieldValue = row[mappedField];
-                            
-                            // 못 찾았으면 trim된 버전으로 시도
-                            if (fieldValue === undefined) {
-                                for (const key in row) {
-                                    if (key.trim() === mappedField.trim()) {
-                                        fieldValue = row[key];
-                                        break;
-                                    }
-                                }
+                // 못 찾았으면 trim된 버전으로 시도
+                if (fieldValue === undefined) {
+                    for (const key in row) {
+                        if (key.trim() === mappedField.trim()) {
+                            fieldValue = row[key];
+                            if (marketName === '토스' && fieldValue !== undefined) {
+                                console.log(`토스 trim 매칭 성공: ${mappedField} = ${key}`);
                             }
+                            break;
+                        }
+                    }
+                }
+                
+                // 그래도 못 찾았으면 부분 매칭 시도 (토스용)
+                if (fieldValue === undefined && marketName === '토스') {
+                    for (const key in row) {
+                        // 공백 제거 후 비교
+                        const cleanKey = key.replace(/\s/g, '');
+                        const cleanMapped = mappedField.replace(/\s/g, '');
+                        if (cleanKey === cleanMapped || 
+                            cleanKey.includes(cleanMapped) || 
+                            cleanMapped.includes(cleanKey)) {
+                            console.log(`토스 부분 매칭: ${mappedField} ≈ ${key}`);
+                            fieldValue = row[key];
+                            break;
+                        }
+                    }
+                }
                             
                             if (fieldValue !== undefined) {
                                 // 날짜 필드 처리
