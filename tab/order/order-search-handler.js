@@ -339,7 +339,7 @@ window.OrderSearchHandler = {
                     padding: 4px 10px;
                     transition: all 0.2s;
                 }
-                    
+
             </style>
 
             <div class="search-container">
@@ -822,6 +822,7 @@ window.OrderSearchHandler = {
                 return dateNum >= startNum && dateNum <= endNum;
             });
         }
+    }
         
         // 마켓 필터
         const marketFilter = document.getElementById('searchMarketFilter')?.value;
