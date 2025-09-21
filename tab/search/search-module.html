@@ -13,14 +13,6 @@
             /* min-height 제거 - 내부 스크롤 방지 */
         }
 
-        /* ========================================
-           섹션 공통 스타일
-           ======================================== */
-        .section-wrapper {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 40px;
-        }
 
         /* ========================================
            섹션 1: 상단 헤더
@@ -67,7 +59,7 @@
             background: #ffffff;
             padding: 16px 0;
             border-bottom: 1px solid #dee2e6;
-            margin-bottom: 24px;
+            /* margin-bottom 제거로 섹션 1,2 연결 */
         }
 
         .inner-tabs {
@@ -106,9 +98,8 @@
            섹션 3: 콘텐츠 영역
            ======================================== */
         .tab-panels {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 40px 40px;
+            padding: 40px;
+            background: #f8f9fa;
         }
 
         .tab-panel {
