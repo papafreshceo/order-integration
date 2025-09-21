@@ -320,6 +320,7 @@ window.OrderSearchHandler = {
                         <button class="quick-filter-btn active" onclick="OrderSearchHandler.setQuickFilter('today', this)">오늘</button>
                         <button class="quick-filter-btn" onclick="OrderSearchHandler.setQuickFilter('yesterday', this)">어제</button>
                         <button class="quick-filter-btn" onclick="OrderSearchHandler.setQuickFilter('week', this)">이번 주</button>
+                        <button class="quick-filter-btn" onclick="OrderSearchHandler.setQuickFilter('last7', this)">최근 7일</button>
                         <button class="quick-filter-btn" onclick="OrderSearchHandler.setQuickFilter('month', this)">이번 달</button>
                         <button class="quick-filter-btn" onclick="OrderSearchHandler.setQuickFilter('last30', this)">최근 30일</button>
                         <button class="quick-filter-btn" onclick="OrderSearchHandler.setQuickFilter('custom', this)">직접 설정</button>
@@ -457,8 +458,14 @@ window.OrderSearchHandler = {
                 endDate = new Date(startDate);
                 break;
             case 'week':
+                startDate = new Date(today);
                 startDate.setDate(today.getDate() - today.getDay());
-                endDate = today;
+                endDate = new Date(today);
+                break;
+            case 'last7':
+                startDate = new Date(today);
+                startDate.setDate(today.getDate() - 6);
+                endDate = new Date(today);
                 break;
             case 'month':
                 startDate.setDate(1);
