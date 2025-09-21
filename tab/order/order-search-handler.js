@@ -789,35 +789,42 @@ window.OrderSearchHandler = {
                         </div>
                         
                         <div class="cs-resend-options" id="csResendOptions">
-                            <div class="cs-resend-grid">
-                                <div class="cs-form-group" style="margin-bottom: 0;">
-                                    <label class="cs-form-label">재발송 상품</label>
-                                    <input type="text" class="cs-input" id="csResendOption" placeholder="옵션명">
-                                </div>
-                                <div class="cs-form-group" style="margin-bottom: 0;">
-                                    <label class="cs-form-label">수량</label>
-                                    <input type="number" class="cs-input-small" id="csResendQty" min="1" value="1" placeholder="1">
-                                </div>
-                                <div class="cs-form-group" style="margin-bottom: 0;">
-                                    <label class="cs-form-label">특이/요청사항</label>
-                                    <input type="text" class="cs-input" id="csResendNote" value="CS재발송, 싱싱하고 맛있는 것">
-                                </div>
-                            </div>
+    <div class="cs-resend-grid">
+        <div class="cs-form-group" style="margin-bottom: 0;">
+            <label class="cs-form-label">재발송 상품</label>
+            <input type="text" class="cs-input" id="csResendOption" placeholder="옵션명">
+        </div>
+        <div class="cs-form-group" style="margin-bottom: 0;">
+            <label class="cs-form-label">수량</label>
+            <input type="number" class="cs-input-small" id="csResendQty" min="1" value="1" placeholder="1">
+        </div>
+        <div class="cs-form-group" style="margin-bottom: 0;">
+            <label class="cs-form-label">특이/요청사항</label>
+            <input type="text" class="cs-input" id="csResendNote" value="CS재발송, 싱싱하고 맛있는 것">
+        </div>
+    </div>
+    
+    <div style="margin-top: 12px;">
+        <div class="cs-form-group">
+            <label class="cs-form-label">발송요청일</label>
+            <input type="date" class="cs-input" id="csRequestDate" value="${new Date().toISOString().split('T')[0]}">
+        </div>
+    </div>
                             
                             <div class="cs-delivery-info" style="margin-top: 12px;">
-                                <div class="cs-form-group">
-                                    <label class="cs-form-label">수령인</label>
-                                    <input type="text" class="cs-input" id="csResendReceiver" placeholder="수령인">
-                                </div>
-                                <div class="cs-form-group">
-                                    <label class="cs-form-label">수령인 전화번호</label>
-                                    <input type="text" class="cs-input" id="csResendPhone" placeholder="수령인 전화번호">
-                                </div>
-                                <div class="cs-form-group">
-                                    <label class="cs-form-label">주소</label>
-                                    <input type="text" class="cs-input" id="csResendAddress" placeholder="배송 주소">
-                                </div>
-                            </div>
+        <div class="cs-form-group">
+        <label class="cs-form-label">수령인</label>
+        <input type="text" class="cs-input" id="csResendReceiver" placeholder="수령인">
+    </div>
+    <div class="cs-form-group">
+        <label class="cs-form-label">수령인 전화번호</label>
+        <input type="text" class="cs-input" id="csResendPhone" placeholder="수령인 전화번호">
+    </div>
+    <div class="cs-form-group">
+        <label class="cs-form-label">주소</label>
+        <input type="text" class="cs-input" id="csResendAddress" placeholder="배송 주소">
+    </div>
+</div>
                         </div>
                     </div>
                     <div class="cs-modal-footer">
@@ -1615,11 +1622,18 @@ onSolutionChange() {
 
             // 2. 재발송/부분재발송인 경우 주문 접수
             if (solution === 'resend' || solution === 'partial-resend') {
-                // 주문 데이터 준비 (주문번호는 서버에서 자동 생성됨)
-                const orderData = {
-                    마켓명: 'CS발송',
-                    마켓: 'CS',
-                    결제일: this.currentCsOrder['결제일'],
+// 주문 데이터 준비
+const now = new Date();
+const year = now.getFullYear();
+const month = String(now.getMonth() + 1).padStart(2, '0');
+const day = String(now.getDate()).padStart(2, '0');
+const hours = String(now.getHours()).padStart(2, '0');
+const minutes = String(now.getMinutes()).padStart(2, '0');
+const paymentDateTime = `${year}/${month}/${day} ${hours}:${minutes}`;
+
+const orderData = {
+    마켓명: 'CS발송',
+    결제일: paymentDateTime,  // YYYY/MM/DD HH:MM 형식
                     주문자: this.currentCsOrder['주문자'],
                     '주문자 전화번호': this.currentCsOrder['주문자전화번호'] || '',
                     '주문자전화번호': this.currentCsOrder['주문자전화번호'] || '',
@@ -1631,7 +1645,8 @@ onSolutionChange() {
                     배송메시지: document.getElementById('csResendNote').value,
                     옵션명: document.getElementById('csResendOption').value,
                     수량: document.getElementById('csResendQty').value,
-                    '특이/요청사항': document.getElementById('csResendNote').value
+                    '특이/요청사항': document.getElementById('csResendNote').value,
+                    '발송요청일': document.getElementById('csRequestDate').value
                 };
 
                 // CS 주문 추가 (시트명은 서버에서 자동으로 오늘 날짜로 설정)
