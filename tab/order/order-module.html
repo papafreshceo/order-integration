@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>주문통합관리</title>
-    <link rel="stylesheet" href="../../order-common.css">
+    <link rel="stylesheet" href="order-common.css">
 </head>
 <body>
     <div class="om-container">
@@ -84,7 +84,7 @@
         this.modules[tab].init();
     } else {
         const script = document.createElement('script');
-        script.src = `../../order-${tab}-handler.js`;
+        script.src = `order-${tab}-handler.js`;
         script.onload = () => {
             // 첫글자 대문자 변환 수정
             const handlerName = 'Order' + tab.charAt(0).toUpperCase() + tab.slice(1) + 'Handler';
