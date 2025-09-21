@@ -444,9 +444,8 @@ input[type="number"] {
 
 
     <div class="form-group" style="width: 140px;">
-        <label class="form-label">발송요청일</label>
-        <input type="date" class="form-input" id="inputRequestDate">
-    </div>
+    <label class="form-label">발송요청일</label>
+    <input type="text" class="form-input" id="inputRequestDate" placeholder="선택" readonly style="cursor: pointer;">
 </div>
                         
                         <!-- 두 번째 행: 주문자/수령인 정보 -->
@@ -586,6 +585,22 @@ setupEventListeners() {
             }
         });
     }
+
+    const requestDateInput = document.getElementById('inputRequestDate');
+if (requestDateInput) {
+    requestDateInput.addEventListener('click', function() {
+        const tempInput = document.createElement('input');
+        tempInput.type = 'date';
+        tempInput.style.position = 'absolute';
+        tempInput.style.opacity = '0';
+        document.body.appendChild(tempInput);
+        tempInput.addEventListener('change', function() {
+            requestDateInput.value = this.value;
+            document.body.removeChild(tempInput);
+        });
+        tempInput.click();
+    });
+}
 },
     
     searchBreed() {
