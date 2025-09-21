@@ -527,19 +527,14 @@ window.OrderSearchHandler = {
     async loadOrders() {
         this.showLoading();
         try {
-            const startDate = document.getElementById('searchStartDate').value.replace(/-/g, '');
-            const endDate = document.getElementById('searchEndDate').value.replace(/-/g, '');
-
-            const response = await fetch('/api/sheets', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'getMarketData',
-                    useMainSpreadsheet: true,
-                    startDate: startDate,
-                    endDate: endDate
-                })
-            });
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'getMarketData',
+                useMainSpreadsheet: true
+            })
+        });
 
             const result = await response.json();
             
@@ -566,25 +561,34 @@ window.OrderSearchHandler = {
     parseDate(dateStr) {
         if (!dateStr) return null;
         
-        // YYYYMMDD 형식 처리
-        if (dateStr.length === 8 && !isNaN(dateStr)) {
-            const year = dateStr.substring(0, 4);
-            const month = dateStr.substring(4, 6);
-            const day = dateStr.substring(6, 8);
-            return new Date(`${year}-${month}-${day}`);
-        }
-        
-        // YYYY-MM-DD 형식 처리
-        if (dateStr.includes('-')) {
-            return new Date(dateStr);
-        }
-        
-        // YYYY/MM/DD 형식 처리
-        if (dateStr.includes('/')) {
-            return new Date(dateStr.replace(/\//g, '-'));
-        }
-        
-        return null;
+// 공백 제거
+    dateStr = String(dateStr).trim();
+    
+    // YYYYMMDD 형식 (20240115)
+    if (dateStr.length === 8 && /^\d{8}$/.test(dateStr)) {
+        const year = dateStr.substring(0, 4);
+        const month = dateStr.substring(4, 6);
+        const day = dateStr.substring(6, 8);
+        return new Date(year, month - 1, day);
+    }
+    
+    // YYYY-MM-DD 형식
+    if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+        return new Date(dateStr);
+    }
+    
+    // YYYY/MM/DD 형식
+    if (/^\d{4}\/\d{2}\/\d{2}/.test(dateStr)) {
+        return new Date(dateStr.replace(/\//g, '-'));
+    }
+    
+    // MM/DD/YYYY 또는 M/D/YYYY 형식
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(dateStr)) {
+        const parts = dateStr.split('/');
+        return new Date(parts[2], parts[0] - 1, parts[1]);
+    }
+    
+    return null;
     },
 
     updateTable() {
