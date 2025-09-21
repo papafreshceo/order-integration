@@ -22,64 +22,65 @@ body {
     overflow: hidden;
 }
 
-.om-title-section {
-    padding: 24px 24px 20px 24px;
+.om-header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
 }
 
 .om-title-wrapper {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .om-title {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 600;
     color: #212529;
     margin: 0;
 }
 
-.om-subtitle {
-    font-size: 14px;
-    font-weight: 300;
-    color: #6c757d;
-    margin: 8px 0 0 32px;
-    padding: 0;
-}
-
 /* 내부 탭 */
 .om-tabs {
-    background: #f8f9fa;
-    border-top: 1px solid #dee2e6;
-    padding: 0;
-    margin: 0;
     display: flex;
-    gap: 0;
+    gap: 8px;
+    flex: 1;
+    justify-content: flex-end;
 }
 
-.om-tab-btn {
-    padding: 12px 24px;
+padding: 8px 16px;
     background: transparent;
-    border: none;
-    border-bottom: 3px solid transparent;
-    border-radius: 0;
+    border: 1px solid transparent;
+    border-radius: 6px;
     color: #6c757d;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 300;
     cursor: pointer;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .om-tab-btn:hover {
     color: #495057;
-    background: rgba(255, 255, 255, 0.5);
+    background: #f8f9fa;
+    border-color: #dee2e6;
 }
 
 .om-tab-btn.active {
     color: #2563eb;
-    background: #ffffff;
-    border-bottom-color: #2563eb;
+    background: #e7f3ff;
+    border-color: #2563eb;
     font-weight: 400;
+}
+
+.om-tab-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
 }
 
 /* 콘텐츠 */

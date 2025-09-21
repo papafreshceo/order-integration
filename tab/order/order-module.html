@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="ko">
-더
+
     <meta charset="UTF-8">
     <title>주문통합관리</title>
     <link rel="stylesheet" href="order-common.css">
 </head>
 <body>
     <div class="om-container">
-        <!-- 통합 헤더 섹션 -->
+                <!-- 통합 헤더 섹션 -->
         <div class="om-header">
-            <div class="om-title-section">
+            <div class="om-header-content">
                 <div class="om-title-wrapper">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -17,17 +17,52 @@
                     </svg>
                     <h1 class="om-title">주문통합관리</h1>
                 </div>
-                <p class="om-subtitle">통합 주문 관리 시스템</p>
-            </div>
-            
-            <!-- 내부 탭 -->
-            <div class="om-tabs">
-                <button class="om-tab-btn active" data-tab="search">주문조회</button>
-                <button class="om-tab-btn" data-tab="input">주문입력</button>
-                <button class="om-tab-btn" data-tab="excel">주문통합(Excel)</button>
-                <button class="om-tab-btn" data-tab="shipping">발송관리</button>
-                <button class="om-tab-btn" data-tab="cs">CS</button>
-                <button class="om-tab-btn" data-tab="etc">기타</button>
+                
+                <!-- 내부 탭 -->
+                <div class="om-tabs">
+                    <button class="om-tab-btn active" data-tab="search">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                        주문조회
+                    </button>
+                    <button class="om-tab-btn" data-tab="input">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v20M2 12h20"></path>
+                        </svg>
+                        주문입력
+                    </button>
+                    <button class="om-tab-btn" data-tab="excel">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                        </svg>
+                        주문통합(Excel)
+                    </button>
+                    <button class="om-tab-btn" data-tab="shipping">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="1" y="3" width="15" height="13"></rect>
+                            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                        </svg>
+                        발송관리
+                    </button>
+                    <button class="om-tab-btn" data-tab="cs">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2h-6l-4 4V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        CS
+                    </button>
+                    <button class="om-tab-btn" data-tab="etc">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="1"></circle>
+                            <circle cx="19" cy="12" r="1"></circle>
+                            <circle cx="5" cy="12" r="1"></circle>
+                        </svg>
+                        기타
+                    </button>
+                </div>
             </div>
         </div>
         
