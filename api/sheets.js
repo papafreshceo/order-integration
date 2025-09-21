@@ -29,15 +29,14 @@ export default async function handler(req, res) {
 case 'saveCsRecord':
         try {
           const { data } = req.body;
-          const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
+          const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
           
           console.log('CS 기록 저장 시작:', { 
             spreadsheetId: ordersSpreadsheetId,
             data: data 
           });
           
-          // CS기록 시트에 데이터 추가 (헤더는 2행에 있고, 3행부터 데이터)
-          // appendSheetData는 자동으로 마지막 행 다음에 추가함
+          // CS기록 시트에 데이터 추가
           const rowData = [[
             data.마켓명 || '',
             '', // 연번은 시트에서 수식으로 자동 계산
@@ -58,7 +57,7 @@ case 'saveCsRecord':
             data.부분환불금액 || ''
           ]];
           
-          // appendSheetData 함수 직접 호출
+          // appendSheetData 함수 호출 - 세 번째 매개변수로 spreadsheetId 전달
           const result = await appendSheetData('CS기록!A:Q', rowData, ordersSpreadsheetId);
           
           console.log('CS 기록 저장 완료:', result);
