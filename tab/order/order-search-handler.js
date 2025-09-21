@@ -527,14 +527,21 @@ window.OrderSearchHandler = {
     async loadOrders() {
         this.showLoading();
         try {
-        const response = await fetch('/api/sheets', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'getMarketData',
-                useMainSpreadsheet: true
-            })
-        });
+            // 선택된 날짜 범위 가져오기
+            const startDate = document.getElementById('searchStartDate').value.replace(/-/g, '');
+            const endDate = document.getElementById('searchEndDate').value.replace(/-/g, '');
+            
+            // 날짜별 시트명으로 데이터 요청
+            const response = await fetch('/api/sheets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'getOrdersByDate',
+                    startDate: startDate,
+                    endDate: endDate,
+                    spreadsheetId: 'orders'  // 주문기록 시트
+                })
+            });
 
             const result = await response.json();
             
@@ -744,26 +751,6 @@ window.OrderSearchHandler = {
 
     getFilteredOrders() {
         let filtered = [...this.currentOrders];
-        
-        // 날짜 필터링
-        const startDate = document.getElementById('searchStartDate')?.value;
-        const endDate = document.getElementById('searchEndDate')?.value;
-        
-        if (startDate && endDate) {
-            const startStr = startDate.replace(/-/g, '');
-            const endStr = endDate.replace(/-/g, '');
-            
-            filtered = filtered.filter(order => {
-                // 결제일 필드에서 날짜 추출 (YYYYMMDD 형식)
-                const orderDateStr = order['결제일'] || order['주문일'] || '';
-                const dateOnly = orderDateStr.toString().replace(/[^0-9]/g, '').substring(0, 8);
-                
-                if (dateOnly.length === 8) {
-                    return dateOnly >= startStr && dateOnly <= endStr;
-                }
-                return false;
-            });
-        }
         
         // 마켓 필터
         const marketFilter = document.getElementById('searchMarketFilter')?.value;
