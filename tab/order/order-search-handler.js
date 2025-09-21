@@ -2,6 +2,7 @@ window.OrderSearchHandler = {
     currentOrders: [],
     marketColors: {},
     tableHeaders: [],
+    dateType: 'payment',
     
     async init() {
         this.render();
@@ -299,12 +300,62 @@ window.OrderSearchHandler = {
                     color: #2563eb;
                     font-weight: 500;
                 }
+
+                .result-count {
+                    color: #2563eb;
+                    font-weight: 500;
+                }
+
+                .date-type-switch {
+                    display: flex;
+                    background: #f8f9fa;
+                    border-radius: 20px;
+                    padding: 2px;
+                }
+
+                .switch-label {
+                    display: flex;
+                    align-items: center;
+                    padding: 6px 12px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    border-radius: 18px;
+                }
+
+                .switch-label input[type="radio"] {
+                    display: none;
+                }
+
+                .switch-label input[type="radio"]:checked + span {
+                    background: #2563eb;
+                    color: #ffffff;
+                    padding: 4px 10px;
+                    border-radius: 16px;
+                }
+
+                .switch-label span {
+                    font-size: 12px;
+                    font-weight: 400;
+                    padding: 4px 10px;
+                    transition: all 0.2s;
+                }
+                    
             </style>
 
             <div class="search-container">
                 <div class="panel-header">
                     <h2 class="panel-title">주문조회</h2>
-                    <div class="panel-actions">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div class="date-type-switch">
+                            <label class="switch-label">
+                                <input type="radio" name="dateType" value="payment" checked onchange="OrderSearchHandler.changeDateType('payment')">
+                                <span>결제일</span>
+                            </label>
+                            <label class="switch-label">
+                                <input type="radio" name="dateType" value="sheet" onchange="OrderSearchHandler.changeDateType('sheet')">
+                                <span>주문통합일</span>
+                            </label>
+                        </div>
                         <button class="btn-action" onclick="OrderSearchHandler.resetFilters()">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="23 4 23 10 17 10"></polyline>
@@ -499,6 +550,11 @@ window.OrderSearchHandler = {
         });
         document.querySelector('.quick-filter-btn').classList.add('active');
         
+        this.loadOrders();
+    },
+
+    changeDateType(type) {
+        this.dateType = type;
         this.loadOrders();
     },
 
@@ -722,6 +778,20 @@ window.OrderSearchHandler = {
         const endDate = document.getElementById('searchEndDate')?.value;
         
         if (startDate && endDate) {
+            if (this.dateType === 'sheet') {
+                // 주문통합일(시트명) 기준 필터링
+                const startNum = parseInt(startDate.replace(/-/g, ''));
+                const endNum = parseInt(endDate.replace(/-/g, ''));
+                
+                filtered = filtered.filter(order => {
+                    const sheetDate = order['sheetDate'] || order['시트날짜'] || '';
+                    if (sheetDate) {
+                        const sheetDateNum = parseInt(sheetDate.replace(/\D/g, ''));
+                        return sheetDateNum >= startNum && sheetDateNum <= endNum;
+                    }
+                    return false;
+                });
+            } else {
             const startNum = parseInt(startDate.replace(/-/g, ''));
             const endNum = parseInt(endDate.replace(/-/g, ''));
             
