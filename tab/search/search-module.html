@@ -29,13 +29,105 @@
 
         .module-description {
             font-size: 14px;
-            font-weight:
+            font-weight: 300;
+            color: #6c757d;
+            margin: 0;
+        }
 
-        .search-actions {
+        /* 내부 탭 네비게이션 */
+        .inner-tabs {
+            background: #ffffff;
+            padding: 0 40px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            gap: 24px;
+        }
+
+        .inner-tab {
+            padding: 16px 4px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: #6c757d;
+            font-size: 14px;
+            font-weight: 300;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: -1px;
+        }
+
+        .inner-tab:hover {
+            color: #495057;
+        }
+
+        .inner-tab.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+            font-weight: 400;
+        }
+
+        /* 탭 패널 영역 */
+        .tab-panels {
+            padding: 40px;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* 패널 헤더 */
+        .panel-header {
+            background: #ffffff;
+            padding: 24px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #212529;
+            margin: 0;
+        }
+
+        .panel-actions {
             display: flex;
             gap: 8px;
         }
 
+        /* 검색 섹션 */
+        .search-section {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        /* 기타 패널 섹션 스타일 */
+        .content-section {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 24px;
+        }
+
+        .content-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #212529;
+            margin: 0 0 24px 0;
+        }
+
+        /* 버튼 스타일 */
         .btn-action {
             padding: 6px 12px;
             border: 1px solid #dee2e6;
@@ -56,9 +148,7 @@
             border-color: #adb5bd;
         }
 
-        /* ========================================
-           검색 필터 (원본)
-           ======================================== */
+        /* 검색 필터 */
         .search-filters {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -112,9 +202,7 @@
             font-weight: 300;
         }
 
-        /* ========================================
-           빠른 필터 버튼 (원본)
-           ======================================== */
+        /* 빠른 필터 버튼 */
         .quick-filters {
             display: flex;
             gap: 8px;
@@ -146,9 +234,7 @@
             border-color: #2563eb;
         }
 
-        /* ========================================
-           검색 버튼 (원본)
-           ======================================== */
+        /* 검색 버튼 */
         .search-button-group {
             display: flex;
             gap: 12px;
@@ -165,12 +251,12 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            border: none;
         }
 
         .btn-search.primary {
             background: #2563eb;
             color: #ffffff;
-            border: none;
         }
 
         .btn-search.primary:hover {
@@ -188,9 +274,7 @@
             border-color: #adb5bd;
         }
 
-        /* ========================================
-           테이블 래퍼 (이전 코드)
-           ======================================== */
+        /* 테이블 */
         .table-wrapper {
             overflow-x: auto;
             max-height: 700px;
@@ -270,63 +354,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* 내부 탭 스타일 */
-        .inner-tab-navigation {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .inner-tab-btn {
-            padding: 10px 20px;
-            background: #ffffff;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            color: #6c757d;
-            font-size: 14px;
-            font-weight: 300;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .inner-tab-btn:hover {
-            background: #f8f9fa;
-            border-color: #adb5bd;
-        }
-
-        .inner-tab-btn.active {
-            background: #2563eb;
-            color: #ffffff;
-            border-color: #2563eb;
-        }
-
-        .inner-tab-content {
-            position: relative;
-        }
-
-        .inner-tab-panel {
-            display: none;
-        }
-
-        .inner-tab-panel.active {
-            display: block;
-        }
-
-        @media (max-width: 768px) {
-            .inner-tab-navigation {
-                flex-wrap: wrap;
-            }
-            
-            .inner-tab-btn {
-                flex: 1;
-                min-width: calc(33.333% - 6px);
-                font-size: 12px;
-                padding: 8px 12px;
-            }
-        }
-
         /* 메시지 */
         .message {
             position: fixed;
@@ -349,6 +376,42 @@
             background: #fee2e2;
             color: #991b1b;
             border: 1px solid #fecaca;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .module-header,
+            .inner-tabs,
+            .tab-panels {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+
+            .inner-tabs {
+                overflow-x: auto;
+                gap: 16px;
+            }
+
+            .inner-tab {
+                white-space: nowrap;
+                padding: 12px 4px;
+                font-size: 12px;
+            }
+
+            .tab-panels {
+                padding: 20px;
+            }
         }
     </style>
 </head>
@@ -373,7 +436,7 @@
         <!-- 탭 콘텐츠 영역 -->
         <div class="tab-panels">
             <!-- 주문조회 패널 -->
-            <div class="tab-panel active" id="order-search-panel">
+            <div class="tab-panel active" id="order-search">
                 <!-- 패널 헤더 -->
                 <div class="panel-header">
                     <h2 class="panel-title">주문 검색</h2>
@@ -392,121 +455,121 @@
                 <div class="search-section">
                     <!-- 빠른 필터 -->
                     <div class="quick-filters">
-                <button class="quick-filter-btn active" onclick="setQuickFilter('today', this)">오늘</button>
-                <button class="quick-filter-btn" onclick="setQuickFilter('yesterday', this)">어제</button>
-                <button class="quick-filter-btn" onclick="setQuickFilter('week', this)">이번 주</button>
-                <button class="quick-filter-btn" onclick="setQuickFilter('month', this)">이번 달</button>
-                <button class="quick-filter-btn" onclick="setQuickFilter('last30', this)">최근 30일</button>
-                <button class="quick-filter-btn" onclick="setQuickFilter('custom', this)">직접 설정</button>
-            </div>
+                        <button class="quick-filter-btn active" onclick="setQuickFilter('today', this)">오늘</button>
+                        <button class="quick-filter-btn" onclick="setQuickFilter('yesterday', this)">어제</button>
+                        <button class="quick-filter-btn" onclick="setQuickFilter('week', this)">이번 주</button>
+                        <button class="quick-filter-btn" onclick="setQuickFilter('month', this)">이번 달</button>
+                        <button class="quick-filter-btn" onclick="setQuickFilter('last30', this)">최근 30일</button>
+                        <button class="quick-filter-btn" onclick="setQuickFilter('custom', this)">직접 설정</button>
+                    </div>
 
-            <!-- 검색 필터 -->
-            <div class="search-filters">
-                <div class="filter-group">
-                    <label class="filter-label">기간</label>
-                    <div class="date-range-container">
-                        <input type="date" class="filter-input date-input" id="startDate">
-                        <span class="date-separator">~</span>
-                        <input type="date" class="filter-input date-input" id="endDate">
+                    <!-- 검색 필터 -->
+                    <div class="search-filters">
+                        <div class="filter-group">
+                            <label class="filter-label">기간</label>
+                            <div class="date-range-container">
+                                <input type="date" class="filter-input date-input" id="startDate">
+                                <span class="date-separator">~</span>
+                                <input type="date" class="filter-input date-input" id="endDate">
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">마켓</label>
+                            <select class="filter-select" id="marketFilter">
+                                <option value="">전체</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">주문 상태</label>
+                            <select class="filter-select" id="statusFilter">
+                                <option value="">전체</option>
+                                <option value="preparing">상품준비중</option>
+                                <option value="shipped">발송완료</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label class="filter-label">검색어</label>
+                            <input type="text" class="filter-input" id="searchKeyword" placeholder="주문번호, 수령인, 송장번호">
+                        </div>
+                    </div>
+
+                    <!-- 검색 버튼 -->
+                    <div class="search-button-group">
+                        <button class="btn-search secondary" onclick="exportToExcel()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            엑셀 다운로드
+                        </button>
+                        <button class="btn-search primary" onclick="loadOrders()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+                            검색
+                        </button>
                     </div>
                 </div>
 
-                <div class="filter-group">
-                    <label class="filter-label">마켓</label>
-                    <select class="filter-select" id="marketFilter">
-                        <option value="">전체</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label class="filter-label">주문 상태</label>
-                    <select class="filter-select" id="statusFilter">
-                        <option value="">전체</option>
-                        <option value="preparing">상품준비중</option>
-                        <option value="shipped">발송완료</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label class="filter-label">검색어</label>
-                    <input type="text" class="filter-input" id="searchKeyword" placeholder="주문번호, 수령인, 송장번호">
+                <!-- 테이블 -->
+                <div class="table-wrapper">
+                    <table class="shipping-table">
+                        <thead id="searchTableHead">
+                            <!-- 헤더는 동적으로 생성됨 -->
+                        </thead>
+                        <tbody id="searchTableBody">
+                            <!-- 데이터는 동적으로 생성됨 -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
-
-            <!-- 검색 버튼 -->
-            <div class="search-button-group">
-                <button class="btn-search secondary" onclick="exportToExcel()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    엑셀 다운로드
-                </button>
-                <button class="btn-search primary" onclick="loadOrders()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <path d="m21 21-4.35-4.35"></path>
-                    </svg>
-                    검색
-                </button>
-            </div>
-        </div>
-
-        <!-- 테이블 (이전 코드 스타일) -->
-        <div class="table-wrapper">
-            <table class="shipping-table">
-                <thead id="searchTableHead">
-                    <!-- 헤더는 동적으로 생성됨 -->
-                </thead>
-                <tbody id="searchTableBody">
-                    <!-- 데이터는 동적으로 생성됨 -->
-                </tbody>
-            </table>
-        </div>
-            </div> <!-- order-search panel 닫기 -->
 
             <!-- 주문입력 탭 -->
-            <div class="inner-tab-panel" id="order-input">
-                <div class="search-section">
-                    <h2 class="search-title">수동 주문 입력</h2>
+            <div class="tab-panel" id="order-input">
+                <div class="content-section">
+                    <h2 class="content-title">수동 주문 입력</h2>
                     <div id="manualOrderContent"></div>
                 </div>
             </div>
 
             <!-- 주문통합(Excel) 탭 -->
-            <div class="inner-tab-panel" id="order-excel">
-                <div class="search-section">
-                    <h2 class="search-title">엑셀 주문 통합</h2>
+            <div class="tab-panel" id="order-excel">
+                <div class="content-section">
+                    <h2 class="content-title">엑셀 주문 통합</h2>
                     <div id="excelOrderContent"></div>
                 </div>
             </div>
 
             <!-- 발송관리 탭 -->
-            <div class="inner-tab-panel" id="shipping-manage">
-                <div class="search-section">
-                    <h2 class="search-title">발송 관리</h2>
+            <div class="tab-panel" id="shipping-manage">
+                <div class="content-section">
+                    <h2 class="content-title">발송 관리</h2>
                     <div id="shippingManageContent"></div>
                 </div>
             </div>
 
             <!-- CS 탭 -->
-            <div class="inner-tab-panel" id="cs">
-                <div class="search-section">
-                    <h2 class="search-title">고객 서비스</h2>
+            <div class="tab-panel" id="cs">
+                <div class="content-section">
+                    <h2 class="content-title">고객 서비스</h2>
                     <div id="csContent"></div>
                 </div>
             </div>
 
             <!-- 기타 탭 -->
-            <div class="inner-tab-panel" id="others">
-                <div class="search-section">
-                    <h2 class="search-title">기타 기능</h2>
+            <div class="tab-panel" id="others">
+                <div class="content-section">
+                    <h2 class="content-title">기타 기능</h2>
                     <div id="othersContent"></div>
                 </div>
             </div>
-        </div> <!-- inner-tab-content 닫기 -->
-    </div> <!-- order-search-container 닫기 -->
+        </div>
+    </div>
 
     <!-- 로딩 -->
     <div class="loading-overlay" id="loadingOverlay">
@@ -535,8 +598,8 @@
 
         // 내부 탭 전환 기능
         function initializeInnerTabs() {
-            const tabButtons = document.querySelectorAll('.inner-tab-btn');
-            const tabPanels = document.querySelectorAll('.inner-tab-panel');
+            const tabButtons = document.querySelectorAll('.inner-tab');
+            const tabPanels = document.querySelectorAll('.tab-panel');
             
             tabButtons.forEach(button => {
                 button.addEventListener('click', () => {
@@ -563,31 +626,26 @@
                     // 이미 로드됨
                     break;
                 case 'order-input':
-                    // manual-order.js의 함수 호출
                     if (typeof loadManualOrderForm !== 'undefined') {
                         loadManualOrderForm('manualOrderContent');
                     }
                     break;
                 case 'order-excel':
-                    // 엑셀 업로드 기능
                     if (typeof loadExcelUpload !== 'undefined') {
                         loadExcelUpload('excelOrderContent');
                     }
                     break;
                 case 'shipping-manage':
-                    // 발송 관리
                     if (typeof loadShippingManage !== 'undefined') {
                         loadShippingManage('shippingManageContent');
                     }
                     break;
                 case 'cs':
-                    // CS 관리
                     if (typeof loadCSManage !== 'undefined') {
                         loadCSManage('csContent');
                     }
                     break;
                 case 'others':
-                    // 기타
                     if (typeof loadOthers !== 'undefined') {
                         loadOthers('othersContent');
                     }
@@ -666,7 +724,7 @@
             });
         }
 
-        // 주문 데이터 로드 (동적 테이블)
+        // 주문 데이터 로드
         async function loadOrders() {
             showLoading();
             try {
@@ -688,7 +746,6 @@
                     currentOrders = result.data || [];
                     marketColors = result.colors || {};
                     
-                    // 헤더 설정
                     if (currentOrders.length > 0) {
                         tableHeaders = Object.keys(currentOrders[0]);
                     }
@@ -705,7 +762,7 @@
             }
         }
 
-        // 테이블 업데이트 (동적 생성)
+        // 테이블 업데이트
         function updateTable() {
             const thead = document.getElementById('searchTableHead');
             const tbody = document.getElementById('searchTableBody');
@@ -745,7 +802,7 @@
             });
         }
 
-// 테이블 행 생성 (동적)
+        // 테이블 행 생성
         function createTableRow(order, serialNumber) {
             const row = document.createElement('tr');
             const hasTracking = order['송장번호'] && order['송장번호'].trim() !== '';
@@ -795,6 +852,7 @@
             
             return row;
         }
+
         // 필터링
         function getFilteredOrders() {
             let filtered = [...currentOrders];
