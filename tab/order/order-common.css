@@ -25,7 +25,7 @@ body {
 .om-header-content {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
 }
 
 .om-title-wrapper {
@@ -45,6 +45,7 @@ body {
 .om-tabs {
     display: flex;
     gap: 4px;
+    margin-left: 150px;
 }
 
 .om-tab-btn {
@@ -61,7 +62,6 @@ body {
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
-}
 
 .om-tab-btn:hover {
     background: #f8f9fa;
