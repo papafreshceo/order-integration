@@ -1055,7 +1055,7 @@
 </div>
 
 <div id="search-tab" class="tab-content">
-    <iframe src="tab/search/search-module.html" style="width: 100%; height: calc(100vh - 200px); border: none;"></iframe>
+    <iframe src="tab/search/search-module.html" style="width: 100%; min-height: 100vh; border: none;" onload="this.style.height=this.contentWindow.document.body.scrollHeight+'px';"></iframe>
 </div>
 
 <div id="products-tab" class="tab-content">
