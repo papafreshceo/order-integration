@@ -4,7 +4,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@200;300;400;500;600;700&display=swap');
 
 /* ========================================
-   CSS Variables
+   CSS Variables - 유지
    ======================================== */
 :root {
     /* Background Colors */
@@ -41,7 +41,7 @@
     --info: #2563eb;
     --info-bg: rgba(37, 99, 235, 0.1);
 
-    /* Scales */
+    /* Color Scales */
     --blue-50: #e7f3ff;
     --blue-100: #dbeafe;
     --yellow-100: #fef3c7;
@@ -82,7 +82,7 @@ body {
 .container {
     width: 100%;
     min-height: 100vh;
-    background: var(--bg-primary);
+    background: var(--bg-muted);
     display: flex;
     flex-direction: column;
 }
@@ -146,15 +146,26 @@ body {
     border-radius: 6px;
     cursor: pointer;
     font-size: 14px;
+    transition: all 0.2s;
+}
+
+#mainSystem .header .btn-logout:hover {
+    background: var(--brand-primary-hover);
 }
 
 /* ========================================
    Main Content
    ======================================== */
 .main-content {
-    padding: 0;
     flex: 1;
-    overflow: visible;
+    padding: 40px;
+    background: var(--bg-muted);
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        padding: 20px;
+    }
 }
 
 /* ========================================
@@ -163,9 +174,9 @@ body {
 .tab-navigation {
     display: flex;
     gap: 8px;
-    padding: 20px 20px 0 20px;
+    margin-bottom: 32px;
     border-bottom: 1px solid var(--border-default);
-    background: var(--bg-primary);
+    background: transparent;
 }
 
 .tab-button {
@@ -200,35 +211,69 @@ body {
 }
 
 /* ========================================
-   Module Container (통일된 UI)
+   Settings Layout (주문조회 탭 스타일)
+   ======================================== */
+.settings-container {
+    padding: 0;
+    background: var(--bg-muted);
+    min-height: calc(100vh - 60px);
+}
+
+.settings-content {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-default);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 20px;
+}
+
+.section-header {
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-default);
+}
+
+.section-title {
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.section-description {
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--text-muted);
+}
+
+/* ========================================
+   Module Cards (통일된 카드 스타일)
    ======================================== */
 .module-container {
-    padding: 20px;
+    padding: 0;
     max-width: 100%;
-    background: var(--bg-secondary);
 }
 
 .module-card {
     background: var(--bg-primary);
     border: 1px solid var(--border-default);
-    border-radius: 12px;
+    border-radius: 16px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
 }
 
 .card-header {
-    padding: 20px;
+    padding: 20px 32px;
     border-bottom: 1px solid var(--border-default);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--bg-secondary);
-    border-radius: 12px 12px 0 0;
+    background: var(--bg-primary);
 }
 
 .card-header h3 {
     margin: 0;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 500;
     color: var(--text-primary);
     display: flex;
@@ -237,57 +282,159 @@ body {
 }
 
 .card-body {
-    padding: 20px;
+    padding: 32px;
     overflow-x: auto;
 }
 
-.btn-toggle {
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--border-default);
-    background: white;
-    border-radius: 6px;
-    cursor: pointer;
+/* ========================================
+   Form Sections
+   ======================================== */
+.form-section {
+    margin-bottom: 32px;
+}
+
+.form-section-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-group {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 300;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-default);
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--text-primary);
+    background: var(--bg-primary);
     transition: all 0.2s;
 }
 
-.btn-toggle:hover {
-    background: var(--blue-50);
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    outline: none;
     border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-.btn-toggle svg {
-    transition: transform 0.2s;
+/* 건별 입력 스타일 - 유지 */
+.form-input-direct {
+    border: 1px solid #2563eb !important;
+    background: white;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.btn-toggle.collapsed svg {
-    transform: rotate(-90deg);
-}
-
-.card-body.collapsed {
-    display: none;
+.form-input-readonly {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* ========================================
-   Result Section Header
+   Buttons (통일된 버튼 스타일)
    ======================================== */
-.result-header {
-    margin-bottom: 15px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--border-default);
-}
-
-.export-buttons {
-    display: flex;
+.btn-primary {
+    padding: 10px 24px;
+    background: var(--brand-primary);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 300;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
     gap: 8px;
 }
 
-/* ========================================
-   Buttons
-   ======================================== */
+.btn-primary:hover {
+    background: var(--brand-primary-hover);
+}
+
+.btn-secondary {
+    padding: 10px 24px;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-default);
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 300;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-secondary:hover {
+    background: var(--bg-secondary);
+    border-color: #adb5bd;
+}
+
+.btn-danger {
+    padding: 10px 24px;
+    background: var(--danger);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 300;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.btn-small {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+}
+
+/* 특수 버튼들 - 유지 */
 .upload-btn {
     background: var(--brand-primary);
     color: var(--bg-primary);
@@ -300,11 +447,6 @@ body {
     transition: all 0.2s;
     display: inline-block;
     margin: 12px;
-}
-
-.upload-btn:hover {
-    background: var(--brand-primary-hover);
-    transform: translateY(-2px);
 }
 
 .btn-reset {
@@ -390,141 +532,90 @@ body {
 }
 
 /* ========================================
-   Upload Section (카드 내부)
+   Action Buttons
    ======================================== */
-.upload-section {
-    border: 1px solid var(--border-default);
-    border-radius: 8px;
-    padding: 40px;
-    text-align: center;
-    transition: all 0.2s;
-    background: var(--bg-secondary);
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border-default);
 }
 
-.upload-section.dragover {
-    border-color: var(--brand-primary);
-    background: var(--blue-50);
-}
-
-.file-input {
-    display: none;
+.export-buttons {
+    display: flex;
+    gap: 8px;
 }
 
 /* ========================================
-   Supported Markets
+   Result Section
    ======================================== */
-.supported-markets {
+.result-header {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-default);
+}
+
+/* ========================================
+   Toggle Button
+   ======================================== */
+.btn-toggle {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border-default);
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-toggle:hover {
+    background: var(--blue-50);
+    border-color: var(--brand-primary);
+}
+
+.btn-toggle svg {
+    transition: transform 0.2s;
+}
+
+.btn-toggle.collapsed svg {
+    transform: rotate(-90deg);
+}
+
+/* ========================================
+   Info Boxes
+   ======================================== */
+.info-box {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    padding: 16px;
     margin-bottom: 20px;
 }
 
-.market-badge {
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-weight: 400;
-    font-size: 13px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: all 0.2s;
-}
-
-/* ========================================
-   File List
-   ======================================== */
-.file-list {
-    margin-top: 24px;
-}
-
-.file-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-default);
-    border-radius: 8px;
-    margin-bottom: 12px;
-    transition: all 0.2s;
-}
-
-.file-item.warning {
-    background: var(--yellow-100);
-    border-color: var(--yellow-200);
-}
-
-.file-info {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.file-name-section {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.file-details {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    font-size: 12px;
-}
-
-.market-tag {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 400;
-    margin-left: 12px;
-    min-width: 60px;
-    text-align: center;
-}
-
-/* ========================================
-   File Summary
-   ======================================== */
-.file-summary {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-default);
-    border-radius: 8px;
-    padding: 20px;
-    margin: 24px 0;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-}
-
-.summary-item {
-    text-align: center;
-}
-
-.summary-label {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-    font-weight: 200;
-}
-
-.summary-value {
-    font-size: 24px;
+.info-title {
+    font-size: 14px;
     font-weight: 500;
     color: var(--text-primary);
+    margin-bottom: 8px;
 }
 
-/* ========================================
-   Warning Box
-   ======================================== */
+.info-content {
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
 .warning-box {
     background: var(--yellow-100);
     border: 1px solid var(--yellow-200);
     border-radius: 8px;
-    padding: 20px;
-    margin: 20px 0;
-    display: none;
+    padding: 16px;
+    margin-bottom: 20px;
 }
 
 .warning-box.show {
@@ -532,7 +623,7 @@ body {
 }
 
 /* ========================================
-   Table (기존 설정 유지)
+   Table Styles (주문조회 탭과 동일)
    ======================================== */
 .table-wrapper {
     width: 100%;
@@ -544,6 +635,34 @@ body {
     position: relative;
     background: var(--bg-primary);
     margin-top: 10px;
+}
+
+.settings-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+}
+
+.settings-table th {
+    padding: 12px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--border-default);
+    background: var(--bg-secondary);
+}
+
+.settings-table td {
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.settings-table tbody tr:hover {
+    background: var(--bg-secondary);
 }
 
 table {
@@ -572,7 +691,7 @@ th {
     user-select: none;
 }
 
-/* 초록색 헤더 (기존 유지) */
+/* 초록색 헤더 - 유지 */
 #resultTable th[data-header="마켓명"],
 #resultTable th[data-header="연번"],
 #resultTable th[data-header="결제일"],
@@ -606,7 +725,7 @@ td {
     color: var(--text-primary);
 }
 
-/* 고정열 z-index (기존 유지) */
+/* 고정열 z-index - 유지 */
 thead th[style*="sticky"] {
     z-index: 20 !important;
 }
@@ -619,7 +738,7 @@ tbody td[style*="sticky"]:first-child {
     z-index: 11 !important;
 }
 
-/* 선택된 행 스타일 (기존 유지) */
+/* 선택된 행 스타일 - 유지 */
 tbody tr.selected-row {
     background: #e7f3ff !important;
 }
@@ -630,8 +749,16 @@ tbody tr.selected-row td:not([data-header="마켓명"]) {
     font-weight: 400 !important;
 }
 
+tbody tr:hover {
+    background: var(--bg-light);
+}
+
+tbody tr:nth-child(even) {
+    background: var(--bg-muted);
+}
+
 /* ========================================
-   Statistics Section (기존 유지)
+   Statistics Section - 유지
    ======================================== */
 .statistics-section {
     display: grid;
@@ -672,7 +799,6 @@ tbody tr.selected-row td:not([data-header="마켓명"]) {
     min-width: 1530px;
 }
 
-/* 발송/미발송 색상 (기존 유지) */
 .stat-table td.sent-col {
     color: #212529;
 }
@@ -682,7 +808,7 @@ tbody tr.selected-row td:not([data-header="마켓명"]) {
 }
 
 /* ========================================
-   옵션명 매칭 상태 (기존 유지)
+   옵션명 매칭 상태 - 유지
    ======================================== */
 .unmatched-cell {
     background: #fef3c7 !important;
@@ -738,7 +864,7 @@ tbody tr.selected-row td:not([data-header="마켓명"]) {
 }
 
 /* ========================================
-   중복발송 검증 (기존 유지)
+   중복발송 검증 스타일 - 유지
    ======================================== */
 .duplicate-shipped {
     background: #fee2e2 !important;
@@ -755,7 +881,7 @@ tbody tr.selected-row td:not([data-header="마켓명"]) {
 }
 
 /* ========================================
-   수량 강조 (기존 유지)
+   수량 강조 - 유지
    ======================================== */
 .quantity-highlight {
     font-weight: 500 !important;
@@ -764,74 +890,8 @@ tbody tr.selected-row td:not([data-header="마켓명"]) {
 }
 
 /* ========================================
-   건별 입력 폼 (기존 유지)
+   수량 컨트롤 - 유지
    ======================================== */
-.manual-order-section {
-    margin-top: 20px;
-}
-
-.manual-order-form {
-    background: var(--bg-secondary);
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.form-row-table {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 10px;
-    align-items: flex-end;
-}
-
-.form-row-bottom {
-    display: flex;
-    gap: 10px;
-    align-items: flex-end;
-}
-
-.form-group-wrapper {
-    display: flex;
-    gap: 10px;
-    flex-wrap: nowrap;
-    align-items: flex-end;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.form-group label {
-    font-size: 13px;
-    color: var(--text-secondary);
-    font-weight: 400;
-}
-
-/* 입력 필드 스타일 (기존 유지) */
-.form-input-direct {
-    border: 1px solid #2563eb !important;
-    background: white;
-    padding: 8px;
-    border-radius: 4px;
-    font-size: 14px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.form-input-readonly {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    padding: 8px;
-    border-radius: 4px;
-    font-size: 14px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-/* 수량 컨트롤 (기존 유지) */
 .quantity-control {
     display: flex;
     align-items: center;
@@ -871,8 +931,205 @@ tbody tr.selected-row td:not([data-header="마켓명"]) {
 }
 
 /* ========================================
-   Pivot Controls (기존 유지)
+   Switch Toggle
    ======================================== */
+.switch-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.switch-label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.switch-title {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-primary);
+}
+
+.switch-desc {
+    font-size: 12px;
+    font-weight: 300;
+    color: var(--text-muted);
+}
+
+.switch {
+    position: relative;
+    width: 48px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--border-default);
+    transition: 0.3s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--brand-primary);
+}
+
+input:checked + .slider:before {
+    transform: translateX(24px);
+}
+
+/* ========================================
+   Connection Card
+   ======================================== */
+.connection-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.connection-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.connection-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+}
+
+.connection-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.connection-name {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-primary);
+}
+
+.connection-status {
+    font-size: 12px;
+    font-weight: 300;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+}
+
+.status-dot.disconnected {
+    background: var(--danger);
+}
+
+/* ========================================
+   기타 필요 스타일들
+   ======================================== */
+.upload-section {
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    transition: all 0.2s;
+    background: var(--bg-secondary);
+}
+
+.upload-section.dragover {
+    border-color: var(--brand-primary);
+    background: var(--blue-50);
+}
+
+.file-input {
+    display: none;
+}
+
+.file-list {
+    margin-top: 24px;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+}
+
+.file-summary {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 24px 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.supported-markets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.market-badge {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 400;
+    font-size: 13px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.2s;
+}
+
 .pivot-controls {
     margin-bottom: 20px;
     padding: 16px;
@@ -880,26 +1137,23 @@ tbody tr.selected-row td:not([data-header="마켓명"]) {
     border-radius: 8px;
 }
 
-.pivot-controls select {
-    padding: 8px 12px;
-    border-radius: 4px;
-    border: 1px solid var(--border-default);
-    font-size: 14px;
-    font-weight: 300;
-    color: var(--text-primary);
-    background: var(--bg-primary);
+.manual-order-section {
+    margin-top: 20px;
 }
 
-.pivot-controls button {
-    padding: 10px 24px;
-    background: var(--brand-primary);
-    color: var(--bg-primary);
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 300;
-    font-size: 14px;
-    transition: all 0.2s;
+.manual-order-form {
+    background: var(--bg-secondary);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.form-row-table {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: flex-end;
 }
 
 /* ========================================
@@ -967,10 +1221,6 @@ tbody tr.selected-row td:not([data-header="마켓명"]) {
     font-weight: 300;
 }
 
-.success-message.show {
-    display: block;
-}
-
 .center-message {
     position: fixed;
     top: 50%;
@@ -1002,49 +1252,12 @@ tbody tr.selected-row td:not([data-header="마켓명"]) {
 }
 
 /* ========================================
-   기타 유틸리티
+   Utilities
    ======================================== */
 .text-left { text-align: left; }
 .text-center { text-align: center; }
 .text-right { text-align: right; }
 .required { color: #dc3545; }
-
-.search-results {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-default);
-    border-radius: 6px;
-    max-height: 200px;
-    overflow-y: auto;
-    display: none;
-    z-index: 100;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.search-result-item {
-    padding: 10px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--border-light);
-    font-size: 14px;
-    font-weight: 400;
-    color: var(--brand-primary);
-}
-
-.search-result-item:hover {
-    background: var(--bg-hover);
-}
-
-.manual-order-list {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-default);
-    border-radius: 8px;
-    padding: 20px;
-}
 
 .empty-list {
     text-align: center;
@@ -1061,10 +1274,6 @@ tbody tr.selected-row td:not([data-header="마켓명"]) {
         flex-direction: column;
         align-items: stretch;
     }
-    
-    .form-group-wrapper {
-        width: 100%;
-    }
 }
 
 @media (max-width: 768px) {
@@ -1076,18 +1285,21 @@ tbody tr.selected-row td:not([data-header="마켓명"]) {
         font-size: 28px;
     }
     
-    .module-container {
-        padding: 15px;
+    .settings-container {
+        padding: 20px;
+    }
+    
+    .settings-content {
+        padding: 20px;
     }
     
     .card-header,
     .card-body {
-        padding: 15px;
+        padding: 20px;
     }
     
     .tab-navigation {
         flex-wrap: wrap;
-        padding: 15px 15px 0 15px;
     }
     
     .tab-button {
