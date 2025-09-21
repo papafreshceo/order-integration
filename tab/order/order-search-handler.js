@@ -1639,7 +1639,7 @@ const orderData = {
     수령인: document.getElementById('csResendReceiver').value,
     '수령인 전화번호': document.getElementById('csResendPhone').value,
     주소: document.getElementById('csResendAddress').value,
-    배송메세지: document.getElementById('csResendNote').value,
+    
     옵션명: document.getElementById('csResendOption').value,
     수량: document.getElementById('csResendQty').value,
     '특이/요청사항': document.getElementById('csResendNote').value,
