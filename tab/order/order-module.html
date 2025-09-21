@@ -80,24 +80,27 @@
             },
             
             loadModule(tab) {
-                if (this.modules[tab]) {
-                    this.modules[tab].init();
-                } else {
-                    const script = document.createElement('script');
-                    script.src = `order-${tab}-handler.js`;
-                    script.onload = () => {
-                        if (window[`Order${tab.charAt(0).toUpperCase() + tab.slice(1)}Handler`]) {
-                            this.modules[tab] = window[`Order${tab.charAt(0).toUpperCase() + tab.slice(1)}Handler`];
-                            this.modules[tab].init();
-                        }
-                    };
-                    document.head.appendChild(script);
-                }
-            },
-            
-            showLoading(show) {
-                document.getElementById('om-loading').classList.toggle('show', show);
+    if (this.modules[tab]) {
+        this.modules[tab].init();
+    } else {
+        const script = document.createElement('script');
+        script.src = `order-${tab}-handler.js`;  // 이 경로가 맞는지 확인
+        script.onload = () => {
+            // 첫글자 대문자 변환 수정
+            const handlerName = 'Order' + tab.charAt(0).toUpperCase() + tab.slice(1) + 'Handler';
+            if (window[handlerName]) {
+                this.modules[tab] = window[handlerName];
+                this.modules[tab].init();
+            } else {
+                console.error(`${handlerName} not found`);
             }
+        };
+        script.onerror = () => {
+            console.error(`Failed to load order-${tab}-handler.js`);
+        };
+        document.head.appendChild(script);
+    }
+}
         };
         
         document.addEventListener('DOMContentLoaded', () => {
