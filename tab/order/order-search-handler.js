@@ -1511,15 +1511,33 @@ onSolutionChange() {
             if (this.currentCsOrder) {
                 document.getElementById('csResendOption').value = this.currentCsOrder['옵션명'] || '';
                 document.getElementById('csResendReceiver').value = this.currentCsOrder['수령인'] || this.currentCsOrder['수취인'] || '';
-                document.getElementById('csResendPhone').value = 
-                    this.currentCsOrder['수령인전화번호'] || 
-                    this.currentCsOrder['수취인전화번호'] || 
-                    this.currentCsOrder['수령인연락처'] || 
-                    this.currentCsOrder['수취인연락처'] || '';
-                document.getElementById('csResendAddress').value = 
-                    this.currentCsOrder['주소'] || 
-                    this.currentCsOrder['수령인주소'] || 
-                    this.currentCsOrder['수취인주소'] || '';
+                
+                // 전화번호 필드 - 다양한 필드명 체크
+                const phoneValue = this.currentCsOrder['수령인전화번호'] || 
+                                  this.currentCsOrder['수취인전화번호'] || 
+                                  this.currentCsOrder['수령인연락처'] || 
+                                  this.currentCsOrder['수취인연락처'] ||
+                                  this.currentCsOrder['수령인 전화번호'] ||
+                                  this.currentCsOrder['수취인 전화번호'] || '';
+                                  
+                document.getElementById('csResendPhone').value = phoneValue;
+                
+                // 주소 필드
+                const addressValue = this.currentCsOrder['주소'] || 
+                                    this.currentCsOrder['수령인주소'] || 
+                                    this.currentCsOrder['수취인주소'] ||
+                                    this.currentCsOrder['배송지주소'] || '';
+                                    
+                document.getElementById('csResendAddress').value = addressValue;
+                
+                // 디버깅용 로그
+                console.log('재발송 기본값 설정:', {
+                    옵션명: document.getElementById('csResendOption').value,
+                    수령인: document.getElementById('csResendReceiver').value,
+                    전화번호: phoneValue,
+                    주소: addressValue,
+                    원본데이터: this.currentCsOrder
+                });
             }
         }
     },
