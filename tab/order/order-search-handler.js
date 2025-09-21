@@ -733,7 +733,6 @@ window.OrderSearchHandler = {
             </div>
 
             <!-- CS 모달 -->
-<!-- CS 모달 -->
             <div class="cs-modal-overlay" id="csModalOverlay">
                 <div class="cs-modal">
                     <div class="cs-modal-header">
@@ -757,13 +756,14 @@ window.OrderSearchHandler = {
                             </div>
                             
                             <div class="cs-form-group">
-                                <label class="cs-form-label">해결방안</label>
+                                <label class="cs-form-label">해결방법</label>
                                 <select class="cs-select" id="csSolution" onchange="OrderSearchHandler.onSolutionChange()">
                                     <option value="">선택하세요</option>
                                     <option value="site-refund">사이트환불</option>
                                     <option value="partial-refund">부분환불</option>
                                     <option value="resend">재발송</option>
                                     <option value="partial-resend">부분재발송</option>
+                                    <option value="return">반품</option>
                                 </select>
                             </div>
                         </div>
@@ -801,6 +801,21 @@ window.OrderSearchHandler = {
                                 <div class="cs-form-group" style="margin-bottom: 0;">
                                     <label class="cs-form-label">특이/요청사항</label>
                                     <input type="text" class="cs-input" id="csResendNote" value="CS재발송, 싱싱하고 맛있는 것">
+                                </div>
+                            </div>
+                            
+                            <div class="cs-delivery-info" style="margin-top: 12px;">
+                                <div class="cs-form-group">
+                                    <label class="cs-form-label">수령인</label>
+                                    <input type="text" class="cs-input" id="csResendReceiver" placeholder="수령인">
+                                </div>
+                                <div class="cs-form-group">
+                                    <label class="cs-form-label">수령인 전화번호</label>
+                                    <input type="text" class="cs-input" id="csResendPhone" placeholder="수령인 전화번호">
+                                </div>
+                                <div class="cs-form-group">
+                                    <label class="cs-form-label">주소</label>
+                                    <input type="text" class="cs-input" id="csResendAddress" placeholder="배송 주소">
                                 </div>
                             </div>
                         </div>
@@ -1495,6 +1510,16 @@ onSolutionChange() {
             // 기본값 설정
             if (this.currentCsOrder) {
                 document.getElementById('csResendOption').value = this.currentCsOrder['옵션명'] || '';
+                document.getElementById('csResendReceiver').value = this.currentCsOrder['수령인'] || this.currentCsOrder['수취인'] || '';
+                document.getElementById('csResendPhone').value = 
+                    this.currentCsOrder['수령인전화번호'] || 
+                    this.currentCsOrder['수취인전화번호'] || 
+                    this.currentCsOrder['수령인연락처'] || 
+                    this.currentCsOrder['수취인연락처'] || '';
+                document.getElementById('csResendAddress').value = 
+                    this.currentCsOrder['주소'] || 
+                    this.currentCsOrder['수령인주소'] || 
+                    this.currentCsOrder['수취인주소'] || '';
             }
         }
     },
@@ -1516,47 +1541,138 @@ onSolutionChange() {
             return;
         }
 
-        const csData = {
-            접수일시: new Date().toLocaleString('ko-KR'),
-            마켓명: this.currentCsOrder['마켓명'],
-            결제일: this.currentCsOrder['결제일'],
-            주문번호: this.currentCsOrder['주문번호'],
-            주문자: this.currentCsOrder['주문자'],
-            주문자전화번호: this.currentCsOrder['주문자전화번호'],
-            수령인: this.currentCsOrder['수령인'] || this.currentCsOrder['수취인'],
-            수령인전화번호: this.currentCsOrder['수령인전화번호'] || this.currentCsOrder['수취인전화번호'],
-            주소: this.currentCsOrder['주소'] || this.currentCsOrder['수령인주소'] || this.currentCsOrder['수취인주소'],
-            옵션명: this.currentCsOrder['옵션명'],
-            수량: this.currentCsOrder['수량'],
-            상품금액: this.currentCsOrder['상품금액'],
-            CS내용: customerRequest,
-            해결방안: solution
-        };
+        this.showLoading();
 
-        // 추가 데이터
-        if (solution === 'partial-refund') {
-            csData.환불비율 = document.getElementById('csRefundPercent').value + '%';
-        } else if (solution === 'resend' || solution === 'partial-resend') {
-            csData.재발송옵션 = document.getElementById('csResendOption').value;
-            csData.재발송수량 = document.getElementById('csResendQty').value;
-            csData.재발송특이사항 = document.getElementById('csResendNote').value;
-        }
+        try {
+            // CS 데이터 준비
+            const csData = {
+                마켓명: this.currentCsOrder['마켓명'],
+                접수일: new Date().toLocaleDateString('ko-KR'),
+                해결방법: this.getSolutionText(solution),
+                결제일: this.currentCsOrder['결제일'],
+                주문번호: this.currentCsOrder['주문번호'],
+                주문자: this.currentCsOrder['주문자'],
+                '주문자 전화번호': this.currentCsOrder['주문자전화번호'] || this.currentCsOrder['주문자연락처'] || '',
+                수령인: this.currentCsOrder['수령인'] || this.currentCsOrder['수취인'],
+                '수령인 전화번호': this.currentCsOrder['수령인전화번호'] || this.currentCsOrder['수취인전화번호'] || '',
+                주소: this.currentCsOrder['주소'] || this.currentCsOrder['수령인주소'] || this.currentCsOrder['수취인주소'],
+                배송메세지: this.currentCsOrder['배송메세지'] || this.currentCsOrder['배송메시지'] || '',
+                옵션명: this.currentCsOrder['옵션명'],
+                수량: this.currentCsOrder['수량'],
+                재발송상품: '',
+                재발송수량: '',
+                부분환불금액: ''
+            };
 
-        // CS 탭으로 데이터 전달
-        if (window.OrderManage && window.OrderManage.modules.cs) {
-            window.OrderManage.modules.cs.addCsCase(csData);
-            this.showMessage('CS 접수가 완료되었습니다.', 'success');
+            // 해결방법별 추가 데이터
+            if (solution === 'partial-refund') {
+                const refundAmount = Math.round(
+                    (parseFloat(document.getElementById('csPaymentAmount').value) || 0) * 
+                    (parseFloat(document.getElementById('csRefundPercent').value) || 0) / 100
+                );
+                csData.부분환불금액 = refundAmount;
+            } else if (solution === 'resend' || solution === 'partial-resend') {
+                csData.재발송상품 = document.getElementById('csResendOption').value;
+                csData.재발송수량 = document.getElementById('csResendQty').value;
+                csData.수령인 = document.getElementById('csResendReceiver').value;
+                csData['수령인 전화번호'] = document.getElementById('csResendPhone').value;
+                csData.주소 = document.getElementById('csResendAddress').value;
+            }
+
+            // 1. CS기록 시트에 저장
+            const csResponse = await fetch('/api/sheets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'saveCsRecord',
+                    data: csData
+                })
+            });
+
+            const csResult = await csResponse.json();
+            if (!csResult.success) {
+                throw new Error('CS 기록 저장 실패');
+            }
+
+            // 2. 재발송/부분재발송인 경우 주문 접수
+            if (solution === 'resend' || solution === 'partial-resend') {
+                const today = new Date();
+                const sheetName = today.getFullYear() + 
+                    String(today.getMonth() + 1).padStart(2, '0') + 
+                    String(today.getDate()).padStart(2, '0');
+
+                // CS 마켓 번호 가져오기
+                const csNumberResponse = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'getNextCsNumber',
+                        sheetName: sheetName
+                    })
+                });
+
+                const csNumberResult = await csNumberResponse.json();
+                const csMarketNumber = csNumberResult.csNumber || 'CS001';
+
+                // 주문 데이터 준비
+                const orderData = {
+                    마켓명: 'CS발송',
+                    마켓: csMarketNumber,
+                    결제일: this.currentCsOrder['결제일'],
+                    주문번호: this.currentCsOrder['주문번호'],
+                    주문자: this.currentCsOrder['주문자'],
+                    '주문자 전화번호': this.currentCsOrder['주문자전화번호'] || '',
+                    수령인: document.getElementById('csResendReceiver').value,
+                    '수령인 전화번호': document.getElementById('csResendPhone').value,
+                    주소: document.getElementById('csResendAddress').value,
+                    배송메세지: document.getElementById('csResendNote').value,
+                    옵션명: document.getElementById('csResendOption').value,
+                    수량: document.getElementById('csResendQty').value,
+                    '특이/요청사항': document.getElementById('csResendNote').value,
+                    발송요청일: today.toLocaleDateString('ko-KR')
+                };
+
+                // 오늘 날짜 시트에 주문 추가
+                const orderResponse = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'addCsOrder',
+                        sheetName: sheetName,
+                        data: orderData
+                    })
+                });
+
+                const orderResult = await orderResponse.json();
+                if (!orderResult.success) {
+                    throw new Error('주문 접수 실패');
+                }
+
+                this.showMessage('CS 접수 및 재발송 주문이 완료되었습니다.', 'success');
+            } else {
+                this.showMessage('CS 접수가 완료되었습니다.', 'success');
+            }
+
             this.closeCsModal();
-        } else {
-            // CS 모듈이 로드되지 않은 경우 로컬 스토리지 임시 저장
-            const csCases = JSON.parse(localStorage.getItem('csCases') || '[]');
-            csCases.push(csData);
-            localStorage.setItem('csCases', JSON.stringify(csCases));
-            this.showMessage('CS 접수가 완료되었습니다. CS 탭에서 확인하세요.', 'success');
-            this.closeCsModal();
+            
+        } catch (error) {
+            console.error('CS 접수 오류:', error);
+            this.showMessage('CS 접수 중 오류가 발생했습니다.', 'error');
+        } finally {
+            this.hideLoading();
         }
     },
 
+    getSolutionText(value) {
+        const solutionMap = {
+            'site-refund': '사이트환불',
+            'partial-refund': '부분환불',
+            'resend': '재발송',
+            'partial-resend': '부분재발송',
+            'return': '반품'
+        };
+        return solutionMap[value] || value;
+    },
     // 추가주문접수 모달 (추후 구현)
     openAdditionalOrderModal() {
         this.showMessage('추가주문접수 기능은 준비 중입니다.', 'info');

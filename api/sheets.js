@@ -26,15 +26,224 @@ export default async function handler(req, res) {
     const { action, sheetName, range, values } = req.body || req.query;
 
     switch (action) {
+      case 'saveCsRecord':
+        try {
+          const { data } = req.body;
+          const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
+          
+          // CS기록 시트의 헤더 읽기 (2행이 헤더)
+          const csHeaders = await getOrderData('CS기록!2:2', ordersSpreadsheetId);
+          
+          if (!csHeaders || csHeaders.length === 0) {
+            throw new Error('CS기록 시트 헤더를 찾을 수 없습니다');
+          }
+          
+          const headers = csHeaders[0];
+          
+          // 현재 데이터 읽어서 다음 연번 계산
+          const existingData = await getOrderData('CS기록!A3:A', ordersSpreadsheetId);
+          const nextSerial = existingData ? existingData.length + 1 : 1;
+          
+          // 데이터 배열 생성
+          const rowData = headers.map(header => {
+            if (header === '연번') {
+              return nextSerial;
+            }
+            // 헤더명에 공백 처리
+            const normalizedHeader = header.replace(/\s/g, '');
+            const dataKeys = Object.keys(data);
+            
+            // 정확한 키 매칭 시도
+            for (const key of dataKeys) {
+              if (key.replace(/\s/g, '') === normalizedHeader) {
+                return data[key] || '';
+              }
+            }
+            
+            return data[header] || '';
+          });
+          
+          // CS기록 시트에 추가 (3행부터 데이터)
+          const targetRow = 3 + (existingData ? existingData.length : 0);
+          const targetRange = `CS기록!A${targetRow}:${columnToLetter(headers.length)}${targetRow}`;
+          
+          await updateSheetData(targetRange, [rowData], ordersSpreadsheetId);
+          
+          return res.status(200).json({
+            success: true,
+            message: 'CS 기록이 저장되었습니다',
+            serial: nextSerial
+          });
+          
+        } catch (error) {
+          console.error('saveCsRecord 오류:', error);
+          return res.status(500).json({
+            success: false,
+            error: error.message
+          });
+        }
+
+      case 'getNextCsNumber':
+        try {
+          const { sheetName } = req.body;
+          const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
+          
+          // 해당 날짜 시트가 있는지 확인
+          try {
+            const sheetData = await getOrderData(`${sheetName}!B:B`, ordersSpreadsheetId);
+            
+            if (sheetData && sheetData.length > 1) {
+              // B열(마켓) 데이터에서 CS로 시작하는 번호 찾기
+              let maxCsNumber = 0;
+              
+              for (let i = 1; i < sheetData.length; i++) {
+                const market = sheetData[i][0] || '';
+                if (market.startsWith('CS')) {
+                  const numberPart = parseInt(market.replace('CS', ''));
+                  if (!isNaN(numberPart) && numberPart > maxCsNumber) {
+                    maxCsNumber = numberPart;
+                  }
+                }
+              }
+              
+              const nextNumber = maxCsNumber + 1;
+              return res.status(200).json({
+                success: true,
+                csNumber: `CS${String(nextNumber).padStart(3, '0')}`
+              });
+            }
+          } catch (err) {
+            // 시트가 없는 경우
+          }
+          
+          // 기본값 반환
+          return res.status(200).json({
+            success: true,
+            csNumber: 'CS001'
+          });
+          
+        } catch (error) {
+          console.error('getNextCsNumber 오류:', error);
+          return res.status(200).json({
+            success: true,
+            csNumber: 'CS001'
+          });
+        }
+
+      case 'addCsOrder':
+        try {
+          const { sheetName, data } = req.body;
+          const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
+          const mainSpreadsheetId = process.env.SPREADSHEET_ID;
+          
+          // 날짜 시트 존재 확인
+          let sheetExists = false;
+          let headers = [];
+          
+          try {
+            const existingData = await getOrderData(`${sheetName}!1:1`, ordersSpreadsheetId);
+            if (existingData && existingData.length > 0) {
+              sheetExists = true;
+              headers = existingData[0];
+            }
+          } catch (err) {
+            sheetExists = false;
+          }
+          
+          // 시트가 없으면 생성
+          if (!sheetExists) {
+            // 매핑 시트에서 표준필드 가져오기
+            const mappingData = await getSheetData('매핑!A:B', mainSpreadsheetId);
+            
+            if (!mappingData || mappingData.length < 2) {
+              throw new Error('매핑 시트에서 표준필드를 찾을 수 없습니다');
+            }
+            
+            // 표준필드 찾기 (B열)
+            const standardFields = [];
+            let foundHeader = false;
+            
+            for (let i = 0; i < mappingData.length; i++) {
+              if (mappingData[i][1] === '표준필드') {
+                foundHeader = true;
+                continue;
+              }
+              if (foundHeader && mappingData[i][1]) {
+                standardFields.push(mappingData[i][1]);
+              }
+            }
+            
+            if (standardFields.length === 0) {
+              // 기본 헤더 사용
+              headers = [
+                '연번', '마켓명', '마켓', '결제일', '주문번호', '상품주문번호',
+                '주문자', '주문자전화번호', '수령인', '수령인전화번호', '주소',
+                '배송메세지', '옵션명', '수량', '특이/요청사항', '발송요청일'
+              ];
+            } else {
+              headers = standardFields;
+            }
+            
+            // 새 시트 생성
+            await createSheet(sheetName, ordersSpreadsheetId);
+            
+            // 헤더 설정
+            await updateSheetData(`${sheetName}!A1:${columnToLetter(headers.length)}1`, 
+              [headers], ordersSpreadsheetId);
+          }
+          
+          // 연번 계산
+          const existingRows = await getOrderData(`${sheetName}!A:A`, ordersSpreadsheetId);
+          const nextSerial = existingRows ? existingRows.length : 1;
+          
+          // 데이터 행 생성
+          const rowData = headers.map(header => {
+            if (header === '연번') {
+              return nextSerial;
+            }
+            
+            // 헤더명 정규화
+            const normalizedHeader = header.replace(/\s/g, '').replace(/[_-]/g, '');
+            
+            // 데이터에서 매칭되는 키 찾기
+            for (const key of Object.keys(data)) {
+              const normalizedKey = key.replace(/\s/g, '').replace(/[_-]/g, '');
+              if (normalizedKey === normalizedHeader) {
+                return data[key] || '';
+              }
+            }
+            
+            return data[header] || '';
+          });
+          
+          // 데이터 추가
+          const targetRow = existingRows ? existingRows.length + 1 : 2;
+          const targetRange = `${sheetName}!A${targetRow}:${columnToLetter(headers.length)}${targetRow}`;
+          
+          await updateSheetData(targetRange, [rowData], ordersSpreadsheetId);
+          
+          return res.status(200).json({
+            success: true,
+            message: 'CS 재발송 주문이 접수되었습니다',
+            sheetName: sheetName,
+            row: targetRow
+          });
+          
+        } catch (error) {
+          console.error('addCsOrder 오류:', error);
+          return res.status(500).json({
+            success: false,
+            error: error.message
+          });
+        }
+
       case 'getProductData':
         try {
-          // 제품 정보 조회 (SPREADSHEET_ID_PRODUCTS 사용)
+          // 기존 코드 유지
           const productSpreadsheetId = process.env.SPREADSHEET_ID_PRODUCTS || '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg';
           
-          // google-sheets 모듈에서 getProductSheetData 함수 사용
           const { getProductSheetData } = require('../lib/google-sheets');
           
-          // 통합상품마스터 시트 데이터
           const productSheetData = await getProductSheetData(productSpreadsheetId, '통합상품마스터!A:DZ');
           const productInfo = {};
           
@@ -46,12 +255,10 @@ export default async function handler(req, res) {
                   const optionName = String(productSheetData[i][optionIdx] || '').trim();
                   if (!optionName) continue;
                   
-                  // 모든 컬럼 데이터를 객체로 저장
                   const rowData = {};
                   headers.forEach((header, idx) => {
                       if (header && header !== '옵션명') {
                           const value = productSheetData[i][idx];
-                          // 숫자 필드 처리
                           if (header.includes('비용') || header.includes('가격') || header.includes('금액')) {
                               rowData[header] = parseNumber(value);
                           } else {
@@ -66,7 +273,7 @@ export default async function handler(req, res) {
           
           return res.status(200).json({
               productData: productInfo,
-              priceData: productInfo  // productInfo에 이미 셀러공급가 포함
+              priceData: productInfo
           });
           
         } catch (error) {
@@ -82,7 +289,6 @@ export default async function handler(req, res) {
           const { sheetName, spreadsheetId } = req.body;
           const { getOrderData } = require('../lib/google-sheets');
           
-          // 주문기록 시트에서 데이터 읽기 (SPREADSHEET_ID_ORDERS 사용)
           const orderData = await getOrderData(`${sheetName}!A:ZZ`, spreadsheetId || process.env.SPREADSHEET_ID_ORDERS);
           
           if (!orderData || orderData.length < 2) {
@@ -135,7 +341,6 @@ export default async function handler(req, res) {
             return obj;
           });
           
-          // 매핑에서 마켓 색상 가져오기
           const mappingData = await getSheetData('매핑!A:D');
           const colors = {};
           
@@ -181,14 +386,13 @@ export default async function handler(req, res) {
           });
         }
 
-case 'getOrdersByDateRange':
+      case 'getOrdersByDateRange':
         try {
           const { startDate, endDate } = req.body;
           const { getOrderData } = require('../lib/google-sheets');
           const targetSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
           
           if (!startDate || !endDate) {
-            // 날짜가 없으면 오늘 날짜 사용
             const today = new Date().toLocaleDateString('ko-KR', {
               timeZone: 'Asia/Seoul',
               year: 'numeric',
@@ -218,7 +422,6 @@ case 'getOrdersByDateRange':
               return obj;
             });
             
-            // 매핑에서 마켓 색상
             const mappingData = await getSheetData('매핑!A:D');
             const colors = {};
             
@@ -259,7 +462,6 @@ case 'getOrdersByDateRange':
             });
           }
           
-          // 날짜 범위가 있는 경우
           const orders = [];
           let allHeaders = new Set(['연번']);
           
@@ -292,12 +494,10 @@ case 'getOrdersByDateRange':
             }
           }
           
-          // 연번 추가
           orders.forEach((order, index) => {
             order['연번'] = index + 1;
           });
           
-          // 마켓 색상
           const mappingData = await getSheetData('매핑!A:D');
           const colors = {};
           
@@ -351,7 +551,6 @@ case 'getOrdersByDateRange':
           const { getOrderData, updateOrderCell } = require('../lib/google-sheets');
           const targetSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
           
-          // 헤더와 주문번호 컬럼만 읽기
           const headerData = await getOrderData(`${sheetName}!1:1`, targetSpreadsheetId);
           const headers = headerData[0];
           
@@ -360,7 +559,6 @@ case 'getOrdersByDateRange':
           const trackingCol = headers.indexOf('송장번호');
           const dateCol = headers.indexOf('발송일(송장입력일)');
           
-          // 컬럼 번호를 문자로 변환
           const getColumnLetter = (col) => {
             let letter = '';
             let num = col;
@@ -371,11 +569,9 @@ case 'getOrdersByDateRange':
             return letter;
           };
           
-          // 주문번호 컬럼 데이터 읽기
           const orderNumLetter = getColumnLetter(orderNumCol);
           const orderData = await getOrderData(`${sheetName}!${orderNumLetter}:${orderNumLetter}`, targetSpreadsheetId);
           
-          // 오늘 날짜
           const today = new Date().toLocaleDateString('ko-KR', {
             year: 'numeric',
             month: '2-digit',
@@ -384,19 +580,16 @@ case 'getOrdersByDateRange':
           
           let updateCount = 0;
           
-          // 각 업데이트 처리
           for (const update of updates) {
-            // 주문번호로 행 찾기
             let targetRow = -1;
             for (let i = 1; i < orderData.length; i++) {
               if (orderData[i][0] === update.orderNumber) {
-                targetRow = i + 1; // 실제 행 번호
+                targetRow = i + 1;
                 break;
               }
             }
             
             if (targetRow > 0) {
-              // 개별 셀 업데이트
               if (update.carrier && carrierCol >= 0) {
                 const cell = `${sheetName}!${getColumnLetter(carrierCol)}${targetRow}`;
                 await updateOrderCell(cell, update.carrier, targetSpreadsheetId);
@@ -432,16 +625,13 @@ case 'getOrdersByDateRange':
 
       case 'getMarketFormats':
         try {
-          // 마켓별송장업로드양식 시트 읽기 (SPREADSHEET_ID 사용)
           const formatData = await getSheetData('마켓별송장업로드양식!A:Z');
           
           const formats = {};
           
           if (formatData && formatData.length > 0) {
-            // 첫 행이 마켓명
             const markets = formatData[0].filter(cell => cell);
             
-            // 각 마켓별로 필드 수집
             markets.forEach((market, colIndex) => {
               formats[market] = [];
               for (let rowIndex = 1; rowIndex < formatData.length; rowIndex++) {
@@ -453,7 +643,6 @@ case 'getOrdersByDateRange':
             });
           }
           
-          // 기본값 제공
           if (Object.keys(formats).length === 0) {
             formats['쿠팡'] = ['주문번호', '택배사', '송장번호'];
             formats['네이버'] = ['상품주문번호', '택배사코드', '송장번호'];
@@ -486,9 +675,7 @@ case 'getOrdersByDateRange':
         try {
           const { useMainSpreadsheet } = req.body;
           
-          // 발송관리 탭에서 호출시: 주문 데이터와 마켓 색상 둘 다 반환
           if (useMainSpreadsheet) {
-            // 1. 오늘 날짜의 주문 데이터 가져오기
             const today = new Date().toLocaleDateString('ko-KR', {
               timeZone: 'Asia/Seoul',
               year: 'numeric',
@@ -518,15 +705,13 @@ case 'getOrdersByDateRange':
               console.log('주문 데이터 로드 실패:', orderError.message);
             }
             
-            // 2. 매핑 시트에서 마켓 색상 정보 가져오기
             let markets = [];
             let colors = {};
             
             try {
-              const mappingData = await getSheetData('매핑!A:D'); // A~D열까지 읽기
+              const mappingData = await getSheetData('매핑!A:D');
               
               if (mappingData && mappingData.length > 2) {
-                // 헤더 위치 찾기
                 let headerRowIndex = -1;
                 for (let i = 0; i < Math.min(5, mappingData.length); i++) {
                   if (mappingData[i] && mappingData[i][0] === '마켓명') {
@@ -536,18 +721,16 @@ case 'getOrdersByDateRange':
                 }
                 
                 if (headerRowIndex !== -1) {
-                  // 데이터 행 처리 (헤더 다음 행부터)
                   for (let i = headerRowIndex + 1; i < mappingData.length; i++) {
                     const row = mappingData[i];
                     if (row && row[0]) {
                       const marketName = String(row[0]).trim();
-                      const colorValue = row[2] ? String(row[2]).trim() : ''; // C열이 색상
+                      const colorValue = row[2] ? String(row[2]).trim() : '';
                       
                       if (marketName) {
                         markets.push(marketName);
                         
                         if (colorValue) {
-                          // RGB 값 처리
                           if (colorValue.match(/^\d+,\s*\d+,\s*\d+$/)) {
                             colors[marketName] = `rgb(${colorValue})`;
                           } else if (colorValue.startsWith('rgb(')) {
@@ -571,14 +754,12 @@ case 'getOrdersByDateRange':
             });
             
           } else {
-            // 기본 동작: 매핑 시트에서만 마켓 정보 읽기
             const mappingData = await getSheetData('매핑!A:D');
             
             const markets = [];
             const colors = {};
             
             if (mappingData && mappingData.length > 2) {
-              // 헤더 위치 찾기
               let headerRowIndex = -1;
               for (let i = 0; i < Math.min(5, mappingData.length); i++) {
                 if (mappingData[i] && mappingData[i][0] === '마켓명') {
@@ -588,12 +769,11 @@ case 'getOrdersByDateRange':
               }
               
               if (headerRowIndex !== -1) {
-                // 데이터 행 처리
                 for (let i = headerRowIndex + 1; i < mappingData.length; i++) {
                   const row = mappingData[i];
                   if (row && row[0]) {
                     const marketName = String(row[0]).trim();
-                    const colorValue = row[2] ? String(row[2]).trim() : ''; // C열이 색상
+                    const colorValue = row[2] ? String(row[2]).trim() : '';
                     
                     if (marketName) {
                       markets.push(marketName);
@@ -627,17 +807,13 @@ case 'getOrdersByDateRange':
         }
 
       case 'saveToSheet':
-        // 시트 생성 또는 확인
         const sheetResult = await createOrderSheet(sheetName);
         
-        // 헤더와 데이터 분리
         const headerRow = values[0];
         const dataRows = values.slice(1);
         
-        // 클라이언트에서 받은 마켓 색상 사용
         const marketColorMap = req.body.marketColors || {};
         
-        // 중복 체크 및 병합 저장
         const result = await mergeAndSaveOrderData(
           sheetName, 
           dataRows, 
@@ -697,4 +873,3 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
-
