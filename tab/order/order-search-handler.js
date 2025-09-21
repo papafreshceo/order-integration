@@ -539,15 +539,22 @@ window.OrderSearchHandler = {
             const result = await response.json();
             
             if (result.success) {
-                this.currentOrders = result.data || [];
-                this.marketColors = result.colors || {};
-                
-                if (this.currentOrders.length > 0) {
-                    this.tableHeaders = Object.keys(this.currentOrders[0]);
-                }
-                
-                this.updateTable();
-            } else {
+            this.currentOrders = result.data || [];
+            this.marketColors = result.colors || {};
+            
+            // 디버깅: 데이터 확인
+            console.log('전체 주문 수:', this.currentOrders.length);
+            if (this.currentOrders.length > 0) {
+                console.log('첫 번째 주문 데이터:', this.currentOrders[0]);
+                console.log('결제일 필드:', this.currentOrders[0]['결제일']);
+                this.tableHeaders = Object.keys(this.currentOrders[0]);
+            }
+            
+            const today = document.getElementById('searchStartDate').value;
+            console.log('오늘 날짜 필터:', today);
+            
+            this.updateTable();
+        } else {
                 this.showMessage('데이터를 불러올 수 없습니다.', 'error');
             }
         } catch (error) {
