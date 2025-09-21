@@ -211,57 +211,108 @@ case 'addCsOrder':
             console.log('시트 생성 및 헤더 설정 완료');
           }
           
-          // 3. CS 번호 생성 (접수날짜 + CS001, CS002...)
-          const allRows = await getOrderData(`${sheetName}!A:E`);
-          let csNumber = 1;
-          
-          if (allRows && allRows.length > 1) {
-            // 주문번호 컬럼 찾기
-            const orderNumIdx = headers.indexOf('주문번호');
+          // 3. 제품 정보 가져오기 (재발송 상품 기준)
+let productInfo = {};
+if (data['옵션명']) {
+    try {
+        const productSpreadsheetId = process.env.SPREADSHEET_ID_PRODUCTS || '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg';
+        const { getProductSheetData } = require('../lib/google-sheets');
+        
+        const productSheetData = await getProductSheetData(productSpreadsheetId, '통합상품마스터!A:DZ');
+        
+        if (productSheetData && productSheetData.length > 1) {
+            const headers = productSheetData[0];
+            const optionIdx = headers.indexOf('옵션명');
+            const 출고처Idx = headers.indexOf('출고처');
+            const 송장주체Idx = headers.indexOf('송장주체');
+            const 벤더사Idx = headers.indexOf('벤더사');
+            const 발송지명Idx = headers.indexOf('발송지명');
+            const 발송지주소Idx = headers.indexOf('발송지주소');
+            const 발송지연락처Idx = headers.indexOf('발송지연락처');
             
-            // 기존 CS 주문 확인
-            for (let i = 1; i < allRows.length; i++) {
-              const orderNum = allRows[i][orderNumIdx] || '';
-              if (orderNum.startsWith(sheetName + 'CS')) {
-                const num = parseInt(orderNum.replace(sheetName + 'CS', ''));
-                if (!isNaN(num) && num >= csNumber) {
-                  csNumber = num + 1;
+            // 옵션명으로 제품 찾기
+            for (let i = 1; i < productSheetData.length; i++) {
+                const optionName = String(productSheetData[i][optionIdx] || '').trim();
+                if (optionName === data['옵션명']) {
+                    productInfo = {
+                        출고처: productSheetData[i][출고처Idx] || '',
+                        송장주체: productSheetData[i][송장주체Idx] || '',
+                        벤더사: productSheetData[i][벤더사Idx] || '',
+                        발송지명: productSheetData[i][발송지명Idx] || '',
+                        발송지주소: productSheetData[i][발송지주소Idx] || '',
+                        발송지연락처: productSheetData[i][발송지연락처Idx] || ''
+                    };
+                    console.log(`제품 정보 찾음: ${data['옵션명']}`, productInfo);
+                    break;
                 }
-              }
             }
-          }
+        }
+    } catch (error) {
+        console.error('제품 정보 조회 오류:', error);
+    }
+}
+
+// 4. CS 번호 생성 (마켓 필드에 CS001, CS002...)
+const allRows = await getOrderData(`${sheetName}!A:E`);
+let csNumber = 1;
+
+if (allRows && allRows.length > 1) {
+    // 마켓 컬럼 찾기
+    const marketIdx = headers.indexOf('마켓');
+    
+    // 기존 CS 번호 확인
+    for (let i = 1; i < allRows.length; i++) {
+        const market = allRows[i][marketIdx] || '';
+        if (market.startsWith('CS')) {
+            const num = parseInt(market.replace('CS', ''));
+            if (!isNaN(num) && num >= csNumber) {
+                csNumber = num + 1;
+            }
+        }
+    }
+}
+
+const csMarketNumber = `CS${String(csNumber).padStart(3, '0')}`;
+const csOrderNumber = `${sheetName}CS${String(csNumber).padStart(3, '0')}`;
+console.log('생성된 CS 마켓번호:', csMarketNumber);
+console.log('생성된 CS 주문번호:', csOrderNumber);
+
+// 5. 연번 계산
+const existingRows = await getOrderData(`${sheetName}!A:A`);
+const nextSerial = existingRows ? existingRows.length : 1;
           
-          const csOrderNumber = `${sheetName}CS${String(csNumber).padStart(3, '0')}`;
-          console.log('생성된 CS 주문번호:', csOrderNumber);
-          
-          // 4. 연번 계산
-          const existingRows = await getOrderData(`${sheetName}!A:A`);
-          const nextSerial = existingRows ? existingRows.length : 1;
-          
-          // 5. 데이터 행 생성
-          const rowData = headers.map(header => {
-            if (header === '연번') {
-              return nextSerial;
-            }
-            if (header === '주문번호') {
-              return csOrderNumber;  // CS 주문번호 사용
-            }
-            if (header === '발송요청일') {
-              return today.toLocaleDateString('ko-KR');
-            }
-            
-            // 헤더명 정규화하여 데이터 매칭
-            const normalizedHeader = header.replace(/\s/g, '').replace(/[_-]/g, '');
-            
-            for (const key of Object.keys(data)) {
-              const normalizedKey = key.replace(/\s/g, '').replace(/[_-]/g, '');
-              if (normalizedKey === normalizedHeader) {
-                return data[key] || '';
-              }
-            }
-            
-            return data[header] || '';
-          });
+          // 6. 데이터 행 생성
+const rowData = headers.map(header => {
+    if (header === '연번') {
+        return nextSerial;
+    }
+    if (header === '마켓') {
+        return csMarketNumber;  // CS001, CS002...
+    }
+    if (header === '주문번호') {
+        return csOrderNumber;  // CS 주문번호 사용
+    }
+    if (header === '발송요청일') {
+        return data['발송요청일'] || today.toLocaleDateString('ko-KR');
+    }
+    
+    // 제품 정보에서 가져올 필드들
+    if (productInfo[header]) {
+        return productInfo[header];
+    }
+    
+    // 헤더명 정규화하여 데이터 매칭
+    const normalizedHeader = header.replace(/\s/g, '').replace(/[_-]/g, '');
+    
+    for (const key of Object.keys(data)) {
+        const normalizedKey = key.replace(/\s/g, '').replace(/[_-]/g, '');
+        if (normalizedKey === normalizedHeader) {
+            return data[key] || '';
+        }
+    }
+    
+    return data[header] || '';
+});
           
           console.log('저장할 CS 주문 데이터:', rowData);
           
