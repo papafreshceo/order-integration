@@ -85,6 +85,7 @@ body {
     background: var(--bg-muted);
     display: flex;
     flex-direction: column;
+    padding: 0 100px;
 }
 
 /* ========================================
@@ -158,7 +159,7 @@ body {
    ======================================== */
 .main-content {
     flex: 1;
-    padding: 40px;
+    padding: 40px 0;
     background: var(--bg-muted);
 }
 
