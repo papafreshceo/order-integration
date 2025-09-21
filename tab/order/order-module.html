@@ -5,76 +5,11 @@
     <title>주문통합관리</title>
     <link rel="stylesheet" href="order-common.css">
     <style>
-        /* 헤더 섹션 */
-        .om-header-section {
-            background: #ffffff;
-            border-bottom: 2px solid #dee2e6;
-            padding: 0;
-        }
-
-        .om-title-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 24px;
-            border-bottom: 1px solid #f1f3f5;
-        }
-
-        .om-title {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 500;
-            color: #212529;
-        }
-
-        .om-refresh-btn {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            background: #ffffff;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            color: #495057;
-            font-size: 14px;
-            font-weight: 300;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .om-refresh-btn:hover {
-            background: #e7f3ff;
-            border-color: #2563eb;
-            color: #2563eb;
-        }
-
-        .om-refresh-btn:active {
-            transform: scale(0.98);
-        }
-
-        .om-refresh-btn.refreshing {
-            pointer-events: none;
-            opacity: 0.7;
-        }
-
-        .om-refresh-btn.refreshing svg {
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .refresh-text {
-            font-weight: 400;
-        }
-
-        /* 탭 네비게이션 */
+        /* 탭 버튼 강조 스타일 */
         .om-tabs {
             display: flex;
             gap: 12px;
-            padding: 12px 24px;
+            padding: 8px 0;
         }
 
         .om-tab-btn {
@@ -110,7 +45,7 @@
         .om-tab-btn.active::after {
             content: '';
             position: absolute;
-            bottom: -12px;
+            bottom: -8px;
             left: 50%;
             transform: translateX(-50%);
             width: 40%;
@@ -119,155 +54,206 @@
             border-radius: 2px;
         }
 
-        /* 아이콘 색상 */
-        .om-tab-btn[data-tab="search"] svg { stroke: #2563eb; }
-        .om-tab-btn[data-tab="input"] svg { stroke: #10b981; }
-        .om-tab-btn[data-tab="excel"] svg { stroke: #f59e0b; }
-        .om-tab-btn[data-tab="shipping"] svg { stroke: #8b5cf6; }
-        .om-tab-btn[data-tab="cs"] svg { stroke: #ef4444; }
-        .om-tab-btn[data-tab="etc"] svg { stroke: #6b7280; }
-        
+        /* 각 탭별 아이콘 색상 */
+        .om-tab-btn[data-tab="search"] svg {
+            stroke: #2563eb;
+        }
+
+        .om-tab-btn[data-tab="input"] svg {
+            stroke: #10b981;
+        }
+
+        .om-tab-btn[data-tab="excel"] svg {
+            stroke: #f59e0b;
+        }
+
+        .om-tab-btn[data-tab="shipping"] svg {
+            stroke: #8b5cf6;
+        }
+
+        .om-tab-btn[data-tab="cs"] svg {
+            stroke: #ef4444;
+        }
+
+        .om-tab-btn[data-tab="etc"] svg {
+            stroke: #6b7280;
+        }
+
+        /* 활성 상태에서는 아이콘 색상을 흰색으로 */
         .om-tab-btn.active svg {
             stroke: #ffffff;
         }
 
+        /* 호버 시 아이콘 애니메이션 */
         .om-tab-btn:hover svg {
             transform: scale(1.1);
         }
 
-        /* 콘텐츠 영역 */
-        .om-content {
-            padding: 24px;
-            background: #f8f9fa;
-            min-height: calc(100vh - 140px);
-        }
+        .om-header-section {
+    background: #ffffff;
+    border-bottom: 2px solid #dee2e6;
+    padding: 0;
+}
 
-        .om-panel {
-            display: none;
-        }
+.om-title-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid #f1f3f5;
+}
 
-        .om-panel.active {
-            display: block;
-        }
+.om-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+    color: #212529;
+}
 
-        /* 토스트 알림 */
-        .refresh-toast {
-            position: fixed;
-            top: 24px;
-            right: 24px;
-            padding: 12px 20px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 14px;
-            font-weight: 400;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
-            z-index: 10000;
-        }
+.om-refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    color: #495057;
+    font-size: 14px;
+    font-weight: 300;
+    cursor: pointer;
+    transition: all 0.2s;
+}
 
-        .refresh-toast.show {
-            transform: translateX(0);
-        }
+.om-refresh-btn:hover {
+    background: #e7f3ff;
+    border-color: #2563eb;
+    color: #2563eb;
+}
 
-        .refresh-toast.success {
-            background: #10b981;
-            color: white;
-        }
+.om-refresh-btn:active {
+    transform: scale(0.98);
+}
 
-        .refresh-toast.error {
-            background: #ef4444;
-            color: white;
-        }
+.om-refresh-btn.refreshing {
+    pointer-events: none;
+    opacity: 0.7;
+}
 
-        /* 로딩 */
-        .om-loading {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255,255,255,0.9);
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
+.om-refresh-btn.refreshing svg {
+    animation: spin 1s linear infinite;
+}
 
-        .om-loading.show {
-            display: flex;
-        }
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
 
-        .om-spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #2563eb;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
+.refresh-text {
+    font-weight: 400;
+}
+
+.om-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 24px;
+}
+
+.om-tab {
+    padding: 12px 24px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #6c757d;
+    font-size: 14px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.om-tab:hover {
+    color: #2563eb;
+    background: #f8f9fa;
+}
+
+.om-tab.active {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+    font-weight: 500;
+}
+
     </style>
 </head>
 <body>
     <div class="om-container">
-        <div class="om-header-section">
-            <div class="om-title-bar">
-                <h2 class="om-title">주문통합관리</h2>
-                <button class="om-refresh-btn" onclick="OrderModule.refreshCurrentTab()" title="현재 탭 새로고침">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M23 4v6h-6"></path>
-                        <path d="M1 20v-6h6"></path>
-                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                    </svg>
-                    <span class="refresh-text">새로고침</span>
-                </button>
-            </div>
-            
-            <div class="om-tabs">
-                <button class="om-tab-btn active" data-tab="search">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <path d="m21 21-4.35-4.35"></path>
-                    </svg>
-                    주문조회
-                </button>
-                <button class="om-tab-btn" data-tab="input">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2v20M2 12h20"></path>
-                    </svg>
-                    주문입력
-                </button>
-                <button class="om-tab-btn" data-tab="excel">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                    </svg>
-                    주문통합(Excel)
-                </button>
-                <button class="om-tab-btn" data-tab="shipping">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="1" y="3" width="15" height="13"></rect>
-                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                    </svg>
-                    발송관리
-                </button>
-                <button class="om-tab-btn" data-tab="cs">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15a2 2 0 0 1-2 2h-6l-4 4V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    CS
-                </button>
-                <button class="om-tab-btn" data-tab="etc">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="1"></circle>
-                        <circle cx="19" cy="12" r="1"></circle>
-                        <circle cx="5" cy="12" r="1"></circle>
-                    </svg>
-                    기타
-                </button>
+    <div class="om-header-section">
+        <div class="om-title-bar">
+            <h2 class="om-title">주문통합관리</h2>
+            <button class="om-refresh-btn" onclick="OrderModule.refreshCurrentTab()" title="현재 탭 새로고침">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 4v6h-6"></path>
+                    <path d="M1 20v-6h6"></path>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                <span class="refresh-text">새로고침</span>
+            </button>
+        </div>
+        
+        <div class="om-tabs">
+            <button class="om-tab active" data-panel="input">건별입력</button>
+            <button class="om-tab" data-panel="excel">Excel</button>
+            <button class="om-tab" data-panel="search">주문조회</button>
+            <button class="om-tab" data-panel="shipping">발송관리</button>
+            <button class="om-tab" data-panel="purchase">구매관리</button>
+            <button class="om-tab" data-panel="stats">통계분석</button>
+        </div>
+    </div>
+                
+                <!-- 내부 탭 -->
+                <div class="om-tabs">
+                    <button class="om-tab-btn active" data-tab="search">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                        주문조회
+                    </button>
+                    <button class="om-tab-btn" data-tab="input">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v20M2 12h20"></path>
+                        </svg>
+                        주문입력
+                    </button>
+                    <button class="om-tab-btn" data-tab="excel">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                        </svg>
+                        주문통합(Excel)
+                    </button>
+                    <button class="om-tab-btn" data-tab="shipping">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="1" y="3" width="15" height="13"></rect>
+                            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                        </svg>
+                        발송관리
+                    </button>
+                    <button class="om-tab-btn" data-tab="cs">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2h-6l-4 4V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        CS
+                    </button>
+                    <button class="om-tab-btn" data-tab="etc">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="1"></circle>
+                            <circle cx="19" cy="12" r="1"></circle>
+                            <circle cx="5" cy="12" r="1"></circle>
+                        </svg>
+                        기타
+                    </button>
+                </div>
             </div>
         </div>
         
@@ -289,8 +275,8 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
-        // 메인 OrderModule 객체
-        window.OrderModule = {
+        // 모듈 로더
+        window.OrderManage = {
             currentTab: 'search',
             modules: {},
             
@@ -322,202 +308,31 @@
             },
             
             loadModule(tab) {
-                if (this.modules[tab]) {
-                    this.modules[tab].init();
-                } else {
-                    const script = document.createElement('script');
-                    script.src = `order-${tab}-handler.js`;
-                    script.onload = () => {
-                        const handlerName = 'Order' + tab.charAt(0).toUpperCase() + tab.slice(1) + 'Handler';
-                        if (window[handlerName]) {
-                            this.modules[tab] = window[handlerName];
-                            this.modules[tab].init();
-                        }
-                    };
-                    script.onerror = () => {
-                        console.error(`Failed to load order-${tab}-handler.js`);
-                    };
-                    document.head.appendChild(script);
-                }
-            },
-            
-            async refreshCurrentTab() {
-                const refreshBtn = document.querySelector('.om-refresh-btn');
-                const activeTab = document.querySelector('.om-tab-btn.active');
-                
-                if (!refreshBtn || !activeTab) return;
-                
-                const tabName = activeTab.dataset.tab;
-                const tabText = activeTab.textContent.trim();
-                
-                // 버튼 상태 변경
-                refreshBtn.classList.add('refreshing');
-                const originalText = refreshBtn.querySelector('.refresh-text').textContent;
-                refreshBtn.querySelector('.refresh-text').textContent = `${tabText} 새로고침 중...`;
-                
-                try {
-                    console.log(`새로고침: ${tabText} 탭`);
-                    
-                    // 각 탭별 새로고침 처리
-                    switch(tabName) {
-                        case 'search':
-                            await this.refreshSearchTab();
-                            break;
-                        case 'input':
-                            await this.refreshInputTab();
-                            break;
-                        case 'excel':
-                            await this.refreshExcelTab();
-                            break;
-                        case 'shipping':
-                            await this.refreshShippingTab();
-                            break;
-                        case 'cs':
-                            await this.refreshCsTab();
-                            break;
-                        case 'etc':
-                            await this.refreshEtcTab();
-                            break;
-                    }
-                    
-                    // 공통 데이터 새로고침
-                    await this.refreshCommonData();
-                    
-                    // 성공 알림
-                    this.showRefreshSuccess(tabText);
-                    
-                } catch (error) {
-                    console.error('새로고침 오류:', error);
-                    this.showRefreshError(tabText);
-                    
-                } finally {
-                    // 버튼 원상복구
-                    setTimeout(() => {
-                        refreshBtn.classList.remove('refreshing');
-                        refreshBtn.querySelector('.refresh-text').textContent = originalText;
-                    }, 500);
-                }
-            },
-            
-            async refreshSearchTab() {
-                if (this.modules.search) {
-                    await this.modules.search.init();
-                }
-            },
-            
-            async refreshInputTab() {
-                if (this.modules.input && window.OrderInputHandler) {
-                    const tempOrders = [...(window.OrderInputHandler.manualOrders || [])];
-                    await window.OrderInputHandler.init();
-                    window.OrderInputHandler.manualOrders = tempOrders;
-                    window.OrderInputHandler.updateOrderList();
-                }
-            },
-            
-            async refreshExcelTab() {
-                if (this.modules.excel && window.OrderExcelHandler) {
-                    const tempFiles = [...(window.OrderExcelHandler.uploadedFiles || [])];
-                    const tempData = window.OrderExcelHandler.processedData;
-                    
-                    await window.OrderExcelHandler.init();
-                    
-                    if (tempFiles.length > 0) {
-                        window.OrderExcelHandler.uploadedFiles = tempFiles;
-                        window.OrderExcelHandler.updateFileList();
-                    }
-                    
-                    if (tempData) {
-                        window.OrderExcelHandler.processedData = tempData;
-                        window.OrderExcelHandler.displayResults();
-                    }
-                }
-            },
-            
-            async refreshShippingTab() {
-                if (this.modules.shipping) {
-                    await this.modules.shipping.init();
-                }
-            },
-            
-            async refreshCsTab() {
-                if (this.modules.cs) {
-                    await this.modules.cs.init();
-                }
-            },
-            
-            async refreshEtcTab() {
-                if (this.modules.etc) {
-                    await this.modules.etc.init();
-                }
-            },
-            
-            async refreshCommonData() {
-                // 매핑 데이터 새로고침
-                if (window.mappingData) {
-                    try {
-                        const response = await fetch('/api/mapping');
-                        const data = await response.json();
-                        if (!data.error) {
-                            window.mappingData = data;
-                        }
-                    } catch (error) {
-                        console.error('매핑 데이터 새로고침 실패:', error);
-                    }
-                }
-                
-                // 제품 데이터 새로고침
-                if (window.ProductMatching) {
-                    await window.ProductMatching.loadProductData();
-                }
-            },
-            
-            showRefreshSuccess(tabName) {
-                const toast = document.createElement('div');
-                toast.className = 'refresh-toast success';
-                toast.innerHTML = `
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                    </svg>
-                    <span>${tabName} 탭이 새로고침되었습니다</span>
-                `;
-                
-                document.body.appendChild(toast);
-                
-                setTimeout(() => toast.classList.add('show'), 10);
-                
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                    setTimeout(() => toast.remove(), 300);
-                }, 2000);
-            },
-            
-            showRefreshError(tabName) {
-                const toast = document.createElement('div');
-                toast.className = 'refresh-toast error';
-                toast.innerHTML = `
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="15" y1="9" x2="9" y2="15"></line>
-                        <line x1="9" y1="9" x2="15" y2="15"></line>
-                    </svg>
-                    <span>${tabName} 탭 새로고침 실패</span>
-                `;
-                
-                document.body.appendChild(toast);
-                
-                setTimeout(() => toast.classList.add('show'), 10);
-                
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                    setTimeout(() => toast.remove(), 300);
-                }, 3000);
+    if (this.modules[tab]) {
+        this.modules[tab].init();
+    } else {
+        const script = document.createElement('script');
+        script.src = `order-${tab}-handler.js`;
+        script.onload = () => {
+            // 첫글자 대문자 변환 수정
+            const handlerName = 'Order' + tab.charAt(0).toUpperCase() + tab.slice(1) + 'Handler';
+            if (window[handlerName]) {
+                this.modules[tab] = window[handlerName];
+                this.modules[tab].init();
+            } else {
+                console.error(`${handlerName} not found`);
             }
         };
+        script.onerror = () => {
+            console.error(`Failed to load order-${tab}-handler.js`);
+        };
+        document.head.appendChild(script);
+    }
+}
+        };
         
-        // 초기화
         document.addEventListener('DOMContentLoaded', () => {
-            OrderModule.init();
+            OrderManage.init();
         });
     </script>
 </body>
