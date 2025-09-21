@@ -376,7 +376,7 @@ async function verifyOptions() {
                 <div style="margin-top: 20px; padding: 15px; background: #fee2e2; border-radius: 8px; border: 1px solid #fecaca;">
                     <p style="margin: 0; color: #dc3545; font-size: 14px;">
                         <strong>매칭 실패한 옵션명이 ${unmatchedCount}개 있습니다.</strong><br>
-                        빨간색으로 표시된 셀을 클릭하여 수정하거나,<br>
+                        노란색으로 표시된 셀을 클릭하여 수정하거나,<br>
                         '옵션명 일괄수정' 버튼을 사용하세요.
                     </p>
                 </div>
