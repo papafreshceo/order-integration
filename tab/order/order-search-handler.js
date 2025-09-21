@@ -8,19 +8,22 @@ window.OrderSearchHandler = {
         this.initializeFilters();
         await this.loadMarketList();
         await this.loadOrders();
+        
+        // 이벤트 리스너 추가
+        document.getElementById('searchStartDate')?.addEventListener('change', () => this.loadOrders());
+        document.getElementById('searchEndDate')?.addEventListener('change', () => this.loadOrders());
     },
     
     render() {
         const container = document.getElementById('om-panel-search');
         container.innerHTML = `
             <style>
-                /* 검색 패널 전체 스타일 */
+                /* 기존 스타일 유지 */
                 .search-container {
                     padding: 0;
                     background: transparent;
                 }
 
-                /* 패널 헤더 */
                 .panel-header {
                     background: #ffffff;
                     padding: 24px;
@@ -38,7 +41,6 @@ window.OrderSearchHandler = {
                     margin: 0;
                 }
 
-                /* 검색 섹션 */
                 .search-section {
                     background: #ffffff;
                     border: 1px solid #dee2e6;
@@ -48,7 +50,6 @@ window.OrderSearchHandler = {
                     margin-bottom: 24px;
                 }
 
-                /* 빠른 필터 */
                 .quick-filters {
                     display: flex;
                     gap: 8px;
@@ -79,7 +80,6 @@ window.OrderSearchHandler = {
                     border-color: #2563eb;
                 }
 
-                /* 검색 필터 */
                 .search-filters {
                     display: grid;
                     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -133,7 +133,6 @@ window.OrderSearchHandler = {
                     font-weight: 300;
                 }
 
-                /* 버튼 그룹 */
                 .search-button-group {
                     display: flex;
                     gap: 12px;
@@ -191,7 +190,6 @@ window.OrderSearchHandler = {
                     background: #f8f9fa;
                 }
 
-                /* 테이블 섹션 */
                 .table-section {
                     background: #ffffff;
                     border: 1px solid #dee2e6;
@@ -273,10 +271,6 @@ window.OrderSearchHandler = {
                     background: #b7f7bd;
                 }
 
-                .search-table tbody tr.selected-row {
-                    background: #e7f3ff;
-                }
-
                 .search-table tbody tr.has-tracking {
                     background: #f0f3f7;
                 }
@@ -292,7 +286,6 @@ window.OrderSearchHandler = {
                     cursor: pointer;
                 }
 
-                /* 결과 정보 */
                 .result-info {
                     display: flex;
                     align-items: center;
@@ -308,23 +301,20 @@ window.OrderSearchHandler = {
             </style>
 
             <div class="search-container">
-                <!-- 검색 패널 -->
                 <div class="panel-header">
                     <h2 class="panel-title">주문조회</h2>
                     <div class="panel-actions">
                         <button class="btn-action" onclick="OrderSearchHandler.resetFilters()">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="23 4 23 10 17 10"></polyline>
-                                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                                </svg>
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            </svg>
                             초기화
                         </button>
                     </div>
                 </div>
 
-                <!-- 검색 영역 -->
                 <div class="search-section">
-                    <!-- 빠른 필터 -->
                     <div class="quick-filters">
                         <button class="quick-filter-btn active" onclick="OrderSearchHandler.setQuickFilter('today', this)">오늘</button>
                         <button class="quick-filter-btn" onclick="OrderSearchHandler.setQuickFilter('yesterday', this)">어제</button>
@@ -334,7 +324,6 @@ window.OrderSearchHandler = {
                         <button class="quick-filter-btn" onclick="OrderSearchHandler.setQuickFilter('custom', this)">직접 설정</button>
                     </div>
 
-                    <!-- 검색 필터 -->
                     <div class="search-filters">
                         <div class="filter-group">
                             <label class="filter-label">기간</label>
@@ -368,7 +357,6 @@ window.OrderSearchHandler = {
                         </div>
                     </div>
 
-                    <!-- 검색 버튼 -->
                     <div class="search-button-group">
                         <button class="btn-search secondary" onclick="OrderSearchHandler.exportToExcel()">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -388,7 +376,6 @@ window.OrderSearchHandler = {
                     </div>
                 </div>
 
-                <!-- 테이블 섹션 -->
                 <div class="table-section">
                     <div class="table-header">
                         <div class="table-header-left">
@@ -411,30 +398,10 @@ window.OrderSearchHandler = {
                     <div class="table-wrapper">
                         <table class="search-table" id="searchTable">
                             <thead id="searchTableHead">
-                                <tr>
-                                    <th class="checkbox-cell">
-                                        <input type="checkbox" id="selectAllCheckbox" 
-                                               onchange="OrderSearchHandler.toggleSelectAll(this)">
-                                    </th>
-                                    <th>연번</th>
-                                    <th>마켓명</th>
-                                    <th>결제일</th>
-                                    <th>주문번호</th>
-                                    <th>주문자</th>
-                                    <th>수령인</th>
-                                    <th>전화번호</th>
-                                    <th style="width: 300px;">주소</th>
-                                    <th>옵션명</th>
-                                    <th>수량</th>
-                                    <th>금액</th>
-                                    <th>택배사</th>
-                                    <th>송장번호</th>
-                                    <th>상태</th>
-                                </tr>
                             </thead>
                             <tbody id="searchTableBody">
                                 <tr>
-                                    <td colspan="15" style="text-align: center; padding: 40px; color: #6c757d;">
+                                    <td colspan="100" style="text-align: center; padding: 40px; color: #6c757d;">
                                         조회 조건을 선택하고 검색 버튼을 클릭하세요.
                                     </td>
                                 </tr>
@@ -502,9 +469,8 @@ window.OrderSearchHandler = {
     },
 
     resetFilters() {
-        const today = new Date();
-        document.getElementById('searchStartDate').value = this.formatDate(today);
-        document.getElementById('searchEndDate').value = this.formatDate(today);
+        document.getElementById('searchStartDate').value = '';
+        document.getElementById('searchEndDate').value = '';
         document.getElementById('searchMarketFilter').value = '';
         document.getElementById('searchStatusFilter').value = '';
         document.getElementById('searchKeywordInput').value = '';
@@ -512,7 +478,6 @@ window.OrderSearchHandler = {
         document.querySelectorAll('.quick-filter-btn').forEach(btn => {
             btn.classList.remove('active');
         });
-        document.querySelector('.quick-filter-btn').classList.add('active');
     },
 
     async loadMarketList() {
@@ -543,38 +508,211 @@ window.OrderSearchHandler = {
     },
 
     async loadOrders() {
-        // 실제 구현시 API 호출
-        this.updateTable();
-    },
+        this.showLoading();
+        try {
+            const startDate = document.getElementById('searchStartDate').value.replace(/-/g, '');
+            const endDate = document.getElementById('searchEndDate').value.replace(/-/g, '');
 
-    updateTable() {
-        const tbody = document.getElementById('searchTableBody');
-        
-        if (this.currentOrders.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="15" style="text-align: center; padding: 40px; color: #6c757d;">
-                        조회된 주문이 없습니다.
-                    </td>
-                </tr>
-            `;
-            document.getElementById('resultCount').textContent = '0';
-        } else {
-            // 데이터 렌더링
-            document.getElementById('resultCount').textContent = this.currentOrders.length;
+            const response = await fetch('/api/sheets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'getMarketData',
+                    useMainSpreadsheet: true
+                })
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                this.currentOrders = result.data || [];
+                this.marketColors = result.colors || {};
+                
+                if (this.currentOrders.length > 0) {
+                    this.tableHeaders = Object.keys(this.currentOrders[0]);
+                }
+                
+                this.updateTable();
+            } else {
+                this.showMessage('데이터를 불러올 수 없습니다.', 'error');
+            }
+        } catch (error) {
+            console.error('로드 오류:', error);
+            this.showMessage('데이터 로드 중 오류가 발생했습니다.', 'error');
+        } finally {
+            this.hideLoading();
         }
     },
 
+    updateTable() {
+        const thead = document.getElementById('searchTableHead');
+        const tbody = document.getElementById('searchTableBody');
+        
+        thead.innerHTML = '';
+        const headerRow = document.createElement('tr');
+        
+        const thCheckbox = document.createElement('th');
+        thCheckbox.className = 'checkbox-cell';
+        thCheckbox.innerHTML = '<input type="checkbox" onchange="OrderSearchHandler.toggleSelectAll(this)">';
+        headerRow.appendChild(thCheckbox);
+        
+        this.tableHeaders.forEach(header => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            headerRow.appendChild(th);
+        });
+        
+        thead.appendChild(headerRow);
+        
+        const filteredOrders = this.getFilteredOrders();
+        
+        tbody.innerHTML = '';
+        
+        if (filteredOrders.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="100" style="text-align: center; padding: 40px; color: #6c757d;">조회된 주문이 없습니다.</td></tr>';
+            document.getElementById('resultCount').textContent = '0';
+            return;
+        }
+        
+        document.getElementById('resultCount').textContent = filteredOrders.length;
+        
+        filteredOrders.forEach((order, index) => {
+            const row = this.createTableRow(order, index + 1);
+            tbody.appendChild(row);
+        });
+    },
+
+    createTableRow(order, serialNumber) {
+        const row = document.createElement('tr');
+        const hasTracking = order['송장번호'] && order['송장번호'].trim() !== '';
+        
+        if (hasTracking) {
+            row.classList.add('has-tracking');
+        }
+        
+        const tdCheckbox = document.createElement('td');
+        tdCheckbox.className = 'checkbox-cell';
+        tdCheckbox.innerHTML = `<input type="checkbox" class="order-checkbox" data-index="${serialNumber - 1}">`;
+        row.appendChild(tdCheckbox);
+        
+        this.tableHeaders.forEach(header => {
+            const td = document.createElement('td');
+            
+            if (header === '연번') {
+                td.textContent = serialNumber;
+            } else if (header === '마켓명') {
+                const marketName = order[header] || '';
+                const marketColor = this.marketColors[marketName] || 'rgb(128,128,128)';
+                td.innerHTML = `
+                    <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
+                         color: ${this.getTextColor(marketColor)}; border-radius: 4px; font-size: 11px; font-weight: 600;">
+                        ${marketName}
+                    </span>
+                `;
+            } else {
+                const value = order[header] || '';
+                
+                if (header.includes('금액') || header.includes('가격') || header === '수량') {
+                    td.style.textAlign = 'right';
+                    td.textContent = this.formatNumber(value);
+                } else {
+                    td.textContent = value;
+                }
+            }
+            
+            row.appendChild(td);
+        });
+        
+        return row;
+    },
+
+    getFilteredOrders() {
+        let filtered = [...this.currentOrders];
+        
+        const marketFilter = document.getElementById('searchMarketFilter').value;
+        if (marketFilter) {
+            filtered = filtered.filter(order => order['마켓명'] === marketFilter);
+        }
+        
+        const statusFilter = document.getElementById('searchStatusFilter').value;
+        if (statusFilter === 'preparing') {
+            filtered = filtered.filter(order => !order['송장번호'] || order['송장번호'].trim() === '');
+        } else if (statusFilter === 'shipped') {
+            filtered = filtered.filter(order => order['송장번호'] && order['송장번호'].trim() !== '');
+        }
+        
+        const keyword = document.getElementById('searchKeywordInput').value.toLowerCase();
+        if (keyword) {
+            filtered = filtered.filter(order => {
+                return Object.values(order).some(value => 
+                    String(value).toLowerCase().includes(keyword)
+                );
+            });
+        }
+        
+        return filtered;
+    },
+
     toggleSelectAll(checkbox) {
-        const checkboxes = document.querySelectorAll('#searchTableBody input[type="checkbox"]');
+        const checkboxes = document.querySelectorAll('.order-checkbox');
         checkboxes.forEach(cb => cb.checked = checkbox.checked);
     },
 
     exportToExcel() {
-        console.log('엑셀 다운로드');
+        const filteredOrders = this.getFilteredOrders();
+        
+        if (filteredOrders.length === 0) {
+            this.showMessage('내보낼 데이터가 없습니다.', 'error');
+            return;
+        }
+        
+        const ws = XLSX.utils.json_to_sheet(filteredOrders);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, '주문목록');
+        
+        const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
+        XLSX.writeFile(wb, `주문조회_${date}.xlsx`);
     },
 
     refreshData() {
         this.loadOrders();
+    },
+
+    getTextColor(bgColor) {
+        const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+        if (match) {
+            const r = parseInt(match[1]);
+            const g = parseInt(match[2]);
+            const b = parseInt(match[3]);
+            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+            return brightness > 128 ? '#000' : '#fff';
+        }
+        return '#fff';
+    },
+
+    formatNumber(num) {
+        if (!num) return '0';
+        return Number(num).toLocaleString('ko-KR');
+    },
+
+    showLoading() {
+        const loading = document.getElementById('om-loading');
+        if (loading) loading.classList.add('show');
+    },
+
+    hideLoading() {
+        const loading = document.getElementById('om-loading');
+        if (loading) loading.classList.remove('show');
+    },
+
+    showMessage(message, type = 'info') {
+        const div = document.createElement('div');
+        div.className = `om-message ${type} show`;
+        div.textContent = message;
+        document.body.appendChild(div);
+        
+        setTimeout(() => {
+            div.remove();
+        }, 3000);
     }
 };
