@@ -590,13 +590,23 @@ window.OrderSearchHandler = {
     async loadOrders() {
         this.showLoading();
         try {
+            let requestBody = {
+                action: 'getMarketData',
+                useMainSpreadsheet: true
+            };
+            
+            // 주문통합일 모드일 때 날짜 파라미터 추가
+            if (this.dateType === 'sheet') {
+                const startDate = document.getElementById('searchStartDate').value.replace(/-/g, '');
+                const endDate = document.getElementById('searchEndDate').value.replace(/-/g, '');
+                requestBody.startDate = startDate;
+                requestBody.endDate = endDate;
+            }
+            
             const response = await fetch('/api/sheets', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'getMarketData',
-                    useMainSpreadsheet: true
-                })
+                body: JSON.stringify(requestBody)
             });
 
             const result = await response.json();
