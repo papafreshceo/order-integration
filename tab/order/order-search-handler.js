@@ -412,6 +412,13 @@ window.OrderSearchHandler = {
                 </div>
             </div>
         `;
+        
+        // 필터 이벤트 리스너 추가
+        setTimeout(() => {
+            document.getElementById('searchMarketFilter')?.addEventListener('change', () => this.updateTable());
+            document.getElementById('searchStatusFilter')?.addEventListener('change', () => this.updateTable());
+            document.getElementById('searchKeywordInput')?.addEventListener('input', () => this.updateTable());
+        }, 100);
     },
 
     initializeFilters() {
@@ -467,11 +474,15 @@ window.OrderSearchHandler = {
 
         document.getElementById('searchStartDate').value = this.formatDate(startDate);
         document.getElementById('searchEndDate').value = this.formatDate(endDate);
+        
+        // 필터 변경 시 자동으로 데이터 로드
+        this.loadOrders();
     },
 
     resetFilters() {
-        document.getElementById('searchStartDate').value = '';
-        document.getElementById('searchEndDate').value = '';
+        const today = new Date();
+        document.getElementById('searchStartDate').value = this.formatDate(today);
+        document.getElementById('searchEndDate').value = this.formatDate(today);
         document.getElementById('searchMarketFilter').value = '';
         document.getElementById('searchStatusFilter').value = '';
         document.getElementById('searchKeywordInput').value = '';
@@ -479,6 +490,9 @@ window.OrderSearchHandler = {
         document.querySelectorAll('.quick-filter-btn').forEach(btn => {
             btn.classList.remove('active');
         });
+        document.querySelector('.quick-filter-btn').classList.add('active');
+        
+        this.loadOrders();
     },
 
     async loadMarketList() {
@@ -521,7 +535,9 @@ window.OrderSearchHandler = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'getMarketData',
-                    useMainSpreadsheet: true
+                    useMainSpreadsheet: true,
+                    startDate: startDate,
+                    endDate: endDate
                 })
             });
 
@@ -547,6 +563,30 @@ window.OrderSearchHandler = {
         }
     },
 
+    parseDate(dateStr) {
+        if (!dateStr) return null;
+        
+        // YYYYMMDD 형식 처리
+        if (dateStr.length === 8 && !isNaN(dateStr)) {
+            const year = dateStr.substring(0, 4);
+            const month = dateStr.substring(4, 6);
+            const day = dateStr.substring(6, 8);
+            return new Date(`${year}-${month}-${day}`);
+        }
+        
+        // YYYY-MM-DD 형식 처리
+        if (dateStr.includes('-')) {
+            return new Date(dateStr);
+        }
+        
+        // YYYY/MM/DD 형식 처리
+        if (dateStr.includes('/')) {
+            return new Date(dateStr.replace(/\//g, '-'));
+        }
+        
+        return null;
+    },
+
     updateTable() {
         const thead = document.getElementById('searchTableHead');
         const tbody = document.getElementById('searchTableBody');
@@ -569,6 +609,28 @@ window.OrderSearchHandler = {
             this.tableHeaders.forEach(header => {
                 const th = document.createElement('th');
                 th.textContent = header;
+                
+                // 열 너비 설정
+                const columnWidths = {
+                    '연번': '60px',
+                    '마켓명': '120px',
+                    '결제일': '100px',
+                    '주문번호': '150px',
+                    '옵션명': '200px',
+                    '수량': '60px',
+                    '주문자': '100px',
+                    '수령인': '100px',
+                    '전화번호': '120px',
+                    '주소': '300px',
+                    '배송메세지': '200px',
+                    '택배사': '100px',
+                    '송장번호': '150px'
+                };
+                
+                if (columnWidths[header]) {
+                    th.style.width = columnWidths[header];
+                }
+                
                 headerRow.appendChild(th);
             });
         }
@@ -594,89 +656,109 @@ window.OrderSearchHandler = {
     },
 
     createTableRow(order, serialNumber) {
-    const row = document.createElement('tr');
-    const hasTracking = order['송장번호'] && order['송장번호'].trim() !== '';
-    
-    if (hasTracking) {
-        row.classList.add('has-tracking');
-    }
-    
-    const tdCheckbox = document.createElement('td');
-    tdCheckbox.className = 'checkbox-cell';
-    tdCheckbox.style.width = '50px';
-    tdCheckbox.innerHTML = `<input type="checkbox" class="order-checkbox" data-index="${serialNumber - 1}">`;
-    row.appendChild(tdCheckbox);
-    
-    // 열 너비 매핑 (발송관리와 동일)
-    const columnWidths = {
-        '연번': '60px',
-        '마켓명': '120px',
-        '결제일': '100px',
-        '주문번호': '150px',
-        '옵션명': '200px',
-        '수량': '60px',
-        '주문자': '100px',
-        '수령인': '100px',
-        '전화번호': '120px',
-        '주소': '300px',
-        '배송메세지': '200px',
-        '택배사': '100px',
-        '송장번호': '150px'
-    };
-    
-    this.tableHeaders.forEach(header => {
-        const td = document.createElement('td');
+        const row = document.createElement('tr');
+        const hasTracking = order['송장번호'] && order['송장번호'].trim() !== '';
         
-        // 열 너비 설정
-        if (columnWidths[header]) {
-            td.style.width = columnWidths[header];
+        if (hasTracking) {
+            row.classList.add('has-tracking');
         }
         
-        if (header === '연번') {
-            td.textContent = serialNumber;
-        } else if (header === '마켓명') {
-            const marketName = order[header] || '';
-            const marketColor = this.marketColors[marketName] || 'rgb(128,128,128)';
-            td.innerHTML = `
-                <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
-                     color: ${this.getTextColor(marketColor)}; border-radius: 4px; font-size: 11px; font-weight: 600;">
-                    ${marketName}
-                </span>
-            `;
-        } else {
-            const value = order[header] || '';
+        const tdCheckbox = document.createElement('td');
+        tdCheckbox.className = 'checkbox-cell';
+        tdCheckbox.style.width = '50px';
+        tdCheckbox.innerHTML = `<input type="checkbox" class="order-checkbox" data-index="${serialNumber - 1}">`;
+        row.appendChild(tdCheckbox);
+        
+        // 열 너비 매핑 (발송관리와 동일)
+        const columnWidths = {
+            '연번': '60px',
+            '마켓명': '120px',
+            '결제일': '100px',
+            '주문번호': '150px',
+            '옵션명': '200px',
+            '수량': '60px',
+            '주문자': '100px',
+            '수령인': '100px',
+            '전화번호': '120px',
+            '주소': '300px',
+            '배송메세지': '200px',
+            '택배사': '100px',
+            '송장번호': '150px'
+        };
+        
+        this.tableHeaders.forEach(header => {
+            const td = document.createElement('td');
             
-            if (header.includes('금액') || header.includes('가격')) {
-                td.style.textAlign = 'right';
-                td.textContent = this.formatNumber(value);
-            } else if (header === '수량') {
-                td.style.textAlign = 'right';
-                td.style.paddingRight = '12px';
-                td.textContent = value;
+            // 열 너비 설정
+            if (columnWidths[header]) {
+                td.style.width = columnWidths[header];
+            }
+            
+            if (header === '연번') {
+                td.textContent = serialNumber;
+            } else if (header === '마켓명') {
+                const marketName = order[header] || '';
+                const marketColor = this.marketColors[marketName] || 'rgb(128,128,128)';
+                td.innerHTML = `
+                    <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
+                         color: ${this.getTextColor(marketColor)}; border-radius: 4px; font-size: 11px; font-weight: 600;">
+                        ${marketName}
+                    </span>
+                `;
             } else {
-                td.textContent = value;
+                const value = order[header] || '';
+                
+                if (header.includes('금액') || header.includes('가격')) {
+                    td.style.textAlign = 'right';
+                    td.textContent = this.formatNumber(value);
+                } else if (header === '수량') {
+                    td.style.textAlign = 'right';
+                    td.style.paddingRight = '12px';
+                    td.textContent = value;
+                } else {
+                    td.textContent = value;
+                }
+                
+                // 텍스트 정렬
+                if (header === '옵션명' || header === '주소' || header === '배송메세지') {
+                    td.style.textAlign = 'left';
+                }
             }
             
-            // 텍스트 정렬
-            if (header === '옵션명' || header === '주소' || header === '배송메세지') {
-                td.style.textAlign = 'left';
-            }
-        }
+            row.appendChild(td);
+        });
         
-        row.appendChild(td);
-    });
-    
-    return row;
-},
+        return row;
+    },
 
     getFilteredOrders() {
         let filtered = [...this.currentOrders];
         
+        // 날짜 필터링
+        const startDate = document.getElementById('searchStartDate')?.value;
+        const endDate = document.getElementById('searchEndDate')?.value;
+        
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            
+            filtered = filtered.filter(order => {
+                const orderDate = this.parseDate(order['결제일'] || order['주문일']);
+                if (orderDate) {
+                    return orderDate >= start && orderDate <= end;
+                }
+                return false;
+            });
+        }
+        
+        // 마켓 필터
         const marketFilter = document.getElementById('searchMarketFilter')?.value;
         if (marketFilter) {
             filtered = filtered.filter(order => order['마켓명'] === marketFilter);
         }
         
+        // 상태 필터
         const statusFilter = document.getElementById('searchStatusFilter')?.value;
         if (statusFilter === 'preparing') {
             filtered = filtered.filter(order => !order['송장번호'] || order['송장번호'].trim() === '');
@@ -684,6 +766,7 @@ window.OrderSearchHandler = {
             filtered = filtered.filter(order => order['송장번호'] && order['송장번호'].trim() !== '');
         }
         
+        // 검색어 필터
         const keyword = document.getElementById('searchKeywordInput')?.value?.toLowerCase();
         if (keyword) {
             filtered = filtered.filter(order => {
