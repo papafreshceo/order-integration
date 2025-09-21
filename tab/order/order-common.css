@@ -19,20 +19,19 @@ body {
     border: 1px solid #dee2e6;
     border-radius: 8px;
     margin: 20px 40px 24px 40px;
-    overflow: hidden;
+    padding: 16px 24px;
 }
 
 .om-header-content {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 30px;
 }
 
 .om-title-wrapper {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 .om-title {
@@ -45,41 +44,40 @@ body {
 /* 내부 탭 */
 .om-tabs {
     display: flex;
-    gap: 8px;
-    flex: 1;
-    justify-content: flex-end;
+    gap: 4px;
 }
 
-padding: 8px 16px;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    color: #6c757d;
-    font-size: 13px;
-    font-weight: 300;
-    cursor: pointer;
-    transition: all 0.2s;
+.om-tab-btn {
     display: flex;
     align-items: center;
     gap: 6px;
+    padding: 8px 16px;
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    color: #6c757d;
+    font-size: 14px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
 }
 
 .om-tab-btn:hover {
-    color: #495057;
     background: #f8f9fa;
-    border-color: #dee2e6;
+    border-color: #adb5bd;
+    color: #495057;
 }
 
 .om-tab-btn.active {
-    color: #2563eb;
-    background: #e7f3ff;
+    background: #2563eb;
     border-color: #2563eb;
-    font-weight: 400;
+    color: #ffffff;
 }
 
 .om-tab-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
 }
 
