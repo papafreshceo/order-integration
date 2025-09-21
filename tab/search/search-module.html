@@ -282,6 +282,63 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* 내부 탭 스타일 */
+        .inner-tab-navigation {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .inner-tab-btn {
+            padding: 10px 20px;
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            color: #6c757d;
+            font-size: 14px;
+            font-weight: 300;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .inner-tab-btn:hover {
+            background: #f8f9fa;
+            border-color: #adb5bd;
+        }
+
+        .inner-tab-btn.active {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+        }
+
+        .inner-tab-content {
+            position: relative;
+        }
+
+        .inner-tab-panel {
+            display: none;
+        }
+
+        .inner-tab-panel.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .inner-tab-navigation {
+                flex-wrap: wrap;
+            }
+            
+            .inner-tab-btn {
+                flex: 1;
+                min-width: calc(33.333% - 6px);
+                font-size: 12px;
+                padding: 8px 12px;
+            }
+        }
+
         /* 메시지 */
         .message {
             position: fixed;
@@ -309,8 +366,22 @@
 </head>
 <body>
     <div class="order-search-container">
-        <!-- 검색 섹션 (원본) -->
-        <div class="search-section">
+        <!-- 내부 탭 네비게이션 -->
+        <div class="inner-tab-navigation">
+            <button class="inner-tab-btn active" data-tab="order-search">주문조회</button>
+            <button class="inner-tab-btn" data-tab="order-input">주문입력</button>
+            <button class="inner-tab-btn" data-tab="order-excel">주문통합(Excel)</button>
+            <button class="inner-tab-btn" data-tab="shipping-manage">발송관리</button>
+            <button class="inner-tab-btn" data-tab="cs">CS</button>
+            <button class="inner-tab-btn" data-tab="others">기타</button>
+        </div>
+
+        <!-- 내부 탭 콘텐츠 영역 -->
+        <div class="inner-tab-content">
+            <!-- 주문조회 탭 -->
+            <div class="inner-tab-panel active" id="order-search">
+                <!-- 검색 섹션 (원본) -->
+                <div class="search-section">
             <div class="search-header">
                 <h2 class="search-title">주문 검색</h2>
                 <div class="search-actions">
@@ -398,7 +469,49 @@
                 </tbody>
             </table>
         </div>
-    </div>
+            </div> <!-- order-search panel 닫기 -->
+
+            <!-- 주문입력 탭 -->
+            <div class="inner-tab-panel" id="order-input">
+                <div class="search-section">
+                    <h2 class="search-title">수동 주문 입력</h2>
+                    <div id="manualOrderContent"></div>
+                </div>
+            </div>
+
+            <!-- 주문통합(Excel) 탭 -->
+            <div class="inner-tab-panel" id="order-excel">
+                <div class="search-section">
+                    <h2 class="search-title">엑셀 주문 통합</h2>
+                    <div id="excelOrderContent"></div>
+                </div>
+            </div>
+
+            <!-- 발송관리 탭 -->
+            <div class="inner-tab-panel" id="shipping-manage">
+                <div class="search-section">
+                    <h2 class="search-title">발송 관리</h2>
+                    <div id="shippingManageContent"></div>
+                </div>
+            </div>
+
+            <!-- CS 탭 -->
+            <div class="inner-tab-panel" id="cs">
+                <div class="search-section">
+                    <h2 class="search-title">고객 서비스</h2>
+                    <div id="csContent"></div>
+                </div>
+            </div>
+
+            <!-- 기타 탭 -->
+            <div class="inner-tab-panel" id="others">
+                <div class="search-section">
+                    <h2 class="search-title">기타 기능</h2>
+                    <div id="othersContent"></div>
+                </div>
+            </div>
+        </div> <!-- inner-tab-content 닫기 -->
+    </div> <!-- order-search-container 닫기 -->
 
     <!-- 로딩 -->
     <div class="loading-overlay" id="loadingOverlay">
@@ -415,11 +528,77 @@
 
         // 초기화
         document.addEventListener('DOMContentLoaded', function() {
+            // 내부 탭 이벤트 리스너
+            initializeInnerTabs();
+            
+            // 주문조회 탭 초기화
             initializeFilters();
             const todayBtn = document.querySelector('.quick-filter-btn');
             setQuickFilter('today', todayBtn);
             loadOrders();
         });
+
+        // 내부 탭 전환 기능
+        function initializeInnerTabs() {
+            const tabButtons = document.querySelectorAll('.inner-tab-btn');
+            const tabPanels = document.querySelectorAll('.inner-tab-panel');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetTab = button.dataset.tab;
+                    
+                    // 모든 탭 비활성화
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabPanels.forEach(panel => panel.classList.remove('active'));
+                    
+                    // 선택한 탭 활성화
+                    button.classList.add('active');
+                    document.getElementById(targetTab).classList.add('active');
+                    
+                    // 각 탭별 초기화 함수 호출
+                    initializeTabContent(targetTab);
+                });
+            });
+        }
+
+        // 각 탭 콘텐츠 초기화
+        function initializeTabContent(tabName) {
+            switch(tabName) {
+                case 'order-search':
+                    // 이미 로드됨
+                    break;
+                case 'order-input':
+                    // manual-order.js의 함수 호출
+                    if (typeof loadManualOrderForm !== 'undefined') {
+                        loadManualOrderForm('manualOrderContent');
+                    }
+                    break;
+                case 'order-excel':
+                    // 엑셀 업로드 기능
+                    if (typeof loadExcelUpload !== 'undefined') {
+                        loadExcelUpload('excelOrderContent');
+                    }
+                    break;
+                case 'shipping-manage':
+                    // 발송 관리
+                    if (typeof loadShippingManage !== 'undefined') {
+                        loadShippingManage('shippingManageContent');
+                    }
+                    break;
+                case 'cs':
+                    // CS 관리
+                    if (typeof loadCSManage !== 'undefined') {
+                        loadCSManage('csContent');
+                    }
+                    break;
+                case 'others':
+                    // 기타
+                    if (typeof loadOthers !== 'undefined') {
+                        loadOthers('othersContent');
+                    }
+                    break;
+            }
+        }
 
         // 필터 초기화
         function initializeFilters() {
