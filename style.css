@@ -1316,3 +1316,296 @@ input:checked + .slider:before {
         width: 100%;
     }
 }
+
+
+/* ========== RESPONSIVE GLOBAL RULES ========== */
+
+/* 모바일 우선 설계 */
+:root {
+    --mobile-breakpoint: 768px;
+    --tablet-breakpoint: 1024px;
+    --desktop-breakpoint: 1400px;
+    
+    /* 반응형 spacing */
+    --container-padding-mobile: 15px;
+    --container-padding-tablet: 30px;
+    --container-padding-desktop: 40px;
+    
+    /* 반응형 font-size */
+    --h1-mobile: 20px;
+    --h1-tablet: 24px;
+    --h1-desktop: 28px;
+    
+    --body-mobile: 14px;
+    --body-desktop: 16px;
+}
+
+/* 전역 반응형 설정 */
+@media (max-width: 768px) {
+    /* 레이아웃 */
+    body {
+        font-size: 14px;
+        overflow-x: hidden;
+    }
+    
+    /* 컨테이너 */
+    .container,
+    .om-container,
+    .shipping-container,
+    [class*="-container"] {
+        padding: var(--container-padding-mobile);
+        margin: 0;
+        width: 100%;
+    }
+    
+    /* 헤더 */
+    .header,
+    .om-header,
+    .new-section-header,
+    [class*="-header"] {
+        margin: 10px !important;
+        padding: 15px !important;
+        border-radius: 8px;
+    }
+    
+    /* 타이틀 */
+    h1, .title, .om-title, .module-title {
+        font-size: var(--h1-mobile) !important;
+    }
+    
+    h2, .section-title {
+        font-size: 18px !important;
+    }
+    
+    /* 탭 네비게이션 - 가로 스크롤 */
+    .tab-navigation,
+    .om-tabs,
+    .new-section-tabs {
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        gap: 4px;
+        padding: 10px;
+    }
+    
+    .tab-button,
+    .om-tab-btn,
+    .inner-tab {
+        font-size: 12px !important;
+        padding: 8px 12px !important;
+        flex-shrink: 0;
+        min-width: fit-content;
+    }
+    
+    /* 테이블 반응형 */
+    .table-wrapper,
+    .om-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        max-height: 60vh;
+    }
+    
+    table {
+        min-width: 800px;
+        font-size: 11px !important;
+    }
+    
+    th, td {
+        padding: 6px 4px !important;
+        font-size: 11px !important;
+    }
+    
+    /* 버튼 */
+    button, .btn, [class*="btn-"] {
+        font-size: 12px !important;
+        padding: 8px 12px !important;
+    }
+    
+    /* 폼 요소 */
+    input, select, textarea {
+        font-size: 14px !important;
+        padding: 8px 10px !important;
+    }
+    
+    /* 그리드 레이아웃 모바일 대응 */
+    .search-filters,
+    .filter-controls,
+    [class*="-grid"] {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+    
+    /* 통계 카드 */
+    .shipping-stats,
+    .om-stats,
+    .stat-cards {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+    
+    .stat-card {
+        padding: 12px !important;
+    }
+    
+    .stat-value {
+        font-size: 20px !important;
+    }
+    
+    /* 모달 */
+    .modal-content,
+    [class*="modal-"] {
+        width: 95% !important;
+        max-width: none !important;
+        margin: 10px !important;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    /* 날짜 입력 반응형 */
+    .date-range-container {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    
+    .date-separator {
+        display: none;
+    }
+    
+    /* 버튼 그룹 */
+    .button-group,
+    .search-button-group,
+    .table-actions {
+        flex-direction: column !important;
+        width: 100%;
+    }
+    
+    .button-group > *,
+    .search-button-group > * {
+        width: 100% !important;
+    }
+    
+    /* 숨기기/보이기 */
+    .mobile-hide {
+        display: none !important;
+    }
+    
+    .mobile-only {
+        display: block !important;
+    }
+    
+    /* 패딩/마진 조정 */
+    .section-container {
+        padding: 15px !important;
+        margin: 10px !important;
+    }
+    
+    /* 카드 레이아웃 */
+    .card, [class*="-card"] {
+        padding: 15px !important;
+        margin: 10px 0 !important;
+    }
+}
+
+/* 태블릿 (768px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .container,
+    [class*="-container"] {
+        padding: var(--container-padding-tablet);
+    }
+    
+    .header,
+    [class*="-header"] {
+        margin: 20px 30px !important;
+    }
+    
+    h1 {
+        font-size: var(--h1-tablet);
+    }
+    
+    .table-wrapper {
+        max-height: 70vh;
+    }
+    
+    /* 그리드 2열 */
+    .search-filters,
+    .filter-controls {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    .shipping-stats,
+    .om-stats {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+/* 작은 모바일 (480px 이하) */
+@media (max-width: 480px) {
+    body {
+        font-size: 13px;
+    }
+    
+    .header h1,
+    .om-title {
+        font-size: 18px !important;
+    }
+    
+    .tab-button,
+    .om-tab-btn {
+        font-size: 11px !important;
+        padding: 6px 10px !important;
+    }
+    
+    /* 아이콘 숨기기 */
+    .om-tab-btn svg,
+    .tab-button svg {
+        display: none;
+    }
+    
+    table {
+        font-size: 10px !important;
+    }
+    
+    th, td {
+        padding: 4px 2px !important;
+        font-size: 10px !important;
+    }
+}
+
+/* 프린트 스타일 */
+@media print {
+    .tab-navigation,
+    .om-tabs,
+    .no-print,
+    button {
+        display: none !important;
+    }
+    
+    body {
+        font-size: 12px;
+    }
+    
+    table {
+        page-break-inside: avoid;
+    }
+}
+
+/* 모바일 터치 최적화 */
+@media (hover: none) and (pointer: coarse) {
+    button, a, .clickable {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    input[type="checkbox"],
+    input[type="radio"] {
+        min-width: 20px;
+        min-height: 20px;
+    }
+}
+
+/* 다크모드 지원 (선택사항) */
+@media (prefers-color-scheme: dark) {
+    /* 다크모드 스타일 */
+}
