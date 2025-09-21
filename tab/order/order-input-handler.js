@@ -1054,14 +1054,13 @@ async saveOrders() {
         const result = await response.json();
         
         if (result.success) {
-    this.showMessage(`${this.manualOrders.length}건의 주문이 저장되었습니다.`, 'success');
-    
-    // 저장 성공 시 캐시와 목록 모두 초기화
-    this.manualOrders = [];
-    this.updateOrderList();
-    this.resetForm();
-    this.clearCache(); // 캐시 완전 삭제
-}
+            this.showMessage(`${this.manualOrders.length}건의 주문이 저장되었습니다.`, 'success');
+            
+            // 저장 성공 시 캐시와 목록 모두 초기화
+            this.manualOrders = [];
+            this.updateOrderList();
+            this.resetForm();
+            this.clearCache(); // 캐시 완전 삭제
         } else {
             throw new Error(result.error || '저장 실패');
         }
@@ -1077,7 +1076,7 @@ async saveOrders() {
             saveButton.disabled = false;
         }
     }
-},
+}, // 여기에 콤마 추가
 
 saveToCache() {
     localStorage.setItem('orderInputHandler_orders', JSON.stringify(this.manualOrders));
@@ -1101,4 +1100,3 @@ loadFromCache() {
 clearCache() {
     localStorage.removeItem('orderInputHandler_orders');
 }
-};
