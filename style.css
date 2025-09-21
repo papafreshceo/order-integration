@@ -11,14 +11,14 @@
     --bg-primary: #ffffff;
     --bg-secondary: #f8f9fa;
     --bg-muted: #fafafa;
-    --bg-hover: #f8f9fa;
+    --bg-hover: #f0f8ff;
     --bg-today: #e7f3ff;
     --bg-light: #f5f6fa;
     --bg-lighter: #fefefe;
 
     /* Text Colors */
-    --text-primary: #212529;
-    --text-secondary: #495057;
+    --text-primary: #042848;
+    --text-secondary: #042848;
     --text-muted: #6c757d;
     --text-link: #2563eb;
 
@@ -409,7 +409,7 @@ body {
 }
 
 .btn-secondary:hover {
-    background: var(--bg-secondary);
+    background: var(--bg-hover);
     border-color: #adb5bd;
 }
 
