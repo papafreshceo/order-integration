@@ -123,30 +123,34 @@ case 'saveCsRecord':
           });
         }
 
-      case 'addCsOrder':
+case 'addCsOrder':
         try {
           const { sheetName, data } = req.body;
-          const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
+          const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
           const mainSpreadsheetId = process.env.SPREADSHEET_ID;
+          
+          console.log('addCsOrder 시작:', { sheetName, ordersSpreadsheetId });
           
           // 날짜 시트 존재 확인
           let sheetExists = false;
           let headers = [];
           
           try {
-            const existingData = await getOrderData(`${sheetName}!1:1`, ordersSpreadsheetId);
+            const existingData = await getOrderData(`${sheetName}!1:1`);
             if (existingData && existingData.length > 0) {
               sheetExists = true;
               headers = existingData[0];
+              console.log('기존 시트 헤더:', headers);
             }
           } catch (err) {
             sheetExists = false;
+            console.log('시트가 존재하지 않음');
           }
           
           // 시트가 없으면 생성
           if (!sheetExists) {
             // 매핑 시트에서 표준필드 가져오기
-            const mappingData = await getSheetData('매핑!A:B', mainSpreadsheetId);
+            const mappingData = await getSheetData('매핑!A:B');
             
             if (!mappingData || mappingData.length < 2) {
               throw new Error('매핑 시트에서 표준필드를 찾을 수 없습니다');
@@ -177,17 +181,20 @@ case 'saveCsRecord':
               headers = standardFields;
             }
             
-            // 새 시트 생성
-            await createSheet(sheetName, ordersSpreadsheetId);
+            console.log('새 시트 생성 필요, 헤더:', headers);
             
-            // 헤더 설정
-            await updateSheetData(`${sheetName}!A1:${columnToLetter(headers.length)}1`, 
-              [headers], ordersSpreadsheetId);
+            // 새 시트 생성
+            await createOrderSheet(sheetName);
+            
+            // 헤더 설정 - saveOrderData 사용
+            await saveOrderData(`${sheetName}!A1`, [headers]);
           }
           
           // 연번 계산
-          const existingRows = await getOrderData(`${sheetName}!A:A`, ordersSpreadsheetId);
+          const existingRows = await getOrderData(`${sheetName}!A:A`);
           const nextSerial = existingRows ? existingRows.length : 1;
+          
+          console.log('다음 연번:', nextSerial);
           
           // 데이터 행 생성
           const rowData = headers.map(header => {
@@ -209,11 +216,15 @@ case 'saveCsRecord':
             return data[header] || '';
           });
           
+          console.log('저장할 데이터:', rowData);
+          
           // 데이터 추가
           const targetRow = existingRows ? existingRows.length + 1 : 2;
-          const targetRange = `${sheetName}!A${targetRow}:${columnToLetter(headers.length)}${targetRow}`;
+          const targetRange = `${sheetName}!A${targetRow}`;
           
-          await updateSheetData(targetRange, [rowData], ordersSpreadsheetId);
+          await saveOrderData(targetRange, [rowData]);
+          
+          console.log('CS 주문 저장 완료');
           
           return res.status(200).json({
             success: true,
@@ -223,10 +234,11 @@ case 'saveCsRecord':
           });
           
         } catch (error) {
-          console.error('addCsOrder 오류:', error);
+          console.error('addCsOrder 오류 상세:', error.message, error.stack);
           return res.status(500).json({
             success: false,
-            error: error.message
+            error: error.message,
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
           });
         }
 
