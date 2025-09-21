@@ -778,20 +778,8 @@ window.OrderSearchHandler = {
         const endDate = document.getElementById('searchEndDate')?.value;
         
         if (startDate && endDate) {
-            if (this.dateType === 'sheet') {
-                // 주문통합일(시트명) 기준 필터링
-                const startNum = parseInt(startDate.replace(/-/g, ''));
-                const endNum = parseInt(endDate.replace(/-/g, ''));
-                
-                filtered = filtered.filter(order => {
-                    const sheetDate = order['sheetDate'] || order['시트날짜'] || '';
-                    if (sheetDate) {
-                        const sheetDateNum = parseInt(sheetDate.replace(/\D/g, ''));
-                        return sheetDateNum >= startNum && sheetDateNum <= endNum;
-                    }
-                    return false;
-                });
-            } else {
+            if (startDate && endDate && this.dateType === 'payment') {
+            // 결제일 기준 필터링만 적용
             const startNum = parseInt(startDate.replace(/-/g, ''));
             const endNum = parseInt(endDate.replace(/-/g, ''));
             
