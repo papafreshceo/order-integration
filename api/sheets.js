@@ -153,32 +153,85 @@ case 'addCsOrder':
           if (!sheetExists) {
             console.log('새 시트 생성 필요');
             
-            // 매핑 시트에서 표준필드 가져오기
-            const mappingData = await getSheetData('매핑!A:B');
+// mapping.js와 동일한 방식으로 표준필드 가져오기
+const mappingData = await getSheetData('매핑!A:AZ');
+console.log('매핑 시트 데이터 행 수:', mappingData.length);
+
+headers = [];
+
+if (mappingData.length >= 2) {
+  // 2행(인덱스 1)에서 "표준필드시작" 마커 찾기
+  const markerRow = mappingData[1];
+  let standardFieldsStartCol = -1;
+  
+  for (let i = 0; i < markerRow.length; i++) {
+    if (String(markerRow[i]).trim() === '표준필드시작') {
+      standardFieldsStartCol = i + 1;
+      break;
+    }
+  }
+  
+  console.log('표준필드시작 열 인덱스:', standardFieldsStartCol);
+  
+  if (standardFieldsStartCol !== -1) {
+    // 표준필드 목록 생성 (표준필드시작 다음 열부터)
+    for (let i = standardFieldsStartCol; i < markerRow.length; i++) {
+      const fieldName = String(markerRow[i] || '').trim();
+      if (fieldName === '') break;  // 빈 값이면 중단
+      headers.push(fieldName);
+    }
+  }
+}
+
+console.log('추출된 표준필드:', headers);
+console.log('표준필드 개수:', headers.length);
+
+// 표준필드를 못 찾았거나 비어있으면 기본 헤더 사용
+if (headers.length === 0) {
+  console.log('표준필드를 찾을 수 없어 기본 헤더 사용');
+  headers = [
+    '연번', '마켓명', '마켓', '결제일', '주문번호', '상품주문번호',
+    '주문자', '주문자전화번호', '수령인', '수령인전화번호', '주소',
+    '배송메세지', '옵션명', '수량', '특이/요청사항', '발송요청일',
+    '확인', '셀러', '셀러공급가', '출고처', '송장주체', '벤더사',
+    '발송지명', '발송지주소', '발송지연락처', '출고비용',
+    '정산예정금액', '정산대상금액', '상품금액', '최종결제금액',
+    '할인금액', '마켓부담할인금액', '판매자할인쿠폰할인',
+    '구매쿠폰적용금액', '쿠폰할인금액', '기타지원금할인금',
+    '수수료1', '수수료2', '판매아이디', '분리배송 Y/N',
+    '택배비', '발송일(송장입력일)', '택배사', '송장번호'
+  ];
+}
             
-            // 표준필드 찾기 (B열)
-            const standardFields = [];
-            let foundHeader = false;
+            console.log('표준필드 열 인덱스:', standardFieldCol);
             
-            for (let i = 0; i < mappingData.length; i++) {
-              if (mappingData[i][1] === '표준필드') {
-                foundHeader = true;
-                continue;
-              }
-              if (foundHeader && mappingData[i][1]) {
-                standardFields.push(mappingData[i][1]);
+            // 표준필드 값들 추출
+            headers = [];
+            for (let i = headerRowIndex + 1; i < mappingData.length; i++) {
+              const row = mappingData[i];
+              if (row && row[standardFieldCol] && row[standardFieldCol].trim() !== '') {
+                headers.push(row[standardFieldCol]);
               }
             }
             
-            if (standardFields.length === 0) {
-              // 기본 헤더 사용
+            console.log('추출된 표준필드 개수:', headers.length);
+            console.log('표준필드 헤더:', headers);
+            
+            if (headers.length === 0) {
+              // 기본 헤더 사용 (fallback)
+              console.log('표준필드가 비어있어 기본 헤더 사용');
               headers = [
                 '연번', '마켓명', '마켓', '결제일', '주문번호', '상품주문번호',
                 '주문자', '주문자전화번호', '수령인', '수령인전화번호', '주소',
-                '배송메세지', '옵션명', '수량', '특이/요청사항', '발송요청일'
+                '배송메세지', '옵션명', '수량', '특이/요청사항', '발송요청일',
+                '셀러', '셀러공급가', '출고처', '송장주체', '벤더사',
+                '발송지명', '발송지주소', '발송지연락처', '출고비용',
+                '정산예정금액', '정산대상금액', '상품금액', '최종결제금액',
+                '할인금액', '마켓부담할인금액', '판매자할인쿠폰할인',
+                '구매쿠폰적용금액', '쿠폰할인금액', '기타지원금할인금',
+                '수수료1', '수수료2', '판매아이디', '분리배송 Y/N',
+                '택배비', '발송일(송장입력일)', '택배사', '송장번호'
               ];
-            } else {
-              headers = standardFields;
             }
             
             // 새 시트 생성
