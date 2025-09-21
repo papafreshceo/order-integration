@@ -594,53 +594,80 @@ window.OrderSearchHandler = {
     },
 
     createTableRow(order, serialNumber) {
-        const row = document.createElement('tr');
-        const hasTracking = order['송장번호'] && order['송장번호'].trim() !== '';
+    const row = document.createElement('tr');
+    const hasTracking = order['송장번호'] && order['송장번호'].trim() !== '';
+    
+    if (hasTracking) {
+        row.classList.add('has-tracking');
+    }
+    
+    const tdCheckbox = document.createElement('td');
+    tdCheckbox.className = 'checkbox-cell';
+    tdCheckbox.style.width = '50px';
+    tdCheckbox.innerHTML = `<input type="checkbox" class="order-checkbox" data-index="${serialNumber - 1}">`;
+    row.appendChild(tdCheckbox);
+    
+    // 열 너비 매핑 (발송관리와 동일)
+    const columnWidths = {
+        '연번': '60px',
+        '마켓명': '120px',
+        '결제일': '100px',
+        '주문번호': '150px',
+        '옵션명': '200px',
+        '수량': '60px',
+        '주문자': '100px',
+        '수령인': '100px',
+        '전화번호': '120px',
+        '주소': '300px',
+        '배송메세지': '200px',
+        '택배사': '100px',
+        '송장번호': '150px'
+    };
+    
+    this.tableHeaders.forEach(header => {
+        const td = document.createElement('td');
         
-        if (hasTracking) {
-            row.classList.add('has-tracking');
+        // 열 너비 설정
+        if (columnWidths[header]) {
+            td.style.width = columnWidths[header];
         }
         
-        const tdCheckbox = document.createElement('td');
-        tdCheckbox.className = 'checkbox-cell';
-        tdCheckbox.innerHTML = `<input type="checkbox" class="order-checkbox" data-index="${serialNumber - 1}">`;
-        row.appendChild(tdCheckbox);
-        
-        this.tableHeaders.forEach(header => {
-            const td = document.createElement('td');
+        if (header === '연번') {
+            td.textContent = serialNumber;
+        } else if (header === '마켓명') {
+            const marketName = order[header] || '';
+            const marketColor = this.marketColors[marketName] || 'rgb(128,128,128)';
+            td.innerHTML = `
+                <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
+                     color: ${this.getTextColor(marketColor)}; border-radius: 4px; font-size: 11px; font-weight: 600;">
+                    ${marketName}
+                </span>
+            `;
+        } else {
+            const value = order[header] || '';
             
-            if (header === '연번') {
-                td.textContent = serialNumber;
-            } else if (header === '마켓명') {
-                const marketName = order[header] || '';
-                const marketColor = this.marketColors[marketName] || 'rgb(128,128,128)';
-                td.innerHTML = `
-                    <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
-                         color: ${this.getTextColor(marketColor)}; border-radius: 4px; font-size: 11px; font-weight: 600;">
-                        ${marketName}
-                    </span>
-                `;
+            if (header.includes('금액') || header.includes('가격')) {
+                td.style.textAlign = 'right';
+                td.textContent = this.formatNumber(value);
+            } else if (header === '수량') {
+                td.style.textAlign = 'right';
+                td.style.paddingRight = '12px';
+                td.textContent = value;
             } else {
-                const value = order[header] || '';
-                
-                if (header.includes('금액') || header.includes('가격') || header === '수량') {
-                    td.style.textAlign = 'right';
-                    td.textContent = this.formatNumber(value);
-                } else {
-                    td.textContent = value;
-                }
-                
-                // 텍스트 정렬
-                if (header === '옵션명' || header === '주소' || header === '배송메세지') {
-                    td.style.textAlign = 'left';
-                }
+                td.textContent = value;
             }
             
-            row.appendChild(td);
-        });
+            // 텍스트 정렬
+            if (header === '옵션명' || header === '주소' || header === '배송메세지') {
+                td.style.textAlign = 'left';
+            }
+        }
         
-        return row;
-    },
+        row.appendChild(td);
+    });
+    
+    return row;
+}
 
     getFilteredOrders() {
         let filtered = [...this.currentOrders];
