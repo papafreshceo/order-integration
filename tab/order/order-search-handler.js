@@ -1339,6 +1339,12 @@ displayCsOrderInfo(order) {
 
         const marketColor = this.marketColors[order['마켓명']] || 'rgb(128,128,128)';
         
+        // 전화번호 필드 확인 - 다양한 필드명 처리
+        const orderPhone = order['주문자전화번호'] || order['주문자연락처'] || order['주문자 전화번호'] || '';
+        const receiverPhone = order['수령인전화번호'] || order['수취인전화번호'] || 
+                              order['수령인연락처'] || order['수취인연락처'] || 
+                              order['수령인 전화번호'] || order['수취인 전화번호'] || '';
+        
         infoDiv.innerHTML = `
             <div style="margin-bottom: 16px;">
                 <span style="display: inline-block; padding: 4px 8px; background: ${marketColor}; 
@@ -1348,73 +1354,34 @@ displayCsOrderInfo(order) {
             </div>
             <div class="cs-info-grid">
                 <div class="cs-info-item">
-                    <span class="cs-info-label">결제일: ${order['결제일'] || ''}</span>
+                    <span class="cs-info-label">결제일: <span style="color: #042848; font-weight: 400;">${order['결제일'] || ''}</span></span>
                 </div>
                 <div class="cs-info-item">
-                    <span class="cs-info-label">주문번호: ${order['주문번호'] || ''}</span>
+                    <span class="cs-info-label">주문번호: <span style="color: #042848; font-weight: 400;">${order['주문번호'] || ''}</span></span>
                 </div>
                 <div class="cs-info-item">
-                    <span class="cs-info-label">주문자: ${order['주문자'] || ''}</span>
+                    <span class="cs-info-label">주문자: <span style="color: #042848; font-weight: 400;">${order['주문자'] || ''}</span></span>
                 </div>
                 <div class="cs-info-item">
-                    <span class="cs-info-label">주문자 전화번호: ${order['주문자전화번호'] || order['주문자연락처'] || ''}</span>
+                    <span class="cs-info-label">주문자 전화번호: <span style="color: #042848; font-weight: 400;">${orderPhone}</span></span>
                 </div>
                 <div class="cs-info-item">
-                    <span class="cs-info-label">수령인: ${order['수령인'] || order['수취인'] || ''}</span>
+                    <span class="cs-info-label">수령인: <span style="color: #042848; font-weight: 400;">${order['수령인'] || order['수취인'] || ''}</span></span>
                 </div>
                 <div class="cs-info-item">
-                    <span class="cs-info-label">수령인 전화번호: ${order['수령인전화번호'] || order['수취인전화번호'] || order['수령인연락처'] || order['수취인연락처'] || ''}</span>
+                    <span class="cs-info-label">수령인 전화번호: <span style="color: #042848; font-weight: 400;">${receiverPhone}</span></span>
                 </div>
                 <div class="cs-info-item" style="grid-column: 1 / -1;">
-                    <span class="cs-info-label">주소: ${order['주소'] || order['수령인주소'] || order['수취인주소'] || ''}</span>
+                    <span class="cs-info-label">주소: <span style="color: #042848; font-weight: 400;">${order['주소'] || order['수령인주소'] || order['수취인주소'] || ''}</span></span>
                 </div>
                 <div class="cs-info-item">
-                    <span class="cs-info-label">옵션명: ${order['옵션명'] || ''}</span>
+                    <span class="cs-info-label">옵션명: <span style="color: #042848; font-weight: 400;">${order['옵션명'] || ''}</span></span>
                 </div>
                 <div class="cs-info-item">
-                    <span class="cs-info-label">수량: ${order['수량'] || ''}</span>
+                    <span class="cs-info-label">수량: <span style="color: #042848; font-weight: 400;">${order['수량'] || ''}</span></span>
                 </div>
                 <div class="cs-info-item">
-                    <span class="cs-info-label">상품금액: ${this.formatNumber(order['상품금액'] || 0)}</span>
-                </div>
-            </div>
-        `;
-    },
-                <div class="cs-info-item">
-                    <span class="cs-info-label">주문번호</span>
-                    <span class="cs-info-value">${order['주문번호'] || ''}</span>
-                </div>
-                <div class="cs-info-item">
-                    <span class="cs-info-label">주문자</span>
-                    <span class="cs-info-value">${order['주문자'] || ''}</span>
-                </div>
-                <div class="cs-info-item">
-                    <span class="cs-info-label">주문자 전화번호</span>
-                    <span class="cs-info-value">${order['주문자전화번호'] || ''}</span>
-                </div>
-                <div class="cs-info-item">
-                    <span class="cs-info-label">수령인</span>
-                    <span class="cs-info-value">${order['수령인'] || order['수취인'] || ''}</span>
-                </div>
-                <div class="cs-info-item">
-                    <span class="cs-info-label">수령인 전화번호</span>
-                    <span class="cs-info-value">${order['수령인전화번호'] || order['수취인전화번호'] || ''}</span>
-                </div>
-                <div class="cs-info-item" style="grid-column: 1 / -1;">
-                    <span class="cs-info-label">주소</span>
-                    <span class="cs-info-value">${order['주소'] || order['수령인주소'] || order['수취인주소'] || ''}</span>
-                </div>
-                <div class="cs-info-item">
-                    <span class="cs-info-label">옵션명</span>
-                    <span class="cs-info-value">${order['옵션명'] || ''}</span>
-                </div>
-                <div class="cs-info-item">
-                    <span class="cs-info-label">수량</span>
-                    <span class="cs-info-value">${order['수량'] || ''}</span>
-                </div>
-                <div class="cs-info-item">
-                    <span class="cs-info-label">상품금액</span>
-                    <span class="cs-info-value">${this.formatNumber(order['상품금액'] || 0)}</span>
+                    <span class="cs-info-label">상품금액: <span style="color: #042848; font-weight: 400;">${this.formatNumber(order['상품금액'] || 0)}</span></span>
                 </div>
             </div>
         `;
