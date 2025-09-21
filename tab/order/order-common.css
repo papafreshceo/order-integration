@@ -13,13 +13,17 @@ body {
     min-height: 100vh;
 }
 
-/* 헤더 */
+/* 통합 헤더 */
 .om-header {
     background: #ffffff;
     border: 1px solid #dee2e6;
     border-radius: 8px;
-    padding: 24px;
     margin: 20px 40px 24px 40px;
+    overflow: hidden;
+}
+
+.om-title-section {
+    padding: 24px 24px 20px 24px;
 }
 
 .om-title-wrapper {
@@ -32,23 +36,25 @@ body {
     font-size: 24px;
     font-weight: 600;
     color: #212529;
+    margin: 0;
 }
 
 .om-subtitle {
     font-size: 14px;
     font-weight: 300;
     color: #6c757d;
+    margin: 8px 0 0 32px;
+    padding: 0;
 }
 
-/* 탭 */
+/* 내부 탭 */
 .om-tabs {
-    background: #ffffff;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 16px 24px;
-    margin: 0 40px 24px 40px;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    padding: 0;
+    margin: 0;
     display: flex;
-    gap: 16px;
+    gap: 0;
 }
 
 .om-tab-btn {

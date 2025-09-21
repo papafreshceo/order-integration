@@ -1,32 +1,34 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
+더
     <meta charset="UTF-8">
     <title>주문통합관리</title>
     <link rel="stylesheet" href="order-common.css">
 </head>
 <body>
     <div class="om-container">
-        <!-- 헤더 -->
+        <!-- 통합 헤더 섹션 -->
         <div class="om-header">
-            <div class="om-title-wrapper">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                </svg>
-                <h1 class="om-title">주문통합관리</h1>
-                <span class="om-subtitle">통합 주문 관리 시스템</span>
+            <div class="om-title-section">
+                <div class="om-title-wrapper">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                    </svg>
+                    <h1 class="om-title">주문통합관리</h1>
+                </div>
+                <p class="om-subtitle">통합 주문 관리 시스템</p>
             </div>
-        </div>
-        
-        <!-- 탭 -->
-        <div class="om-tabs">
-            <button class="om-tab-btn active" data-tab="search">주문조회</button>
-            <button class="om-tab-btn" data-tab="input">주문입력</button>
-            <button class="om-tab-btn" data-tab="excel">주문통합(Excel)</button>
-            <button class="om-tab-btn" data-tab="shipping">발송관리</button>
-            <button class="om-tab-btn" data-tab="cs">CS</button>
-            <button class="om-tab-btn" data-tab="etc">기타</button>
+            
+            <!-- 내부 탭 -->
+            <div class="om-tabs">
+                <button class="om-tab-btn active" data-tab="search">주문조회</button>
+                <button class="om-tab-btn" data-tab="input">주문입력</button>
+                <button class="om-tab-btn" data-tab="excel">주문통합(Excel)</button>
+                <button class="om-tab-btn" data-tab="shipping">발송관리</button>
+                <button class="om-tab-btn" data-tab="cs">CS</button>
+                <button class="om-tab-btn" data-tab="etc">기타</button>
+            </div>
         </div>
         
         <!-- 콘텐츠 -->
