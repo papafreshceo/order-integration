@@ -314,9 +314,9 @@ window.OrderSearchHandler = {
                     <div class="panel-actions">
                         <button class="btn-action" onclick="OrderSearchHandler.resetFilters()">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="23 4 23 10 17 10"></polyline>
-                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                            </svg>
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                </svg>
                             초기화
                         </button>
                     </div>
