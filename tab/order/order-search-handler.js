@@ -548,19 +548,30 @@ window.OrderSearchHandler = {
         const thead = document.getElementById('searchTableHead');
         const tbody = document.getElementById('searchTableBody');
         
+        // 헤더 생성 - 매핑시트의 모든 컬럼 사용
         thead.innerHTML = '';
         const headerRow = document.createElement('tr');
         
+        // 체크박스 컬럼
         const thCheckbox = document.createElement('th');
         thCheckbox.className = 'checkbox-cell';
         thCheckbox.innerHTML = '<input type="checkbox" onchange="OrderSearchHandler.toggleSelectAll(this)">';
         headerRow.appendChild(thCheckbox);
         
-        this.tableHeaders.forEach(header => {
-            const th = document.createElement('th');
-            th.textContent = header;
-            headerRow.appendChild(th);
-        });
+        // 매핑시트에서 가져온 모든 헤더 추가
+        if (this.currentOrders.length > 0) {
+            this.tableHeaders = Object.keys(this.currentOrders[0]);
+            this.tableHeaders.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                if (header === '주소' || header === '수령인주소') {
+                    th.style.width = '300px';
+                }
+                headerRow.appendChild(th);
+            });
+        }
+        
+        thead.appendChild(headerRow);
         
         thead.appendChild(headerRow);
         
