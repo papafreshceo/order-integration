@@ -145,17 +145,18 @@ window.OrderInputHandler = {
                 }
 
                 .btn-search-address {
-                    padding: 8px 16px;
-                    background: #ffffff;
-                    color: #2563eb;
-                    border: 1px solid #2563eb;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    font-size: 14px;
-                    font-weight: 300;
-                    white-space: nowrap;
-                    transition: all 0.2s;
-                }
+    padding: 8px 16px;
+    background: #ffffff;
+    color: #2563eb;
+    border: 1px solid #2563eb;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 300;
+    white-space: nowrap;
+    transition: all 0.2s;
+    height: 32px;  /* form-input과 동일한 높이로 설정 */
+}
 
                 .btn-search-address:hover {
                     background: #f0f8ff;
@@ -446,12 +447,12 @@ window.OrderInputHandler = {
                             </div>
                             
                             <div class="form-group" style="flex: 1; min-width: 300px;">
-                                <label class="form-label">주소 <span class="required">*</span></label>
-                                <div style="display: flex; gap: 8px;">
-                                    <input type="text" class="form-input" id="inputAddress" readonly style="flex: 1;">
-                                    <button type="button" class="btn-search-address" onclick="OrderInputHandler.searchAddress()">주소검색</button>
-                                </div>
-                            </div>
+    <label class="form-label">주소 <span class="required">*</span></label>
+    <div style="display: flex; gap: 8px; align-items: center;">
+        <input type="text" class="form-input" id="inputAddress" readonly style="flex: 1;">
+        <button type="button" class="btn-search-address" onclick="OrderInputHandler.searchAddress()">주소검색</button>
+    </div>
+</div>
                         </div>
                         
                         <!-- 세 번째 행: 배송 메시지 및 추가 버튼 -->
