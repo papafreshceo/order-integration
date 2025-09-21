@@ -31,12 +31,16 @@ case 'saveCsRecord':
           const { data } = req.body;
           const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
           
-          console.log('CS 기록 저장 시작:', { spreadsheetId: ordersSpreadsheetId });
+          console.log('CS 기록 저장 시작:', { 
+            spreadsheetId: ordersSpreadsheetId,
+            data: data 
+          });
           
-          // appendSheetData 함수를 직접 사용
-          const csData = [
+          // CS기록 시트에 데이터 추가 (헤더는 2행에 있고, 3행부터 데이터)
+          // appendSheetData는 자동으로 마지막 행 다음에 추가함
+          const rowData = [[
             data.마켓명 || '',
-            '', // 연번은 구글시트 수식으로 자동 계산
+            '', // 연번은 시트에서 수식으로 자동 계산
             data.접수일 || new Date().toLocaleDateString('ko-KR'),
             data.해결방법 || '',
             data.결제일 || '',
@@ -52,12 +56,12 @@ case 'saveCsRecord':
             data.재발송상품 || '',
             data.재발송수량 || '',
             data.부분환불금액 || ''
-          ];
+          ]];
           
-          // 직접 appendSheetData 사용
-          const result = await appendSheetData('CS기록!A:Q', [csData], ordersSpreadsheetId);
+          // appendSheetData 함수 직접 호출
+          const result = await appendSheetData('CS기록!A:Q', rowData, ordersSpreadsheetId);
           
-          console.log('CS 기록 저장 결과:', result);
+          console.log('CS 기록 저장 완료:', result);
           
           return res.status(200).json({
             success: true,
@@ -65,10 +69,11 @@ case 'saveCsRecord':
           });
           
         } catch (error) {
-          console.error('saveCsRecord 오류 상세:', error);
+          console.error('saveCsRecord 오류:', error.message, error.stack);
           return res.status(500).json({
             success: false,
-            error: error.message || 'CS 기록 저장 실패'
+            error: error.message || 'CS 기록 저장 실패',
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
           });
         }
 
