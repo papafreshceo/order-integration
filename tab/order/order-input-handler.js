@@ -76,6 +76,7 @@ window.OrderInputHandler = {
                     color: #042848;
                     background: #ffffff;
                     transition: all 0.2s;
+                    height: 32px;
                 }
 
                 .form-input:focus {
@@ -100,6 +101,7 @@ window.OrderInputHandler = {
                     border-radius: 6px;
                     overflow: hidden;
                     background: #ffffff;
+                    height: 32px;
                 }
 
                 .qty-btn {
@@ -138,6 +140,9 @@ window.OrderInputHandler = {
                     border: none;
                     background: #2563eb;
                     color: #ffffff;
+                    height: 32px;
+                    display: flex;
+                    align-items: center;
                 }
 
                 .btn-add:hover {
@@ -145,18 +150,18 @@ window.OrderInputHandler = {
                 }
 
                 .btn-search-address {
-    padding: 8px 16px;
-    background: #ffffff;
-    color: #2563eb;
-    border: 1px solid #2563eb;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 300;
-    white-space: nowrap;
-    transition: all 0.2s;
-    height: 32px;  /* form-input과 동일한 높이로 설정 */
-}
+                    padding: 8px 16px;
+                    background: #ffffff;
+                    color: #2563eb;
+                    border: 1px solid #2563eb;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 300;
+                    white-space: nowrap;
+                    transition: all 0.2s;
+                    height: 32px;
+                }
 
                 .btn-search-address:hover {
                     background: #f0f8ff;
@@ -176,6 +181,7 @@ window.OrderInputHandler = {
                     overflow-y: auto;
                     z-index: 100;
                     display: none;
+                    margin-top: 2px;
                 }
 
                 .search-results.show {
@@ -376,53 +382,64 @@ window.OrderInputHandler = {
                 <div class="input-section">
                     <form id="inputOrderForm">
                         <!-- 첫 번째 행: 구분, 상품 정보 -->
-<div class="form-row">
-    <div class="form-group" style="width: 120px;">
-        <label class="form-label">구분 <span class="required">*</span></label>
-        <select class="form-input" id="inputOrderType">
-            <option value="">선택</option>
-            <option value="CS발송">CS발송</option>
-            <option value="전화주문">전화주문</option>
-        </select>
-    </div>
-    
-    <div class="form-group" style="width: 180px; margin-right: 8px;">
-        <label class="form-label">상품 검색</label>
-        <div style="position: relative;">
-            <input type="text" class="form-input" id="inputProductSearch" placeholder="상품명 검색...">
-            <div id="productSearchResults" class="search-results"></div>
-        </div>
-    </div>
-    
-    <div class="form-group" style="width: 250px; margin-right: 8px;">
-        <label class="form-label">옵션명 <span class="required">*</span></label>
-        <input type="text" class="form-input" id="inputOptionName" readonly>
-    </div>
-    
-    <div class="form-group" style="width: 100px;">
-        <label class="form-label">단가 <span class="required">*</span></label>
-        <input type="number" class="form-input" id="inputUnitPrice" style="text-align: right;">
-    </div>
-    
-    <div class="form-group" style="width: 100px;">
-        <label class="form-label">수량 <span class="required">*</span></label>
-        <div class="quantity-control">
-            <button type="button" class="qty-btn" onclick="OrderInputHandler.changeQuantity(-1)">−</button>
-            <input type="number" class="qty-input" id="inputQuantity" value="1" min="1">
-            <button type="button" class="qty-btn" onclick="OrderInputHandler.changeQuantity(1)">+</button>
-        </div>
-    </div>
-    
-    <div class="form-group" style="width: 100px;">
-        <label class="form-label">택배비</label>
-        <input type="number" class="form-input" id="inputShipping" value="0" style="text-align: right;">
-    </div>
+                        <div class="form-row">
+                            <div class="form-group" style="width: 120px;">
+                                <label class="form-label">구분 <span class="required">*</span></label>
+                                <select class="form-input" id="inputOrderType">
+                                    <option value="">선택</option>
+                                    <option value="CS발송">CS발송</option>
+                                    <option value="전화주문">전화주문</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group" style="width: 100px;">
+                                <label class="form-label">품종</label>
+                                <div style="position: relative;">
+                                    <input type="text" class="form-input" id="inputBreed" placeholder="품종 입력">
+                                    <div id="breedSearchResults" class="search-results"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" style="width: 100px;">
+                                <label class="form-label">품목</label>
+                                <div style="position: relative;">
+                                    <input type="text" class="form-input" id="inputItem" placeholder="품목 입력">
+                                    <div id="itemSearchResults" class="search-results"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" style="width: 250px;">
+                                <label class="form-label">옵션명 <span class="required">*</span></label>
+                                <div style="position: relative;">
+                                    <input type="text" class="form-input" id="inputOptionName" placeholder="품종/품목 선택 또는 직접 입력">
+                                    <div id="optionSearchResults" class="search-results"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" style="width: 100px;">
+                                <label class="form-label">단가 <span class="required">*</span></label>
+                                <input type="number" class="form-input" id="inputUnitPrice" style="text-align: right;">
+                            </div>
+                            
+                            <div class="form-group" style="width: 100px;">
+                                <label class="form-label">수량 <span class="required">*</span></label>
+                                <div class="quantity-control">
+                                    <button type="button" class="qty-btn" onclick="OrderInputHandler.changeQuantity(-1)">−</button>
+                                    <input type="number" class="qty-input" id="inputQuantity" value="1" min="1">
+                                    <button type="button" class="qty-btn" onclick="OrderInputHandler.changeQuantity(1)">+</button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" style="width: 100px;">
+                                <label class="form-label">택배비</label>
+                                <input type="number" class="form-input" id="inputShipping" value="0" style="text-align: right;">
+                            </div>
 
-    <div class="form-group" style="width: 140px;">
-        <label class="form-label">발송요청일</label>
-        <input type="date" class="form-input" id="inputRequestDate">
-    </div>
-</div>
+                            <div class="form-group" style="width: 140px;">
+                                <label class="form-label">발송요청일</label>
+                                <input type="date" class="form-input" id="inputRequestDate">
+                            </div>
+                        </div>
                         
                         <!-- 두 번째 행: 주문자/수령인 정보 -->
                         <div class="form-row">
@@ -447,12 +464,12 @@ window.OrderInputHandler = {
                             </div>
                             
                             <div class="form-group" style="flex: 1; min-width: 300px;">
-    <label class="form-label">주소 <span class="required">*</span></label>
-    <div style="display: flex; gap: 8px; align-items: center;">
-        <input type="text" class="form-input" id="inputAddress" readonly style="flex: 1;">
-        <button type="button" class="btn-search-address" onclick="OrderInputHandler.searchAddress()">주소검색</button>
-    </div>
-</div>
+                                <label class="form-label">주소 <span class="required">*</span></label>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="text" class="form-input" id="inputAddress" readonly style="flex: 1;">
+                                    <button type="button" class="btn-search-address" onclick="OrderInputHandler.searchAddress()">주소검색</button>
+                                </div>
+                            </div>
                         </div>
                         
                         <!-- 세 번째 행: 배송 메시지 및 추가 버튼 -->
@@ -539,16 +556,31 @@ window.OrderInputHandler = {
     },
     
     setupEventListeners() {
-        const searchInput = document.getElementById('inputProductSearch');
-        if (searchInput) {
-            searchInput.addEventListener('input', () => this.searchProduct());
+        // 품종 검색
+        const breedInput = document.getElementById('inputBreed');
+        if (breedInput) {
+            breedInput.addEventListener('input', () => this.searchBreed());
         }
         
+        // 품목 검색
+        const itemInput = document.getElementById('inputItem');
+        if (itemInput) {
+            itemInput.addEventListener('input', () => this.searchItem());
+        }
+        
+        // 옵션명 검색
+        const optionInput = document.getElementById('inputOptionName');
+        if (optionInput) {
+            optionInput.addEventListener('input', () => this.searchOption());
+        }
+        
+        // 가격 계산
         ['inputUnitPrice', 'inputQuantity', 'inputShipping'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.addEventListener('input', () => this.calculateTotal());
         });
 
+        // 모달 상세주소 엔터키
         const modalDetail = document.getElementById('modalDetail');
         if (modalDetail) {
             modalDetail.addEventListener('keypress', (e) => {
@@ -560,23 +592,31 @@ window.OrderInputHandler = {
         }
     },
     
-    searchProduct() {
-        const input = document.getElementById('inputProductSearch');
+    searchBreed() {
+        const input = document.getElementById('inputBreed');
         const keyword = input.value.toLowerCase();
-        const results = document.getElementById('productSearchResults');
+        const results = document.getElementById('breedSearchResults');
         
-        if (keyword.length < 2) {
+        if (keyword.length < 1) {
             results.classList.remove('show');
             return;
         }
         
-        const matches = Object.keys(this.productData).filter(name => 
-            name.toLowerCase().includes(keyword)
-        ).slice(0, 10);
+        const breeds = new Set();
+        Object.keys(this.productData).forEach(optionName => {
+            const product = this.productData[optionName];
+            if (product['품종']) {
+                breeds.add(product['품종']);
+            }
+        });
+        
+        const matches = Array.from(breeds)
+            .filter(breed => breed.toLowerCase().includes(keyword))
+            .slice(0, 10);
         
         if (matches.length > 0) {
-            results.innerHTML = matches.map(name => 
-                `<div class="search-item" onclick="OrderInputHandler.selectProduct('${name.replace(/'/g, "\\'")}')">${name}</div>`
+            results.innerHTML = matches.map(breed => 
+                `<div class="search-item" onclick="OrderInputHandler.selectBreed('${breed.replace(/'/g, "\\'")}')">${breed}</div>`
             ).join('');
             results.classList.add('show');
         } else {
@@ -584,13 +624,120 @@ window.OrderInputHandler = {
         }
     },
     
-    selectProduct(name) {
-        document.getElementById('inputOptionName').value = name;
-        document.getElementById('productSearchResults').classList.remove('show');
-        document.getElementById('inputProductSearch').value = '';
+    searchItem() {
+        const input = document.getElementById('inputItem');
+        const keyword = input.value.toLowerCase();
+        const results = document.getElementById('itemSearchResults');
+        const selectedBreed = document.getElementById('inputBreed').value;
         
-        if (this.productData[name] && this.productData[name]['셀러공급가']) {
-            document.getElementById('inputUnitPrice').value = this.productData[name]['셀러공급가'];
+        if (keyword.length < 1) {
+            results.classList.remove('show');
+            return;
+        }
+        
+        const items = new Set();
+        Object.keys(this.productData).forEach(optionName => {
+            const product = this.productData[optionName];
+            if (!selectedBreed || product['품종'] === selectedBreed) {
+                if (product['품목']) {
+                    items.add(product['품목']);
+                }
+            }
+        });
+        
+        const matches = Array.from(items)
+            .filter(item => item.toLowerCase().includes(keyword))
+            .slice(0, 10);
+        
+        if (matches.length > 0) {
+            results.innerHTML = matches.map(item => 
+                `<div class="search-item" onclick="OrderInputHandler.selectItem('${item.replace(/'/g, "\\'")}')">${item}</div>`
+            ).join('');
+            results.classList.add('show');
+        } else {
+            results.classList.remove('show');
+        }
+    },
+    
+    searchOption() {
+        const input = document.getElementById('inputOptionName');
+        const keyword = input.value.toLowerCase();
+        const results = document.getElementById('optionSearchResults');
+        const selectedBreed = document.getElementById('inputBreed').value;
+        const selectedItem = document.getElementById('inputItem').value;
+        
+        if (keyword.length < 2) {
+            results.classList.remove('show');
+            return;
+        }
+        
+        let matches = Object.keys(this.productData).filter(optionName => {
+            const product = this.productData[optionName];
+            
+            if (selectedBreed && product['품종'] !== selectedBreed) return false;
+            if (selectedItem && product['품목'] !== selectedItem) return false;
+            
+            return optionName.toLowerCase().includes(keyword);
+        }).slice(0, 10);
+        
+        if (matches.length > 0) {
+            results.innerHTML = matches.map(name => 
+                `<div class="search-item" onclick="OrderInputHandler.selectOption('${name.replace(/'/g, "\\'")}')">${name}</div>`
+            ).join('');
+            results.classList.add('show');
+        } else {
+            results.classList.remove('show');
+        }
+    },
+    
+    selectBreed(breed) {
+        document.getElementById('inputBreed').value = breed;
+        document.getElementById('breedSearchResults').classList.remove('show');
+        this.updateOptionSuggestions();
+    },
+    
+    selectItem(item) {
+        document.getElementById('inputItem').value = item;
+        document.getElementById('itemSearchResults').classList.remove('show');
+        this.updateOptionSuggestions();
+    },
+    
+    selectOption(name) {
+        document.getElementById('inputOptionName').value = name;
+        document.getElementById('optionSearchResults').classList.remove('show');
+        
+        if (this.productData[name]) {
+            const product = this.productData[name];
+            
+            if (product['품종']) {
+                document.getElementById('inputBreed').value = product['품종'];
+            }
+            if (product['품목']) {
+                document.getElementById('inputItem').value = product['품목'];
+            }
+            if (product['셀러공급가']) {
+                document.getElementById('inputUnitPrice').value = product['셀러공급가'];
+            }
+        }
+    },
+    
+    updateOptionSuggestions() {
+        const selectedBreed = document.getElementById('inputBreed').value;
+        const selectedItem = document.getElementById('inputItem').value;
+        
+        if (selectedBreed || selectedItem) {
+            const matches = Object.keys(this.productData).filter(optionName => {
+                const product = this.productData[optionName];
+                
+                if (selectedBreed && product['품종'] !== selectedBreed) return false;
+                if (selectedItem && product['품목'] !== selectedItem) return false;
+                
+                return true;
+            });
+            
+            if (matches.length === 1) {
+                this.selectOption(matches[0]);
+            }
         }
     },
     
@@ -636,7 +783,6 @@ window.OrderInputHandler = {
     },
     
     addOrder() {
-        // 유효성 검사
         const required = ['inputOrderType', 'inputOptionName', 'inputUnitPrice', 'inputReceiver', 'inputReceiverPhone', 'inputAddress'];
         for (const id of required) {
             if (!document.getElementById(id).value) {
@@ -657,10 +803,11 @@ window.OrderInputHandler = {
             '수령인 전화번호': document.getElementById('inputReceiverPhone').value,
             주소: document.getElementById('inputAddress').value,
             배송메세지: document.getElementById('inputDeliveryMsg').value,
-            발송요청일: document.getElementById('inputRequestDate').value
+            발송요청일: document.getElementById('inputRequestDate').value,
+            품종: document.getElementById('inputBreed').value,
+            품목: document.getElementById('inputItem').value
         };
         
-        // 금액 계산
         orderData['상품금액'] = (orderData.단가 * orderData.수량) + orderData.택배비;
         
         this.manualOrders.push(orderData);
@@ -714,8 +861,8 @@ window.OrderInputHandler = {
         msg.className = `message-box ${type} show`;
         setTimeout(() => msg.classList.remove('show'), 3000);
     },
-
+    
     calculateTotal() {
-        // 필요시 총액 계산 로직 추가
+        // 필요시 총액 계산 로직
     }
 };
