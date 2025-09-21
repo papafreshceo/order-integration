@@ -354,11 +354,11 @@ window.OrderSearchHandler = {
                     display: flex;
                 }
 
-                .cs-modal {
+                 .cs-modal {
                     background: #ffffff;
                     border-radius: 16px;
                     width: 90%;
-                    max-width: 800px;
+                    max-width: 1120px;
                     max-height: 90vh;
                     overflow-y: auto;
                     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
@@ -408,7 +408,7 @@ window.OrderSearchHandler = {
 
                 .cs-info-grid {
                     display: grid;
-                    grid-template-columns: repeat(2, 1fr);
+                    grid-template-columns: repeat(3, 1fr);
                     gap: 16px;
                     margin-top: 16px;
                 }
@@ -479,6 +479,13 @@ window.OrderSearchHandler = {
                     padding: 16px;
                     border-radius: 8px;
                     margin-top: 12px;
+                }
+                
+                .cs-resend-grid {
+                    display: grid;
+                    grid-template-columns: 2fr 1fr 3fr;
+                    gap: 16px;
+                    align-items: start;
                 }
 
                 .cs-resend-options.show {
@@ -688,7 +695,7 @@ window.OrderSearchHandler = {
                         </div>
                         
                         <div class="cs-form-group">
-                            <label class="cs-form-label">고객요청사항</label>
+                            <label class="cs-form-label">CS 내용</label>
                             <textarea class="cs-textarea" id="csCustomerRequest" placeholder="고객 요청사항을 입력하세요"></textarea>
                         </div>
                         
@@ -709,17 +716,19 @@ window.OrderSearchHandler = {
                             </div>
                             
                             <div class="cs-resend-options" id="csResendOptions">
-                                <div class="cs-form-group">
-                                    <label class="cs-form-label">재발송 상품</label>
-                                    <input type="text" class="filter-input" id="csResendOption" placeholder="옵션명">
-                                </div>
-                                <div class="cs-form-group">
-                                    <label class="cs-form-label">수량</label>
-                                    <input type="number" class="filter-input" id="csResendQty" min="1" placeholder="수량">
-                                </div>
-                                <div class="cs-form-group">
-                                    <label class="cs-form-label">특이/요청사항</label>
-                                    <textarea class="cs-textarea" id="csResendNote" placeholder="재발송 관련 특이사항"></textarea>
+                                <div class="cs-resend-grid">
+                                    <div class="cs-form-group">
+                                        <label class="cs-form-label">재발송 상품</label>
+                                        <input type="text" class="filter-input" id="csResendOption" placeholder="옵션명">
+                                    </div>
+                                    <div class="cs-form-group">
+                                        <label class="cs-form-label">수량</label>
+                                        <input type="number" class="filter-input" id="csResendQty" min="1" placeholder="수량">
+                                    </div>
+                                    <div class="cs-form-group">
+                                        <label class="cs-form-label">특이/요청사항</label>
+                                        <input type="text" class="filter-input" id="csResendNote" placeholder="재발송 관련 특이사항">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1324,7 +1333,7 @@ window.OrderSearchHandler = {
         if (modal) modal.classList.add('show');
     },
 
-    displayCsOrderInfo(order) {
+displayCsOrderInfo(order) {
         const infoDiv = document.getElementById('csOrderInfo');
         if (!infoDiv) return;
 
@@ -1339,9 +1348,38 @@ window.OrderSearchHandler = {
             </div>
             <div class="cs-info-grid">
                 <div class="cs-info-item">
-                    <span class="cs-info-label">결제일</span>
-                    <span class="cs-info-value">${order['결제일'] || ''}</span>
+                    <span class="cs-info-label">결제일: ${order['결제일'] || ''}</span>
                 </div>
+                <div class="cs-info-item">
+                    <span class="cs-info-label">주문번호: ${order['주문번호'] || ''}</span>
+                </div>
+                <div class="cs-info-item">
+                    <span class="cs-info-label">주문자: ${order['주문자'] || ''}</span>
+                </div>
+                <div class="cs-info-item">
+                    <span class="cs-info-label">주문자 전화번호: ${order['주문자전화번호'] || order['주문자연락처'] || ''}</span>
+                </div>
+                <div class="cs-info-item">
+                    <span class="cs-info-label">수령인: ${order['수령인'] || order['수취인'] || ''}</span>
+                </div>
+                <div class="cs-info-item">
+                    <span class="cs-info-label">수령인 전화번호: ${order['수령인전화번호'] || order['수취인전화번호'] || order['수령인연락처'] || order['수취인연락처'] || ''}</span>
+                </div>
+                <div class="cs-info-item" style="grid-column: 1 / -1;">
+                    <span class="cs-info-label">주소: ${order['주소'] || order['수령인주소'] || order['수취인주소'] || ''}</span>
+                </div>
+                <div class="cs-info-item">
+                    <span class="cs-info-label">옵션명: ${order['옵션명'] || ''}</span>
+                </div>
+                <div class="cs-info-item">
+                    <span class="cs-info-label">수량: ${order['수량'] || ''}</span>
+                </div>
+                <div class="cs-info-item">
+                    <span class="cs-info-label">상품금액: ${this.formatNumber(order['상품금액'] || 0)}</span>
+                </div>
+            </div>
+        `;
+    },
                 <div class="cs-info-item">
                     <span class="cs-info-label">주문번호</span>
                     <span class="cs-info-value">${order['주문번호'] || ''}</span>
@@ -1438,7 +1476,7 @@ window.OrderSearchHandler = {
             옵션명: this.currentCsOrder['옵션명'],
             수량: this.currentCsOrder['수량'],
             상품금액: this.currentCsOrder['상품금액'],
-            고객요청사항: customerRequest,
+            CS내용: customerRequest,
             해결방안: solution
         };
 
