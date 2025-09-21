@@ -914,9 +914,12 @@ searchProduct() {
     },
     
     calculateTotal() {
-    const unitPrice = parseFloat(document.getElementById('inputUnitPrice').value) || 0;
+    const unitPriceValue = document.getElementById('inputUnitPrice').value.replace(/,/g, '');
+    const shippingValue = document.getElementById('inputShipping').value.replace(/,/g, '');
+    
+    const unitPrice = parseFloat(unitPriceValue) || 0;
     const quantity = parseInt(document.getElementById('inputQuantity').value) || 1;
-    const shipping = parseFloat(document.getElementById('inputShipping').value) || 0;
+    const shipping = parseFloat(shippingValue) || 0;
     
     const totalPrice = (unitPrice * quantity) + shipping;
     
