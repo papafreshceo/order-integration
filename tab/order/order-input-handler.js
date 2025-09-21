@@ -375,53 +375,53 @@ window.OrderInputHandler = {
                 <div class="input-section">
                     <form id="inputOrderForm">
                         <!-- 첫 번째 행: 구분, 상품 정보 -->
-                        <div class="form-row">
-                            <div class="form-group" style="width: 120px;">
-                                <label class="form-label">구분 <span class="required">*</span></label>
-                                <select class="form-input" id="inputOrderType">
-                                    <option value="">선택</option>
-                                    <option value="CS발송">CS발송</option>
-                                    <option value="전화주문">전화주문</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group" style="width: 180px;">
-                                <label class="form-label">상품 검색</label>
-                                <div style="position: relative;">
-                                    <input type="text" class="form-input" id="inputProductSearch" placeholder="상품명 검색...">
-                                    <div id="productSearchResults" class="search-results"></div>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group" style="width: 250px;">
-                                <label class="form-label">옵션명 <span class="required">*</span></label>
-                                <input type="text" class="form-input" id="inputOptionName" readonly>
-                            </div>
-                            
-                            <div class="form-group" style="width: 100px;">
-                                <label class="form-label">단가 <span class="required">*</span></label>
-                                <input type="number" class="form-input" id="inputUnitPrice" style="text-align: right;">
-                            </div>
-                            
-                            <div class="form-group" style="width: 100px;">
-                                <label class="form-label">수량 <span class="required">*</span></label>
-                                <div class="quantity-control">
-                                    <button type="button" class="qty-btn" onclick="OrderInputHandler.changeQuantity(-1)">−</button>
-                                    <input type="number" class="qty-input" id="inputQuantity" value="1" min="1">
-                                    <button type="button" class="qty-btn" onclick="OrderInputHandler.changeQuantity(1)">+</button>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group" style="width: 100px;">
-                                <label class="form-label">택배비</label>
-                                <input type="number" class="form-input" id="inputShipping" value="0" style="text-align: right;">
-                            </div>
+<div class="form-row">
+    <div class="form-group" style="width: 120px;">
+        <label class="form-label">구분 <span class="required">*</span></label>
+        <select class="form-input" id="inputOrderType">
+            <option value="">선택</option>
+            <option value="CS발송">CS발송</option>
+            <option value="전화주문">전화주문</option>
+        </select>
+    </div>
+    
+    <div class="form-group" style="width: 180px; margin-right: 8px;">
+        <label class="form-label">상품 검색</label>
+        <div style="position: relative;">
+            <input type="text" class="form-input" id="inputProductSearch" placeholder="상품명 검색...">
+            <div id="productSearchResults" class="search-results"></div>
+        </div>
+    </div>
+    
+    <div class="form-group" style="width: 250px; margin-right: 8px;">
+        <label class="form-label">옵션명 <span class="required">*</span></label>
+        <input type="text" class="form-input" id="inputOptionName" readonly>
+    </div>
+    
+    <div class="form-group" style="width: 100px;">
+        <label class="form-label">단가 <span class="required">*</span></label>
+        <input type="number" class="form-input" id="inputUnitPrice" style="text-align: right;">
+    </div>
+    
+    <div class="form-group" style="width: 100px;">
+        <label class="form-label">수량 <span class="required">*</span></label>
+        <div class="quantity-control">
+            <button type="button" class="qty-btn" onclick="OrderInputHandler.changeQuantity(-1)">−</button>
+            <input type="number" class="qty-input" id="inputQuantity" value="1" min="1">
+            <button type="button" class="qty-btn" onclick="OrderInputHandler.changeQuantity(1)">+</button>
+        </div>
+    </div>
+    
+    <div class="form-group" style="width: 100px;">
+        <label class="form-label">택배비</label>
+        <input type="number" class="form-input" id="inputShipping" value="0" style="text-align: right;">
+    </div>
 
-                            <div class="form-group" style="width: 140px;">
-                                <label class="form-label">발송요청일</label>
-                                <input type="date" class="form-input" id="inputRequestDate">
-                            </div>
-                        </div>
+    <div class="form-group" style="width: 140px;">
+        <label class="form-label">발송요청일</label>
+        <input type="date" class="form-input" id="inputRequestDate">
+    </div>
+</div>
                         
                         <!-- 두 번째 행: 주문자/수령인 정보 -->
                         <div class="form-row">
