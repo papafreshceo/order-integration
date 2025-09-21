@@ -293,7 +293,7 @@ const rowData = headers.map(header => {
         return csOrderNumber;  // CS 주문번호 사용
     }
     if (header === '발송요청일') {
-        return data['발송요청일'] || today.toLocaleDateString('ko-KR');
+    return data['발송요청일'] || '';  // 비어있으면 빈 값으로
     }
     
     // 제품 정보에서 가져올 필드들
