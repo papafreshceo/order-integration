@@ -923,3 +923,4 @@ searchProduct() {
         totalPriceInput.value = totalPrice.toLocaleString('ko-KR');
     }
 }
+};
