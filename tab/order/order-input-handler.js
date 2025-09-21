@@ -80,16 +80,25 @@ window.OrderInputHandler = {
                 }
 
                 .form-input:focus {
-                    outline: none;
-                    border-color: #2563eb;
-                    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-                }
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
 
-                .form-input[readonly] {
-                    background: #f8f9fa;
-                    cursor: not-allowed;
-                }
+/* 단가 입력란 스핀버튼 제거 - 여기에 추가 */
+#inputUnitPrice::-webkit-outer-spin-button,
+#inputUnitPrice::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+#inputUnitPrice {
+    -moz-appearance: textfield;
+}
 
+.form-input[readonly] {
+    background: #f8f9fa;
+    cursor: not-allowed;
+}
                 .required {
                     color: #dc3545;
                 }
@@ -408,9 +417,9 @@ window.OrderInputHandler = {
     </div>
     
     <div class="form-group" style="width: 100px;">
-        <label class="form-label">단가 <span class="required">*</span></label>
-        <input type="number" class="form-input" id="inputUnitPrice" style="text-align: right;">
-    </div>
+    <label class="form-label">단가 <span class="required">*</span></label>
+    <input type="text" class="form-input" id="inputUnitPrice" style="text-align: right;">
+</div>
     
     <div class="form-group" style="width: 100px;">
         <label class="form-label">수량 <span class="required">*</span></label>
@@ -741,16 +750,17 @@ searchProduct() {
         searchInput.value = '';
     }
     
-    // 제품 데이터가 있으면 단가 자동 설정
-    if (this.productData[name]) {
-        const product = this.productData[name];
-        
-        if (product['셀러공급가']) {
-            const priceInput = document.getElementById('inputUnitPrice');
-            if (priceInput) {
-                priceInput.value = product['셀러공급가'];
-            }
-        }
+// 제품 데이터가 있으면 C무료판매가를 단가로 설정
+if (this.productData[name]) {
+    const product = this.productData[name];
+    
+    // C무료판매가만 사용, 없으면 0
+    const price = product['C무료판매가'] || 0;
+    const priceInput = document.getElementById('inputUnitPrice');
+    if (priceInput) {
+        priceInput.value = price;
+    }
+}
     }
 },
     
