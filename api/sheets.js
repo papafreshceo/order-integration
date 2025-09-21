@@ -26,22 +26,35 @@ export default async function handler(req, res) {
     const { action, sheetName, range, values } = req.body || req.query;
 
     switch (action) {
-      case 'saveCsRecord':
+       case 'saveCsRecord':
         try {
           const { data } = req.body;
           const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
           
-          // CS기록 시트의 헤더 읽기 (2행이 헤더)
-          const csHeaders = await getOrderData('CS기록!2:2', ordersSpreadsheetId);
+          // Google Sheets API 직접 사용
+          const { google } = require('googleapis');
+          const auth = await getAuth(); // 인증 함수
+          const sheets = google.sheets({ version: 'v4', auth });
           
-          if (!csHeaders || csHeaders.length === 0) {
+          // CS기록 시트의 헤더 읽기 (2행이 헤더)
+          const headerResponse = await sheets.spreadsheets.values.get({
+            spreadsheetId: ordersSpreadsheetId,
+            range: 'CS기록!2:2'
+          });
+          
+          const headers = headerResponse.data.values?.[0];
+          
+          if (!headers || headers.length === 0) {
             throw new Error('CS기록 시트 헤더를 찾을 수 없습니다');
           }
           
-          const headers = csHeaders[0];
-          
           // 현재 데이터 읽어서 다음 연번 계산
-          const existingData = await getOrderData('CS기록!A3:A', ordersSpreadsheetId);
+          const dataResponse = await sheets.spreadsheets.values.get({
+            spreadsheetId: ordersSpreadsheetId,
+            range: 'CS기록!A3:A'
+          });
+          
+          const existingData = dataResponse.data.values;
           const nextSerial = existingData ? existingData.length + 1 : 1;
           
           // 데이터 배열 생성
@@ -49,12 +62,10 @@ export default async function handler(req, res) {
             if (header === '연번') {
               return nextSerial;
             }
-            // 헤더명에 공백 처리
+            // 헤더명에서 공백 제거하여 매칭
             const normalizedHeader = header.replace(/\s/g, '');
-            const dataKeys = Object.keys(data);
             
-            // 정확한 키 매칭 시도
-            for (const key of dataKeys) {
+            for (const key of Object.keys(data)) {
               if (key.replace(/\s/g, '') === normalizedHeader) {
                 return data[key] || '';
               }
@@ -63,11 +74,17 @@ export default async function handler(req, res) {
             return data[header] || '';
           });
           
-          // CS기록 시트에 추가 (3행부터 데이터)
+          // CS기록 시트에 추가
           const targetRow = 3 + (existingData ? existingData.length : 0);
-          const targetRange = `CS기록!A${targetRow}:${columnToLetter(headers.length)}${targetRow}`;
           
-          await updateSheetData(targetRange, [rowData], ordersSpreadsheetId);
+          await sheets.spreadsheets.values.update({
+            spreadsheetId: ordersSpreadsheetId,
+            range: `CS기록!A${targetRow}`,
+            valueInputOption: 'USER_ENTERED',
+            resource: {
+              values: [rowData]
+            }
+          });
           
           return res.status(200).json({
             success: true,
@@ -79,7 +96,7 @@ export default async function handler(req, res) {
           console.error('saveCsRecord 오류:', error);
           return res.status(500).json({
             success: false,
-            error: error.message
+            error: error.message || 'CS 기록 저장 중 오류 발생'
           });
         }
 
