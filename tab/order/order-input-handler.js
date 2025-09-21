@@ -150,7 +150,7 @@ window.OrderInputHandler = {
                 }
 
                 .btn-search-address {
-                    padding: 10px 24px;
+                    padding: 8px 16px;
                     background: #ffffff;
                     color: #2563eb;
                     border: 1px solid #2563eb;
