@@ -4,6 +4,91 @@
     <meta charset="UTF-8">
     <title>주문통합관리</title>
     <link rel="stylesheet" href="order-common.css">
+    <style>
+        /* 탭 버튼 강조 스타일 */
+        .om-tabs {
+            display: flex;
+            gap: 12px;
+            padding: 8px 0;
+        }
+
+        .om-tab-btn {
+            padding: 10px 18px;
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            color: #212529;
+            font-size: 14px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+
+        .om-tab-btn:hover {
+            background: #f8f9fa;
+            border-color: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .om-tab-btn.active {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+        }
+
+        .om-tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40%;
+            height: 3px;
+            background: #2563eb;
+            border-radius: 2px;
+        }
+
+        /* 각 탭별 아이콘 색상 */
+        .om-tab-btn[data-tab="search"] svg {
+            stroke: #2563eb;
+        }
+
+        .om-tab-btn[data-tab="input"] svg {
+            stroke: #10b981;
+        }
+
+        .om-tab-btn[data-tab="excel"] svg {
+            stroke: #f59e0b;
+        }
+
+        .om-tab-btn[data-tab="shipping"] svg {
+            stroke: #8b5cf6;
+        }
+
+        .om-tab-btn[data-tab="cs"] svg {
+            stroke: #ef4444;
+        }
+
+        .om-tab-btn[data-tab="etc"] svg {
+            stroke: #6b7280;
+        }
+
+        /* 활성 상태에서는 아이콘 색상을 흰색으로 */
+        .om-tab-btn.active svg {
+            stroke: #ffffff;
+        }
+
+        /* 호버 시 아이콘 애니메이션 */
+        .om-tab-btn:hover svg {
+            transform: scale(1.1);
+        }
+    </style>
 </head>
 <body>
     <div class="om-container">
