@@ -667,7 +667,7 @@ window.OrderSearchHandler = {
     });
     
     return row;
-}
+},
 
     getFilteredOrders() {
         let filtered = [...this.currentOrders];
