@@ -26,66 +26,49 @@ export default async function handler(req, res) {
     const { action, sheetName, range, values } = req.body || req.query;
 
     switch (action) {
-       case 'saveCsRecord':
+case 'saveCsRecord':
         try {
           const { data } = req.body;
           const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
           
-          // 기존의 getSheetData 함수 사용
-          const csHeaders = await getSheetData('CS기록!2:2', ordersSpreadsheetId);
+          console.log('CS 기록 저장 시작:', { spreadsheetId: ordersSpreadsheetId });
           
-          if (!csHeaders || csHeaders.length === 0 || !csHeaders[0]) {
-            // 헤더가 없으면 기본 헤더 생성
-            const defaultHeaders = [
-              '마켓명', '연번', '접수일', '해결방법', '결제일', '주문번호', 
-              '주문자', '주문자 전화번호', '수령인', '수령인 전화번호', 
-              '주소', '배송메세지', '옵션명', '수량', '재발송상품', 
-              '재발송수량', '부분환불금액'
-            ];
-            await updateSheetData('CS기록!A2:Q2', [defaultHeaders], ordersSpreadsheetId);
-            csHeaders[0] = defaultHeaders;
-          }
+          // appendSheetData 함수를 직접 사용
+          const csData = [
+            data.마켓명 || '',
+            '', // 연번은 구글시트 수식으로 자동 계산
+            data.접수일 || new Date().toLocaleDateString('ko-KR'),
+            data.해결방법 || '',
+            data.결제일 || '',
+            data.주문번호 || '',
+            data.주문자 || '',
+            data['주문자 전화번호'] || '',
+            data.수령인 || '',
+            data['수령인 전화번호'] || '',
+            data.주소 || '',
+            data.배송메세지 || '',
+            data.옵션명 || '',
+            data.수량 || '',
+            data.재발송상품 || '',
+            data.재발송수량 || '',
+            data.부분환불금액 || ''
+          ];
           
-          const headers = csHeaders[0];
+          // 직접 appendSheetData 사용
+          const result = await appendSheetData('CS기록!A:Q', [csData], ordersSpreadsheetId);
           
-          // 현재 데이터 읽어서 다음 연번 계산
-          const existingData = await getSheetData('CS기록!A3:A', ordersSpreadsheetId);
-          const nextSerial = existingData && existingData.length > 0 ? existingData.length + 1 : 1;
-          
-          // 데이터 배열 생성
-          const rowData = headers.map(header => {
-            if (header === '연번') {
-              return nextSerial;
-            }
-            // 헤더명 정규화하여 매칭
-            const normalizedHeader = header.replace(/\s/g, '');
-            for (const key of Object.keys(data)) {
-              const normalizedKey = key.replace(/\s/g, '');
-              if (normalizedKey === normalizedHeader) {
-                return data[key] || '';
-              }
-            }
-            return data[header] || '';
-          });
-          
-          // CS기록 시트에 추가
-          const targetRow = 3 + (existingData && existingData.length > 0 ? existingData.length : 0);
-          const targetRange = `CS기록!A${targetRow}:${columnToLetter(headers.length)}${targetRow}`;
-          
-          await updateSheetData(targetRange, [rowData], ordersSpreadsheetId);
+          console.log('CS 기록 저장 결과:', result);
           
           return res.status(200).json({
             success: true,
-            message: 'CS 기록이 저장되었습니다',
-            serial: nextSerial
+            message: 'CS 기록이 저장되었습니다'
           });
           
         } catch (error) {
-          console.error('saveCsRecord 상세 오류:', error);
+          console.error('saveCsRecord 오류 상세:', error);
           return res.status(500).json({
             success: false,
-            error: error.message || 'CS 기록 저장 중 오류 발생',
-            details: error.stack
+            error: error.message || 'CS 기록 저장 실패'
           });
         }
 
