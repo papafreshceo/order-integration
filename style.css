@@ -85,7 +85,7 @@ body {
     background: var(--bg-muted);
     display: flex;
     flex-direction: column;
-    padding: 0 100px;
+    padding: 0;
 }
 
 /* ========================================
@@ -99,6 +99,8 @@ body {
     text-align: center;
     position: relative;
     flex-shrink: 0;
+    width: 100%;
+    margin: 0;
 }
 
 .header h1 {
@@ -159,7 +161,7 @@ body {
    ======================================== */
 .main-content {
     flex: 1;
-    padding: 40px 0;
+    padding: 40px;
     background: var(--bg-muted);
 }
 
@@ -175,9 +177,11 @@ body {
 .tab-navigation {
     display: flex;
     gap: 8px;
-    margin-bottom: 32px;
+    margin: 0;
+    padding: 0 40px;
     border-bottom: 1px solid var(--border-default);
-    background: transparent;
+    background: var(--bg-primary);
+    width: 100%;
 }
 
 .tab-button {
@@ -195,6 +199,7 @@ body {
 
 .tab-button:hover {
     color: var(--brand-primary);
+    background: var(--bg-hover);
 }
 
 .tab-button.active {
@@ -210,6 +215,7 @@ body {
 .tab-content.active {
     display: block;
 }
+
 
 /* ========================================
    Settings Layout (주문조회 탭 스타일)
