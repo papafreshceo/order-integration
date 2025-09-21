@@ -1612,51 +1612,34 @@ onSolutionChange() {
                 throw new Error('CS 기록 저장 실패');
             }
 
+
             // 2. 재발송/부분재발송인 경우 주문 접수
             if (solution === 'resend' || solution === 'partial-resend') {
-                const today = new Date();
-                const sheetName = today.getFullYear() + 
-                    String(today.getMonth() + 1).padStart(2, '0') + 
-                    String(today.getDate()).padStart(2, '0');
-
-                // CS 마켓 번호 가져오기
-                const csNumberResponse = await fetch('/api/sheets', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'getNextCsNumber',
-                        sheetName: sheetName
-                    })
-                });
-
-                const csNumberResult = await csNumberResponse.json();
-                const csMarketNumber = csNumberResult.csNumber || 'CS001';
-
-                // 주문 데이터 준비
+                // 주문 데이터 준비 (주문번호는 서버에서 자동 생성됨)
                 const orderData = {
                     마켓명: 'CS발송',
-                    마켓: csMarketNumber,
+                    마켓: 'CS',
                     결제일: this.currentCsOrder['결제일'],
-                    주문번호: this.currentCsOrder['주문번호'],
                     주문자: this.currentCsOrder['주문자'],
                     '주문자 전화번호': this.currentCsOrder['주문자전화번호'] || '',
+                    '주문자전화번호': this.currentCsOrder['주문자전화번호'] || '',
                     수령인: document.getElementById('csResendReceiver').value,
                     '수령인 전화번호': document.getElementById('csResendPhone').value,
+                    '수령인전화번호': document.getElementById('csResendPhone').value,
                     주소: document.getElementById('csResendAddress').value,
                     배송메세지: document.getElementById('csResendNote').value,
+                    배송메시지: document.getElementById('csResendNote').value,
                     옵션명: document.getElementById('csResendOption').value,
                     수량: document.getElementById('csResendQty').value,
-                    '특이/요청사항': document.getElementById('csResendNote').value,
-                    발송요청일: today.toLocaleDateString('ko-KR')
+                    '특이/요청사항': document.getElementById('csResendNote').value
                 };
 
-                // 오늘 날짜 시트에 주문 추가
+                // CS 주문 추가 (시트명은 서버에서 자동으로 오늘 날짜로 설정)
                 const orderResponse = await fetch('/api/sheets', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         action: 'addCsOrder',
-                        sheetName: sheetName,
                         data: orderData
                     })
                 });

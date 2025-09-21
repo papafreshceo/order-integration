@@ -125,13 +125,17 @@ case 'saveCsRecord':
 
 case 'addCsOrder':
         try {
-          const { sheetName, data } = req.body;
-          const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
-          const mainSpreadsheetId = process.env.SPREADSHEET_ID;
+          const { data } = req.body;
           
-          console.log('addCsOrder 시작:', { sheetName, ordersSpreadsheetId });
+          // CS 접수일자로 시트명 생성 (오늘 날짜)
+          const today = new Date();
+          const sheetName = today.getFullYear() + 
+            String(today.getMonth() + 1).padStart(2, '0') + 
+            String(today.getDate()).padStart(2, '0');
           
-          // 날짜 시트 존재 확인
+          console.log('CS 주문 접수 - 시트명:', sheetName);
+          
+          // 1. 날짜 시트 존재 확인
           let sheetExists = false;
           let headers = [];
           
@@ -140,21 +144,17 @@ case 'addCsOrder':
             if (existingData && existingData.length > 0) {
               sheetExists = true;
               headers = existingData[0];
-              console.log('기존 시트 헤더:', headers);
             }
           } catch (err) {
             sheetExists = false;
-            console.log('시트가 존재하지 않음');
           }
           
-          // 시트가 없으면 생성
+          // 2. 시트가 없으면 생성
           if (!sheetExists) {
+            console.log('새 시트 생성 필요');
+            
             // 매핑 시트에서 표준필드 가져오기
             const mappingData = await getSheetData('매핑!A:B');
-            
-            if (!mappingData || mappingData.length < 2) {
-              throw new Error('매핑 시트에서 표준필드를 찾을 수 없습니다');
-            }
             
             // 표준필드 찾기 (B열)
             const standardFields = [];
@@ -181,31 +181,56 @@ case 'addCsOrder':
               headers = standardFields;
             }
             
-            console.log('새 시트 생성 필요, 헤더:', headers);
-            
             // 새 시트 생성
             await createOrderSheet(sheetName);
             
-            // 헤더 설정 - saveOrderData 사용
+            // 표준필드 헤더 설정
             await saveOrderData(`${sheetName}!A1`, [headers]);
+            console.log('시트 생성 및 헤더 설정 완료');
           }
           
-          // 연번 계산
+          // 3. CS 번호 생성 (접수날짜 + CS001, CS002...)
+          const allRows = await getOrderData(`${sheetName}!A:E`);
+          let csNumber = 1;
+          
+          if (allRows && allRows.length > 1) {
+            // 주문번호 컬럼 찾기
+            const orderNumIdx = headers.indexOf('주문번호');
+            
+            // 기존 CS 주문 확인
+            for (let i = 1; i < allRows.length; i++) {
+              const orderNum = allRows[i][orderNumIdx] || '';
+              if (orderNum.startsWith(sheetName + 'CS')) {
+                const num = parseInt(orderNum.replace(sheetName + 'CS', ''));
+                if (!isNaN(num) && num >= csNumber) {
+                  csNumber = num + 1;
+                }
+              }
+            }
+          }
+          
+          const csOrderNumber = `${sheetName}CS${String(csNumber).padStart(3, '0')}`;
+          console.log('생성된 CS 주문번호:', csOrderNumber);
+          
+          // 4. 연번 계산
           const existingRows = await getOrderData(`${sheetName}!A:A`);
           const nextSerial = existingRows ? existingRows.length : 1;
           
-          console.log('다음 연번:', nextSerial);
-          
-          // 데이터 행 생성
+          // 5. 데이터 행 생성
           const rowData = headers.map(header => {
             if (header === '연번') {
               return nextSerial;
             }
+            if (header === '주문번호') {
+              return csOrderNumber;  // CS 주문번호 사용
+            }
+            if (header === '발송요청일') {
+              return today.toLocaleDateString('ko-KR');
+            }
             
-            // 헤더명 정규화
+            // 헤더명 정규화하여 데이터 매칭
             const normalizedHeader = header.replace(/\s/g, '').replace(/[_-]/g, '');
             
-            // 데이터에서 매칭되는 키 찾기
             for (const key of Object.keys(data)) {
               const normalizedKey = key.replace(/\s/g, '').replace(/[_-]/g, '');
               if (normalizedKey === normalizedHeader) {
@@ -216,13 +241,11 @@ case 'addCsOrder':
             return data[header] || '';
           });
           
-          console.log('저장할 데이터:', rowData);
+          console.log('저장할 CS 주문 데이터:', rowData);
           
-          // 데이터 추가
+          // 6. 데이터 저장
           const targetRow = existingRows ? existingRows.length + 1 : 2;
-          const targetRange = `${sheetName}!A${targetRow}`;
-          
-          await saveOrderData(targetRange, [rowData]);
+          await saveOrderData(`${sheetName}!A${targetRow}`, [rowData]);
           
           console.log('CS 주문 저장 완료');
           
@@ -230,15 +253,15 @@ case 'addCsOrder':
             success: true,
             message: 'CS 재발송 주문이 접수되었습니다',
             sheetName: sheetName,
+            csOrderNumber: csOrderNumber,
             row: targetRow
           });
           
         } catch (error) {
-          console.error('addCsOrder 오류 상세:', error.message, error.stack);
+          console.error('addCsOrder 오류:', error.message, error.stack);
           return res.status(500).json({
             success: false,
-            error: error.message,
-            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            error: error.message || 'CS 주문 접수 실패'
           });
         }
 
