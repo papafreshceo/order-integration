@@ -463,16 +463,16 @@ async function processExcelData(jsonData, file, isSmartStore) {
         // 전화주문, CS재발송은 2행이 헤더
         headerRowIndex = 1;
         console.log(`${file.name}: 전화주문/CS재발송 - 2행 헤더 사용`);
-    } else if (isToss && rawRows.length > 1) {
-    // 토스는 항상 2행이 헤더
-    headerRowIndex = 1;
-    console.log(`${file.name}: 토스 마켓 - 2행 헤더 사용`);
+    } else if (fileName.includes('주문내역') && fileName.includes('상품준비중')) {
+    // 토스 파일 패턴 확인 - "주문내역-상품준비중-" 형식
+    headerRowIndex = 0; // 토스는 실제로 1행이 헤더
+    console.log(`${file.name}: 토스 파일 - 1행 헤더 사용`);
     
-    // 토스 헤더 내용 확인
-    const tossHeaders = rawRows[1].map(h => String(h || '').trim());
-    console.log('토스 헤더:', tossHeaders);
-    if (rawRows[2]) {
-        console.log('토스 첫 데이터 행:', rawRows[2]);
+    // 토스 헤더 확인
+    const tossHeaders = rawRows[0].map(h => String(h || '').trim());
+    console.log('토스 실제 헤더:', tossHeaders);
+    if (rawRows[1]) {
+        console.log('토스 첫 데이터 행:', rawRows[1]);
     }
     } else if (isSmartStore && rawRows.length > 2) {
         // 스마트스토어는 내용 확인 후 결정
@@ -530,13 +530,15 @@ async function detectMarketAndAdd(file, headers, dataRows, rawRows, provisionalH
     
     // 마켓별 헤더행 조정
 try {
-    // 토스는 항상 2행이 헤더
+    // 토스는 항상 2행이 헤더 - provisionalHeaderRowIndex 사용
     if (marketName === '토스') {
-        const idx = 1; // 0-based index이므로 1이 2행
-        if (rawRows[idx]) {
-            finalHeaders = (rawRows[idx] || []).map(h => String(h || '').trim());
-            finalDataRows = rawRows.slice(idx + 1);
-            console.log(`토스 헤더 2행 적용: ${finalHeaders.slice(0, 5).join(', ')}...`);
+        // processExcelData에서 이미 headerRowIndex = 1로 설정됨
+        // 하지만 detectMarketAndAdd에서는 다시 원본 rawRows 사용
+        const correctIdx = 0; // 토스 파일의 실제 헤더는 첫 번째 행
+        if (rawRows[correctIdx]) {
+            finalHeaders = (rawRows[correctIdx] || []).map(h => String(h || '').trim());
+            finalDataRows = rawRows.slice(correctIdx + 1);
+            console.log(`토스 헤더 수정: ${finalHeaders.slice(0, 5).join(', ')}...`);
         }
     } else if (marketName === '11번가') {
         const idx = 1;
