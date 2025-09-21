@@ -161,6 +161,8 @@ window.OrderInputHandler = {
                     white-space: nowrap;
                     transition: all 0.2s;
                     height: 32px;
+                    display: flex;
+                    align-items: center;  /* 텍스트 수직 중앙 정렬 추가 */
                 }
 
                 .btn-search-address:hover {
