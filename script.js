@@ -218,6 +218,11 @@ function switchTab(tabName) {
         loadDashboard();
     }
     
+    // 검색 탭일 때 모듈 로드
+    if (tabName === 'search') {
+        loadSearchTab();
+    }
+    
     // 발송관리 탭일 때 iframe 새로고침
     if (tabName === 'shipping') {
         const shippingIframe = document.querySelector('#shipping-tab iframe');
@@ -3023,3 +3028,45 @@ document.addEventListener('keydown', function(e) {
         closeBatchEditModal();
     }
 });
+
+
+// 검색 탭 로드 함수
+async function loadSearchTab() {
+    const container = document.getElementById('search-container');
+    if (!container) return;
+    
+    try {
+        const response = await fetch('tab/search/search-module.html');
+        const html = await response.text();
+        
+        // HTML 파싱하여 body 내용만 추출
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // 스타일 추출
+        const styles = doc.querySelectorAll('style');
+        styles.forEach(style => {
+            document.head.appendChild(style.cloneNode(true));
+        });
+        
+        // body 내용 추출
+        const bodyContent = doc.querySelector('.order-search-container');
+        if (bodyContent) {
+            container.innerHTML = bodyContent.outerHTML;
+        }
+        
+        // 스크립트 재실행 (필요한 경우)
+        const scripts = doc.querySelectorAll('script');
+        scripts.forEach(script => {
+            if (script.src) {
+                // 외부 스크립트는 이미 로드됨
+            } else {
+                // 인라인 스크립트 실행
+                eval(script.textContent);
+            }
+        });
+        
+    } catch (error) {
+        console.error('검색 탭 로드 오류:', error);
+    }
+}
