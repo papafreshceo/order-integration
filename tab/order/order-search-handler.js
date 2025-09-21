@@ -336,7 +336,7 @@ window.OrderSearchHandler = {
                     transition: all 0.2s;
                 }
 
-                /* CS 모달 스타일 */
+/* CS 모달 스타일 */
                 .cs-modal-overlay {
                     display: none;
                     position: fixed;
@@ -354,26 +354,27 @@ window.OrderSearchHandler = {
                     display: flex;
                 }
 
-                 .cs-modal {
+                .cs-modal {
                     background: #ffffff;
                     border-radius: 16px;
                     width: 90%;
-                    max-width: 1120px;
+                    max-width: 900px;
                     max-height: 90vh;
                     overflow-y: auto;
                     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
                 }
 
                 .cs-modal-header {
-                    padding: 24px;
+                    padding: 20px 24px;
                     border-bottom: 1px solid #dee2e6;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
+                    background: #f8f9fa;
                 }
 
                 .cs-modal-title {
-                    font-size: 20px;
+                    font-size: 18px;
                     font-weight: 500;
                     color: #042848;
                 }
@@ -392,53 +393,54 @@ window.OrderSearchHandler = {
                 }
 
                 .cs-modal-close:hover {
-                    background: #f8f9fa;
+                    background: #ffffff;
                 }
 
                 .cs-modal-body {
-                    padding: 24px;
+                    padding: 20px;
                 }
 
                 .cs-order-info {
                     background: #f8f9fa;
                     border-radius: 8px;
-                    padding: 20px;
-                    margin-bottom: 24px;
+                    padding: 16px;
+                    margin-bottom: 20px;
                 }
 
                 .cs-info-grid {
                     display: grid;
                     grid-template-columns: repeat(3, 1fr);
-                    gap: 16px;
-                    margin-top: 16px;
+                    gap: 12px;
+                    margin-top: 12px;
                 }
 
                 .cs-info-item {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 4px;
-                }
-
-                .cs-info-label {
-                    font-size: 12px;
+                    font-size: 13px;
                     color: #6c757d;
                     font-weight: 300;
+                    line-height: 1.4;
                 }
 
                 .cs-info-value {
-                    font-size: 14px;
                     color: #042848;
                     font-weight: 400;
                 }
 
+                .cs-form-row {
+                    display: grid;
+                    grid-template-columns: 2fr 1fr;
+                    gap: 16px;
+                    margin-bottom: 16px;
+                }
+
                 .cs-form-group {
-                    margin-bottom: 20px;
+                    margin-bottom: 16px;
                 }
 
                 .cs-form-label {
                     display: block;
-                    margin-bottom: 8px;
-                    font-size: 14px;
+                    margin-bottom: 6px;
+                    font-size: 13px;
                     font-weight: 400;
                     color: #042848;
                 }
@@ -449,42 +451,94 @@ window.OrderSearchHandler = {
                     padding: 10px;
                     border: 1px solid #dee2e6;
                     border-radius: 6px;
-                    font-size: 14px;
+                    font-size: 13px;
                     font-weight: 300;
                     resize: vertical;
                 }
 
                 .cs-select {
                     width: 100%;
-                    padding: 10px;
+                    padding: 8px 10px;
                     border: 1px solid #dee2e6;
                     border-radius: 6px;
-                    font-size: 14px;
+                    font-size: 13px;
                     font-weight: 300;
                     background: #ffffff;
                 }
 
-                .cs-refund-input {
-                    width: 100px;
-                    padding: 8px;
+                .cs-input {
+                    width: 100%;
+                    padding: 8px 10px;
                     border: 1px solid #dee2e6;
                     border-radius: 6px;
-                    font-size: 14px;
-                    margin-left: 12px;
+                    font-size: 13px;
+                    font-weight: 300;
+                }
+
+                .cs-input-small {
+                    width: 80px;
+                    padding: 8px 10px;
+                    border: 1px solid #dee2e6;
+                    border-radius: 6px;
+                    font-size: 13px;
+                }
+
+                .cs-refund-section {
+                    display: none;
+                    background: #e7f3ff;
+                    padding: 12px;
+                    border-radius: 6px;
+                    margin-top: 12px;
+                }
+
+                .cs-refund-section.show {
+                    display: block;
+                }
+
+                .cs-refund-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr;
+                    gap: 12px;
+                    align-items: end;
+                }
+
+                .cs-refund-notice {
+                    grid-column: 1 / -1;
+                    font-size: 11px;
+                    color: #6c757d;
+                    font-weight: 300;
+                    background: #ffffff;
+                    padding: 8px;
+                    border-radius: 4px;
+                    margin-bottom: 8px;
+                }
+
+                .cs-refund-result {
+                    padding: 8px;
+                    background: #ffffff;
+                    border-radius: 4px;
+                    font-size: 13px;
+                    font-weight: 400;
+                    color: #042848;
+                    text-align: center;
+                    min-height: 36px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                 }
 
                 .cs-resend-options {
                     display: none;
-                    background: #f8f9fa;
-                    padding: 16px;
-                    border-radius: 8px;
+                    background: #f0f8ff;
+                    padding: 12px;
+                    border-radius: 6px;
                     margin-top: 12px;
                 }
                 
                 .cs-resend-grid {
                     display: grid;
-                    grid-template-columns: 2fr 1fr 3fr;
-                    gap: 16px;
+                    grid-template-columns: 3fr 80px 3fr;
+                    gap: 12px;
                     align-items: start;
                 }
 
@@ -493,17 +547,18 @@ window.OrderSearchHandler = {
                 }
 
                 .cs-modal-footer {
-                    padding: 20px 24px;
+                    padding: 16px 20px;
                     border-top: 1px solid #dee2e6;
                     display: flex;
                     justify-content: flex-end;
-                    gap: 12px;
+                    gap: 10px;
+                    background: #f8f9fa;
                 }
 
                 .cs-btn {
-                    padding: 10px 24px;
+                    padding: 8px 20px;
                     border-radius: 6px;
-                    font-size: 14px;
+                    font-size: 13px;
                     font-weight: 400;
                     cursor: pointer;
                     transition: all 0.2s;
@@ -678,6 +733,7 @@ window.OrderSearchHandler = {
             </div>
 
             <!-- CS 모달 -->
+<!-- CS 모달 -->
             <div class="cs-modal-overlay" id="csModalOverlay">
                 <div class="cs-modal">
                     <div class="cs-modal-header">
@@ -694,41 +750,57 @@ window.OrderSearchHandler = {
                             <!-- 주문 정보가 여기 표시됩니다 -->
                         </div>
                         
-                        <div class="cs-form-group">
-                            <label class="cs-form-label">CS 내용</label>
-                            <textarea class="cs-textarea" id="csCustomerRequest" placeholder="고객 요청사항을 입력하세요"></textarea>
-                        </div>
-                        
-                        <div class="cs-form-group">
-                            <label class="cs-form-label">해결방안</label>
-                            <select class="cs-select" id="csSolution" onchange="OrderSearchHandler.onSolutionChange()">
-                                <option value="">선택하세요</option>
-                                <option value="site-refund">사이트환불</option>
-                                <option value="partial-refund">부분환불</option>
-                                <option value="resend">재발송</option>
-                                <option value="partial-resend">부분재발송</option>
-                            </select>
-                            
-                            <div id="csRefundRate" style="display:none; margin-top:12px;">
-                                <label class="cs-form-label">환불 비율</label>
-                                <input type="number" class="cs-refund-input" id="csRefundPercent" min="0" max="100" placeholder="0">
-                                <span style="margin-left:4px; color:#6c757d;">%</span>
+                        <div class="cs-form-row">
+                            <div class="cs-form-group">
+                                <label class="cs-form-label">CS 내용</label>
+                                <textarea class="cs-textarea" id="csCustomerRequest" placeholder="CS 내용을 입력하세요"></textarea>
                             </div>
                             
-                            <div class="cs-resend-options" id="csResendOptions">
-                                <div class="cs-resend-grid">
-                                    <div class="cs-form-group">
-                                        <label class="cs-form-label">재발송 상품</label>
-                                        <input type="text" class="filter-input" id="csResendOption" placeholder="옵션명">
-                                    </div>
-                                    <div class="cs-form-group">
-                                        <label class="cs-form-label">수량</label>
-                                        <input type="number" class="filter-input" id="csResendQty" min="1" placeholder="수량">
-                                    </div>
-                                    <div class="cs-form-group">
-                                        <label class="cs-form-label">특이/요청사항</label>
-                                        <input type="text" class="filter-input" id="csResendNote" placeholder="재발송 관련 특이사항">
-                                    </div>
+                            <div class="cs-form-group">
+                                <label class="cs-form-label">해결방안</label>
+                                <select class="cs-select" id="csSolution" onchange="OrderSearchHandler.onSolutionChange()">
+                                    <option value="">선택하세요</option>
+                                    <option value="site-refund">사이트환불</option>
+                                    <option value="partial-refund">부분환불</option>
+                                    <option value="resend">재발송</option>
+                                    <option value="partial-resend">부분재발송</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="cs-refund-section" id="csRefundSection">
+                            <div class="cs-refund-notice">
+                                ※ 결제금액은 결제내역을 확인할 수 있는 캡쳐사진으로 확인해야 합니다
+                            </div>
+                            <div class="cs-refund-grid">
+                                <div class="cs-form-group" style="margin-bottom: 0;">
+                                    <label class="cs-form-label">결제금액</label>
+                                    <input type="number" class="cs-input" id="csPaymentAmount" placeholder="0" onchange="OrderSearchHandler.calculateRefund()">
+                                </div>
+                                <div class="cs-form-group" style="margin-bottom: 0;">
+                                    <label class="cs-form-label">환불 비율(%)</label>
+                                    <input type="number" class="cs-input" id="csRefundPercent" min="0" max="100" placeholder="0" onchange="OrderSearchHandler.calculateRefund()">
+                                </div>
+                                <div class="cs-form-group" style="margin-bottom: 0;">
+                                    <label class="cs-form-label">환불금액</label>
+                                    <div class="cs-refund-result" id="csRefundAmount">0원</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="cs-resend-options" id="csResendOptions">
+                            <div class="cs-resend-grid">
+                                <div class="cs-form-group" style="margin-bottom: 0;">
+                                    <label class="cs-form-label">재발송 상품</label>
+                                    <input type="text" class="cs-input" id="csResendOption" placeholder="옵션명">
+                                </div>
+                                <div class="cs-form-group" style="margin-bottom: 0;">
+                                    <label class="cs-form-label">수량</label>
+                                    <input type="number" class="cs-input-small" id="csResendQty" min="1" value="1" placeholder="1">
+                                </div>
+                                <div class="cs-form-group" style="margin-bottom: 0;">
+                                    <label class="cs-form-label">특이/요청사항</label>
+                                    <input type="text" class="cs-input" id="csResendNote" value="CS재발송, 싱싱하고 맛있는 것">
                                 </div>
                             </div>
                         </div>
@@ -1400,25 +1472,39 @@ displayCsOrderInfo(order) {
         document.getElementById('csResendNote').value = '';
         
         // 추가 옵션 숨기기
-        document.getElementById('csRefundRate').style.display = 'none';
+        document.getElementById('csRefundSection').classList.remove('show');
         document.getElementById('csResendOptions').classList.remove('show');
+        document.getElementById('csPaymentAmount').value = '';
+        document.getElementById('csRefundAmount').textContent = '0원';
     },
 
-    onSolutionChange() {
+onSolutionChange() {
         const solution = document.getElementById('csSolution').value;
-        const refundDiv = document.getElementById('csRefundRate');
+        const refundSection = document.getElementById('csRefundSection');
         const resendDiv = document.getElementById('csResendOptions');
         
         // 모든 추가 옵션 숨기기
-        refundDiv.style.display = 'none';
+        refundSection.classList.remove('show');
         resendDiv.classList.remove('show');
         
         // 선택에 따라 표시
         if (solution === 'partial-refund') {
-            refundDiv.style.display = 'block';
+            refundSection.classList.add('show');
         } else if (solution === 'resend' || solution === 'partial-resend') {
             resendDiv.classList.add('show');
+            // 기본값 설정
+            if (this.currentCsOrder) {
+                document.getElementById('csResendOption').value = this.currentCsOrder['옵션명'] || '';
+            }
         }
+    },
+
+    calculateRefund() {
+        const paymentAmount = parseFloat(document.getElementById('csPaymentAmount').value) || 0;
+        const refundPercent = parseFloat(document.getElementById('csRefundPercent').value) || 0;
+        const refundAmount = Math.round(paymentAmount * (refundPercent / 100));
+        
+        document.getElementById('csRefundAmount').textContent = this.formatNumber(refundAmount) + '원';
     },
 
     async submitCs() {
