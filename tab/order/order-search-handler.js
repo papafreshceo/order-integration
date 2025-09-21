@@ -6,7 +6,6 @@ window.OrderSearchHandler = {
     async init() {
         this.render();
         this.initializeFilters();
-        this.setQuickFilter('today', document.querySelector('.quick-filter-btn'));
         await this.loadMarketList();
         await this.loadOrders();
     },
@@ -15,11 +14,10 @@ window.OrderSearchHandler = {
         const container = document.getElementById('om-panel-search');
         container.innerHTML = `
             <style>
-                /* 검색 패널 스타일 */
+                /* 검색 패널 전체 스타일 */
                 .search-container {
-                    padding: 20px;
-                    background: #fafafa;
-                    min-height: calc(100vh - 200px);
+                    padding: 0;
+                    background: transparent;
                 }
 
                 /* 패널 헤더 */
@@ -40,11 +38,6 @@ window.OrderSearchHandler = {
                     margin: 0;
                 }
 
-                .panel-actions {
-                    display: flex;
-                    gap: 8px;
-                }
-
                 /* 검색 섹션 */
                 .search-section {
                     background: #ffffff;
@@ -55,7 +48,7 @@ window.OrderSearchHandler = {
                     margin-bottom: 24px;
                 }
 
-                /* 빠른 필터 버튼 */
+                /* 빠른 필터 */
                 .quick-filters {
                     display: flex;
                     gap: 8px;
@@ -78,7 +71,6 @@ window.OrderSearchHandler = {
                 .quick-filter-btn:hover {
                     border-color: #2563eb;
                     color: #2563eb;
-                    background: #f8f9fa;
                 }
 
                 .quick-filter-btn.active {
@@ -141,7 +133,7 @@ window.OrderSearchHandler = {
                     font-weight: 300;
                 }
 
-                /* 검색 버튼 */
+                /* 버튼 그룹 */
                 .search-button-group {
                     display: flex;
                     gap: 12px;
@@ -178,10 +170,8 @@ window.OrderSearchHandler = {
 
                 .btn-search.secondary:hover {
                     background: #f8f9fa;
-                    border-color: #adb5bd;
                 }
 
-                /* 버튼 스타일 */
                 .btn-action {
                     padding: 6px 12px;
                     border: 1px solid #dee2e6;
@@ -199,14 +189,13 @@ window.OrderSearchHandler = {
 
                 .btn-action:hover {
                     background: #f8f9fa;
-                    border-color: #adb5bd;
                 }
 
-                /* 테이블 섹션 (발송관리와 동일) */
+                /* 테이블 섹션 */
                 .table-section {
                     background: #ffffff;
                     border: 1px solid #dee2e6;
-                    border-radius: 16px;
+                    border-radius: 8px;
                     overflow: hidden;
                 }
 
@@ -217,6 +206,12 @@ window.OrderSearchHandler = {
                     justify-content: space-between;
                     align-items: center;
                     background: #f8f9fa;
+                }
+
+                .table-header-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 20px;
                 }
 
                 .table-title {
@@ -232,17 +227,16 @@ window.OrderSearchHandler = {
 
                 .table-wrapper {
                     overflow-x: auto;
-                    height: calc(100vh - 450px);
+                    overflow-y: auto;
+                    height: calc(100vh - 500px);
                     min-height: 400px;
                     max-height: 700px;
-                    overflow-y: auto;
-                    position: relative;
                 }
                 
                 .search-table {
                     width: 100%;
                     border-collapse: collapse;
-                    table-layout: fixed;
+                    min-width: 1200px;
                 }
 
                 .search-table thead {
@@ -260,8 +254,6 @@ window.OrderSearchHandler = {
                     color: #6c757d;
                     border-bottom: 2px solid #dee2e6;
                     white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
                 }
 
                 .search-table td {
@@ -270,41 +262,53 @@ window.OrderSearchHandler = {
                     font-weight: 300;
                     color: #212529;
                     border-bottom: 1px solid #f1f3f5;
+                    text-align: center;
+                    height: 32px;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
-                    height: 32px;
-                    line-height: 20px;
-                    text-align: center;
                 }
 
-                .search-table tbody tr:hover td {
-                    background-color: #b7f7bd !important;
+                .search-table tbody tr:hover {
+                    background: #b7f7bd;
                 }
 
-                .search-table tbody tr.selected-row td {
-                    color: #2563eb !important;
-                    font-size: 14px !important;
-                    background-color: #e7f3ff !important;
+                .search-table tbody tr.selected-row {
+                    background: #e7f3ff;
                 }
 
-                .search-table tbody tr.has-tracking td {
-                    background-color: #f0f3f7 !important;
+                .search-table tbody tr.has-tracking {
+                    background: #f0f3f7;
                 }
 
                 .checkbox-cell {
                     width: 50px;
+                    text-align: center;
                 }
 
                 .checkbox-cell input[type="checkbox"] {
-                    width: 20px;
-                    height: 20px;
+                    width: 18px;
+                    height: 18px;
                     cursor: pointer;
+                }
+
+                /* 결과 정보 */
+                .result-info {
+                    display: flex;
+                    align-items: center;
+                    gap: 20px;
+                    font-size: 13px;
+                    color: #6c757d;
+                }
+
+                .result-count {
+                    color: #2563eb;
+                    font-weight: 500;
                 }
             </style>
 
             <div class="search-container">
-                <!-- 패널 헤더 -->
+                <!-- 검색 패널 -->
                 <div class="panel-header">
                     <h2 class="panel-title">주문조회</h2>
                     <div class="panel-actions">
@@ -318,7 +322,7 @@ window.OrderSearchHandler = {
                     </div>
                 </div>
 
-                <!-- 검색 섹션 -->
+                <!-- 검색 영역 -->
                 <div class="search-section">
                     <!-- 빠른 필터 -->
                     <div class="quick-filters">
@@ -359,7 +363,8 @@ window.OrderSearchHandler = {
 
                         <div class="filter-group">
                             <label class="filter-label">검색어</label>
-                            <input type="text" class="filter-input" id="searchKeywordInput" placeholder="주문번호, 수령인, 송장번호">
+                            <input type="text" class="filter-input" id="searchKeywordInput" 
+                                   placeholder="주문번호, 수령인, 송장번호">
                         </div>
                     </div>
 
@@ -386,13 +391,17 @@ window.OrderSearchHandler = {
                 <!-- 테이블 섹션 -->
                 <div class="table-section">
                     <div class="table-header">
-                        <h3 class="table-title">주문 목록</h3>
+                        <div class="table-header-left">
+                            <h3 class="table-title">주문 목록</h3>
+                            <div class="result-info">
+                                <span>검색결과: <span class="result-count" id="resultCount">0</span>건</span>
+                            </div>
+                        </div>
                         <div class="table-actions">
                             <button class="btn-action" onclick="OrderSearchHandler.refreshData()">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="23 4 23 10 17 10"></polyline>
                                     <polyline points="1 20 1 14 7 14"></polyline>
-                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
                                 </svg>
                                 새로고침
                             </button>
@@ -402,10 +411,33 @@ window.OrderSearchHandler = {
                     <div class="table-wrapper">
                         <table class="search-table" id="searchTable">
                             <thead id="searchTableHead">
-                                <!-- 동적 생성 -->
+                                <tr>
+                                    <th class="checkbox-cell">
+                                        <input type="checkbox" id="selectAllCheckbox" 
+                                               onchange="OrderSearchHandler.toggleSelectAll(this)">
+                                    </th>
+                                    <th>연번</th>
+                                    <th>마켓명</th>
+                                    <th>결제일</th>
+                                    <th>주문번호</th>
+                                    <th>주문자</th>
+                                    <th>수령인</th>
+                                    <th>전화번호</th>
+                                    <th style="width: 300px;">주소</th>
+                                    <th>옵션명</th>
+                                    <th>수량</th>
+                                    <th>금액</th>
+                                    <th>택배사</th>
+                                    <th>송장번호</th>
+                                    <th>상태</th>
+                                </tr>
                             </thead>
                             <tbody id="searchTableBody">
-                                <!-- 동적 생성 -->
+                                <tr>
+                                    <td colspan="15" style="text-align: center; padding: 40px; color: #6c757d;">
+                                        조회 조건을 선택하고 검색 버튼을 클릭하세요.
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -470,8 +502,9 @@ window.OrderSearchHandler = {
     },
 
     resetFilters() {
-        document.getElementById('searchStartDate').value = '';
-        document.getElementById('searchEndDate').value = '';
+        const today = new Date();
+        document.getElementById('searchStartDate').value = this.formatDate(today);
+        document.getElementById('searchEndDate').value = this.formatDate(today);
         document.getElementById('searchMarketFilter').value = '';
         document.getElementById('searchStatusFilter').value = '';
         document.getElementById('searchKeywordInput').value = '';
@@ -479,6 +512,7 @@ window.OrderSearchHandler = {
         document.querySelectorAll('.quick-filter-btn').forEach(btn => {
             btn.classList.remove('active');
         });
+        document.querySelector('.quick-filter-btn').classList.add('active');
     },
 
     async loadMarketList() {
@@ -509,29 +543,25 @@ window.OrderSearchHandler = {
     },
 
     async loadOrders() {
-        // 임시 - 실제 구현시 API 호출
-        console.log('주문 데이터 로드');
+        // 실제 구현시 API 호출
         this.updateTable();
     },
 
     updateTable() {
-        const thead = document.getElementById('searchTableHead');
         const tbody = document.getElementById('searchTableBody');
         
-        // 샘플 헤더 (발송관리와 동일한 구조)
-        const headers = ['연번', '마켓명', '결제일', '주문번호', '주문자', '수령인', '전화번호', '주소', '옵션명', '수량', '금액', '상태'];
-        
-        thead.innerHTML = `
-            <tr>
-                <th class="checkbox-cell">
-                    <input type="checkbox" onchange="OrderSearchHandler.toggleSelectAll(this)">
-                </th>
-                ${headers.map(header => `<th>${header}</th>`).join('')}
-            </tr>
-        `;
-        
         if (this.currentOrders.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="100%" style="text-align: center; padding: 40px; color: #6c757d;">조회된 주문이 없습니다.</td></tr>';
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="15" style="text-align: center; padding: 40px; color: #6c757d;">
+                        조회된 주문이 없습니다.
+                    </td>
+                </tr>
+            `;
+            document.getElementById('resultCount').textContent = '0';
+        } else {
+            // 데이터 렌더링
+            document.getElementById('resultCount').textContent = this.currentOrders.length;
         }
     },
 
