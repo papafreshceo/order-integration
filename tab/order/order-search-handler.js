@@ -807,7 +807,7 @@ window.OrderSearchHandler = {
     <div style="margin-top: 12px;">
         <div class="cs-form-group">
             <label class="cs-form-label">발송요청일</label>
-            <input type="date" class="cs-input" id="csRequestDate" value="${new Date().toISOString().split('T')[0]}">
+            <input type="date" class="cs-input" id="csRequestDate" value="">
         </div>
     </div>
                             
@@ -1634,20 +1634,17 @@ const paymentDateTime = `${year}/${month}/${day} ${hours}:${minutes}`;
 const orderData = {
     마켓명: 'CS발송',
     결제일: paymentDateTime,  // YYYY/MM/DD HH:MM 형식
-                    주문자: this.currentCsOrder['주문자'],
-                    '주문자 전화번호': this.currentCsOrder['주문자전화번호'] || '',
-                    '주문자전화번호': this.currentCsOrder['주문자전화번호'] || '',
-                    수령인: document.getElementById('csResendReceiver').value,
-                    '수령인 전화번호': document.getElementById('csResendPhone').value,
-                    '수령인전화번호': document.getElementById('csResendPhone').value,
-                    주소: document.getElementById('csResendAddress').value,
-                    배송메세지: document.getElementById('csResendNote').value,
-                    배송메시지: document.getElementById('csResendNote').value,
-                    옵션명: document.getElementById('csResendOption').value,
-                    수량: document.getElementById('csResendQty').value,
-                    '특이/요청사항': document.getElementById('csResendNote').value,
-                    '발송요청일': document.getElementById('csRequestDate').value
-                };
+    주문자: this.currentCsOrder['주문자'],
+    '주문자 전화번호': this.currentCsOrder['주문자 전화번호'] || this.currentCsOrder['주문자전화번호'] || '',
+    수령인: document.getElementById('csResendReceiver').value,
+    '수령인 전화번호': document.getElementById('csResendPhone').value,
+    주소: document.getElementById('csResendAddress').value,
+    배송메세지: document.getElementById('csResendNote').value,
+    옵션명: document.getElementById('csResendOption').value,
+    수량: document.getElementById('csResendQty').value,
+    '특이/요청사항': document.getElementById('csResendNote').value,
+    '발송요청일': document.getElementById('csRequestDate').value
+};
 
                 // CS 주문 추가 (시트명은 서버에서 자동으로 오늘 날짜로 설정)
                 const orderResponse = await fetch('/api/sheets', {
