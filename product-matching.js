@@ -258,140 +258,225 @@ function handleCellEdit(td, rowIndex, fieldName, originalValue) {
     }
 }
     
-    // ===========================
-    // 옵션명 검증
-    // ===========================
-    async function verifyOptions() {
-        const button = document.getElementById('verifyOptions');
-        button.disabled = true;
-        button.textContent = '검증 중...';
+ // ===========================
+// 옵션명 검증
+// ===========================
+async function verifyOptions() {
+    const button = document.getElementById('verifyOptions');
+    button.disabled = true;
+    button.textContent = '검증 중...';
+    
+    try {
+        console.log('검증 시작 - processedData 확인:', window.processedData);
         
-         try {
-            console.log('검증 시작 - processedData 확인:', window.processedData);
-            
-            // 제품 데이터 다시 로드
-            const loadResult = await loadProductData();
-            console.log('제품 데이터 로드 결과:', loadResult);
-            
-            if (!processedData || !processedData.data) {
+        // 제품 데이터 다시 로드
+        const loadResult = await loadProductData();
+        console.log('제품 데이터 로드 결과:', loadResult);
+        
+        if (!processedData || !processedData.data) {
             console.error('processedData 상태:', {
                 exists: !!processedData,
                 hasData: processedData ? !!processedData.data : false
             });
             throw new Error('처리된 데이터가 없습니다.');
         }
+        
+        let matchedCount = 0;
+        let unmatchedCount = 0;
+        let modifiedMatchedCount = 0;
+        
+        // 모든 행 재검증
+        processedData.data.forEach((row, index) => {
+            const optionName = row['옵션명'];
+            const cellKey = `${index}-옵션명`;
+            const wasModified = modifiedCells.has(cellKey);
             
-            let matchedCount = 0;
-            let unmatchedCount = 0;
-            let modifiedMatchedCount = 0;
+            if (!optionName) {
+                unmatchedCount++;
+                row['_matchStatus'] = 'unmatched';
+                return;
+            }
             
-            // 모든 행 재검증
-            processedData.data.forEach((row, index) => {
-                const optionName = row['옵션명'];
-                const cellKey = `${index}-옵션명`;
-                const wasModified = modifiedCells.has(cellKey);
-                
-                if (!optionName) {
-                    unmatchedCount++;
-                    row['_matchStatus'] = 'unmatched';
-                    return;
-                }
-                
-                const matchedProduct = matchOption(optionName);
-                
-                if (matchedProduct) {
-                    // 매칭 성공
-                    if (wasModified) {
-                        modifiedMatchedCount++;
-                        row['_matchStatus'] = 'modified-matched';
-                    } else {
-                        matchedCount++;
-                        row['_matchStatus'] = 'matched';
-                    }
-                    
-                    // 필드 업데이트
-                    row['출고처'] = matchedProduct.출고처 || row['출고처'] || '';
-                    row['송장주체'] = matchedProduct.송장주체 || row['송장주체'] || '';
-                    row['벤더사'] = matchedProduct.벤더사 || row['벤더사'] || '';
-                    row['발송지명'] = matchedProduct.발송지명 || row['발송지명'] || '';
-                    row['발송지주소'] = matchedProduct.발송지주소 || row['발송지주소'] || '';
-                    row['발송지연락처'] = matchedProduct.발송지연락처 || row['발송지연락처'] || '';
-                    row['출고비용'] = matchedProduct.출고비용 || 0;
-                    
-                    const sellerPrice = getSellerPrice(optionName);
-                    if (sellerPrice !== null) {
-                        const quantity = parseInt(row['수량']) || 1;
-                        row['셀러공급가'] = sellerPrice * quantity;
-                    }
+            const matchedProduct = matchOption(optionName);
+            
+            if (matchedProduct) {
+                // 매칭 성공
+                if (wasModified) {
+                    modifiedMatchedCount++;
+                    row['_matchStatus'] = 'modified-matched';
                 } else {
-                    unmatchedCount++;
-                    row['_matchStatus'] = 'unmatched';
+                    matchedCount++;
+                    row['_matchStatus'] = 'matched';
                 }
-            });
-            
-            // 테이블 다시 그리기
-            updateTableStyles();
-            
-            // 결과 메시지
-            const message = `옵션명 검증 완료\n` +
-                           `✓ 정상 매칭: ${matchedCount}개\n` +
-                           `✓ 수정 후 매칭: ${modifiedMatchedCount}개\n` +
-                           `✗ 매칭 실패: ${unmatchedCount}개`;
-            
-            showCenterMessage(message.replace(/\n/g, '<br>'), 'success', 4000);
-            
-        } catch (error) {
-            console.error('검증 오류:', error);
-            showCenterMessage('옵션명 검증 중 오류가 발생했습니다.', 'error');
-        } finally {
-            button.disabled = false;
-            button.textContent = '옵션명 검증';
-        }
-    }
-    
-    // ===========================
-    // 테이블 스타일 업데이트
-    // ===========================
-    function updateTableStyles() {
-        const tbody = document.getElementById('resultTableBody');
-        if (!tbody) return;
-        
-        const rows = tbody.querySelectorAll('tr');
-         const headers = processedData.standardFields || [];
-        const optionNameIndex = headers.indexOf('옵션명');
-        
-        if (optionNameIndex === -1) return;
-        
-        rows.forEach((tr, rowIndex) => {
-            const td = tr.children[optionNameIndex];
-            if (!td) return;
-            
-            const row = processedData.data[rowIndex];
-            if (!row) return;
-            
-            // 기존 클래스 제거
-            td.classList.remove('unmatched-cell', 'modified-cell', 'modified-matched-cell');
-            
-            // 상태에 따른 클래스 추가
-            switch(row['_matchStatus']) {
-                case 'unmatched':
-                    td.classList.add('unmatched-cell');
-                    enableCellEditing(td, rowIndex, '옵션명');
-                    break;
-                case 'modified':
-                    td.classList.add('modified-cell');
-                    enableCellEditing(td, rowIndex, '옵션명');
-                    break;
-                case 'modified-matched':
-                    td.classList.add('modified-matched-cell');
-                    break;
-                case 'matched':
-                default:
-                    // 정상 매칭 - 스타일 없음
-                    break;
+                
+                // 필드 업데이트
+                row['출고처'] = matchedProduct.출고처 || row['출고처'] || '';
+                row['송장주체'] = matchedProduct.송장주체 || row['송장주체'] || '';
+                row['벤더사'] = matchedProduct.벤더사 || row['벤더사'] || '';
+                row['발송지명'] = matchedProduct.발송지명 || row['발송지명'] || '';
+                row['발송지주소'] = matchedProduct.발송지주소 || row['발송지주소'] || '';
+                row['발송지연락처'] = matchedProduct.발송지연락처 || row['발송지연락처'] || '';
+                row['출고비용'] = matchedProduct.출고비용 || 0;
+                
+                const sellerPrice = getSellerPrice(optionName);
+                if (sellerPrice !== null) {
+                    const quantity = parseInt(row['수량']) || 1;
+                    row['셀러공급가'] = sellerPrice * quantity;
+                }
+            } else {
+                unmatchedCount++;
+                row['_matchStatus'] = 'unmatched';
             }
         });
+        
+        // 테이블 다시 그리기
+        updateTableStyles();
+        
+        // 결과 메시지 구성
+        const message = `옵션명 검증 완료\n\n` +
+                       `✓ 정상 매칭: ${matchedCount}개\n` +
+                       `✓ 수정 후 매칭: ${modifiedMatchedCount}개\n` +
+                       `✗ 매칭 실패: ${unmatchedCount}개`;
+        
+        // 모달 창 생성 (계속 표시)
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        `;
+        
+        const modalContent = document.createElement('div');
+        modalContent.style.cssText = `
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        `;
+        
+        // 성공/실패에 따른 색상 설정
+        const headerColor = unmatchedCount > 0 ? '#dc3545' : '#10b981';
+        
+        modalContent.innerHTML = `
+            <h3 style="margin-bottom: 20px; font-size: 20px; font-weight: 500; color: ${headerColor};">
+                옵션명 검증 결과
+            </h3>
+            <div style="line-height: 1.8; font-size: 15px; white-space: pre-line;">
+                ${message}
+            </div>
+            ${unmatchedCount > 0 ? `
+                <div style="margin-top: 20px; padding: 15px; background: #fee2e2; border-radius: 8px; border: 1px solid #fecaca;">
+                    <p style="margin: 0; color: #dc3545; font-size: 14px;">
+                        <strong>매칭 실패한 옵션명이 ${unmatchedCount}개 있습니다.</strong><br>
+                        빨간색으로 표시된 셀을 클릭하여 수정하거나,<br>
+                        '옵션명 일괄수정' 버튼을 사용하세요.
+                    </p>
+                </div>
+            ` : ''}
+        `;
+        
+        // 닫기 버튼
+        const closeButton = document.createElement('button');
+        closeButton.textContent = '닫기';
+        closeButton.style.cssText = `
+            margin-top: 20px;
+            padding: 10px 24px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+            font-weight: 400;
+            transition: all 0.2s;
+        `;
+        
+        closeButton.onmouseover = () => {
+            closeButton.style.background = '#1d4ed8';
+        };
+        closeButton.onmouseout = () => {
+            closeButton.style.background = '#2563eb';
+        };
+        
+        closeButton.onclick = () => {
+            document.body.removeChild(modal);
+            document.removeEventListener('keydown', escHandler);
+        };
+        
+        modalContent.appendChild(closeButton);
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+        
+        // ESC 키로 닫기
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                document.body.removeChild(modal);
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+        
+    } catch (error) {
+        console.error('검증 오류:', error);
+        showCenterMessage('옵션명 검증 중 오류가 발생했습니다.', 'error');
+    } finally {
+        button.disabled = false;
+        button.textContent = '옵션명 검증';
     }
+}
+
+// ===========================
+// 테이블 스타일 업데이트
+// ===========================
+function updateTableStyles() {
+    const tbody = document.getElementById('resultTableBody');
+    if (!tbody) return;
+    
+    const rows = tbody.querySelectorAll('tr');
+    const headers = processedData.standardFields || [];
+    const optionNameIndex = headers.indexOf('옵션명');
+    
+    if (optionNameIndex === -1) return;
+    
+    rows.forEach((tr, rowIndex) => {
+        const td = tr.children[optionNameIndex];
+        if (!td) return;
+        
+        const row = processedData.data[rowIndex];
+        if (!row) return;
+        
+        // 기존 클래스 제거
+        td.classList.remove('unmatched-cell', 'modified-cell', 'modified-matched-cell');
+        
+        // 상태에 따른 클래스 추가
+        switch(row['_matchStatus']) {
+            case 'unmatched':
+                td.classList.add('unmatched-cell');
+                enableCellEditing(td, rowIndex, '옵션명');
+                break;
+            case 'modified':
+                td.classList.add('modified-cell');
+                enableCellEditing(td, rowIndex, '옵션명');
+                break;
+            case 'modified-matched':
+                td.classList.add('modified-matched-cell');
+                break;
+            case 'matched':
+            default:
+                // 정상 매칭 - 스타일 없음
+                break;
+        }
+    });
+}
     
     // ===========================
     // 퍼블릭 API

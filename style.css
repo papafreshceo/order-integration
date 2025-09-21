@@ -1554,3 +1554,18 @@ tbody tr:nth-child(even) {
         flex: 1;
     }
 }
+.btn-batch-edit {
+    padding: 10px 20px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 400;
+    transition: all 0.2s;
+}
+
+.btn-batch-edit:hover {
+    background: #5a6268;
+}

@@ -797,10 +797,12 @@
                         <div class="result-section" id="resultSection">
                             <div class="result-header">
     <div style="display: flex; align-items: center; gap: 12px;">
-        <button class="btn-verify" id="verifyOptions" onclick="ProductMatching.verifyOptions()">옵션명 검증</button>
-        <button class="btn-batch-edit" id="batchEditOptions" onclick="openBatchEditModal()" style="background: #f59e0b; color: white;">옵션명 일괄수정</button>
-        <button class="btn-duplicate" id="verifyDuplicate" onclick="verifyDuplicateOrders()">중복발송검증</button>
         <button class="btn-reset" id="resetResults" onclick="resetResultSection()">초기화</button>
+        <div style="width: 80px;"></div>
+        <button class="btn-batch-edit" id="batchEditOptions" onclick="openBatchEditModal()">옵션명 일괄수정</button>
+        <div style="width: 80px;"></div>
+        <button class="btn-verify" id="verifyOptions" onclick="ProductMatching.verifyOptions()">옵션명 검증</button>
+        <button class="btn-duplicate" id="verifyDuplicate" onclick="verifyDuplicateOrders()">중복발송검증</button>
     </div>
                                 <div class="export-buttons">
                                     <button class="export-btn export-excel" id="exportExcel">엑셀 다운로드</button>
