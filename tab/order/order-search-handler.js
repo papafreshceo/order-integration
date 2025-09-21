@@ -502,9 +502,7 @@ window.OrderSearchHandler = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'getMarketData',
-                    useMainSpreadsheet: true,
-                    startDate: startDate,
-                    endDate: endDate
+                    useMainSpreadsheet: false
                 })
             });
             const data = await response.json();
@@ -529,38 +527,34 @@ window.OrderSearchHandler = {
     async loadOrders() {
         this.showLoading();
         try {
-            const startDate = document.getElementById('searchStartDate').value.replace(/-/g, '');
-            const endDate = document.getElementById('searchEndDate').value.replace(/-/g, '');
-            
             const response = await fetch('/api/sheets', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action: 'getOrderData',
-                    startDate: startDate,
-                    endDate: endDate
+                    action: 'getMarketData',
+                    useMainSpreadsheet: true
                 })
             });
 
             const result = await response.json();
             
             if (result.success) {
-            this.currentOrders = result.data || [];
-            this.marketColors = result.colors || {};
-            
-            // 디버깅: 데이터 확인
-            console.log('전체 주문 수:', this.currentOrders.length);
-            if (this.currentOrders.length > 0) {
-                console.log('첫 번째 주문 데이터:', this.currentOrders[0]);
-                console.log('결제일 필드:', this.currentOrders[0]['결제일']);
-                this.tableHeaders = Object.keys(this.currentOrders[0]);
-            }
-            
-            const today = document.getElementById('searchStartDate').value;
-            console.log('오늘 날짜 필터:', today);
-            
-            this.updateTable();
-        } else {
+                this.currentOrders = result.data || [];
+                this.marketColors = result.colors || {};
+                
+                // 디버깅: 데이터 확인
+                console.log('전체 주문 수:', this.currentOrders.length);
+                if (this.currentOrders.length > 0) {
+                    console.log('첫 번째 주문 데이터:', this.currentOrders[0]);
+                    console.log('결제일 필드:', this.currentOrders[0]['결제일']);
+                    this.tableHeaders = Object.keys(this.currentOrders[0]);
+                }
+                
+                const today = document.getElementById('searchStartDate').value;
+                console.log('오늘 날짜 필터:', today);
+                
+                this.updateTable();
+            } else {
                 this.showMessage('데이터를 불러올 수 없습니다.', 'error');
             }
         } catch (error) {
@@ -574,34 +568,34 @@ window.OrderSearchHandler = {
     parseDate(dateStr) {
         if (!dateStr) return null;
         
-// 공백 제거
-    dateStr = String(dateStr).trim();
-    
-    // YYYYMMDD 형식 (20240115)
-    if (dateStr.length === 8 && /^\d{8}$/.test(dateStr)) {
-        const year = dateStr.substring(0, 4);
-        const month = dateStr.substring(4, 6);
-        const day = dateStr.substring(6, 8);
-        return new Date(year, month - 1, day);
-    }
-    
-    // YYYY-MM-DD 형식
-    if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
-        return new Date(dateStr);
-    }
-    
-    // YYYY/MM/DD 형식
-    if (/^\d{4}\/\d{2}\/\d{2}/.test(dateStr)) {
-        return new Date(dateStr.replace(/\//g, '-'));
-    }
-    
-    // MM/DD/YYYY 또는 M/D/YYYY 형식
-    if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(dateStr)) {
-        const parts = dateStr.split('/');
-        return new Date(parts[2], parts[0] - 1, parts[1]);
-    }
-    
-    return null;
+        // 공백 제거
+        dateStr = String(dateStr).trim();
+        
+        // YYYYMMDD 형식 (20240115)
+        if (dateStr.length === 8 && /^\d{8}$/.test(dateStr)) {
+            const year = dateStr.substring(0, 4);
+            const month = dateStr.substring(4, 6);
+            const day = dateStr.substring(6, 8);
+            return new Date(year, month - 1, day);
+        }
+        
+        // YYYY-MM-DD 형식
+        if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+            return new Date(dateStr);
+        }
+        
+        // YYYY/MM/DD 형식
+        if (/^\d{4}\/\d{2}\/\d{2}/.test(dateStr)) {
+            return new Date(dateStr.replace(/\//g, '-'));
+        }
+        
+        // MM/DD/YYYY 또는 M/D/YYYY 형식
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(dateStr)) {
+            const parts = dateStr.split('/');
+            return new Date(parts[2], parts[0] - 1, parts[1]);
+        }
+        
+        return null;
     },
 
     updateTable() {
@@ -626,28 +620,10 @@ window.OrderSearchHandler = {
             this.tableHeaders.forEach(header => {
                 const th = document.createElement('th');
                 th.textContent = header;
-                
-                // 열 너비 설정
-                const columnWidths = {
-                    '연번': '60px',
-                    '마켓명': '120px',
-                    '결제일': '100px',
-                    '주문번호': '150px',
-                    '옵션명': '200px',
-                    '수량': '60px',
-                    '주문자': '100px',
-                    '수령인': '100px',
-                    '전화번호': '120px',
-                    '주소': '300px',
-                    '배송메세지': '200px',
-                    '택배사': '100px',
-                    '송장번호': '150px'
-                };
-                
-                if (columnWidths[header]) {
-                    th.style.width = columnWidths[header];
-                }
-                
+                // 모든 열 너비를 100px로 고정
+                th.style.width = '100px';
+                th.style.minWidth = '100px';
+                th.style.maxWidth = '100px';
                 headerRow.appendChild(th);
             });
         }
@@ -686,30 +662,13 @@ window.OrderSearchHandler = {
         tdCheckbox.innerHTML = `<input type="checkbox" class="order-checkbox" data-index="${serialNumber - 1}">`;
         row.appendChild(tdCheckbox);
         
-        // 열 너비 매핑 (발송관리와 동일)
-        const columnWidths = {
-            '연번': '60px',
-            '마켓명': '120px',
-            '결제일': '100px',
-            '주문번호': '150px',
-            '옵션명': '200px',
-            '수량': '60px',
-            '주문자': '100px',
-            '수령인': '100px',
-            '전화번호': '120px',
-            '주소': '300px',
-            '배송메세지': '200px',
-            '택배사': '100px',
-            '송장번호': '150px'
-        };
-        
         this.tableHeaders.forEach(header => {
             const td = document.createElement('td');
             
-            // 열 너비 설정
-            if (columnWidths[header]) {
-                td.style.width = columnWidths[header];
-            }
+            // 모든 열 너비를 100px로 고정
+            td.style.width = '100px';
+            td.style.minWidth = '100px';
+            td.style.maxWidth = '100px';
             
             if (header === '연번') {
                 td.textContent = serialNumber;
@@ -748,8 +707,44 @@ window.OrderSearchHandler = {
         return row;
     },
 
-getFilteredOrders() {
+    getFilteredOrders() {
         let filtered = [...this.currentOrders];
+        
+        // 날짜 필터링
+        const startDate = document.getElementById('searchStartDate')?.value;
+        const endDate = document.getElementById('searchEndDate')?.value;
+        
+        if (startDate && endDate) {
+            const startNum = parseInt(startDate.replace(/-/g, ''));
+            const endNum = parseInt(endDate.replace(/-/g, ''));
+            
+            filtered = filtered.filter(order => {
+                // 모든 날짜 관련 필드 확인
+                const dateField = order['결제일'] || order['주문일'] || order['날짜'] || '';
+                
+                // 날짜 형식 변환
+                let dateNum = 0;
+                
+                // YYYY/MM/DD HH:MM:SS 형식
+                if (dateField.includes('/')) {
+                    const datePart = dateField.split(' ')[0];
+                    const parts = datePart.split('/');
+                    if (parts.length === 3) {
+                        dateNum = parseInt(parts[0] + parts[1].padStart(2, '0') + parts[2].padStart(2, '0'));
+                    }
+                }
+                // YYYY-MM-DD 형식
+                else if (dateField.includes('-')) {
+                    dateNum = parseInt(dateField.substring(0, 10).replace(/-/g, ''));
+                }
+                // YYYYMMDD 형식
+                else if (/^\d{8}$/.test(dateField)) {
+                    dateNum = parseInt(dateField);
+                }
+                
+                return dateNum >= startNum && dateNum <= endNum;
+            });
+        }
         
         // 마켓 필터
         const marketFilter = document.getElementById('searchMarketFilter')?.value;
