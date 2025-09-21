@@ -20,22 +20,21 @@
            전체 컨테이너
            ======================================== */
         .order-search-container {
-            padding: 0;
             background: #f8f9fa;
-            /* min-height 제거 - 내부 스크롤 방지 */
         }
-
 
         /* ========================================
            섹션 1: 상단 헤더
            ======================================== */
         .module-header {
             background: #ffffff;
-            padding: 32px 40px;
+            padding: 32px 0;
             border-bottom: 1px solid #dee2e6;
         }
 
         .module-header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
             padding: 0 40px;
             display: flex;
             align-items: center;
@@ -67,12 +66,14 @@
            ======================================== */
         .inner-tabs-section {
             background: #ffffff;
-            padding: 16px 40px;
+            padding: 16px 0;
             border-bottom: 1px solid #dee2e6;
             margin-bottom: 24px;
         }
 
         .inner-tabs-inner {
+            max-width: 1400px;
+            margin: 0 auto;
             padding: 0 40px;
             display: flex;
             gap: 16px;
@@ -106,8 +107,9 @@
            섹션 3: 콘텐츠 영역
            ======================================== */
         .tab-panels {
-            padding: 40px;
-            background: #f8f9fa;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 40px 40px;
         }
 
         .tab-panel {
@@ -430,15 +432,14 @@
 
         /* 반응형 */
         @media (max-width: 768px) {
-            .section-wrapper,
-            .module-header-content,
-            .inner-tabs,
+            .module-header-inner,
+            .inner-tabs-inner,
             .tab-panels {
                 padding-left: 20px;
                 padding-right: 20px;
             }
 
-            .inner-tabs {
+            .inner-tabs-inner {
                 overflow-x: auto;
                 gap: 12px;
             }
@@ -471,7 +472,7 @@
         </div>
 
         <!-- 섹션 2: 내부 탭 -->
-         <div class="inner-tabs-section">
+        <div class="inner-tabs-section">
             <div class="inner-tabs-inner">
                 <button class="inner-tab active" data-tab="order-search">주문조회</button>
                 <button class="inner-tab" data-tab="order-input">주문입력</button>
