@@ -218,7 +218,7 @@ function switchTab(tabName) {
         loadDashboard();
     }
     
-    // 검색 탭일 때 모듈 로드
+    // 검색 탭일 때 search-module 로드
     if (tabName === 'search') {
         loadSearchTab();
     }
@@ -3030,7 +3030,7 @@ document.addEventListener('keydown', function(e) {
 });
 
 
-// 검색 탭 로드 함수
+// 검색 탭 로드 함수 추가
 async function loadSearchTab() {
     const container = document.getElementById('search-container');
     if (!container) return;
@@ -3038,17 +3038,13 @@ async function loadSearchTab() {
     try {
         const response = await fetch('tab/search/search-module.html');
         const html = await response.text();
-        
-        // 직접 HTML 삽입
         container.innerHTML = html;
         
-        // search-module의 스크립트 재실행
-        if (typeof initSearchModule === 'function') {
-            initSearchModule();
+        // 스크립트 재실행이 필요한 경우
+        if (typeof initializeSearchModule === 'function') {
+            initializeSearchModule();
         }
-        
     } catch (error) {
         console.error('검색 탭 로드 오류:', error);
-        container.innerHTML = '<div style="padding: 20px;">검색 모듈 로드 실패</div>';
     }
 }
