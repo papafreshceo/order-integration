@@ -862,9 +862,9 @@ searchProduct() {
        const orderData = {
     마켓명: document.getElementById('inputOrderType').value,
     옵션명: document.getElementById('inputOptionName').value,
-    단가: parseFloat(document.getElementById('inputUnitPrice').value),
+    단가: parseFloat(document.getElementById('inputUnitPrice').value.replace(/,/g, '')) || 0,
     수량: parseInt(document.getElementById('inputQuantity').value) || 1,
-    택배비: parseFloat(document.getElementById('inputShipping').value) || 0,
+    택배비: parseFloat(document.getElementById('inputShipping').value.replace(/,/g, '')) || 0,
     주문자: document.getElementById('inputOrderer').value || document.getElementById('inputReceiver').value,
     '주문자 전화번호': document.getElementById('inputOrdererPhone').value || document.getElementById('inputReceiverPhone').value,
     수령인: document.getElementById('inputReceiver').value,
