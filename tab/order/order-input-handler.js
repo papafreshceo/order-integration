@@ -435,6 +435,12 @@ window.OrderInputHandler = {
         <input type="number" class="form-input" id="inputShipping" value="0" style="text-align: right;">
     </div>
 
+    <div class="form-group" style="width: 120px;">
+    <label class="form-label">판매가</label>
+    <input type="text" class="form-input" id="inputTotalPrice" readonly style="text-align: right; background: #f8f9fa;">
+</div>
+
+
     <div class="form-group" style="width: 140px;">
         <label class="form-label">발송요청일</label>
         <input type="date" class="form-input" id="inputRequestDate">
@@ -750,17 +756,19 @@ searchProduct() {
         searchInput.value = '';
     }
     
-// 제품 데이터가 있으면 C무료판매가를 단가로 설정
-if (this.productData[name]) {
-    const product = this.productData[name];
-    
-    // C무료판매가만 사용, 없으면 0
-    const price = product['C무료판매가'] || 0;
-    const priceInput = document.getElementById('inputUnitPrice');
-    if (priceInput) {
-        priceInput.value = price;
-    }
-}
+    // 제품 데이터가 있으면 C무료판매가를 단가로 설정
+    if (this.productData[name]) {
+        const product = this.productData[name];
+        
+        // C무료판매가만 사용, 없으면 0
+        const price = product['C무료판매가'] || 0;
+        const priceInput = document.getElementById('inputUnitPrice');
+        if (priceInput) {
+            priceInput.value = price;
+        }
+        
+        // 판매가 계산
+        this.calculateTotal();
     }
 },
     
@@ -785,10 +793,11 @@ if (this.productData[name]) {
     },
     
     changeQuantity(delta) {
-        const input = document.getElementById('inputQuantity');
-        const current = parseInt(input.value) || 1;
-        input.value = Math.max(1, current + delta);
-    },
+    const input = document.getElementById('inputQuantity');
+    const current = parseInt(input.value) || 1;
+    input.value = Math.max(1, current + delta);
+    this.calculateTotal();  // 수량 변경시 판매가 재계산
+},
     
     searchAddress() {
         new daum.Postcode({
@@ -903,6 +912,14 @@ if (this.productData[name]) {
     },
     
     calculateTotal() {
-        // 필요시 총액 계산 로직
+    const unitPrice = parseFloat(document.getElementById('inputUnitPrice').value) || 0;
+    const quantity = parseInt(document.getElementById('inputQuantity').value) || 1;
+    const shipping = parseFloat(document.getElementById('inputShipping').value) || 0;
+    
+    const totalPrice = (unitPrice * quantity) + shipping;
+    
+    const totalPriceInput = document.getElementById('inputTotalPrice');
+    if (totalPriceInput) {
+        totalPriceInput.value = totalPrice.toLocaleString('ko-KR');
     }
-};
+}
