@@ -679,14 +679,64 @@ window.OrderSearchHandler = {
         
         // 매핑시트에서 가져온 모든 헤더 추가
         if (this.currentOrders.length > 0) {
+            const columnWidths = {
+                '연번': 50,
+                '마켓명': 100,
+                '마켓': 60,
+                '결제일': 150,
+                '주문번호': 140,
+                '상품주문번호': 140,
+                '주문자': 70,
+                '수취인': 70,
+                '수령인': 70,
+                '주문자전화번호': 120,
+                '수취인전화번호': 120,
+                '수령인전화번호': 120,
+                '주소': 300,
+                '수취인주소': 300,
+                '수령인주소': 300,
+                '배송메세지': 100,
+                '배송메시지': 100,
+                '옵션명': 160,
+                '수량': 60,
+                '확인': 160,
+                '셀러': 80,
+                '셀러공급가': 70,
+                '출고처': 80,
+                '송장주체': 60,
+                '벤더사': 100,
+                '발송지명': 100,
+                '발송지주소': 300,
+                '발송지연락처': 120,
+                '출고비용': 90,
+                '정산예정금액': 90,
+                '정산대상금액': 90,
+                '상품금액': 80,
+                '최종결제금액': 90,
+                '할인금액': 90,
+                '마켓부담할인금액': 120,
+                '판매자할인쿠폰할인': 120,
+                '구매쿠폰적용금액': 120,
+                '쿠폰할인금액': 100,
+                '기타지원금할인금': 120,
+                '수수료1': 70,
+                '수수료2': 70,
+                '판매아이디': 80,
+                '분리배송 Y/N': 100,
+                '택배비': 80,
+                '발송일(송장입력일)': 150,
+                '택배사': 80,
+                '송장번호': 140
+            };
+            
             this.tableHeaders = Object.keys(this.currentOrders[0]);
             this.tableHeaders.forEach(header => {
                 const th = document.createElement('th');
                 th.textContent = header;
-                // 모든 열 너비를 100px로 고정
-                th.style.width = '100px';
-                th.style.minWidth = '100px';
-                th.style.maxWidth = '100px';
+                const width = columnWidths[header] || 100;
+                th.style.width = width + 'px';
+                th.style.minWidth = width + 'px';
+                th.style.maxWidth = width + 'px';
                 headerRow.appendChild(th);
             });
         }
@@ -725,13 +775,63 @@ window.OrderSearchHandler = {
         tdCheckbox.innerHTML = `<input type="checkbox" class="order-checkbox" data-index="${serialNumber - 1}">`;
         row.appendChild(tdCheckbox);
         
+                const columnWidths = {
+            '연번': 50,
+            '마켓명': 100,
+            '마켓': 60,
+            '결제일': 150,
+            '주문번호': 140,
+            '상품주문번호': 140,
+            '주문자': 70,
+            '수취인': 70,
+            '수령인': 70,
+            '주문자전화번호': 120,
+            '수취인전화번호': 120,
+            '수령인전화번호': 120,
+            '주소': 300,
+            '수취인주소': 300,
+            '수령인주소': 300,
+            '배송메세지': 100,
+            '배송메시지': 100,
+            '옵션명': 160,
+            '수량': 60,
+            '확인': 160,
+            '셀러': 80,
+            '셀러공급가': 70,
+            '출고처': 80,
+            '송장주체': 60,
+            '벤더사': 100,
+            '발송지명': 100,
+            '발송지주소': 300,
+            '발송지연락처': 120,
+            '출고비용': 90,
+            '정산예정금액': 90,
+            '정산대상금액': 90,
+            '상품금액': 80,
+            '최종결제금액': 90,
+            '할인금액': 90,
+            '마켓부담할인금액': 120,
+            '판매자할인쿠폰할인': 120,
+            '구매쿠폰적용금액': 120,
+            '쿠폰할인금액': 100,
+            '기타지원금할인금': 120,
+            '수수료1': 70,
+            '수수료2': 70,
+            '판매아이디': 80,
+            '분리배송 Y/N': 100,
+            '택배비': 80,
+            '발송일(송장입력일)': 150,
+            '택배사': 80,
+            '송장번호': 140
+        };
+        
         this.tableHeaders.forEach(header => {
             const td = document.createElement('td');
             
-            // 모든 열 너비를 100px로 고정
-            td.style.width = '100px';
-            td.style.minWidth = '100px';
-            td.style.maxWidth = '100px';
+            const width = columnWidths[header] || 100;
+            td.style.width = width + 'px';
+            td.style.minWidth = width + 'px';
+            td.style.maxWidth = width + 'px';
             
             if (header === '연번') {
                 td.textContent = serialNumber;
