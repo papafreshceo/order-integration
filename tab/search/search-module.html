@@ -5,43 +5,31 @@
     <title>주문조회</title>
     <style>
         /* ========================================
-           주문조회 레이아웃 (원본)
+           3단 레이아웃 구조
            ======================================== */
         .order-search-container {
-            padding: 40px;
+            padding: 0;
             background: #fafafa;
             min-height: 100vh;
         }
 
-        @media (max-width: 768px) {
-            .order-search-container {
-                padding: 20px;
-            }
-        }
-
-        /* ========================================
-           검색 섹션 (원본)
-           ======================================== */
-        .search-section {
+        /* 상단 모듈 헤더 */
+        .module-header {
             background: #ffffff;
-            border: 1px solid #dee2e6;
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 32px;
+            padding: 24px 40px;
+            border-bottom: 1px solid #dee2e6;
         }
 
-        .search-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-
-        .search-title {
-            font-size: 18px;
-            font-weight: 500;
+        .module-title {
+            font-size: 24px;
+            font-weight: 600;
             color: #212529;
+            margin: 0 0 8px 0;
         }
+
+        .module-description {
+            font-size: 14px;
+            font-weight:
 
         .search-actions {
             display: flex;
@@ -366,37 +354,44 @@
 </head>
 <body>
     <div class="order-search-container">
-        <!-- 내부 탭 네비게이션 -->
-        <div class="inner-tab-navigation">
-            <button class="inner-tab-btn active" data-tab="order-search">주문조회</button>
-            <button class="inner-tab-btn" data-tab="order-input">주문입력</button>
-            <button class="inner-tab-btn" data-tab="order-excel">주문통합(Excel)</button>
-            <button class="inner-tab-btn" data-tab="shipping-manage">발송관리</button>
-            <button class="inner-tab-btn" data-tab="cs">CS</button>
-            <button class="inner-tab-btn" data-tab="others">기타</button>
+        <!-- 상단 헤더 -->
+        <div class="module-header">
+            <h1 class="module-title">주문조회</h1>
+            <p class="module-description">주문 관리 및 조회 시스템</p>
         </div>
 
-        <!-- 내부 탭 콘텐츠 영역 -->
-        <div class="inner-tab-content">
-            <!-- 주문조회 탭 -->
-            <div class="inner-tab-panel active" id="order-search">
-                <!-- 검색 섹션 (원본) -->
-                <div class="search-section">
-            <div class="search-header">
-                <h2 class="search-title">주문 검색</h2>
-                <div class="search-actions">
-                    <button class="btn-action" onclick="resetFilters()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="23 4 23 10 17 10"></polyline>
-                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                        </svg>
-                        초기화
-                    </button>
-                </div>
-            </div>
+        <!-- 내부 탭 네비게이션 -->
+        <div class="inner-tabs">
+            <button class="inner-tab active" data-tab="order-search">주문조회</button>
+            <button class="inner-tab" data-tab="order-input">주문입력</button>
+            <button class="inner-tab" data-tab="order-excel">주문통합(Excel)</button>
+            <button class="inner-tab" data-tab="shipping-manage">발송관리</button>
+            <button class="inner-tab" data-tab="cs">CS</button>
+            <button class="inner-tab" data-tab="others">기타</button>
+        </div>
 
-            <!-- 빠른 필터 -->
-            <div class="quick-filters">
+        <!-- 탭 콘텐츠 영역 -->
+        <div class="tab-panels">
+            <!-- 주문조회 패널 -->
+            <div class="tab-panel active" id="order-search-panel">
+                <!-- 패널 헤더 -->
+                <div class="panel-header">
+                    <h2 class="panel-title">주문 검색</h2>
+                    <div class="panel-actions">
+                        <button class="btn-action" onclick="resetFilters()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            </svg>
+                            초기화
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 검색 섹션 -->
+                <div class="search-section">
+                    <!-- 빠른 필터 -->
+                    <div class="quick-filters">
                 <button class="quick-filter-btn active" onclick="setQuickFilter('today', this)">오늘</button>
                 <button class="quick-filter-btn" onclick="setQuickFilter('yesterday', this)">어제</button>
                 <button class="quick-filter-btn" onclick="setQuickFilter('week', this)">이번 주</button>
