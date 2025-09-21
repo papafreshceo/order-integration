@@ -251,21 +251,42 @@
         }
         
         /* 헤더 스타일 수정 */
-        .header {
-            padding: 20px 20px 10px 20px !important; /* 하단 패딩 줄이기 */
-        }
-        
-        /* 탭 네비게이션 고정 */
-        .tab-navigation {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: #ffffff;
-            border-bottom: 1px solid #dee2e6;
-            padding: 10px 20px;
-            margin-top: 10px; /* 헤더와의 간격 줄이기 */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+.header {
+    padding: 15px 20px !important;
+    margin: 0 !important;
+}
+
+/* 탭 네비게이션 고정 */
+.tab-navigation {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0 20px;
+    margin: 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: stretch;
+    height: 48px;
+}
+
+.tab-button {
+    padding: 12px 20px;
+    margin: 0;
+    border-radius: 0;
+    border-top: 3px solid transparent;
+    border-bottom: 3px solid transparent;
+}
+
+.tab-button.active {
+    border-bottom-color: #2563eb;
+}
+
+.main-content {
+    margin-top: 0;
+    padding-top: 0;
+}
         
         /* iframe 높이 조정 */
         .tab-content iframe {
