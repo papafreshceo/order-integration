@@ -497,13 +497,16 @@ input[type="number"] {
 
                 <div class="order-list-section">
                     <div class="list-header">
-                        <h3 class="list-title">추가된 주문 목록</h3>
-                        <div>
-                            <span style="font-size: 14px; color: #6c757d;">
-                                총 <span id="totalOrderCount" style="color: #2563eb; font-weight: 500;">0</span>건
-                            </span>
-                        </div>
-                    </div>
+    <h3 class="list-title">추가된 주문 목록</h3>
+    <div style="display: flex; gap: 12px; align-items: center;">
+        <button class="btn-save" onclick="OrderInputHandler.saveOrders()" style="padding: 6px 16px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 300; cursor: pointer;">
+            저장
+        </button>
+        <span style="font-size: 14px; color: #6c757d;">
+            총 <span id="totalOrderCount" style="color: #2563eb; font-weight: 500;">0</span>건
+        </span>
+    </div>
+</div>
                     <div class="list-body">
                         <div id="inputOrderList">
                             <div class="empty-message">추가된 주문이 없습니다</div>
@@ -883,32 +886,36 @@ searchProduct() {
     },
     
     updateOrderList() {
-        const list = document.getElementById('inputOrderList');
-        const count = document.getElementById('totalOrderCount');
-        
-        if (count) {
-            count.textContent = this.manualOrders.length;
-        }
-        
-        if (this.manualOrders.length === 0) {
-            list.innerHTML = '<div class="empty-message">추가된 주문이 없습니다</div>';
-            return;
-        }
-        
-        list.innerHTML = this.manualOrders.map((order, index) => `
-            <div class="order-item">
-                <div class="order-info">
-                    <div><span class="order-label">구분:</span> <span class="order-value">${order.마켓명}</span></div>
-                    <div><span class="order-label">상품:</span> <span class="order-value">${order.옵션명}</span></div>
-                    <div><span class="order-label">수량:</span> <span class="order-value">${order.수량}</span></div>
-                    <div><span class="order-label">수령인:</span> <span class="order-value">${order.수령인}</span></div>
-                    <div><span class="order-label">금액:</span> <span class="order-value">${order.상품금액.toLocaleString('ko-KR')}원</span></div>
-                    ${order.발송요청일 ? `<div><span class="order-label">발송요청일:</span> <span class="order-value">${order.발송요청일}</span></div>` : ''}
-                </div>
-                <button class="btn-remove" onclick="OrderInputHandler.removeOrder(${index})">삭제</button>
+    const list = document.getElementById('inputOrderList');
+    const count = document.getElementById('totalOrderCount');
+    
+    if (count) {
+        count.textContent = this.manualOrders.length;
+    }
+    
+    if (this.manualOrders.length === 0) {
+        list.innerHTML = '<div class="empty-message">추가된 주문이 없습니다</div>';
+        return;
+    }
+    
+    list.innerHTML = this.manualOrders.map((order, index) => `
+        <div class="order-item">
+            <div class="order-info">
+                <div><span class="order-label">구분:</span> <span class="order-value">${order.마켓명}</span></div>
+                <div><span class="order-label">상품:</span> <span class="order-value">${order.옵션명}</span></div>
+                <div><span class="order-label">수량:</span> <span class="order-value">${order.수량}</span></div>
+                <div><span class="order-label">판매가:</span> <span class="order-value">${order.상품금액.toLocaleString('ko-KR')}원</span></div>
+                <div><span class="order-label">주문자:</span> <span class="order-value">${order.주문자}</span></div>
+                <div><span class="order-label">주문자전화:</span> <span class="order-value">${order['주문자 전화번호']}</span></div>
+                <div><span class="order-label">수령인:</span> <span class="order-value">${order.수령인}</span></div>
+                <div><span class="order-label">수령인전화:</span> <span class="order-value">${order['수령인 전화번호']}</span></div>
+                <div><span class="order-label">주소:</span> <span class="order-value" style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${order.주소}">${order.주소}</span></div>
+                ${order.발송요청일 ? `<div><span class="order-label">발송요청일:</span> <span class="order-value">${order.발송요청일}</span></div>` : ''}
             </div>
-        `).join('');
-    },
+            <button class="btn-remove" onclick="OrderInputHandler.removeOrder(${index})">삭제</button>
+        </div>
+    `).join('');
+},
     
     removeOrder(index) {
         this.manualOrders.splice(index, 1);
@@ -944,3 +951,37 @@ searchProduct() {
     }
 }
 };
+
+async saveOrders() {
+    if (this.manualOrders.length === 0) {
+        this.showMessage('저장할 주문이 없습니다.', 'error');
+        return;
+    }
+    
+    try {
+        // 구글 시트 저장 로직
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'saveManualOrders',
+                orders: this.manualOrders
+            })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            this.showMessage(`${this.manualOrders.length}건의 주문이 저장되었습니다.`, 'success');
+            // 저장 후 목록 초기화
+            if (confirm('저장이 완료되었습니다. 목록을 초기화하시겠습니까?')) {
+                this.manualOrders = [];
+                this.updateOrderList();
+            }
+        } else {
+            this.showMessage('저장 실패: ' + result.error, 'error');
+        }
+    } catch (error) {
+        console.error('저장 오류:', error);
+        this.showMessage('저장 중 오류가 발생했습니다.', 'error');
+    }
+},
