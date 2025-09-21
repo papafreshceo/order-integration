@@ -57,11 +57,11 @@ body {
     gap: 0;
 }
 
-.om-tab-btn {
-    padding: 10px 20px;
+padding: 12px 24px;
     background: transparent;
-    border: 2px solid transparent;
-    border-radius: 6px;
+    border: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
     color: #6c757d;
     font-size: 14px;
     font-weight: 300;
@@ -71,12 +71,13 @@ body {
 
 .om-tab-btn:hover {
     color: #495057;
-    background: #f8f9fa;
+    background: rgba(255, 255, 255, 0.5);
 }
 
 .om-tab-btn.active {
     color: #2563eb;
-    border-color: #2563eb;
+    background: #ffffff;
+    border-bottom-color: #2563eb;
     font-weight: 400;
 }
 
