@@ -587,32 +587,42 @@ window.OrderSearchHandler = {
         }
     },
 
-    async loadOrders() {
+async loadOrders() {
         this.showLoading();
         try {
-            let requestBody = {
-                action: 'getMarketData',
-                useMainSpreadsheet: true
-            };
+            let response;
             
-            // 주문통합일 모드일 때 날짜 파라미터 추가
             if (this.dateType === 'sheet') {
+                // 주문통합일 모드 - 날짜별 시트 읽기
                 const startDate = document.getElementById('searchStartDate').value.replace(/-/g, '');
                 const endDate = document.getElementById('searchEndDate').value.replace(/-/g, '');
-                requestBody.startDate = startDate;
-                requestBody.endDate = endDate;
+                
+                response = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'getOrdersByDateRange',
+                        startDate: startDate,
+                        endDate: endDate
+                    })
+                });
+            } else {
+                // 결제일 모드 - 전체 데이터
+                response = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'getMarketData',
+                        useMainSpreadsheet: true
+                    })
+                });
             }
-            
-            const response = await fetch('/api/sheets', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody)
-            });
 
             const result = await response.json();
             
             if (result.success) {
-                this.currentOrders = result.data || [];
+                // getOrdersByDateRange는 orders 필드로 반환
+                this.currentOrders = result.orders || result.data || [];
                 this.marketColors = result.colors || {};
                 
                 // 디버깅: 데이터 확인
