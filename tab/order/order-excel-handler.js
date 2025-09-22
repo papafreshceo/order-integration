@@ -1203,6 +1203,9 @@ if (this.ProductMatching) {
                 sheetName: new Date().toISOString().slice(0, 10).replace(/-/g, '')
             };
             
+            this.processedData.standardFields = this.mappingData?.standardFields || Object.keys(enrichedData[0] || {});
+window.processedData = this.processedData;
+
             this.displayResults();
             this.showSuccess(`${enrichedData.length}개 주문 통합 완료`);
             
@@ -1390,9 +1393,16 @@ const columnWidths = {
 
 
 // 테이블 전체 너비 설정
+// 테이블 전체 너비 계산 및 설정
+let totalWidth = 0;
+this.processedData.headers.forEach(header => {
+    const width = columnWidths[header] || 100;
+    totalWidth += width;
+});
+
 const table = document.getElementById('excelResultTable');
 if (table) {
-table.style.minWidth = `${totalWidth}px`;
+    table.style.minWidth = `${totalWidth}px`;
 }
 
 // 헤더 생성
