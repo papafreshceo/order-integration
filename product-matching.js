@@ -11,41 +11,45 @@ const ProductMatching = (function() {
     // ===========================
     // 제품 데이터 로드
     // ===========================
-    async function loadProductData() {
-        try {
-            console.log('제품 데이터 로드 시작...');
-            
-            const response = await fetch('/api/sheets', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    action: 'getProductData'
-                })
-            });
-            
-            const result = await response.json();
-            
-            if (result.error) {
-                console.error('제품 데이터 로드 실패:', result.error);
-                return false;
-            }
-            
-            productData = result.productData || {};
-            priceData = result.priceData || {};
-            
-            console.log('제품 데이터 로드 완료:', {
-                products: Object.keys(productData).length,
-                prices: Object.keys(priceData).length
-            });
-            
-            return true;
-        } catch (error) {
-            console.error('제품 데이터 로드 오류:', error);
+async function loadProductData() {
+    try {
+        console.log('제품 데이터 로드 시작...');
+        
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'getProductData'
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.error) {
+            console.error('제품 데이터 로드 실패:', result.error);
             return false;
         }
+        
+        productData = result.productData || {};
+        priceData = result.priceData || {};
+        
+        // window.productData에도 저장
+        window.productData = productData;
+        window.priceData = priceData;
+        
+        console.log('제품 데이터 로드 완료:', {
+            products: Object.keys(productData).length,
+            prices: Object.keys(priceData).length
+        });
+        
+        return true;
+    } catch (error) {
+        console.error('제품 데이터 로드 오류:', error);
+        return false;
     }
+}
     
     // ===========================
     // 옵션명 매칭 처리
