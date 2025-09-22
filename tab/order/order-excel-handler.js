@@ -2035,20 +2035,22 @@ document.getElementById('resultSection').style.display = 'none';
     },
 
     fullReset() {
-        // 모든 데이터 초기화
-        this.uploadedFiles = [];
-        this.processedData = null;
-        this.batchEditData = {};
-        
-        // DOM 완전 재렌더링
-        const container = document.getElementById('om-panel-excel');
-        if (container) {
-            container.innerHTML = '';
-            this.render();
-            this.setupEventListeners();
-        }
-        
-        console.log('OrderExcelHandler 완전 초기화 완료');
+    // 임시 주소 데이터만 초기화 (주문 데이터는 유지)
+    this.tempAddressData = {};
+    
+    // 캐시는 삭제하지 않음
+    // this.clearCache(); <- 제거
+    
+    // DOM 완전 재렌더링
+    const container = document.getElementById('om-panel-input');
+    if (container) {
+        container.innerHTML = '';
+        this.render();
+        this.setupEventListeners();
+        this.loadProductData();
+        this.loadFromCache(); // 캐시에서 다시 로드
     }
-
+    
+    console.log('OrderInputHandler 새로고침 완료 (저장되지 않은 주문 유지)');
+}
 };
