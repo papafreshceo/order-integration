@@ -246,7 +246,7 @@
         </div>
     </div>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
     // 모듈 관리자
     window.OrderManage = {
@@ -257,19 +257,18 @@
             this.setupParentReferences();
             this.setupTabs();
             this.loadModule('search');
+            
+            // 스크롤 이벤트 리스너 - 헤더 고정 효과
+            window.addEventListener('scroll', () => {
+                const header = document.querySelector('.om-header');
+                if (window.scrollY > 10) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
         },
         
-
-        // init() 함수 내에 추가
-window.addEventListener('scroll', () => {
-    const header = document.querySelector('.om-header');
-    if (window.scrollY > 10) {
-        header.classList.add('scrolled');
-    } else {
-        header.classList.remove('scrolled');
-    }
-});
-
         setupParentReferences() {
             // iframe 환경인지 체크
             if (parent.window !== window) {
@@ -378,6 +377,9 @@ window.addEventListener('scroll', () => {
                         window.OrderSearchHandler.init();
                     }
                 };
+                script.onerror = () => {
+                    console.error('Failed to load order-search-handler.js');
+                };
                 document.head.appendChild(script);
             } else {
                 this.modules.search = window.OrderSearchHandler;
@@ -395,6 +397,9 @@ window.addEventListener('scroll', () => {
                         window.ManualOrder.init();
                     }
                 };
+                script.onerror = () => {
+                    console.error('Failed to load manual-order.js');
+                };
                 document.head.appendChild(script);
             } else {
                 this.modules.input = window.ManualOrder;
@@ -411,6 +416,9 @@ window.addEventListener('scroll', () => {
                         this.modules.cs = window.CsHandler;
                         window.CsHandler.init();
                     }
+                };
+                script.onerror = () => {
+                    console.error('Failed to load cs-handler.js');
                 };
                 document.head.appendChild(script);
             } else {
