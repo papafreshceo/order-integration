@@ -223,154 +223,225 @@
     </div>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script>
-        // 모듈 관리자
-        window.OrderManage = {
-            currentTab: 'search',
-            modules: {},
-            
-            init() {
-                this.setupParentReferences();
-                this.setupTabs();
-                this.loadModule('search');
-            },
-            
-            setupParentReferences() {
-                // iframe 환경인지 체크
-                if (parent.window !== window) {
-                    // 부모 window의 전역 객체들 참조
-                    window.mappingData = parent.window.mappingData;
-                    window.ProductMatching = parent.window.ProductMatching;
-                    window.ManualOrder = parent.window.ManualOrder;
-                    window.showCenterMessage = parent.window.showCenterMessage;
-                    window.showLoading = parent.window.showLoading;
-                    window.hideLoading = parent.window.hideLoading;
-                    window.API_BASE = parent.window.API_BASE || '';
-                }
-            },
-            
-            setupTabs() {
-                document.querySelectorAll('.om-tab-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        this.switchTab(btn.dataset.tab);
-                    });
+<script>
+    // 모듈 관리자
+    window.OrderManage = {
+        currentTab: 'search',
+        modules: {},
+        
+        init() {
+            this.setupParentReferences();
+            this.setupTabs();
+            this.loadModule('search');
+        },
+        
+        setupParentReferences() {
+            // iframe 환경인지 체크
+            if (parent.window !== window) {
+                // 부모 window의 전역 객체들 참조
+                window.mappingData = parent.window.mappingData;
+                window.ProductMatching = parent.window.ProductMatching;
+                window.ManualOrder = parent.window.ManualOrder;
+                window.showCenterMessage = parent.window.showCenterMessage;
+                window.showLoading = parent.window.showLoading;
+                window.hideLoading = parent.window.hideLoading;
+                window.API_BASE = parent.window.API_BASE || '';
+            }
+        },
+        
+        setupTabs() {
+            document.querySelectorAll('.om-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    this.switchTab(btn.dataset.tab);
                 });
-            },
+            });
+        },
+        
+        switchTab(tab) {
+            // 탭 버튼 활성화
+            document.querySelectorAll('.om-tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
             
-            switchTab(tab) {
-                // 탭 버튼 활성화
-                document.querySelectorAll('.om-tab-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.tab === tab);
-                });
-                
-                // 패널 활성화
-                document.querySelectorAll('.om-panel').forEach(panel => {
-                    panel.classList.remove('active');
-                });
-                document.getElementById(`om-panel-${tab}`).classList.add('active');
-                
-                this.currentTab = tab;
-                this.loadModule(tab);
-            },
+            // 패널 활성화
+            document.querySelectorAll('.om-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.getElementById(`om-panel-${tab}`).classList.add('active');
             
-            loadModule(tab) {
-                if (this.modules[tab]) {
-                    this.modules[tab].init();
+            this.currentTab = tab;
+            this.loadModule(tab);
+        },
+        
+        loadModule(tab) {
+            if (this.modules[tab] && this.modules[tab].init) {
+                this.modules[tab].init();
+            } else {
+                if (tab === 'excel') {
+                    this.loadExcelModule();
+                } else if (tab === 'shipping') {
+                    this.loadShippingModule();
+                } else if (tab === 'search') {
+                    this.loadSearchModule();
+                } else if (tab === 'input') {
+                    this.loadInputModule();
+                } else if (tab === 'cs') {
+                    this.loadCsModule();
                 } else {
-                    if (tab === 'excel') {
-                        this.loadExcelModule();
-                    } else if (tab === 'shipping') {
-                        this.loadShippingModule();
-                    } else {
-                        this.loadGenericModule(tab);
-                    }
+                    this.loadGenericModule(tab);
                 }
-            },
-            
-            loadExcelModule() {
-                if (!window.OrderExcelHandler) {
-                    const script = document.createElement('script');
-                    script.src = 'order-excel-handler.js';
-                    script.onload = () => {
-                        if (window.OrderExcelHandler) {
-                            this.modules.excel = window.OrderExcelHandler;
-                            window.OrderExcelHandler.init();
-                        }
-                    };
-                    script.onerror = () => {
-                        console.error('Failed to load order-excel-handler.js');
-                    };
-                    document.head.appendChild(script);
-                } else {
-                    this.modules.excel = window.OrderExcelHandler;
-                    window.OrderExcelHandler.init();
-                }
-            },
-            
-            loadShippingModule() {
-                if (!window.OrderShippingHandler) {
-                    const script = document.createElement('script');
-                    script.src = 'order-shipping-handler.js';
-                    script.onload = () => {
-                        if (window.OrderShippingHandler) {
-                            this.modules.shipping = window.OrderShippingHandler;
-                            window.OrderShippingHandler.init();
-                        }
-                    };
-                    script.onerror = () => {
-                        console.error('Failed to load order-shipping-handler.js');
-                    };
-                    document.head.appendChild(script);
-                } else {
-                    this.modules.shipping = window.OrderShippingHandler;
-                    window.OrderShippingHandler.init();
-                }
-            },
-            
-            loadGenericModule(tab) {
+            }
+        },
+        
+        loadExcelModule() {
+            if (!window.OrderExcelHandler) {
                 const script = document.createElement('script');
-                script.src = `order-${tab}-handler.js`;
+                script.src = 'order-excel-handler.js';
                 script.onload = () => {
-                    const handlerName = 'Order' + tab.charAt(0).toUpperCase() + tab.slice(1) + 'Handler';
-                    if (window[handlerName]) {
-                        this.modules[tab] = window[handlerName];
-                        this.modules[tab].init();
+                    if (window.OrderExcelHandler) {
+                        this.modules.excel = window.OrderExcelHandler;
+                        window.OrderExcelHandler.init();
                     }
                 };
                 script.onerror = () => {
-                    console.error(`Failed to load order-${tab}-handler.js`);
+                    console.error('Failed to load order-excel-handler.js');
                 };
                 document.head.appendChild(script);
-            },
-            
-            showLoading() {
-                document.getElementById('om-loading').classList.add('show');
-            },
-            
-            hideLoading() {
-    document.getElementById('om-loading').classList.remove('show');
-},
+            } else {
+                this.modules.excel = window.OrderExcelHandler;
+                window.OrderExcelHandler.init();
+            }
+        },
+        
+        loadShippingModule() {
+            if (!window.OrderShippingHandler) {
+                const script = document.createElement('script');
+                script.src = 'order-shipping-handler.js';
+                script.onload = () => {
+                    if (window.OrderShippingHandler) {
+                        this.modules.shipping = window.OrderShippingHandler;
+                        window.OrderShippingHandler.init();
+                    }
+                };
+                script.onerror = () => {
+                    console.error('Failed to load order-shipping-handler.js');
+                };
+                document.head.appendChild(script);
+            } else {
+                this.modules.shipping = window.OrderShippingHandler;
+                window.OrderShippingHandler.init();
+            }
+        },
+        
+        loadSearchModule() {
+            if (!window.OrderSearchHandler) {
+                const script = document.createElement('script');
+                script.src = 'order-search-handler.js';
+                script.onload = () => {
+                    if (window.OrderSearchHandler) {
+                        this.modules.search = window.OrderSearchHandler;
+                        window.OrderSearchHandler.init();
+                    }
+                };
+                document.head.appendChild(script);
+            } else {
+                this.modules.search = window.OrderSearchHandler;
+                window.OrderSearchHandler.init();
+            }
+        },
+        
+        loadInputModule() {
+            if (!window.ManualOrder) {
+                const script = document.createElement('script');
+                script.src = 'manual-order.js';
+                script.onload = () => {
+                    if (window.ManualOrder) {
+                        this.modules.input = window.ManualOrder;
+                        window.ManualOrder.init();
+                    }
+                };
+                document.head.appendChild(script);
+            } else {
+                this.modules.input = window.ManualOrder;
+                window.ManualOrder.init();
+            }
+        },
+        
+        loadCsModule() {
+            if (!window.CsHandler) {
+                const script = document.createElement('script');
+                script.src = 'cs-handler.js';
+                script.onload = () => {
+                    if (window.CsHandler) {
+                        this.modules.cs = window.CsHandler;
+                        window.CsHandler.init();
+                    }
+                };
+                document.head.appendChild(script);
+            } else {
+                this.modules.cs = window.CsHandler;
+                window.CsHandler.init();
+            }
+        },
+        
+        loadGenericModule(tab) {
+            const script = document.createElement('script');
+            script.src = `order-${tab}-handler.js`;
+            script.onload = () => {
+                const handlerName = 'Order' + tab.charAt(0).toUpperCase() + tab.slice(1) + 'Handler';
+                if (window[handlerName]) {
+                    this.modules[tab] = window[handlerName];
+                    this.modules[tab].init();
+                }
+            };
+            script.onerror = () => {
+                console.error(`Failed to load order-${tab}-handler.js`);
+            };
+            document.head.appendChild(script);
+        },
+        
+        showLoading() {
+            document.getElementById('om-loading').classList.add('show');
+        },
+        
+        hideLoading() {
+            document.getElementById('om-loading').classList.remove('show');
+        },
 
-refreshCurrentTab() {
-    // 현재 활성 탭의 패널 내용만 비우고 다시 로드
-    const currentPanel = document.getElementById(`om-panel-${this.currentTab}`);
-    if (currentPanel) {
-        // 패널 내용 초기화
-        currentPanel.innerHTML = '';
-        
-        // 모듈 캐시에서 제거
-        delete this.modules[this.currentTab];
-        
-        // 모듈 다시 로드
-        this.loadModule(this.currentTab);
-    }
-}
-        };
-        
-        // 초기화
-        document.addEventListener('DOMContentLoaded', () => {
-            OrderManage.init();
-        });
-    </script>
+        refreshCurrentTab() {
+            const currentModule = this.modules[this.currentTab];
+            const currentPanel = document.getElementById(`om-panel-${this.currentTab}`);
+            
+            if (currentModule && typeof currentModule.fullReset === 'function') {
+                // 모듈이 fullReset 메서드를 가지고 있으면 호출
+                currentModule.fullReset();
+            } else if (currentPanel) {
+                // fullReset이 없으면 패널 초기화 후 재로드
+                currentPanel.innerHTML = '';
+                
+                // 모듈 인스턴스 초기화
+                if (currentModule) {
+                    // 모듈의 모든 데이터 초기화
+                    if (currentModule.uploadedFiles) currentModule.uploadedFiles = [];
+                    if (currentModule.processedData) currentModule.processedData = null;
+                    if (currentModule.batchEditData) currentModule.batchEditData = {};
+                    if (currentModule.searchResults) currentModule.searchResults = [];
+                    if (currentModule.selectedRows) currentModule.selectedRows = [];
+                }
+                
+                // 모듈 캐시에서 제거
+                delete this.modules[this.currentTab];
+                
+                // 모듈 다시 로드
+                this.loadModule(this.currentTab);
+            }
+        }
+    };
+    
+    // 초기화
+    document.addEventListener('DOMContentLoaded', () => {
+        OrderManage.init();
+    });
+</script>
 </body>
 </html>
