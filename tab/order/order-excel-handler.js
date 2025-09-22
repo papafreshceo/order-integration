@@ -1663,24 +1663,28 @@ if (header.includes('금액') || header.includes('공급가') || header === '셀
         return;
     }
     
+    console.log('검증 시작 - processedData 설정 전:', this.processedData);
+    
     try {
-        // processedData를 전역으로 설정
+        // processedData를 전역으로 설정 (삭제하지 말 것)
         window.processedData = this.processedData;
+        console.log('전역 processedData 설정됨:', window.processedData);
         
         // ProductMatching의 verifyOptions 호출
-        const result = await this.ProductMatching.verifyOptions();
+        await this.ProductMatching.verifyOptions();
         
-        // 결과는 ProductMatching 내부에서 모달로 표시됨
+        // 검증 후 processedData 업데이트 (ProductMatching이 수정한 내용 반영)
+        if (window.processedData) {
+            this.processedData = window.processedData;
+        }
         
     } catch (error) {
         console.error('옵션명 검증 오류:', error);
         this.showError('옵션명 검증 중 오류가 발생했습니다.');
     } finally {
-        // 검증 후 테이블 다시 그리기
+        // 테이블 재렌더링
         this.displayResults();
-        
-        // 전역 변수 정리 (선택사항)
-        // delete window.processedData;
+        // window.processedData는 삭제하지 않음 (다른 기능에서 사용할 수 있음)
     }
 },
 
