@@ -2023,8 +2023,8 @@ document.getElementById('resultSection').style.display = 'none';
         if (window.OrderManage) {
             window.OrderManage.hideLoading();
         }
-    }
-    
+    },
+
     fullReset() {
         // 모든 데이터 초기화
         this.uploadedFiles = [];
