@@ -1201,7 +1201,7 @@ if (this.ProductMatching) {
     });
 }
             
-            // 예전 방식: 전역 변수와 로컬 변수 동시 설정
+/ 로컬과 전역 변수 동시 설정
 this.processedData = {
     data: enrichedData,
     headers: this.mappingData?.standardFields || Object.keys(enrichedData[0] || {}),
@@ -1209,8 +1209,9 @@ this.processedData = {
     sheetName: new Date().toISOString().slice(0, 10).replace(/-/g, '')
 };
 
-// 전역 변수 즉시 설정 (예전 방식)
+// 전역 변수 확실하게 설정
 window.processedData = this.processedData;
+console.log('window.processedData 설정 완료:', window.processedData);;
 
 this.displayResults();
 this.showSuccess(`${enrichedData.length}개 주문 통합 완료`);
