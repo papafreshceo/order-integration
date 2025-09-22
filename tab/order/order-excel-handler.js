@@ -1627,8 +1627,14 @@ if (header !== '마켓명' && !td.textContent && !td.innerHTML) {
     // 예전 방식: 전역 변수로 직접 설정
     window.processedData = this.processedData;
     
-    // ProductMatching 직접 호출
-    await ProductMatching.verifyOptions();
+    // ProductMatching이 window에 있는지 확인
+    if (typeof window.ProductMatching !== 'undefined') {
+        await window.ProductMatching.verifyOptions();
+    } else {
+        console.error('ProductMatching을 찾을 수 없습니다');
+        this.showError('옵션명 검증 모듈을 찾을 수 없습니다.');
+        return;
+    }
     
     // 변경된 데이터 다시 가져오기
     this.processedData = window.processedData;
