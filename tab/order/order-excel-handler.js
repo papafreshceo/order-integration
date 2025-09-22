@@ -228,36 +228,69 @@ window.OrderExcelHandler = {
                     background: #059669;
                 }
                 
-                /* 결과 섹션 */
-                .result-section {
-                    display: none;
+                .btn-success {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    background: #10b981;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 300;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+                /* 테이블 섹션 - 발송관리와 동일 */
+                .table-section {
                     background: #ffffff;
                     border: 1px solid #dee2e6;
-                    border-radius: 8px;
-                    padding: 24px;
+                    border-radius: 16px;
+                    overflow: hidden;
                     margin-top: 24px;
                 }
-                
-                .result-section.show {
-                    display: block;
-                }
-                
-                .result-header {
+
+                .table-header {
+                    padding: 16px 24px;
+                    border-bottom: 1px solid #dee2e6;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    margin-bottom: 20px;
-                    padding-bottom: 16px;
-                    border-bottom: 1px solid #dee2e6;
+                    background: #f8f9fa;
                 }
-                
+
+                .table-title {
+                    font-size: 16px;
+                    font-weight: 500;
+                    color: #212529;
+                }
+
+                .table-actions {
+                    display: flex;
+                    gap: 8px;
+                }
+
                 /* 테이블 */
                 .table-wrapper {
-                    overflow: auto;
-                    max-height: 600px;
-                    border: 1px solid #dee2e6;
-                    border-radius: 4px;
-                }
+                    overflow-x: auto;
+                    height: calc(100vh - 450px);
+                    min-height: 400px;
+                    max-height: 700px;
+                    overflow-y: auto;
+                    position: relative;
+}
                 
                 .result-table {
                     width: 100%;
@@ -490,27 +523,66 @@ window.OrderExcelHandler = {
                 <div id="excelSuccessMessage" class="message-box success"></div>
                 
                 <!-- 결과 섹션 -->
-                <div class="result-section" id="resultSection">
-                    <div class="result-header">
-                        <div>
-                            <button class="btn-action btn-reset" onclick="OrderExcelHandler.resetResults()">초기화</button>
-                            <button class="btn-action" onclick="OrderExcelHandler.openBatchEdit()">옵션명 일괄수정</button>
-                            <button class="btn-action" onclick="OrderExcelHandler.verifyOptions()">옵션명 검증</button>
-                            <button class="btn-action" onclick="OrderExcelHandler.verifyDuplicate()">중복발송검증</button>
-                        </div>
-                        <div>
-                            <button class="btn-action" onclick="OrderExcelHandler.exportExcel()">엑셀 다운로드</button>
-                            <button class="btn-action btn-save" onclick="OrderExcelHandler.saveToSheets()">저장</button>
-                        </div>
-                    </div>
-                    
-                    <div class="table-wrapper">
-                        <table class="result-table" id="excelResultTable">
-                            <thead id="excelResultHead"></thead>
-                            <tbody id="excelResultBody"></tbody>
-                        </table>
-                    </div>
-                </div>
+                <!-- 테이블 섹션 -->
+<div class="table-section" id="resultSection" style="display: none;">
+    <div class="table-header">
+        <h3 class="table-title">통합 결과</h3>
+        <div class="table-actions">
+            <button class="btn-action btn-reset" onclick="OrderExcelHandler.resetResults()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                초기화
+            </button>
+            <button class="btn-action" onclick="OrderExcelHandler.openBatchEdit()" style="background: #fee2e2; color: #dc3545; border-color: #fecaca;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                </svg>
+                옵션명 일괄수정
+            </button>
+            <button class="btn-action" onclick="OrderExcelHandler.verifyOptions()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                옵션명 검증
+            </button>
+            <button class="btn-action" onclick="OrderExcelHandler.verifyDuplicate()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                중복발송검증
+            </button>
+            <button class="btn-action" onclick="OrderExcelHandler.exportExcel()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                엑셀 다운로드
+            </button>
+            <button class="btn-success" onclick="OrderExcelHandler.saveToSheets()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                저장
+            </button>
+        </div>
+    </div>
+    
+    <div class="table-wrapper">
+        <table class="result-table" id="excelResultTable">
+            <thead id="excelResultHead"></thead>
+            <tbody id="excelResultBody"></tbody>
+        </table>
+    </div>
+</div>
             </div>
             
             <!-- 옵션명 일괄수정 모달 -->
@@ -638,14 +710,58 @@ window.OrderExcelHandler = {
                 if (isCsv) {
                     workbook = XLSX.read(e.target.result, { type: 'string' });
                 } else if (isXls) {
-                    const arr = new Uint8Array(e.target.result);
-                    workbook = XLSX.read(arr, { 
-                        type: 'array',
-                        cellDates: true,
-                        cellNF: true,
-                        cellText: false,
-                        codepage: 949
-                    });
+    const data = e.target.result;
+    const arr = new Uint8Array(data);
+    
+    try {
+        // 첫 번째 시도: array 타입으로
+        workbook = XLSX.read(arr, {
+            type: 'array',
+            cellDates: true,
+            cellNF: true,
+            cellText: false,
+            dateNF: 'YYYY-MM-DD HH:mm:ss',
+            codepage: 949  // 한글 인코딩
+        });
+        console.log(`${file.name}: .xls 파일 읽기 성공 (array)`);
+        
+    } catch (xlsError) {
+        console.log('.xls array 읽기 실패, binary string 시도:', xlsError);
+        
+        // 두 번째 시도: binary string으로
+        try {
+            const binaryString = Array.from(arr, byte => String.fromCharCode(byte)).join('');
+            workbook = XLSX.read(binaryString, {
+                type: 'binary',
+                cellDates: true,
+                cellNF: true,
+                cellText: false,
+                dateNF: 'YYYY-MM-DD HH:mm:ss',
+                codepage: 949
+            });
+            console.log(`${file.name}: .xls 파일 읽기 성공 (binary)`);
+            
+        } catch (binaryError) {
+            console.log('.xls binary 읽기 실패, base64 시도:', binaryError);
+            
+            // 세 번째 시도: base64로
+            try {
+                const base64 = btoa(Array.from(arr, byte => String.fromCharCode(byte)).join(''));
+                workbook = XLSX.read(base64, {
+                    type: 'base64',
+                    cellDates: true,
+                    cellNF: true,
+                    cellText: false,
+                    dateNF: 'YYYY-MM-DD HH:mm:ss',
+                    codepage: 949
+                });
+                console.log(`${file.name}: .xls 파일 읽기 성공 (base64)`);
+                
+            } catch (base64Error) {
+                throw new Error('모든 .xls 읽기 방법 실패');
+            }
+        }
+    }
                 } else if (isXlsx) {
                     workbook = XLSX.read(e.target.result, { 
                         type: 'binary',
@@ -670,13 +786,20 @@ window.OrderExcelHandler = {
             }
         };
         
-        if (file.name.toLowerCase().endsWith('.csv')) {
-            reader.readAsText(file, 'utf-8');
-        } else if (file.name.toLowerCase().endsWith('.xls')) {
-            reader.readAsArrayBuffer(file);
-        } else {
-            reader.readAsBinaryString(file);
-        }
+        const fileName = file.name.toLowerCase();
+
+if (fileName.endsWith('.csv')) {
+    reader.readAsText(file, 'utf-8');
+} else if (fileName.endsWith('.xls') && !fileName.endsWith('.xlsx')) {
+    // .xls는 ArrayBuffer로 읽기
+    reader.readAsArrayBuffer(file);
+} else if (fileName.endsWith('.xlsx')) {
+    // .xlsx는 BinaryString으로 읽기
+    reader.readAsBinaryString(file);
+} else {
+    // 기타는 BinaryString으로 시도
+    reader.readAsBinaryString(file);
+}
     },
     
     async processExcelData(rawRows, file) {
@@ -689,13 +812,76 @@ window.OrderExcelHandler = {
             return;
         }
         
-        // 헤더 위치 판단
-        let headerRowIndex = 0;
-        const fileName = file.name.toLowerCase();
+// 헤더 위치 판단 - 매핑 시트의 헤더행 값 우선 사용
+let headerRowIndex = 0;
+const fileName = file.name.toLowerCase();
+
+// 마켓 감지를 위한 임시 헤더 추출 (1행과 2행 모두 확인)
+let tempMarketName = null;
+
+// 파일명으로 마켓 추측
+if (this.mappingData && this.mappingData.markets) {
+    for (const [marketName, market] of Object.entries(this.mappingData.markets)) {
+        // 감지문자열로 확인
+        const detectStrings = [
+            market.detectString1,
+            market.detectString2,
+            marketName.toLowerCase()
+        ].filter(s => s);
         
-        if (fileName.includes('스마트스토어') && cleanRows.length > 1) {
-            headerRowIndex = 1;
+        if (detectStrings.some(str => fileName.includes(str.toLowerCase()))) {
+            tempMarketName = marketName;
+            break;
         }
+    }
+}
+
+// 매핑 데이터에서 헤더행 값 가져오기
+if (tempMarketName && this.mappingData?.markets?.[tempMarketName]?.headerRow) {
+    const headerRowValue = this.mappingData.markets[tempMarketName].headerRow;
+    headerRowIndex = Math.max(0, parseInt(headerRowValue) - 1); // 1-based를 0-based 인덱스로 변환
+    console.log(`${file.name}: ${tempMarketName} - 매핑시트 헤더행 ${headerRowValue} 사용`);
+} else {
+    // 매핑 데이터가 없으면 기본 로직 사용
+    console.log(`${file.name}: 매핑 데이터 없음 - 기본 헤더 위치 판단`);
+    
+    // 파일명 기반 기본 판단
+    if (fileName.includes('전화주문') || fileName.includes('cs발송') || fileName.includes('cs재발송')) {
+        headerRowIndex = 1;
+    } else if (fileName.includes('스마트스토어') || fileName.includes('네이버')) {
+        headerRowIndex = 1;
+    } else if (fileName.includes('토스') || (fileName.includes('주문내역') && fileName.includes('상품준비중'))) {
+        headerRowIndex = 1;
+    } else {
+        headerRowIndex = 0;
+    }
+}
+
+/ 마켓 감지
+const marketName = await this.detectMarket(file.name, headers, dataRows[0] || []);
+
+if (!marketName) {
+    this.showError(`${file.name}: 마켓을 인식할 수 없습니다.`);
+    return;
+}
+
+// 마켓 감지 후 헤더행 재확인
+if (this.mappingData?.markets?.[marketName]?.headerRow) {
+    const correctHeaderRow = parseInt(this.mappingData.markets[marketName].headerRow);
+    const correctIndex = Math.max(0, correctHeaderRow - 1);
+    
+    // 현재 헤더 위치가 다르면 재조정
+    if (correctIndex !== headerRowIndex) {
+        console.log(`${file.name}: ${marketName} 헤더 위치 재조정 ${headerRowIndex + 1} → ${correctHeaderRow}`);
+        headerRowIndex = correctIndex;
+        
+        // 헤더와 데이터 다시 추출
+        if (cleanRows[headerRowIndex]) {
+            headers = cleanRows[headerRowIndex].map(h => String(h || '').trim());
+            dataRows = cleanRows.slice(headerRowIndex + 1);
+        }
+    }
+}
         
         const headers = cleanRows[headerRowIndex].map(h => String(h || '').trim());
         const dataRows = cleanRows.slice(headerRowIndex + 1);
@@ -956,6 +1142,10 @@ window.OrderExcelHandler = {
                     mappedRow['정산예정금액'] = this.calculateSettlement(mappedRow, market.settlementFormula);
                 }
                 
+                if (mappedRow['정산예정금액']) {
+    mappedRow['정산예정금액'] = Math.round(mappedRow['정산예정금액']);
+}
+
                 mergedData.push(mappedRow);
             });
         }
@@ -974,68 +1164,248 @@ window.OrderExcelHandler = {
             });
             
             // 계산 실행
-            return eval(calculation) || 0;
-        } catch (error) {
-            return 0;
-        }
+try {
+    const result = Function('"use strict"; return (' + calculation + ')')();
+    
+    // 1원 단위로 반올림하여 정수 변환
+    let finalResult = 0;
+    if (!isNaN(result)) {
+        finalResult = Math.round(result);  // 반올림
+        // 또는 Math.floor(result);  // 버림
+        // 또는 Math.ceil(result);   // 올림
+    }
+    
+    console.log(`  계산 결과: ${finalResult} (원본: ${result})`);
+    return finalResult;  // 정수 반환
+    
+} catch (evalError) {
+    console.error(`  계산 실행 오류: ${evalError.message}`);
+    return 0;  // 오류시에도 정수 0 반환
+}
     },
     
-    displayResults() {
-        const resultSection = document.getElementById('resultSection');
-        resultSection.classList.add('show');
+displayResults() {
+    const resultSection = document.getElementById('resultSection');
+    resultSection.style.display = 'block';
         
         const thead = document.getElementById('excelResultHead');
         const tbody = document.getElementById('excelResultBody');
         
-        // 헤더 생성
-        const headerRow = document.createElement('tr');
-        const fixedEndIndex = this.processedData.headers.indexOf('수령인전화번호') || 
-                             this.processedData.headers.indexOf('수취인전화번호') || 10;
-        
-        this.processedData.headers.forEach((header, index) => {
-            const th = document.createElement('th');
-            th.textContent = header;
-            
-            if (index <= fixedEndIndex) {
-                th.classList.add('fixed-column');
-                th.style.left = index * 120 + 'px';
-                if (index === fixedEndIndex) {
-                    th.classList.add('fixed-column-last');
-                }
-            }
-            
-            headerRow.appendChild(th);
-        });
+        // 열너비 설정
+const columnWidths = {
+    '연번': 50,
+    '마켓명': 100,
+    '마켓': 60,
+    '결제일': 150,
+    '주문번호': 140,
+    '상품주문번호': 140,
+    '주문자': 70,
+    '수취인': 70,
+    '수령인': 70,
+    '주문자전화번호': 120,
+    '수취인전화번호': 120,
+    '수령인전화번호': 120,
+    '주소': 300,
+    '수취인주소': 300,
+    '수령인주소': 300,
+    '배송메세지': 100,
+    '배송메시지': 100,
+    '옵션명': 160,
+    '수량': 60,
+    '확인': 160,
+    '셀러': 80,
+    '셀러공급가': 70,
+    '출고처': 80,
+    '송장주체': 60,
+    '벤더사': 100,
+    '발송지명': 100,
+    '발송지주소': 300,
+    '발송지연락처': 120,
+    '출고비용': 90,
+    '정산예정금액': 90,
+    '택배사': 80,
+    '송장번호': 140
+};
+
+// 고정열 끝 인덱스 찾기
+let fixedEndIndex = -1;
+const phoneFields = ['수령인전화번호', '수령인 전화번호', '수취인전화번호', '수취인 전화번호'];
+for (let i = 0; i < this.processedData.headers.length; i++) {
+    if (phoneFields.includes(this.processedData.headers[i])) {
+        fixedEndIndex = i;
+        break;
+    }
+}
+if (fixedEndIndex === -1) {
+    fixedEndIndex = Math.min(10, this.processedData.headers.length - 1);
+}
+
+// 누적 너비 계산
+const cumulativeWidths = [0];
+let totalWidth = 0;
+this.processedData.headers.forEach(header => {
+    const width = columnWidths[header] || 100;
+    cumulativeWidths.push(cumulativeWidths[cumulativeWidths.length - 1] + width);
+    totalWidth += width;
+});
+
+// 테이블 전체 너비 설정
+const table = document.getElementById('excelResultTable');
+if (table) {
+    table.style.minWidth = `${totalWidth}px`;
+    table.style.tableLayout = 'fixed';
+}
+
+// 헤더 생성
+const headerRow = document.createElement('tr');
+this.processedData.headers.forEach((header, index) => {
+    const th = document.createElement('th');
+    th.textContent = header;
+    
+    const width = columnWidths[header] || 100;
+    th.style.width = `${width}px`;
+    th.style.minWidth = `${width}px`;
+    
+    if (index <= fixedEndIndex) {
+        th.classList.add('fixed-column');
+        th.style.position = 'sticky';
+        th.style.left = `${cumulativeWidths[index]}px`;
+        th.style.zIndex = '10';
+        if (index === fixedEndIndex) {
+            th.classList.add('fixed-column-last');
+        }
+    }
+    
+    headerRow.appendChild(th);
+});
         thead.innerHTML = '';
         thead.appendChild(headerRow);
         
-        // 바디 생성
-        tbody.innerHTML = '';
-        this.processedData.data.forEach((row, rowIndex) => {
-            const tr = document.createElement('tr');
+        // 마켓 순서대로 정렬
+if (this.mappingData && this.mappingData.marketOrder && this.mappingData.marketOrder.length > 0) {
+    this.processedData.data.sort((a, b) => {
+        const marketA = a['마켓명'];
+        const marketB = b['마켓명'];
+        const ia = this.mappingData.marketOrder.indexOf(marketA);
+        const ib = this.mappingData.marketOrder.indexOf(marketB);
+        if (ia !== -1 && ib !== -1) return ia - ib;
+        if (ia !== -1) return -1;
+        if (ib !== -1) return 1;
+        return marketA.localeCompare(marketB);
+    });
+}
+
+// 연번 재할당 (정렬 후)
+this.processedData.data.forEach((row, index) => {
+    row['연번'] = index + 1;
+});
+
+// 바디 생성
+tbody.innerHTML = '';
+this.processedData.data.forEach((row, rowIndex) => {
             
-            this.processedData.headers.forEach((header, colIndex) => {
-                const td = document.createElement('td');
-                let value = row[header] || '';
+            // 필드별 정렬 설정
+const centerAlignFields = ['마켓명', '연번', '결제일', '주문번호', '상품주문번호', '주문자', '수취인', '수령인', '옵션명', '수량', '마켓', '택배사', '송장번호'];
+const leftAlignFields = ['주소', '수취인주소', '수령인주소', '배송메세지', '배송메시지', '발송지주소'];
+const rightAlignFields = ['셀러공급가', '출고비용', '정산예정금액', '정산대상금액', '상품금액', '최종결제금액', '할인금액', '택배비'];
+const phoneFields = ['주문자전화번호', '수취인전화번호', '수령인전화번호', '주문자 전화번호', '수취인 전화번호', '수령인 전화번호'];
+
+function getAlignment(fieldName) {
+    if (rightAlignFields.includes(fieldName)) return 'right';
+    if (leftAlignFields.includes(fieldName)) return 'left';
+    if (centerAlignFields.includes(fieldName)) return 'center';
+    if (phoneFields.includes(fieldName)) return 'center';
+    return 'center';
+}
+
+this.processedData.headers.forEach((header, colIndex) => {
+    const td = document.createElement('td');
+    let value = row[header] || '';
+    
+    const width = columnWidths[header] || 100;
+    td.style.width = `${width}px`;
+    td.style.minWidth = `${width}px`;
+    td.style.textAlign = getAlignment(header);
+    
+    // 고정 컬럼 처리
+    if (colIndex <= fixedEndIndex) {
+        td.classList.add('fixed-column');
+        td.style.position = 'sticky';
+        td.style.left = `${cumulativeWidths[colIndex]}px`;
+        td.style.zIndex = '5';
+        if (colIndex === fixedEndIndex) {
+            td.classList.add('fixed-column-last');
+        }
+    }
+    
+    // 날짜 포맷팅
+    if (header.includes('결제일') || header.includes('발송일') || header.includes('주문일')) {
+        if (value) {
+            // 날짜 형식 변환 로직
+            const dateStr = String(value);
+            if (dateStr.match(/^\d{4}-\d{2}-\d{2}/)) {
+                value = dateStr;
+            } else if (dateStr.match(/^\d{1,2}\/\d{1,2}\/\d{2,4}/)) {
+                const parts = dateStr.split(' ');
+                const dateParts = parts[0].split('/');
+                const month = dateParts[0].padStart(2, '0');
+                const day = dateParts[1].padStart(2, '0');
+                let year = dateParts[2];
+                if (year.length === 2) year = '20' + year;
+                value = `${year}-${month}-${day}` + (parts[1] ? ' ' + parts[1] : '');
+            }
+        }
+    }
+    
+    // 금액 포맷팅
+    if (rightAlignFields.includes(header)) {
+        const numValue = parseFloat(String(value).replace(/[^0-9.-]/g, ''));
+        if (!isNaN(numValue) && value !== '') {
+            value = numValue.toLocaleString('ko-KR');
+            td.classList.add('amount-field');
+        }
+    }
+    
+    // 수량 강조
+    if (header === '수량') {
+        const quantity = parseInt(value);
+        if (quantity >= 2) {
+            td.style.color = '#dc3545';
+            td.style.fontWeight = '500';
+        }
+    }
                 
-                // 고정 컬럼 처리
-                if (colIndex <= fixedEndIndex) {
-                    td.classList.add('fixed-column');
-                    td.style.left = colIndex * 120 + 'px';
-                    if (colIndex === fixedEndIndex) {
-                        td.classList.add('fixed-column-last');
-                    }
-                }
-                
-                // 마켓명 셀 색상
-                if (header === '마켓명' && this.mappingData?.markets?.[value]) {
-                    const market = this.mappingData.markets[value];
-                    td.style.background = `rgb(${market.color})`;
-                    const rgb = market.color.split(',').map(Number);
-                    const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
-                    td.style.color = brightness > 128 ? '#000' : '#fff';
-                    td.style.fontWeight = 'bold';
-                }
+                // 마켓명 배지 표시
+if (header === '마켓명') {
+    const marketName = value;
+    if (this.mappingData?.markets?.[marketName]) {
+        const market = this.mappingData.markets[marketName];
+        const colorValue = `rgb(${market.color})`;
+        const rgb = market.color.split(',').map(Number);
+        const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+        const textColor = brightness > 128 ? '#000' : '#fff';
+        
+        const marketBadge = `
+            <span style="
+                display: inline-block;
+                padding: 4px 10px;
+                background: ${colorValue};
+                color: ${textColor};
+                border-radius: 6px;
+                font-size: 11px;
+                font-weight: 600;
+                white-space: nowrap;
+            ">${marketName}</span>
+        `;
+        
+        td.innerHTML = marketBadge;
+        td.style.textAlign = 'center';
+        td.style.background = '#ffffff';  // 셀 배경은 흰색 유지
+    } else {
+        td.textContent = marketName;
+        td.style.textAlign = 'center';
+    }
+}
                 
                 // 옵션명 매칭 상태 표시
                 if (header === '옵션명') {
@@ -1071,80 +1441,152 @@ window.OrderExcelHandler = {
     },
     
     async verifyOptions() {
-        if (!this.processedData || !this.ProductMatching) {
-            this.showError('검증할 데이터가 없습니다.');
-            return;
-        }
-        
-        const result = await this.ProductMatching.verifyOptions();
-        this.displayResults();
-        this.showSuccess(result.message || '옵션명 검증 완료');
-    },
+    if (!this.processedData || !this.ProductMatching) {
+        this.showError('검증할 데이터가 없습니다.');
+        return;
+    }
     
-    async verifyDuplicate() {
-        if (!this.processedData) {
-            this.showError('검증할 데이터가 없습니다.');
-            return;
+    // processedData를 전달해야 함
+    const result = await this.ProductMatching.verifyOptions(this.processedData.data);
+    
+    if (result.unmatchedOptions && result.unmatchedOptions.length > 0) {
+        this.showError(`매칭 실패: ${result.unmatchedOptions.length}개 옵션`);
+    } else {
+        this.showSuccess('모든 옵션명 매칭 성공');
+    }
+    
+    this.displayResults();
+},
+    
+async verifyDuplicate() {
+    if (!this.processedData) {
+        this.showError('검증할 데이터가 없습니다.');
+        return;
+    }
+    
+    this.showLoading();
+    
+    try {
+        // 과거 7일 시트명 생성
+        const sheetNames = [];
+        for (let i = 1; i <= 7; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            sheetNames.push(`${year}${month}${day}`);
         }
         
-        this.showLoading();
-        
-        try {
-            // 7일간 데이터 조회
-            const dates = [];
-            for (let i = 1; i <= 7; i++) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                dates.push(date.toISOString().slice(0, 10).replace(/-/g, ''));
-            }
-            
-            const pastOrders = [];
-            for (const sheetName of dates) {
-                try {
-                    const response = await fetch(`${this.API_BASE}/api/sheets`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            action: 'getOrdersByDate',
-                            sheetName: sheetName
-                        })
+        // 과거 주문 데이터 수집
+        const pastOrders = [];
+        for (const sheetName of sheetNames) {
+            try {
+                const response = await fetch(`${this.API_BASE}/api/sheets`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'getSheetData',  // 올바른 액션명 사용
+                        sheetName: sheetName,
+                        spreadsheetId: 'SPREADSHEET_ID_ORDERS'  // 주문 스프레드시트 ID
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success && result.data) {
+                    result.data.forEach(order => {
+                        order._sheetName = sheetName;  // 출처 시트 기록
                     });
-                    
-                    const result = await response.json();
-                    if (result.data && result.data.length > 0) {
-                        pastOrders.push(...result.data);
-                    }
-                } catch (error) {
-                    console.log(`${sheetName} 조회 실패:`, error);
+                    pastOrders.push(...result.data);
                 }
+            } catch (error) {
+                console.log(`${sheetName} 시트 조회 실패:`, error);
             }
+        }
+        
+        // 중복 검증
+        let shippedDuplicates = 0;
+        let unshippedDuplicates = 0;
+        const duplicateDetails = [];
+        
+        this.processedData.data.forEach((currentOrder, index) => {
+            const currentOrderNo = String(currentOrder['주문번호'] || '').trim();
+            const currentRecipient = String(currentOrder['수령인'] || currentOrder['수취인'] || '').trim();
+            const currentOption = String(currentOrder['옵션명'] || '').trim();
             
-            // 중복 검증
-            let duplicateCount = 0;
-            this.processedData.data.forEach(order => {
-                const orderNo = String(order['주문번호'] || '').trim();
-                const recipient = String(order['수령인'] || order['수취인'] || '').trim();
+            if (!currentOrderNo || !currentRecipient) return;
+            
+            // 과거 데이터에서 중복 찾기
+            const duplicates = pastOrders.filter(pastOrder => {
+                const pastOrderNo = String(pastOrder['주문번호'] || '').trim();
+                const pastRecipient = String(pastOrder['수령인'] || pastOrder['수취인'] || '').trim();
+                const pastOption = String(pastOrder['옵션명'] || '').trim();
                 
-                const isDuplicate = pastOrders.some(past => 
-                    String(past['주문번호']).trim() === orderNo &&
-                    String(past['수령인'] || past['수취인']).trim() === recipient
-                );
-                
-                if (isDuplicate) {
-                    order['_duplicateStatus'] = 'duplicate';
-                    duplicateCount++;
-                }
+                return currentOrderNo === pastOrderNo && 
+                       currentRecipient === pastRecipient &&
+                       currentOption === pastOption;
             });
             
-            this.displayResults();
-            this.showSuccess(`중복발송 검증 완료: ${duplicateCount}건 중복 발견`);
-            
-        } catch (error) {
-            this.showError('중복 검증 중 오류 발생');
-        } finally {
-            this.hideLoading();
+            if (duplicates.length > 0) {
+                const hasShipped = duplicates.some(d => d['송장번호'] && String(d['송장번호']).trim() !== '');
+                
+                if (hasShipped) {
+                    shippedDuplicates++;
+                    currentOrder['_duplicateStatus'] = 'shipped';
+                    
+                    const shippedOrder = duplicates.find(d => d['송장번호']);
+                    duplicateDetails.push({
+                        type: 'shipped',
+                        orderNo: currentOrderNo,
+                        recipient: currentRecipient,
+                        option: currentOption,
+                        invoice: shippedOrder['송장번호'],
+                        sheetName: shippedOrder['_sheetName']
+                    });
+                } else {
+                    unshippedDuplicates++;
+                    currentOrder['_duplicateStatus'] = 'unshipped';
+                    
+                    duplicateDetails.push({
+                        type: 'unshipped',
+                        orderNo: currentOrderNo,
+                        recipient: currentRecipient,
+                        option: currentOption,
+                        sheetName: duplicates[0]['_sheetName']
+                    });
+                }
+            }
+        });
+        
+        // 결과 표시
+        this.displayResults();
+        
+        // 상세 메시지 구성
+        let message = `중복발송 검증 완료\n`;
+        if (shippedDuplicates > 0) {
+            message += `⛔ 발송 완료 중복: ${shippedDuplicates}건 (제거 필요)\n`;
         }
-    },
+        if (unshippedDuplicates > 0) {
+            message += `⚠️ 미발송 중복: ${unshippedDuplicates}건 (확인 필요)\n`;
+        }
+        if (shippedDuplicates === 0 && unshippedDuplicates === 0) {
+            message += `✅ 중복 주문이 없습니다.`;
+        }
+        
+        // 중복 상세 내역 콘솔 출력
+        if (duplicateDetails.length > 0) {
+            console.log('중복 상세 내역:', duplicateDetails);
+        }
+        
+        this.showSuccess(message);
+        
+    } catch (error) {
+        console.error('중복 검증 오류:', error);
+        this.showError('중복 검증 중 오류가 발생했습니다.');
+    } finally {
+        this.hideLoading();
+    }
+},
     
     openBatchEdit() {
         if (!this.processedData) {
@@ -1247,47 +1689,88 @@ window.OrderExcelHandler = {
     },
     
     async saveToSheets() {
-        if (!this.processedData) {
-            this.showError('저장할 데이터가 없습니다.');
-            return;
+    if (!this.processedData || !this.processedData.data || this.processedData.data.length === 0) {
+        this.showError('저장할 데이터가 없습니다. 먼저 주문을 처리해주세요.');
+        return;
+    }
+    
+    // 이미 저장 중인지 확인
+    if (window.isSaving) {
+        this.showMessage('저장 중입니다. 잠시만 기다려주세요.', 'info');
+        return;
+    }
+    
+    window.isSaving = true;
+    this.showLoading();
+    
+    try {
+        // 헤더 행 추가
+        const headers = this.processedData.headers || this.mappingData.standardFields;
+        const values = [headers];
+        
+        // 데이터 행 추가
+        this.processedData.data.forEach(row => {
+            const rowValues = headers.map(header => {
+                const value = row[header];
+                return value !== undefined && value !== null ? String(value) : '';
+            });
+            values.push(rowValues);
+        });
+        
+        // 마켓 색상 매핑 준비
+        const marketColors = {};
+        if (this.mappingData && this.mappingData.markets) {
+            Object.entries(this.mappingData.markets).forEach(([marketName, market]) => {
+                if (market.color) {
+                    const rgb = market.color.split(',').map(Number);
+                    const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+                    marketColors[marketName] = {
+                        color: market.color,
+                        textColor: brightness > 128 ? '#000' : '#fff'
+                    };
+                }
+            });
         }
         
-        this.showLoading();
+        // API 호출
+        const response = await fetch(`${this.API_BASE}/api/sheets`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'saveToSheet',
+                sheetName: this.processedData.sheetName,
+                values: values,
+                marketColors: marketColors,
+                spreadsheetId: 'SPREADSHEET_ID_ORDERS'  // 주문 스프레드시트 ID
+            })
+        });
         
-        try {
-            const values = [this.processedData.headers];
-            this.processedData.data.forEach(row => {
-                values.push(this.processedData.headers.map(h => row[h] || ''));
-            });
-            
-            const response = await fetch(`${this.API_BASE}/api/sheets`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'saveToSheet',
-                    sheetName: this.processedData.sheetName,
-                    values: values
-                })
-            });
-            
-            const result = await response.json();
-            if (result.success) {
-                this.showSuccess('구글 시트에 저장되었습니다.');
-            } else {
-                this.showError('저장 실패: ' + result.error);
-            }
-        } catch (error) {
-            this.showError('저장 중 오류 발생');
-        } finally {
-            this.hideLoading();
+        const result = await response.json();
+        
+        if (result.success) {
+            console.log(`Saved ${this.processedData.data.length} rows to sheet "${this.processedData.sheetName}"`);
+            this.showSuccess(`구글 시트 "${this.processedData.sheetName}"에 저장되었습니다.`);
+        } else {
+            console.error('시트 저장 실패:', result.error);
+            this.showError('시트 저장 실패: ' + (result.error || '알 수 없는 오류'));
         }
-    },
+        
+    } catch (error) {
+        console.error('저장 중 오류:', error);
+        this.showError('저장 중 오류 발생: ' + error.message);
+    } finally {
+        this.hideLoading();
+        window.isSaving = false;
+    }
+},
     
     resetResults() {
         if (!confirm('결과를 초기화하시겠습니까?')) return;
         
         this.processedData = null;
-        document.getElementById('resultSection').classList.remove('show');
+document.getElementById('resultSection').style.display = 'none';
         this.showSuccess('초기화 완료');
     },
     
