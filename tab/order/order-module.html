@@ -3,59 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>주문통합관리</title>
+    <link rel="stylesheet" href="order-common.css">
     <style>
-        /* 기본 스타일 */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Noto Sans KR', -apple-system, sans-serif;
-            background: #f5f6fa;
-            color: #212529;
-        }
-        
-        .om-container {
-            width: 100%;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        /* 헤더 */
-        .om-header {
-            background: #ffffff;
-            border-bottom: 1px solid #dee2e6;
-            padding: 20px;
-        }
-        
-        .om-header-content {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        
-        .om-title-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-        
-        .om-title {
-            font-size: 24px;
-            font-weight: 600;
-            color: #212529;
-        }
-        
-        /* 탭 */
+        /* 탭 버튼 강조 스타일 */
         .om-tabs {
             display: flex;
             gap: 12px;
             padding: 8px 0;
         }
-        
+
         .om-tab-btn {
             padding: 10px 18px;
             background: #ffffff;
@@ -71,21 +27,21 @@
             gap: 8px;
             position: relative;
         }
-        
+
         .om-tab-btn:hover {
             background: #f8f9fa;
             border-color: #2563eb;
             transform: translateY(-1px);
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
-        
+
         .om-tab-btn.active {
             background: #2563eb;
             color: #ffffff;
             border-color: #2563eb;
             box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
         }
-        
+
         .om-tab-btn.active::after {
             content: '';
             position: absolute;
@@ -97,96 +53,46 @@
             background: #2563eb;
             border-radius: 2px;
         }
-        
+
         /* 각 탭별 아이콘 색상 */
         .om-tab-btn[data-tab="search"] svg {
             stroke: #2563eb;
         }
-        
+
         .om-tab-btn[data-tab="input"] svg {
             stroke: #10b981;
         }
-        
+
         .om-tab-btn[data-tab="excel"] svg {
             stroke: #f59e0b;
         }
-        
+
         .om-tab-btn[data-tab="shipping"] svg {
             stroke: #8b5cf6;
         }
-        
+
         .om-tab-btn[data-tab="cs"] svg {
             stroke: #ef4444;
         }
-        
+
         .om-tab-btn[data-tab="etc"] svg {
             stroke: #6b7280;
         }
-        
+
+        /* 활성 상태에서는 아이콘 색상을 흰색으로 */
         .om-tab-btn.active svg {
             stroke: #ffffff;
         }
-        
+
+        /* 호버 시 아이콘 애니메이션 */
         .om-tab-btn:hover svg {
             transform: scale(1.1);
-        }
-        
-        /* 콘텐츠 */
-        .om-content {
-            flex: 1;
-            overflow: hidden;
-            padding: 20px;
-        }
-        
-        .om-panel {
-            display: none;
-            width: 100%;
-            height: 100%;
-            background: #ffffff;
-            border-radius: 8px;
-            overflow: auto;
-        }
-        
-        .om-panel.active {
-            display: block;
-        }
-        
-        /* 로딩 */
-        .om-loading {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.95);
-            z-index: 10000;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .om-loading.show {
-            display: flex;
-        }
-        
-        .om-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #2563eb;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
     <div class="om-container">
-        <!-- 통합 헤더 섹션 -->
+                <!-- 통합 헤더 섹션 -->
         <div class="om-header">
             <div class="om-header-content">
                 <div class="om-title-wrapper">
