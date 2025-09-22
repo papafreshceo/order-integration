@@ -1410,6 +1410,8 @@ if (header === '마켓명') {
         td.style.textAlign = 'center';
     }
 
+} else {
+    td.textContent = String(value);
 }
                 
                 // 옵션명 매칭 상태 표시
@@ -1439,7 +1441,12 @@ if (header === '마켓명') {
                 
                 
         
-        tr.appendChild(td);
+        // 기본값 설정 (마켓명이 아니고 특별한 처리가 없는 경우)
+    if (header !== '마켓명' && !td.textContent && !td.innerHTML) {
+        td.textContent = String(value);
+    }
+    
+    tr.appendChild(td);
     });
     
     tbody.appendChild(tr);
