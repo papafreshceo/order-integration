@@ -1619,7 +1619,7 @@ if (header !== '마켓명' && !td.textContent && !td.innerHTML) {
 });
 },
     
-    async verifyOptions() {
+async verifyOptions() {
     if (!this.processedData) {
         this.showError('처리된 주문 데이터가 없습니다. 먼저 주문 통합을 실행하세요.');
         return;
@@ -1639,9 +1639,13 @@ if (header !== '마켓명' && !td.textContent && !td.innerHTML) {
     console.log('window.productData 존재:', !!window.productData);
     console.log('window.productData 샘플:', Object.keys(window.productData || {}).slice(0, 5));
     
+    // 모든 변수를 여기서 선언
     let matchedCount = 0;
     let unmatchedCount = 0;
+    let modifiedCount = 0;
     let modifiedMatchedCount = 0;
+    let modifiedUnmatchedCount = 0;
+    let notModifiedCount = 0;
     
     // 모든 행 검증
     this.processedData.data.forEach((row, index) => {
@@ -1653,29 +1657,35 @@ if (header !== '마켓명' && !td.textContent && !td.innerHTML) {
             return;
         }
         
-// ProductMatching 있으면 매칭 시도
-let matchedProduct = null;
-const productData = this.ProductMatching?.getProductData() || window.productData || {};
-
-if (this.ProductMatching && Object.keys(productData).length > 0) {
-    const trimmedOption = optionName.trim();
-    matchedProduct = productData[trimmedOption];
-    
-    if (!matchedProduct) {
-        // 대소문자 무시 매칭
-        const lowerOption = trimmedOption.toLowerCase();
-        for (const [key, value] of Object.entries(productData)) {
-            if (key.toLowerCase() === lowerOption) {
-                matchedProduct = value;
-                break;
+        // ProductMatching 있으면 매칭 시도
+        let matchedProduct = null;
+        const productData = this.ProductMatching?.getProductData() || window.productData || {};
+        
+        if (this.ProductMatching && Object.keys(productData).length > 0) {
+            const trimmedOption = optionName.trim();
+            matchedProduct = productData[trimmedOption];
+            
+            if (!matchedProduct) {
+                // 대소문자 무시 매칭
+                const lowerOption = trimmedOption.toLowerCase();
+                for (const [key, value] of Object.entries(productData)) {
+                    if (key.toLowerCase() === lowerOption) {
+                        matchedProduct = value;
+                        break;
+                    }
+                }
             }
         }
-    }
-}
         
         if (matchedProduct) {
-            matchedCount++;
-            row['_matchStatus'] = 'matched';
+            // 기존 상태 확인
+            if (row['_matchStatus'] === 'modified' || row['_matchStatus'] === 'modified-matched') {
+                modifiedMatchedCount++;
+                row['_matchStatus'] = 'modified-matched';
+            } else {
+                matchedCount++;
+                row['_matchStatus'] = 'matched';
+            }
             
             // 제품 정보 업데이트
             row['셀러공급가'] = matchedProduct['셀러공급가'] || row['셀러공급가'] || '';
@@ -1692,109 +1702,107 @@ if (this.ProductMatching && Object.keys(productData).length > 0) {
         }
     });
     
-// 결과 표시
-this.displayResults();
-
-// 상세 통계 계산
-let modifiedCount = 0;
-let modifiedMatchedCount = 0;
-let modifiedUnmatchedCount = 0;
-let notModifiedCount = unmatchedCount;
-
-this.processedData.data.forEach(row => {
-    if (row['_matchStatus'] === 'modified-matched') {
-        modifiedMatchedCount++;
-        modifiedCount++;
-    } else if (row['_matchStatus'] === 'modified') {
-        modifiedUnmatchedCount++;
-        modifiedCount++;
-    }
-});
-
-// 모달 창 생성
-const modal = document.createElement('div');
-modal.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-`;
-
-const modalContent = document.createElement('div');
-modalContent.style.cssText = `
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    max-width: 500px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-`;
-
-modalContent.innerHTML = `
-    <h3 style="margin-bottom: 20px; font-size: 20px; font-weight: 500; color: #2563eb;">
-        옵션명 검증 결과
-    </h3>
-    <div style="line-height: 2; font-size: 14px;">
-        <div style="padding: 8px; background: #f8f9fa; border-radius: 8px; margin-bottom: 10px;">
-            <div style="color: #10b981;">✓ 매칭 성공: <strong>${matchedCount}개</strong></div>
-            <div style="color: #f59e0b;">✏ 수정한 옵션명: <strong>${modifiedCount}개</strong></div>
-            <div style="color: #10b981;">✓ 수정 후 매칭 성공: <strong>${modifiedMatchedCount}개</strong></div>
-            <div style="color: #dc3545;">✗ 수정 후 매칭 실패: <strong>${modifiedUnmatchedCount}개</strong></div>
-            <div style="color: #dc3545;">✗ 수정 안된 옵션명: <strong>${notModifiedCount - modifiedUnmatchedCount}개</strong></div>
+    // 결과 표시
+    this.displayResults();
+    
+    // 상세 통계 재계산
+    modifiedCount = 0;
+    modifiedUnmatchedCount = 0;
+    
+    this.processedData.data.forEach(row => {
+        if (row['_matchStatus'] === 'modified-matched') {
+            modifiedCount++;
+        } else if (row['_matchStatus'] === 'modified') {
+            modifiedCount++;
+            modifiedUnmatchedCount++;
+        }
+    });
+    
+    notModifiedCount = unmatchedCount - modifiedUnmatchedCount;
+    
+    // 모달 창 생성
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        max-width: 500px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    `;
+    
+    modalContent.innerHTML = `
+        <h3 style="margin-bottom: 20px; font-size: 20px; font-weight: 500; color: #2563eb;">
+            옵션명 검증 결과
+        </h3>
+        <div style="line-height: 2; font-size: 14px;">
+            <div style="padding: 8px; background: #f8f9fa; border-radius: 8px; margin-bottom: 10px;">
+                <div style="color: #10b981;">✓ 매칭 성공: <strong>${matchedCount}개</strong></div>
+                <div style="color: #f59e0b;">✏ 수정한 옵션명: <strong>${modifiedCount}개</strong></div>
+                <div style="color: #10b981;">✓ 수정 후 매칭 성공: <strong>${modifiedMatchedCount}개</strong></div>
+                <div style="color: #dc3545;">✗ 수정 후 매칭 실패: <strong>${modifiedUnmatchedCount}개</strong></div>
+                <div style="color: #dc3545;">✗ 수정 안된 매칭 실패: <strong>${notModifiedCount}개</strong></div>
+            </div>
+            <div style="margin-top: 10px; font-size: 13px; color: #6c757d;">
+                ${modifiedMatchedCount > 0 ? '• 수정 후 매칭 성공: <span style="color: #10b981;">초록색</span> 표시<br>' : ''}
+                ${unmatchedCount > 0 ? '• 매칭 실패: <span style="color: #dc3545;">빨간색</span> 표시<br>' : ''}
+                ${modifiedUnmatchedCount > 0 ? '• 수정 후 실패: <span style="color: #f59e0b;">노란색</span> 표시' : ''}
+            </div>
         </div>
-        <div style="margin-top: 10px; font-size: 13px; color: #6c757d;">
-            ${modifiedMatchedCount > 0 ? '• 수정 후 매칭 성공: 초록색 표시' : ''}
-            ${unmatchedCount > 0 ? '<br>• 매칭 실패: 빨간색 표시' : ''}
-            ${modifiedUnmatchedCount > 0 ? '<br>• 수정 후 실패: 노란색 표시' : ''}
-        </div>
-    </div>
-`;
-
-const closeButton = document.createElement('button');
-closeButton.textContent = '닫기';
-closeButton.style.cssText = `
-    margin-top: 20px;
-    padding: 10px 24px;
-    background: #2563eb;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    width: 100%;
-    transition: all 0.2s;
-`;
-
-closeButton.onmouseover = () => {
-    closeButton.style.background = '#1d4ed8';
-};
-closeButton.onmouseout = () => {
-    closeButton.style.background = '#2563eb';
-};
-
-closeButton.onclick = () => {
-    document.body.removeChild(modal);
-};
-
-modalContent.appendChild(closeButton);
-modal.appendChild(modalContent);
-document.body.appendChild(modal);
-
-// ESC 키로 닫기
-const escHandler = (e) => {
-    if (e.key === 'Escape') {
+    `;
+    
+    const closeButton = document.createElement('button');
+    closeButton.textContent = '닫기';
+    closeButton.style.cssText = `
+        margin-top: 20px;
+        padding: 10px 24px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        width: 100%;
+        transition: all 0.2s;
+    `;
+    
+    closeButton.onmouseover = () => {
+        closeButton.style.background = '#1d4ed8';
+    };
+    closeButton.onmouseout = () => {
+        closeButton.style.background = '#2563eb';
+    };
+    
+    closeButton.onclick = () => {
         document.body.removeChild(modal);
-        document.removeEventListener('keydown', escHandler);
-    }
-};
-document.addEventListener('keydown', escHandler);
+    };
+    
+    modalContent.appendChild(closeButton);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // ESC 키로 닫기
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            document.body.removeChild(modal);
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
 },
-
 async verifyDuplicate() {
     if (!this.processedData) {
         this.showError('검증할 데이터가 없습니다.');
