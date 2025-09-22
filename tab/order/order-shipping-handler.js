@@ -2071,5 +2071,26 @@ window.OrderShippingHandler = {
         setTimeout(() => {
             message.classList.remove('show');
         }, 3000);
+    },
+    // fullReset 추가
+fullReset() {
+    // 모든 데이터 초기화
+    this.manualOrders = [];
+    this.tempAddressData = {};
+    this.productData = {};
+    
+    // 캐시 삭제
+    this.clearCache();
+    
+    // DOM 완전 재렌더링
+    const container = document.getElementById('om-panel-input');
+    if (container) {
+        container.innerHTML = '';
+        this.render();
+        this.setupEventListeners();
+        this.loadProductData();
     }
+    
+    console.log('OrderInputHandler 완전 초기화 완료');
+}
 };

@@ -1694,5 +1694,26 @@ const orderData = {
     // 마케팅고객등록 모달 (추후 구현)
     openMarketingModal() {
         this.showMessage('마케팅고객등록 기능은 준비 중입니다.', 'info');
+    },
+    // fullReset 추가
+fullReset() {
+    // 모든 데이터 초기화
+    this.manualOrders = [];
+    this.tempAddressData = {};
+    this.productData = {};
+    
+    // 캐시 삭제
+    this.clearCache();
+    
+    // DOM 완전 재렌더링
+    const container = document.getElementById('om-panel-input');
+    if (container) {
+        container.innerHTML = '';
+        this.render();
+        this.setupEventListeners();
+        this.loadProductData();
     }
+    
+    console.log('OrderInputHandler 완전 초기화 완료');
+}
 };
