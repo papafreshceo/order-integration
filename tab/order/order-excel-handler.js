@@ -857,16 +857,7 @@ if (tempMarketName && this.mappingData?.markets?.[tempMarketName]?.headerRow) {
     }
 }
 
-/ 마켓 감지
-const marketName = await this.detectMarket(file.name, headers, dataRows[0] || []);
 
-if (!marketName) {
-    this.showError(`${file.name}: 마켓을 인식할 수 없습니다.`);
-    return;
-}
-
-// 마켓 감지 후 헤더행 재확인
-if (this.mappingData?.markets?.[marketName]?.headerRow) {
     const correctHeaderRow = parseInt(this.mappingData.markets[marketName].headerRow);
     const correctIndex = Math.max(0, correctHeaderRow - 1);
     
@@ -1139,8 +1130,12 @@ if (this.mappingData?.markets?.[marketName]?.headerRow) {
                 
                 // 정산예정금액 계산
                 if (market.settlementFormula) {
-                    mappedRow['정산예정금액'] = this.calculateSettlement(mappedRow, market.settlementFormula);
-                }
+    mappedRow['정산예정금액'] = this.calculateSettlement(mappedRow, market.settlementFormula, marketName);
+} else {
+    // 정산수식이 없으면 기본값 사용
+    mappedRow['정산예정금액'] = mappedRow['상품금액'] || mappedRow['최종결제금액'] || 0;
+    console.log(`${marketName}: 정산수식 없음 - 기본값 사용`);
+}
                 
                 if (mappedRow['정산예정금액']) {
     mappedRow['정산예정금액'] = Math.round(mappedRow['정산예정금액']);
@@ -1153,18 +1148,57 @@ if (this.mappingData?.markets?.[marketName]?.headerRow) {
         return mergedData;
     },
     
-    calculateSettlement(row, formula) {
+    calculateSettlement(row, formula, marketName) {
+    try {
+        if (!formula || formula.trim() === '') {
+            console.log(`${marketName}: 정산수식이 없습니다`);
+            return 0;
+        }
+        
+        console.log(`${marketName} 원본 정산수식: ${formula}`);
+        
+        let calculation = formula;
+        
+        // 엑셀 함수 변환
+        calculation = calculation.replace(/ROUND\(/gi, 'Math.round(');
+        calculation = calculation.replace(/ABS\(/gi, 'Math.abs(');
+        calculation = calculation.replace(/MIN\(/gi, 'Math.min(');
+        calculation = calculation.replace(/MAX\(/gi, 'Math.max(');
+        
+        // 필드명을 값으로 치환
+        Object.entries(row).forEach(([fieldName, fieldValue]) => {
+            if (calculation.includes(fieldName)) {
+                const numValue = typeof fieldValue === 'number' ? 
+                    fieldValue : parseFloat(String(fieldValue).replace(/[^0-9.-]/g, '')) || 0;
+                calculation = calculation.replace(new RegExp(fieldName, 'g'), numValue);
+            }
+        });
+        
+        console.log(`  변환된 계산식: ${calculation}`);
+        
+        // 계산 실행
         try {
-            let calculation = formula;
+            const result = Function('"use strict"; return (' + calculation + ')')();
             
-            // 필드명을 값으로 치환
-            Object.entries(row).forEach(([field, value]) => {
-                const numValue = parseFloat(String(value).replace(/[^0-9.-]/g, '')) || 0;
-                calculation = calculation.replace(new RegExp(field, 'g'), numValue);
-            });
+            // 1원 단위로 반올림하여 정수 변환
+            let finalResult = 0;
+            if (!isNaN(result)) {
+                finalResult = Math.round(result);
+            }
             
-            // 계산 실행
-try {
+            console.log(`  계산 결과: ${finalResult} (원본: ${result})`);
+            return finalResult;
+            
+        } catch (evalError) {
+            console.error(`  계산 실행 오류: ${evalError.message}`);
+            return 0;
+        }
+        
+    } catch (error) {
+        console.error(`정산금액 계산 오류 (${marketName}):`, error);
+        return 0;
+    }
+}
     const result = Function('"use strict"; return (' + calculation + ')')();
     
     // 1원 단위로 반올림하여 정수 변환
@@ -1303,6 +1337,7 @@ this.processedData.data.forEach((row, index) => {
 // 바디 생성
 tbody.innerHTML = '';
 this.processedData.data.forEach((row, rowIndex) => {
+    const tr = document.createElement('tr');
             
             // 필드별 정렬 설정
 const centerAlignFields = ['마켓명', '연번', '결제일', '주문번호', '상품주문번호', '주문자', '수취인', '수령인', '옵션명', '수량', '마켓', '택배사', '송장번호'];
