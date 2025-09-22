@@ -319,10 +319,11 @@ async function verifyOptions() {
                 row['출고비용'] = matchedProduct.출고비용 || 0;
                 
                 const sellerPrice = getSellerPrice(optionName);
-                if (sellerPrice !== null) {
-                    const quantity = parseInt(row['수량']) || 1;
-                    row['셀러공급가'] = sellerPrice * quantity;
-                }
+                if (row['셀러'] && matchedProduct['셀러공급가']) {
+    const quantity = parseInt(row['수량']) || 1;
+    const unitPrice = parseFloat(matchedProduct['셀러공급가']) || 0;
+    row['셀러공급가'] = unitPrice * quantity;
+}
             } else {
                 unmatchedCount++;
                 row['_matchStatus'] = 'unmatched';
