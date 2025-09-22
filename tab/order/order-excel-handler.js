@@ -803,10 +803,11 @@ window.OrderExcelHandler = {
                     });
                 }
                 
-                const rawRows = XLSX.utils.sheet_to_json(firstSheet, {
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+const rawRows = XLSX.utils.sheet_to_json(firstSheet, {
     header: 1,
     defval: '',
-    blankrows: false,
+    blankrows: true,  // 빈 행도 포함
     raw: false
 });
                 
