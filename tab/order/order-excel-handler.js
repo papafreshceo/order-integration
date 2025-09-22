@@ -299,11 +299,15 @@ window.OrderExcelHandler = {
                 }
                 
                 .result-table thead {
-                    position: sticky;
-                    top: 0;
-                    z-index: 10;
-                    background: #f8f9fa;
-                }
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #f8f9fa;
+}
+
+.result-table thead th.fixed-column {
+    background: #e9ecef !important;  /* 고정 헤더 구분색 */
+}
                 
                 .result-table th {
                     padding: 8px;
@@ -314,11 +318,14 @@ window.OrderExcelHandler = {
                 }
                 
                 .result-table td {
-                    padding: 6px 8px;
-                    border: 1px solid #dee2e6;
-                    white-space: nowrap;
-                    background: white;
-                }
+    padding: 6px 8px;
+    border: 1px solid #dee2e6;
+    white-space: nowrap;
+    background: white;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 0;  /* text-overflow 작동을 위해 필요 */
+}
                 
                 /* 고정 컬럼 */
                 .fixed-column {
@@ -1415,21 +1422,63 @@ if (header === '마켓명') {
 }
                 
                 // 옵션명 매칭 상태 표시
-                if (header === '옵션명') {
-                    if (row['_matchStatus'] === 'unmatched') {
-                        td.classList.add('unmatched-cell', 'editable-cell');
-                        td.contentEditable = true;
-                        
-                        td.addEventListener('blur', () => {
-                            row['옵션명'] = td.textContent.trim();
-                            row['_matchStatus'] = 'modified';
-                            td.classList.remove('unmatched-cell');
-                            td.classList.add('modified-cell');
-                        });
-                    } else if (row['_matchStatus'] === 'modified') {
-                        td.classList.add('modified-cell');
-                    }
-                }
+if (header === '옵션명') {
+    const optionContent = document.createElement('div');
+    optionContent.style.display = 'flex';
+    optionContent.style.alignItems = 'center';
+    optionContent.style.gap = '4px';
+    
+    const optionText = document.createElement('span');
+    optionText.textContent = String(value);
+    optionText.style.overflow = 'hidden';
+    optionText.style.textOverflow = 'ellipsis';
+    optionText.style.flex = '1';
+    
+    if (row['_matchStatus'] === 'unmatched') {
+        td.classList.add('unmatched-cell', 'editable-cell');
+        
+        // 경고 아이콘 추가
+        const warningIcon = document.createElement('span');
+        warningIcon.innerHTML = '⚠️';
+        warningIcon.style.fontSize = '12px';
+        warningIcon.title = '매칭 실패';
+        
+        optionContent.appendChild(optionText);
+        optionContent.appendChild(warningIcon);
+        td.appendChild(optionContent);
+        
+        td.contentEditable = true;
+        td.addEventListener('blur', () => {
+            row['옵션명'] = td.textContent.trim();
+            row['_matchStatus'] = 'modified';
+            td.classList.remove('unmatched-cell');
+            td.classList.add('modified-cell');
+            
+            // 아이콘을 연필로 변경
+            const icon = td.querySelector('span:last-child');
+            if (icon) {
+                icon.innerHTML = '✏️';
+                icon.title = '수정됨';
+            }
+        });
+    } else if (row['_matchStatus'] === 'modified') {
+        td.classList.add('modified-cell');
+        
+        // 연필 아이콘 추가
+        const editIcon = document.createElement('span');
+        editIcon.innerHTML = '✏️';
+        editIcon.style.fontSize = '12px';
+        editIcon.title = '수정됨';
+        
+        optionContent.appendChild(optionText);
+        optionContent.appendChild(editIcon);
+        td.appendChild(optionContent);
+    } else {
+        td.textContent = String(value);
+    }
+} else {
+    td.textContent = String(value);
+}
                 
                 // 금액 포맷팅
                 if (header.includes('금액') || header.includes('공급가')) {
