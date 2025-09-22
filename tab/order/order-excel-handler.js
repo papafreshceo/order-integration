@@ -1184,7 +1184,7 @@ if (tempMarketName && this.mappingData?.markets?.[tempMarketName]?.headerRow) {
         console.error(`정산금액 계산 오류 (${marketName}):`, error);
         return 0;
     }
-}
+},
     
     
 displayResults() {
@@ -1409,8 +1409,7 @@ if (header === '마켓명') {
         td.textContent = marketName;
         td.style.textAlign = 'center';
     }
-} else {
-    td.textContent = String(value);
+
 }
                 
                 // 옵션명 매칭 상태 표시
@@ -1438,9 +1437,7 @@ if (header === '마켓명') {
                     }
                 }
                 
-                } else {
-            td.textContent = String(value);
-        }
+                
         
         tr.appendChild(td);
     });
