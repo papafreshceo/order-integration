@@ -870,17 +870,36 @@ async processExcelData(rawRows, file) {
     console.log(`파일명: ${file.name}`);
     console.log(`임시 감지 마켓: ${tempMarketName || '없음'}`);
     
-    // 매핑 데이터에서 헤더행 값 가져오기
-    if (tempMarketName && this.mappingData?.markets?.[tempMarketName]?.headerRow) {
-        const headerRowValue = this.mappingData.markets[tempMarketName].headerRow;
-        headerRowIndex = Math.max(0, parseInt(headerRowValue) - 1); // 1-based를 0-based 인덱스로 변환
-        console.log(`매핑시트 헤더행 값: ${headerRowValue} → 인덱스: ${headerRowIndex}`);
-        
-        // 디버그: 실제 행 데이터 확인
-        console.log(`1행 데이터:`, rawRows[0]?.slice(0, 5));
-        console.log(`2행 데이터:`, rawRows[1]?.slice(0, 5));
-        if (rawRows[2]) console.log(`3행 데이터:`, rawRows[2]?.slice(0, 5));
+    // 토스 특별 처리
+if (tempMarketName === '토스') {
+    // 토스는 항상 2행이 헤더 (1행이 빈 행)
+    // 첫 행이 실제로 빈 행인지 확인
+    const firstRowEmpty = !rawRows[0] || rawRows[0].every(cell => !cell || String(cell).trim() === '');
+    
+    if (!firstRowEmpty) {
+        // 첫 행이 빈 행이 아니면 이미 제거된 상태
+        headerRowIndex = 0; // 현재 첫 행이 헤더
+        console.log(`토스: 빈 행이 이미 제거됨, 현재 1행을 헤더로 사용 (인덱스: 0)`);
     } else {
+        // 첫 행이 빈 행이면 2행이 헤더
+        headerRowIndex = 1;
+        console.log(`토스: 1행이 빈 행, 2행을 헤더로 사용 (인덱스: 1)`);
+    }
+}
+// 다른 마켓은 매핑 데이터 사용
+else if (tempMarketName && this.mappingData?.markets?.[tempMarketName]?.headerRow) {
+    const headerRowValue = this.mappingData.markets[tempMarketName].headerRow;
+    headerRowIndex = Math.max(0, parseInt(headerRowValue) - 1);
+    console.log(`매핑시트 헤더행 값: ${headerRowValue} → 인덱스: ${headerRowIndex}`);
+}
+
+// 디버그: 실제 행 데이터 확인
+console.log(`rawRows[0] (1행):`, rawRows[0]?.slice(0, 5));
+console.log(`rawRows[1] (2행):`, rawRows[1]?.slice(0, 5));
+if (rawRows[2]) console.log(`rawRows[2] (3행):`, rawRows[2]?.slice(0, 5));
+console.log(`최종 선택된 헤더행: rawRows[${headerRowIndex}]`);
+
+else {
         // 매핑 데이터가 없으면 기본 로직 사용
         console.log(`매핑 데이터 없음 - 기본 로직 사용`);
         
