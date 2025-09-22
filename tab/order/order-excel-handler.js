@@ -2092,25 +2092,58 @@ async saveToSheets() {
             existingMap.set(key, index);
         });
         
-        // 신규 및 업데이트 데이터 분류
-        const updateRows = [];
-        const newRows = [];
-        
-        this.processedData.data.forEach(row => {
-            const key = createKey(row);
-            if (existingMap.has(key)) {
-                // 중복 - 덮어쓰기
-                updateRows.push({
-                    index: existingMap.get(key),
-                    data: row
-                });
-            } else {
-                // 신규
-                newRows.push(row);
-            }
+// 신규 및 업데이트 데이터 분류
+const updateRows = [];
+const newRows = [];
+const duplicateKeys = [];
+
+this.processedData.data.forEach(row => {
+    const key = createKey(row);
+    if (existingMap.has(key)) {
+        // 중복 발견
+        duplicateKeys.push({
+            key: key,
+            row: row,
+            index: existingMap.get(key)
         });
-        
-        console.log(`처리 결과: 덮어쓰기 ${updateRows.length}건, 신규 ${newRows.length}건`);
+    } else {
+        // 신규
+        newRows.push(row);
+    }
+});
+
+console.log(`중복 ${duplicateKeys.length}건, 신규 ${newRows.length}건 발견`);
+
+// 중복이 있는 경우 사용자에게 확인
+if (duplicateKeys.length > 0) {
+    const duplicateMessage = `기존 시트에서 ${duplicateKeys.length}건의 중복 주문을 발견했습니다.\n\n` +
+        `중복된 주문 예시 (최대 5개):\n` +
+        duplicateKeys.slice(0, 5).map(d => {
+            const row = d.row;
+            return `- 주문번호: ${row['주문번호']}, 수령인: ${row['수령인'] || row['수취인']}, 마켓: ${row['마켓']}`;
+        }).join('\n') +
+        (duplicateKeys.length > 5 ? `\n... 외 ${duplicateKeys.length - 5}건` : '') +
+        '\n\n중복된 주문을 덮어쓰시겠습니까?\n' +
+        '(취소 선택 시 중복을 제외한 신규 주문만 추가됩니다)';
+    
+    const overwrite = confirm(duplicateMessage);
+    
+    if (overwrite) {
+        // 덮어쓰기 선택
+        duplicateKeys.forEach(d => {
+            updateRows.push({
+                index: d.index,
+                data: d.row
+            });
+        });
+        console.log(`사용자가 덮어쓰기 선택: ${updateRows.length}건`);
+    } else {
+        // 덮어쓰기 거부 - 중복은 제외
+        console.log(`사용자가 덮어쓰기 거부: 중복 ${duplicateKeys.length}건 제외`);
+    }
+}
+
+console.log(`최종 처리: 덮어쓰기 ${updateRows.length}건, 신규 추가 ${newRows.length}건`);
         
         // 헤더 행 준비
         const headers = this.processedData.headers || this.mappingData.standardFields;
@@ -2191,7 +2224,7 @@ async saveToSheets() {
 },
 
 // 화면 중앙 메시지 표시 함수 추가
-showCenterMessage(message, type) {
+showCenterMessage(message, type, autoClose = false) {
     // 기존 메시지 제거
     const existingMsg = document.getElementById('centerMessage');
     if (existingMsg) {
@@ -2205,7 +2238,7 @@ showCenterMessage(message, type) {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        padding: 30px 40px;
+        padding: 30px 40px 40px;
         background: #ffffff;
         border-radius: 12px;
         box-shadow: 0 20px 60px rgba(0,0,0,0.3);
@@ -2225,19 +2258,40 @@ showCenterMessage(message, type) {
     msgDiv.innerHTML = `
         <div style="font-size: 48px; margin-bottom: 20px;">${icon}</div>
         <div style="color: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#2563eb'}; 
-                    font-weight: 500; font-size: 16px;">
+                    font-weight: 500; font-size: 16px; margin-bottom: 20px;">
             ${message}
         </div>
+        <button onclick="document.getElementById('centerMessage').remove()" style="
+            padding: 10px 24px;
+            background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#2563eb'};
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+            닫기
+        </button>
     `;
     
     document.body.appendChild(msgDiv);
     
-    // 3초 후 자동 제거
-    setTimeout(() => {
-        msgDiv.style.opacity = '0';
-        msgDiv.style.transition = 'opacity 0.3s';
-        setTimeout(() => msgDiv.remove(), 300);
-    }, 3000);
+    // autoClose가 true인 경우에만 자동으로 닫힘
+    if (autoClose) {
+        setTimeout(() => {
+            if (document.getElementById('centerMessage')) {
+                msgDiv.style.opacity = '0';
+                msgDiv.style.transition = 'opacity 0.3s';
+                setTimeout(() => {
+                    if (document.getElementById('centerMessage')) {
+                        msgDiv.remove();
+                    }
+                }, 300);
+            }
+        }, 3000);
+    }
 },
 
 resetResults() {
