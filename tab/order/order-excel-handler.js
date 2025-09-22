@@ -1655,22 +1655,23 @@ if (header !== '마켓명' && !td.textContent && !td.innerHTML) {
         
 // ProductMatching 있으면 매칭 시도
 let matchedProduct = null;
-const productData = this.ProductMatching?.getProductData() || window.productData;
-if (this.ProductMatching && productData) {
+const productData = this.ProductMatching?.getProductData() || window.productData || {};
+
+if (this.ProductMatching && Object.keys(productData).length > 0) {
     const trimmedOption = optionName.trim();
     matchedProduct = productData[trimmedOption];
-            
-            if (!matchedProduct) {
-                // 대소문자 무시 매칭
-                const lowerOption = trimmedOption.toLowerCase();
-                for (const [key, value] of Object.entries(window.productData)) {
-                    if (key.toLowerCase() === lowerOption) {
-                        matchedProduct = value;
-                        break;
-                    }
-                }
+    
+    if (!matchedProduct) {
+        // 대소문자 무시 매칭
+        const lowerOption = trimmedOption.toLowerCase();
+        for (const [key, value] of Object.entries(productData)) {
+            if (key.toLowerCase() === lowerOption) {
+                matchedProduct = value;
+                break;
             }
         }
+    }
+}
         
         if (matchedProduct) {
             matchedCount++;
