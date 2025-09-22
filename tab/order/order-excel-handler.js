@@ -2062,7 +2062,7 @@ async saveToSheets() {
         
         console.log('저장할 시트명:', sheetName);
         
-        / 기존 데이터 가져오기
+// 기존 데이터 가져오기
 const getResponse = await fetch(`${this.API_BASE}/api/sheets`, {
     method: 'POST',
     headers: {
@@ -2074,9 +2074,9 @@ const getResponse = await fetch(`${this.API_BASE}/api/sheets`, {
         sheetName: sheetName
     })
 });
-        
-        const getResult = await getResponse.json();
-        const existingData = getResult.data || [];
+
+const getResult = await getResponse.json();
+const existingData = getResult.data || [];
         
         console.log(`기존 데이터: ${existingData.length}건`);
         
