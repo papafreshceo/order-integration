@@ -46,11 +46,57 @@ window.OrderExcelHandler = {
     },
     
     render() {
-        const container = document.getElementById('om-panel-excel');
-        if (!container) return;
+    const container = document.getElementById('om-panel-excel');
+    if (!container) return;
+    
+    // 헤더에 새로고침 버튼 추가
+    const headerElement = document.querySelector('.order-manage-header h2');
+    if (headerElement && !document.getElementById('excelRefreshBtn')) {
+        const refreshBtn = document.createElement('button');
+        refreshBtn.id = 'excelRefreshBtn';
+        refreshBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+        `;
+        refreshBtn.style.cssText = `
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 34px;
+            height: 34px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #495057;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        `;
+        refreshBtn.onmouseover = () => {
+            refreshBtn.style.borderColor = '#2563eb';
+            refreshBtn.style.color = '#2563eb';
+            refreshBtn.style.transform = 'translateY(-50%) rotate(180deg)';
+        };
+        refreshBtn.onmouseout = () => {
+            refreshBtn.style.borderColor = '#dee2e6';
+            refreshBtn.style.color = '#495057';
+            refreshBtn.style.transform = 'translateY(-50%) rotate(0deg)';
+        };
+        refreshBtn.onclick = () => {
+            location.reload();
+        };
         
-        container.innerHTML = `
-            <style>
+        headerElement.parentElement.style.position = 'relative';
+        headerElement.parentElement.appendChild(refreshBtn);
+    }
+    
+    container.innerHTML = `
+        <style>
                 .excel-container {
     padding: 40px;
     background: transparent;
