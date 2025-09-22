@@ -1207,18 +1207,19 @@ if (this.ProductMatching) {
     standardFields: this.mappingData?.standardFields || Object.keys(enrichedData[0] || {}),
     sheetName: new Date().toISOString().slice(0, 10).replace(/-/g, '')
 };
-            
-            this.processedData.standardFields = this.mappingData?.standardFields || Object.keys(enrichedData[0] || {});
-window.processedData = this.processedData;
 
-            this.displayResults();
-            this.showSuccess(`${enrichedData.length}개 주문 통합 완료`);
-            
-        } catch (error) {
-            this.showError('처리 중 오류 발생: ' + error.message);
-        } finally {
-            this.hideLoading();
-        }
+// 전역 변수 설정
+window.processedData = this.processedData;
+console.log('processedData 설정 완료:', window.processedData);
+
+this.displayResults();
+this.showSuccess(`${enrichedData.length}개 주문 통합 완료`);
+
+} catch (error) {
+    this.showError('처리 중 오류 발생: ' + error.message);
+} finally {
+    this.hideLoading();
+}
     },
     
     async mergeOrderData(files) {
@@ -1623,22 +1624,20 @@ if (header !== '마켓명' && !td.textContent && !td.innerHTML) {
         return;
     }
     
+    console.log('검증 시작 - processedData:', this.processedData);
+    
     try {
         // 전역 변수 설정
         window.processedData = this.processedData;
+        console.log('전역 processedData 설정:', window.processedData);
         
-        // ProductMatching이 없으면 로드
+        // ProductMatching 확인
         if (!this.ProductMatching) {
             if (parent.window !== window && parent.window.ProductMatching) {
                 this.ProductMatching = parent.window.ProductMatching;
             } else if (window.ProductMatching) {
                 this.ProductMatching = window.ProductMatching;
             }
-        }
-        
-        if (!this.ProductMatching) {
-            this.showError('ProductMatching 모듈을 찾을 수 없습니다.');
-            return;
         }
         
         // ProductMatching의 verifyOptions 호출
@@ -1653,7 +1652,6 @@ if (header !== '마켓명' && !td.textContent && !td.innerHTML) {
         console.error('옵션명 검증 오류:', error);
         this.showError('옵션명 검증 중 오류가 발생했습니다.');
     } finally {
-        // 테이블 재렌더링
         this.displayResults();
     }
 },
