@@ -987,11 +987,11 @@ if (tempMarketName && this.mappingData?.markets?.[tempMarketName]?.headerRow) {
             }
             
             const fileName = document.createElement('span');
-            fileName.textContent = file.name;
-            
-            const orderCount = document.createElement('span');
-            orderCount.style.color = '#6c757d';
-            orderCount.textContent = `${file.rowCount}개 주문`;
+fileName.textContent = file.name;
+fileName.style.color = '#6c757d';  // 파일명 회색
+
+const orderCount = document.createElement('span');
+orderCount.innerHTML = `<strong style="color: #2563eb; font-weight: 600;">${file.rowCount}개</strong> <span style="color: #6c757d;">주문</span>`;
             
             const fileDate = document.createElement('span');
             fileDate.style.color = file.isToday ? '#10b981' : '#f59e0b';
