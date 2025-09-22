@@ -196,17 +196,21 @@ window.OrderExcelHandler = {
                 
                 /* 버튼들 */
                 .btn-action {
-                    padding: 8px 16px;
-                    border: 1px solid #dee2e6;
-                    border-radius: 6px;
-                    background: #ffffff;
-                    color: #212529;
-                    font-size: 14px;
-                    font-weight: 300;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    margin: 0 4px;
-                }
+    padding: 0 16px;
+    height: 34px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #212529;
+    font-size: 14px;
+    font-weight: 300;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin: 0 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
                 
                 .btn-action:hover {
                     background: #f8f9fa;
@@ -235,7 +239,8 @@ window.OrderExcelHandler = {
                 }
                 
                 .btn-success {
-    padding: 6px 12px;
+    padding: 0 12px;
+    height: 34px;
     border: none;
     border-radius: 6px;
     background: #10b981;
