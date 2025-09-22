@@ -1201,7 +1201,7 @@ if (this.ProductMatching) {
     });
 }
             
-/ 로컬과 전역 변수 동시 설정
+// 로컬과 전역 변수 동시 설정
 this.processedData = {
     data: enrichedData,
     headers: this.mappingData?.standardFields || Object.keys(enrichedData[0] || {}),
