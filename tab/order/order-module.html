@@ -388,24 +388,24 @@
         },
         
         loadInputModule() {
-            if (!window.ManualOrder) {
-                const script = document.createElement('script');
-                script.src = 'manual-order.js';
-                script.onload = () => {
-                    if (window.ManualOrder) {
-                        this.modules.input = window.ManualOrder;
-                        window.ManualOrder.init();
-                    }
-                };
-                script.onerror = () => {
-                    console.error('Failed to load manual-order.js');
-                };
-                document.head.appendChild(script);
-            } else {
-                this.modules.input = window.ManualOrder;
-                window.ManualOrder.init();
+    if (!window.OrderInputHandler) {
+        const script = document.createElement('script');
+        script.src = 'order-input-handler.js';  // 올바른 파일명
+        script.onload = () => {
+            if (window.OrderInputHandler) {
+                this.modules.input = window.OrderInputHandler;
+                window.OrderInputHandler.init();
             }
-        },
+        };
+        script.onerror = () => {
+            console.error('Failed to load order-input-handler.js');
+        };
+        document.head.appendChild(script);
+    } else {
+        this.modules.input = window.OrderInputHandler;
+        window.OrderInputHandler.init();
+    }
+},
         
         loadCsModule() {
             if (!window.CsHandler) {
