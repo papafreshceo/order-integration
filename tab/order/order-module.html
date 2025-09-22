@@ -98,6 +98,31 @@
             border-radius: 2px;
         }
         
+        /* 각 탭별 아이콘 색상 */
+        .om-tab-btn[data-tab="search"] svg {
+            stroke: #2563eb;
+        }
+        
+        .om-tab-btn[data-tab="input"] svg {
+            stroke: #10b981;
+        }
+        
+        .om-tab-btn[data-tab="excel"] svg {
+            stroke: #f59e0b;
+        }
+        
+        .om-tab-btn[data-tab="shipping"] svg {
+            stroke: #8b5cf6;
+        }
+        
+        .om-tab-btn[data-tab="cs"] svg {
+            stroke: #ef4444;
+        }
+        
+        .om-tab-btn[data-tab="etc"] svg {
+            stroke: #6b7280;
+        }
+        
         .om-tab-btn.active svg {
             stroke: #ffffff;
         }
@@ -161,7 +186,7 @@
 </head>
 <body>
     <div class="om-container">
-        <!-- 헤더 -->
+        <!-- 통합 헤더 섹션 -->
         <div class="om-header">
             <div class="om-header-content">
                 <div class="om-title-wrapper">
@@ -172,7 +197,7 @@
                     <h1 class="om-title">주문통합관리</h1>
                 </div>
                 
-                <!-- 탭 -->
+                <!-- 내부 탭 -->
                 <div class="om-tabs">
                     <button class="om-tab-btn active" data-tab="search">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -235,12 +260,7 @@
                 </div>
             </div>
             <div class="om-panel" id="om-panel-excel"></div>
-            <div class="om-panel" id="om-panel-shipping">
-                <div style="padding: 40px; text-align: center;">
-                    <h2>발송관리</h2>
-                    <p style="color: #6c757d; margin-top: 16px;">발송 관리 기능</p>
-                </div>
-            </div>
+            <div class="om-panel" id="om-panel-shipping"></div>
             <div class="om-panel" id="om-panel-cs">
                 <div style="padding: 40px; text-align: center;">
                     <h2>CS</h2>
@@ -317,17 +337,16 @@
                     this.modules[tab].init();
                 } else {
                     if (tab === 'excel') {
-                        // Excel 탭 특별 처리
                         this.loadExcelModule();
+                    } else if (tab === 'shipping') {
+                        this.loadShippingModule();
                     } else {
-                        // 다른 모듈들 로드
                         this.loadGenericModule(tab);
                     }
                 }
             },
             
             loadExcelModule() {
-                // order-excel-handler.js 로드
                 if (!window.OrderExcelHandler) {
                     const script = document.createElement('script');
                     script.src = 'order-excel-handler.js';
@@ -344,6 +363,26 @@
                 } else {
                     this.modules.excel = window.OrderExcelHandler;
                     window.OrderExcelHandler.init();
+                }
+            },
+            
+            loadShippingModule() {
+                if (!window.OrderShippingHandler) {
+                    const script = document.createElement('script');
+                    script.src = 'order-shipping-handler.js';
+                    script.onload = () => {
+                        if (window.OrderShippingHandler) {
+                            this.modules.shipping = window.OrderShippingHandler;
+                            window.OrderShippingHandler.init();
+                        }
+                    };
+                    script.onerror = () => {
+                        console.error('Failed to load order-shipping-handler.js');
+                    };
+                    document.head.appendChild(script);
+                } else {
+                    this.modules.shipping = window.OrderShippingHandler;
+                    window.OrderShippingHandler.init();
                 }
             },
             
