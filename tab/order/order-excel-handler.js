@@ -52,9 +52,15 @@ window.OrderExcelHandler = {
         container.innerHTML = `
             <style>
                 .excel-container {
-                    padding: 20px;
-                    background: transparent;
-                }
+    padding: 40px;
+    background: transparent;
+}
+
+@media (max-width: 768px) {
+    .excel-container {
+        padding: 20px;
+    }
+}
                 
                 /* 파일 업로드 섹션 */
                 .upload-section {
