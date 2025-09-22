@@ -2338,72 +2338,210 @@ showCenterMessage(message, type, autoClose = false) {
         animation: fadeIn 0.3s ease;
     `;
     
-    // 모달 컨테이너
+    // 모달 컨테이너 - 가로로 넓게
     const modalContent = document.createElement('div');
     modalContent.style.cssText = `
         background: #ffffff;
         border-radius: 16px;
-        min-width: 400px;
-        max-width: 500px;
+        min-width: 600px;
+        max-width: 900px;
+        width: 80%;
+        max-height: 80vh;
+        overflow: auto;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         animation: slideUp 0.3s ease;
-        overflow: hidden;
     `;
     
-    // 모달 헤더
+    // 모달 헤더 - 컴팩트하게
     const modalHeader = document.createElement('div');
     modalHeader.style.cssText = `
-        padding: 24px;
+        padding: 20px 24px;
         background: ${type === 'success' ? 'linear-gradient(135deg, #10b981, #059669)' : 
                       type === 'error' ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 
                       'linear-gradient(135deg, #2563eb, #1d4ed8)'};
         color: white;
-        text-align: center;
+        display: flex;
+        align-items: center;
+        gap: 16px;
     `;
     
     const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
     const title = type === 'success' ? '처리 완료' : type === 'error' ? '오류 발생' : '알림';
     
     modalHeader.innerHTML = `
-        <div style="font-size: 48px; margin-bottom: 12px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">
+        <div style="font-size: 32px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">
             ${icon}
         </div>
-        <h2 style="margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.5px;">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -0.5px; flex: 1;">
             ${title}
         </h2>
+        <button onclick="this.closest('#centerMessageModal').remove()" style="
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        " onmouseover="this.style.background='rgba(255,255,255,0.2)'" 
+           onmouseout="this.style.background='none'">×</button>
     `;
     
-    // 모달 바디
+    // 모달 바디 - 메시지 파싱 및 가로 레이아웃
     const modalBody = document.createElement('div');
     modalBody.style.cssText = `
-        padding: 32px 24px;
+        padding: 24px;
         background: #ffffff;
     `;
     
-    modalBody.innerHTML = `
-        <div style="
-            color: #212529;
-            font-size: 14px;
-            line-height: 1.8;
-            white-space: pre-line;
-            text-align: left;
-        ">${message}</div>
-    `;
+    // 메시지 파싱하여 섹션별로 표시
+    const sections = message.split('━━━').filter(s => s.trim());
+    let bodyHTML = '';
+    
+    sections.forEach((section, index) => {
+        const lines = section.trim().split('\n').filter(l => l.trim());
+        
+        if (lines.length === 0) return;
+        
+        // 섹션 제목 찾기
+        const titleLine = lines[0];
+        const contentLines = lines.slice(1);
+        
+        if (titleLine.includes('처리 결과') || titleLine.includes('최종 현황')) {
+            // 가로 레이아웃 섹션
+            bodyHTML += `
+                <div style="margin-bottom: 20px;">
+                    <h3 style="font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 12px;">
+                        ${titleLine}
+                    </h3>
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            `;
+            
+            contentLines.forEach(line => {
+                if (line.includes(':')) {
+                    const [label, value] = line.split(':').map(s => s.trim());
+                    let bgColor = '#f8f9fa';
+                    let textColor = '#212529';
+                    
+                    if (label.includes('✅') || label.includes('신규')) {
+                        bgColor = '#d1fae5';
+                        textColor = '#059669';
+                    } else if (label.includes('🔄') || label.includes('덮어쓰기')) {
+                        bgColor = '#dbeafe';
+                        textColor = '#1d4ed8';
+                    } else if (label.includes('⚠️')) {
+                        bgColor = '#fef3c7';
+                        textColor = '#d97706';
+                    }
+                    
+                    bodyHTML += `
+                        <div style="
+                            flex: 1;
+                            min-width: 150px;
+                            padding: 12px 16px;
+                            background: ${bgColor};
+                            border-radius: 8px;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 4px;
+                        ">
+                            <span style="font-size: 12px; color: #6c757d;">
+                                ${label.replace(/[✅🔄⚠️📈•]/g, '').trim()}
+                            </span>
+                            <span style="font-size: 18px; font-weight: 600; color: ${textColor};">
+                                ${value || '0'}
+                            </span>
+                        </div>
+                    `;
+                }
+            });
+            
+            bodyHTML += `</div></div>`;
+            
+        } else if (titleLine.includes('중복 주문 상세')) {
+            // 중복 주문 리스트 - 테이블 형식
+            bodyHTML += `
+                <div style="margin-bottom: 20px;">
+                    <h3 style="font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 12px;">
+                        ${titleLine}
+                    </h3>
+                    <div style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 8px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                            <thead style="background: #f8f9fa; position: sticky; top: 0;">
+                                <tr>
+                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #dee2e6;">#</th>
+                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #dee2e6;">주문번호</th>
+                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #dee2e6;">수령인</th>
+                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #dee2e6;">옵션명</th>
+                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #dee2e6;">상태</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+            
+            contentLines.forEach(line => {
+                if (line.match(/^\d+\./)) {
+                    const parts = line.split(/\s{2,}/);
+                    const num = parts[0];
+                    let orderNo = '', recipient = '', option = '', status = '';
+                    
+                    // 다음 줄들에서 정보 추출
+                    const nextIndex = contentLines.indexOf(line);
+                    for (let i = nextIndex; i < Math.min(nextIndex + 4, contentLines.length); i++) {
+                        const currentLine = contentLines[i];
+                        if (currentLine.includes('주문번호:')) {
+                            orderNo = currentLine.split(':')[1]?.trim() || '-';
+                        } else if (currentLine.includes('수령인:')) {
+                            recipient = currentLine.split(':')[1]?.trim() || '-';
+                        } else if (currentLine.includes('옵션명:')) {
+                            option = currentLine.split(':')[1]?.trim() || '-';
+                        } else if (currentLine.includes('상태:')) {
+                            status = currentLine.split(':')[1]?.trim() || '-';
+                        }
+                    }
+                    
+                    const statusBadge = status.includes('덮어쓰기') ? 
+                        '<span style="color: #1d4ed8;">🔄 덮어쓰기</span>' : 
+                        '<span style="color: #dc2626;">❌ 제외</span>';
+                    
+                    bodyHTML += `
+                        <tr style="border-bottom: 1px solid #f1f3f5;">
+                            <td style="padding: 8px;">${num}</td>
+                            <td style="padding: 8px; font-family: monospace;">${orderNo}</td>
+                            <td style="padding: 8px;">${recipient}</td>
+                            <td style="padding: 8px;">${option}</td>
+                            <td style="padding: 8px; text-align: center;">${statusBadge}</td>
+                        </tr>
+                    `;
+                }
+            });
+            
+            bodyHTML += `</tbody></table></div></div>`;
+        }
+    });
+    
+    modalBody.innerHTML = bodyHTML || `<div style="color: #212529; font-size: 14px; line-height: 1.8;">${message}</div>`;
     
     // 모달 푸터
     const modalFooter = document.createElement('div');
     modalFooter.style.cssText = `
-        padding: 20px 24px;
+        padding: 16px 24px;
         background: #f8f9fa;
         display: flex;
-        justify-content: center;
-        gap: 12px;
+        justify-content: flex-end;
+        border-top: 1px solid #dee2e6;
     `;
     
     const closeButton = document.createElement('button');
     closeButton.textContent = '확인';
     closeButton.style.cssText = `
-        padding: 12px 32px;
+        padding: 10px 28px;
         background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#2563eb'};
         color: white;
         border: none;
@@ -2412,24 +2550,15 @@ showCenterMessage(message, type, autoClose = false) {
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     `;
     
-    closeButton.onmouseover = () => {
-        closeButton.style.transform = 'translateY(-1px)';
-        closeButton.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
-    };
-    closeButton.onmouseout = () => {
-        closeButton.style.transform = 'translateY(0)';
-        closeButton.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-    };
+    closeButton.onmouseover = () => closeButton.style.opacity = '0.9';
+    closeButton.onmouseout = () => closeButton.style.opacity = '1';
     
     const closeModal = () => {
         modalBackdrop.style.animation = 'fadeOut 0.3s ease';
         modalContent.style.animation = 'slideDown 0.3s ease';
-        setTimeout(() => {
-            modalBackdrop.remove();
-        }, 300);
+        setTimeout(() => modalBackdrop.remove(), 300);
     };
     
     closeButton.onclick = closeModal;
@@ -2443,41 +2572,16 @@ showCenterMessage(message, type, autoClose = false) {
     modalContent.appendChild(modalFooter);
     modalBackdrop.appendChild(modalContent);
     
-    // 애니메이션 스타일 추가
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
-        @keyframes slideUp {
-            from {
-                transform: translateY(20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        @keyframes slideDown {
-            from {
-                transform: translateY(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateY(20px);
-                opacity: 0;
-            }
-        }
-    `;
-    
+    // 애니메이션 스타일
     if (!document.getElementById('modalAnimations')) {
+        const style = document.createElement('style');
         style.id = 'modalAnimations';
+        style.textContent = `
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+            @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+            @keyframes slideDown { from { transform: translateY(0); opacity: 1; } to { transform: translateY(20px); opacity: 0; } }
+        `;
         document.head.appendChild(style);
     }
     
@@ -2491,15 +2595,6 @@ showCenterMessage(message, type, autoClose = false) {
         }
     };
     document.addEventListener('keydown', escHandler);
-    
-    // autoClose가 true인 경우 자동 닫기
-    if (autoClose) {
-        setTimeout(() => {
-            if (document.getElementById('centerMessageModal')) {
-                closeModal();
-            }
-        }, 3000);
-    }
 },
 
 resetResults() {
