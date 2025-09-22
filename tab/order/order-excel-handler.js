@@ -2316,69 +2316,187 @@ console.log(`최종 처리: 덮어쓰기 ${updateRows.length}건, 신규 추가 
 // 화면 중앙 메시지 표시 함수 추가
 showCenterMessage(message, type, autoClose = false) {
     // 기존 메시지 제거
-    const existingMsg = document.getElementById('centerMessage');
+    const existingMsg = document.getElementById('centerMessageModal');
     if (existingMsg) {
         existingMsg.remove();
     }
     
-    const msgDiv = document.createElement('div');
-    msgDiv.id = 'centerMessage';
-    msgDiv.style.cssText = `
+    // 모달 배경
+    const modalBackdrop = document.createElement('div');
+    modalBackdrop.id = 'centerMessageModal';
+    modalBackdrop.style.cssText = `
         position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        padding: 30px 40px 40px;
-        background: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
         z-index: 10000;
-        min-width: 300px;
+        animation: fadeIn 0.3s ease;
+    `;
+    
+    // 모달 컨테이너
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: #ffffff;
+        border-radius: 16px;
+        min-width: 400px;
         max-width: 500px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: slideUp 0.3s ease;
+        overflow: hidden;
+    `;
+    
+    // 모달 헤더
+    const modalHeader = document.createElement('div');
+    modalHeader.style.cssText = `
+        padding: 24px;
+        background: ${type === 'success' ? 'linear-gradient(135deg, #10b981, #059669)' : 
+                      type === 'error' ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 
+                      'linear-gradient(135deg, #2563eb, #1d4ed8)'};
+        color: white;
         text-align: center;
-        white-space: pre-line;
-        line-height: 1.6;
-        font-size: 14px;
-        border: 2px solid ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#2563eb'};
     `;
     
-    // 아이콘 추가
     const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+    const title = type === 'success' ? '처리 완료' : type === 'error' ? '오류 발생' : '알림';
     
-    msgDiv.innerHTML = `
-        <div style="font-size: 48px; margin-bottom: 20px;">${icon}</div>
-        <div style="color: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#2563eb'}; 
-                    font-weight: 500; font-size: 16px; margin-bottom: 20px;">
-            ${message}
+    modalHeader.innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 12px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">
+            ${icon}
         </div>
-        <button onclick="document.getElementById('centerMessage').remove()" style="
-            padding: 10px 24px;
-            background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#2563eb'};
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
-            닫기
-        </button>
+        <h2 style="margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.5px;">
+            ${title}
+        </h2>
     `;
     
-    document.body.appendChild(msgDiv);
+    // 모달 바디
+    const modalBody = document.createElement('div');
+    modalBody.style.cssText = `
+        padding: 32px 24px;
+        background: #ffffff;
+    `;
     
-    // autoClose가 true인 경우에만 자동으로 닫힘
+    modalBody.innerHTML = `
+        <div style="
+            color: #212529;
+            font-size: 14px;
+            line-height: 1.8;
+            white-space: pre-line;
+            text-align: left;
+        ">${message}</div>
+    `;
+    
+    // 모달 푸터
+    const modalFooter = document.createElement('div');
+    modalFooter.style.cssText = `
+        padding: 20px 24px;
+        background: #f8f9fa;
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+    `;
+    
+    const closeButton = document.createElement('button');
+    closeButton.textContent = '확인';
+    closeButton.style.cssText = `
+        padding: 12px 32px;
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#2563eb'};
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    `;
+    
+    closeButton.onmouseover = () => {
+        closeButton.style.transform = 'translateY(-1px)';
+        closeButton.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+    };
+    closeButton.onmouseout = () => {
+        closeButton.style.transform = 'translateY(0)';
+        closeButton.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+    };
+    
+    const closeModal = () => {
+        modalBackdrop.style.animation = 'fadeOut 0.3s ease';
+        modalContent.style.animation = 'slideDown 0.3s ease';
+        setTimeout(() => {
+            modalBackdrop.remove();
+        }, 300);
+    };
+    
+    closeButton.onclick = closeModal;
+    modalBackdrop.onclick = (e) => {
+        if (e.target === modalBackdrop) closeModal();
+    };
+    
+    modalFooter.appendChild(closeButton);
+    modalContent.appendChild(modalHeader);
+    modalContent.appendChild(modalBody);
+    modalContent.appendChild(modalFooter);
+    modalBackdrop.appendChild(modalContent);
+    
+    // 애니메이션 스타일 추가
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideDown {
+            from {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+        }
+    `;
+    
+    if (!document.getElementById('modalAnimations')) {
+        style.id = 'modalAnimations';
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(modalBackdrop);
+    
+    // ESC 키로 닫기
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+    
+    // autoClose가 true인 경우 자동 닫기
     if (autoClose) {
         setTimeout(() => {
-            if (document.getElementById('centerMessage')) {
-                msgDiv.style.opacity = '0';
-                msgDiv.style.transition = 'opacity 0.3s';
-                setTimeout(() => {
-                    if (document.getElementById('centerMessage')) {
-                        msgDiv.remove();
-                    }
-                }, 300);
+            if (document.getElementById('centerMessageModal')) {
+                closeModal();
             }
         }, 3000);
     }
