@@ -2116,15 +2116,20 @@ console.log(`중복 ${duplicateKeys.length}건, 신규 ${newRows.length}건 발�
 
 // 중복이 있는 경우 사용자에게 확인
 if (duplicateKeys.length > 0) {
-    const duplicateMessage = `기존 시트에서 ${duplicateKeys.length}건의 중복 주문을 발견했습니다.\n\n` +
-        `중복된 주문 예시 (최대 5개):\n` +
-        duplicateKeys.slice(0, 5).map(d => {
-            const row = d.row;
-            return `- 주문번호: ${row['주문번호']}, 수령인: ${row['수령인'] || row['수취인']}, 마켓: ${row['마켓']}`;
-        }).join('\n') +
-        (duplicateKeys.length > 5 ? `\n... 외 ${duplicateKeys.length - 5}건` : '') +
-        '\n\n중복된 주문을 덮어쓰시겠습니까?\n' +
-        '(취소 선택 시 중복을 제외한 신규 주문만 추가됩니다)';
+const duplicateMessage = `⚠️ 중복 주문 발견\n\n` +
+    `기존 시트에서 ${duplicateKeys.length}건의 중복을 발견했습니다.\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n\n` +
+    `📋 중복 주문 상세 (최대 5개)\n` +
+    duplicateKeys.slice(0, 5).map((d, idx) => {
+        const row = d.row;
+        return `${idx + 1}. 주문번호: ${row['주문번호']}\n   수령인: ${row['수령인'] || row['수취인']}\n   마켓: ${row['마켓']}`;
+    }).join('\n\n') +
+    (duplicateKeys.length > 5 ? `\n\n... 외 ${duplicateKeys.length - 5}건 더 있음` : '') +
+    `\n\n━━━━━━━━━━━━━━━━━━━━\n` +
+    `선택 옵션:\n` +
+    `• 확인: 중복 주문을 덮어씁니다\n` +
+    `• 취소: 중복을 제외하고 신규만 추가합니다\n\n` +
+    `중복된 주문을 덮어쓰시겠습니까?`;
     
     const overwrite = confirm(duplicateMessage);
     
@@ -2202,14 +2207,26 @@ console.log(`최종 처리: 덮어쓰기 ${updateRows.length}건, 신규 추가 
         const result = await response.json();
         
         if (result.success) {
-            const message = `구글 시트 "${sheetName}"에 저장 완료\n\n` +
-                           `✓ 덮어쓰기: ${updateRows.length}건\n` +
-                           `✓ 신규 추가: ${newRows.length}건\n` +
-                           `✓ 전체 주문: ${finalData.length}건`;
-            
-            this.showCenterMessage(message, 'success');
-            console.log(message.replace(/\n/g, ' '));
-        } else {
+    // 실제 처리된 건수 계산
+    const duplicateNotSaved = duplicateKeys.length - updateRows.length;
+    const existingOrderCount = existingData.length - updateRows.length; // 기존 주문 중 덮어쓰지 않은 것
+    const totalOrderCount = existingOrderCount + updateRows.length + newRows.length;
+    
+    const message = `구글 시트 "${sheetName}" 저장 완료\n\n` +
+                   `📊 처리 결과\n` +
+                   `━━━━━━━━━━━━━━━━━━━━\n` +
+                   `✅ 신규 추가: ${newRows.length}건\n` +
+                   (updateRows.length > 0 ? `🔄 덮어쓰기 (중복): ${updateRows.length}건\n` : '') +
+                   (duplicateNotSaved > 0 ? `⚠️ 중복으로 미저장: ${duplicateNotSaved}건\n` : '') +
+                   `\n📈 누적 현황\n` +
+                   `━━━━━━━━━━━━━━━━━━━━\n` +
+                   `• 기존 주문: ${existingData.length}건\n` +
+                   `• 현재 처리: ${this.processedData.data.length}건\n` +
+                   `• 전체 누적: ${totalOrderCount}건`;
+    
+    this.showCenterMessage(message, 'success');
+    console.log(message.replace(/\n/g, ' '));
+} else {
             console.error('시트 저장 실패:', result.error);
             this.showCenterMessage('시트 저장 실패: ' + (result.error || '알 수 없는 오류'), 'error');
         }
