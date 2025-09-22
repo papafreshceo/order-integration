@@ -650,30 +650,44 @@ window.OrderExcelHandler = {
     },
     
     displaySupportedMarkets() {
-        const container = document.getElementById('supportedMarkets');
-        if (!container || !this.mappingData) return;
+    const container = document.getElementById('supportedMarkets');
+    if (!container || !this.mappingData) return;
+    
+    container.innerHTML = '';
+    container.style.display = 'flex';
+    container.style.alignItems = 'center';
+    container.style.flexWrap = 'wrap';
+    container.style.gap = '8px';
+    
+    // 지원 마켓 레이블
+    const label = document.createElement('span');
+    label.textContent = '지원 마켓:';
+    label.style.fontSize = '14px';
+    label.style.fontWeight = '500';
+    label.style.color = '#495057';
+    label.style.marginRight = '4px';
+    container.appendChild(label);
+    
+    const markets = this.mappingData.markets || {};
+    const marketOrder = this.mappingData.marketOrder || Object.keys(markets);
+    
+    marketOrder.forEach(marketName => {
+        const market = markets[marketName];
+        if (!market) return;
         
-        container.innerHTML = '<h3 style="margin: 0 0 12px 0; font-size: 16px;">지원 마켓</h3>';
+        const badge = document.createElement('span');
+        badge.className = 'market-badge';
+        badge.textContent = marketName;
+        badge.style.background = `rgb(${market.color})`;
+        badge.style.display = 'inline-block';
         
-        const markets = this.mappingData.markets || {};
-        const marketOrder = this.mappingData.marketOrder || Object.keys(markets);
+        const rgb = market.color.split(',').map(Number);
+        const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+        badge.style.color = brightness > 128 ? '#000' : '#fff';
         
-        marketOrder.forEach(marketName => {
-            const market = markets[marketName];
-            if (!market) return;
-            
-            const badge = document.createElement('div');
-            badge.className = 'market-badge';
-            badge.textContent = marketName;
-            badge.style.background = `rgb(${market.color})`;
-            
-            const rgb = market.color.split(',').map(Number);
-            const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
-            badge.style.color = brightness > 128 ? '#000' : '#fff';
-            
-            container.appendChild(badge);
-        });
-    },
+        container.appendChild(badge);
+    });
+},
     
     handleFileSelect(e) {
         const files = Array.from(e.target.files);
