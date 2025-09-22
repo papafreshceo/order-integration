@@ -316,9 +316,7 @@ window.OrderExcelHandler = {
     background: #f8f9fa;
 }
 
-.result-table thead th.fixed-column {
-    background: #e9ecef !important;  /* 고정 헤더 구분색 */
-}
+
                 
                 .result-table th {
                     padding: 8px;
@@ -338,17 +336,7 @@ window.OrderExcelHandler = {
 
 }
                 
-                /* 고정 컬럼 */
-                .fixed-column {
-                    position: sticky;
-                    left: 0;
-                    background: #ffffff;
-                    z-index: 5;
-                }
-                
-                .fixed-column-last {
-                    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-                }
+
                 
                 /* 옵션명 매칭 상태 */
                 .unmatched-cell {
@@ -1399,27 +1387,7 @@ const columnWidths = {
         '송장번호': 140
 };
 
-// 고정열 끝 인덱스 찾기
-let fixedEndIndex = -1;
-const phoneFields = ['수령인전화번호', '수령인 전화번호', '수취인전화번호', '수취인 전화번호'];
-for (let i = 0; i < this.processedData.headers.length; i++) {
-    if (phoneFields.includes(this.processedData.headers[i])) {
-        fixedEndIndex = i;
-        break;
-    }
-}
-if (fixedEndIndex === -1) {
-    fixedEndIndex = Math.min(10, this.processedData.headers.length - 1);
-}
 
-// 누적 너비 계산
-const cumulativeWidths = [0];
-let totalWidth = 0;
-this.processedData.headers.forEach(header => {
-    const width = columnWidths[header] || 100;
-    cumulativeWidths.push(cumulativeWidths[cumulativeWidths.length - 1] + width);
-    totalWidth += width;
-});
 
 // 테이블 전체 너비 설정
 const table = document.getElementById('excelResultTable');
@@ -1434,23 +1402,9 @@ this.processedData.headers.forEach((header, index) => {
     th.textContent = header;
     
     const width = columnWidths[header] || 100;
-th.style.width = `${width}px`;
-th.style.minWidth = `${width}px`;
-th.style.maxWidth = `${width}px`; // maxWidth 추가
-
-if (index <= fixedEndIndex) {
-    th.classList.add('fixed-column');
-    th.style.position = 'sticky';
-    th.style.left = `${cumulativeWidths[index]}px`;
-    th.style.zIndex = '10';
-    // 고정 열에도 너비 강제 적용
     th.style.width = `${width}px`;
     th.style.minWidth = `${width}px`;
     th.style.maxWidth = `${width}px`;
-        if (index === fixedEndIndex) {
-            th.classList.add('fixed-column-last');
-        }
-    }
     
     headerRow.appendChild(th);
 });
@@ -1496,29 +1450,14 @@ function getAlignment(fieldName) {
     }
 
     this.processedData.headers.forEach((header, colIndex) => {
-        const td = document.createElement('td');
-        let value = row[header] || '';
+    const td = document.createElement('td');
+    let value = row[header] || '';
     
     const width = columnWidths[header] || 100;
-td.style.width = `${width}px`;
-td.style.minWidth = `${width}px`;
-td.style.maxWidth = `${width}px`; // maxWidth 추가
-td.style.textAlign = getAlignment(header);
-
-// 고정 컬럼 처리
-if (colIndex <= fixedEndIndex) {
-    td.classList.add('fixed-column');
-    td.style.position = 'sticky';
-    td.style.left = `${cumulativeWidths[colIndex]}px`;
-    td.style.zIndex = '5';
-    // 고정 열에도 너비 강제 적용
     td.style.width = `${width}px`;
     td.style.minWidth = `${width}px`;
     td.style.maxWidth = `${width}px`;
-        if (colIndex === fixedEndIndex) {
-            td.classList.add('fixed-column-last');
-        }
-    }
+    td.style.textAlign = getAlignment(header);
     
     // 날짜 포맷팅
     if (header.includes('결제일') || header.includes('발송일') || header.includes('주문일')) {
