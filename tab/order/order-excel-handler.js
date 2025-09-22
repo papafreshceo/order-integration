@@ -1424,8 +1424,7 @@ this.processedData.headers.forEach(header => {
 // 테이블 전체 너비 설정
 const table = document.getElementById('excelResultTable');
 if (table) {
-    table.style.minWidth = `${totalWidth}px`;
-    table.style.tableLayout = 'fixed';
+table.style.minWidth = `${totalWidth}px`;
 }
 
 // 헤더 생성
@@ -1435,14 +1434,19 @@ this.processedData.headers.forEach((header, index) => {
     th.textContent = header;
     
     const width = columnWidths[header] || 100;
+th.style.width = `${width}px`;
+th.style.minWidth = `${width}px`;
+th.style.maxWidth = `${width}px`; // maxWidth 추가
+
+if (index <= fixedEndIndex) {
+    th.classList.add('fixed-column');
+    th.style.position = 'sticky';
+    th.style.left = `${cumulativeWidths[index]}px`;
+    th.style.zIndex = '10';
+    // 고정 열에도 너비 강제 적용
     th.style.width = `${width}px`;
     th.style.minWidth = `${width}px`;
-    
-    if (index <= fixedEndIndex) {
-        th.classList.add('fixed-column');
-        th.style.position = 'sticky';
-        th.style.left = `${cumulativeWidths[index]}px`;
-        th.style.zIndex = '10';
+    th.style.maxWidth = `${width}px`;
         if (index === fixedEndIndex) {
             th.classList.add('fixed-column-last');
         }
@@ -1496,16 +1500,21 @@ function getAlignment(fieldName) {
         let value = row[header] || '';
     
     const width = columnWidths[header] || 100;
+td.style.width = `${width}px`;
+td.style.minWidth = `${width}px`;
+td.style.maxWidth = `${width}px`; // maxWidth 추가
+td.style.textAlign = getAlignment(header);
+
+// 고정 컬럼 처리
+if (colIndex <= fixedEndIndex) {
+    td.classList.add('fixed-column');
+    td.style.position = 'sticky';
+    td.style.left = `${cumulativeWidths[colIndex]}px`;
+    td.style.zIndex = '5';
+    // 고정 열에도 너비 강제 적용
     td.style.width = `${width}px`;
     td.style.minWidth = `${width}px`;
-    td.style.textAlign = getAlignment(header);
-    
-    // 고정 컬럼 처리
-    if (colIndex <= fixedEndIndex) {
-        td.classList.add('fixed-column');
-        td.style.position = 'sticky';
-        td.style.left = `${cumulativeWidths[colIndex]}px`;
-        td.style.zIndex = '5';
+    td.style.maxWidth = `${width}px`;
         if (colIndex === fixedEndIndex) {
             td.classList.add('fixed-column-last');
         }
