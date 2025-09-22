@@ -559,9 +559,10 @@ window.OrderExcelHandler = {
                 <!-- 결과 섹션 -->
                 <!-- 테이블 섹션 -->
 <div class="table-section" id="resultSection" style="display: none;">
-    <div class="table-header">
-        <h3 class="table-title">통합 결과</h3>
-        <div class="table-actions">
+<div class="table-header">
+    <div style="display: flex; align-items: center; flex: 1;">
+        <h3 class="table-title" style="margin: 0;">통합 결과</h3>
+        <div style="margin-left: 20px; display: flex; gap: 8px;">
             <button class="btn-action btn-reset" onclick="OrderExcelHandler.resetResults()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="23 4 23 10 17 10"></polyline>
@@ -576,7 +577,7 @@ window.OrderExcelHandler = {
                 </svg>
                 옵션명 일괄수정
             </button>
-            <button class="btn-action" onclick="OrderExcelHandler.verifyOptions()">
+            <button class="btn-action" onclick="OrderExcelHandler.verifyOptions()" style="background: #d1fae5; color: #10b981; border-color: #a7f3d0;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
@@ -591,24 +592,27 @@ window.OrderExcelHandler = {
                 </svg>
                 중복발송검증
             </button>
-            <button class="btn-action" onclick="OrderExcelHandler.exportExcel()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                엑셀 다운로드
-            </button>
-            <button class="btn-success" onclick="OrderExcelHandler.saveToSheets()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                    <polyline points="7 3 7 8 15 8"></polyline>
-                </svg>
-                저장
-            </button>
         </div>
     </div>
+    <div class="table-actions">
+        <button class="btn-action" onclick="OrderExcelHandler.exportExcel()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            엑셀 다운로드
+        </button>
+        <button class="btn-success" onclick="OrderExcelHandler.saveToSheets()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            저장
+        </button>
+    </div>
+</div>
     
     <div class="table-wrapper">
         <table class="result-table" id="excelResultTable">
@@ -2033,15 +2037,15 @@ async verifyDuplicate() {
         this.showSuccess('엑셀 파일 다운로드 완료');
     },
     
-    async saveToSheets() {
+async saveToSheets() {
     if (!this.processedData || !this.processedData.data || this.processedData.data.length === 0) {
-        this.showError('저장할 데이터가 없습니다. 먼저 주문을 처리해주세요.');
+        this.showCenterMessage('저장할 데이터가 없습니다. 먼저 주문을 처리해주세요.', 'error');
         return;
     }
     
     // 이미 저장 중인지 확인
     if (window.isSaving) {
-        this.showMessage('저장 중입니다. 잠시만 기다려주세요.', 'info');
+        this.showCenterMessage('저장 중입니다. 잠시만 기다려주세요.', 'info');
         return;
     }
     
@@ -2049,12 +2053,82 @@ async verifyDuplicate() {
     this.showLoading();
     
     try {
-        // 헤더 행 추가
-        const headers = this.processedData.headers || this.mappingData.standardFields;
-        const values = [headers];
+        // 한국 시간 기준 날짜 생성
+        const koreaTime = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Seoul"}));
+        const year = koreaTime.getFullYear();
+        const month = String(koreaTime.getMonth() + 1).padStart(2, '0');
+        const day = String(koreaTime.getDate()).padStart(2, '0');
+        const sheetName = `${year}${month}${day}`;
         
-        // 데이터 행 추가
+        console.log('저장할 시트명:', sheetName);
+        
+        // 기존 데이터 가져오기
+        const getResponse = await fetch(`${this.API_BASE}/api/sheets`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'getSheetData',
+                sheetName: sheetName,
+                spreadsheetId: 'SPREADSHEET_ID_ORDERS'
+            })
+        });
+        
+        const getResult = await getResponse.json();
+        const existingData = getResult.data || [];
+        
+        console.log(`기존 데이터: ${existingData.length}건`);
+        
+        // 중복 체크를 위한 키 생성 함수
+        const createKey = (row) => {
+            return `${row['주문번호']}_${row['주문자']}_${row['수령인'] || row['수취인']}_${row['마켓']}`;
+        };
+        
+        // 기존 데이터 맵 생성 (키 -> 행 인덱스)
+        const existingMap = new Map();
+        existingData.forEach((row, index) => {
+            const key = createKey(row);
+            existingMap.set(key, index);
+        });
+        
+        // 신규 및 업데이트 데이터 분류
+        const updateRows = [];
+        const newRows = [];
+        
         this.processedData.data.forEach(row => {
+            const key = createKey(row);
+            if (existingMap.has(key)) {
+                // 중복 - 덮어쓰기
+                updateRows.push({
+                    index: existingMap.get(key),
+                    data: row
+                });
+            } else {
+                // 신규
+                newRows.push(row);
+            }
+        });
+        
+        console.log(`처리 결과: 덮어쓰기 ${updateRows.length}건, 신규 ${newRows.length}건`);
+        
+        // 헤더 행 준비
+        const headers = this.processedData.headers || this.mappingData.standardFields;
+        
+        // 전체 데이터 구성 (기존 + 업데이트 + 신규)
+        const finalData = [...existingData];
+        
+        // 덮어쓰기 처리
+        updateRows.forEach(({index, data}) => {
+            finalData[index] = data;
+        });
+        
+        // 신규 데이터 추가
+        finalData.push(...newRows);
+        
+        // 시트 데이터 준비 (헤더 + 데이터)
+        const values = [headers];
+        finalData.forEach(row => {
             const rowValues = headers.map(header => {
                 const value = row[header];
                 return value !== undefined && value !== null ? String(value) : '';
@@ -2077,7 +2151,7 @@ async verifyDuplicate() {
             });
         }
         
-        // API 호출
+        // API 호출 - 전체 시트 덮어쓰기
         const response = await fetch(`${this.API_BASE}/api/sheets`, {
             method: 'POST',
             headers: {
@@ -2085,95 +2159,84 @@ async verifyDuplicate() {
             },
             body: JSON.stringify({
                 action: 'saveToSheet',
-                sheetName: this.processedData.sheetName,
+                sheetName: sheetName,
                 values: values,
                 marketColors: marketColors,
-                spreadsheetId: 'SPREADSHEET_ID_ORDERS'  // 주문 스프레드시트 ID
+                spreadsheetId: 'SPREADSHEET_ID_ORDERS'
             })
         });
         
         const result = await response.json();
         
         if (result.success) {
-            console.log(`Saved ${this.processedData.data.length} rows to sheet "${this.processedData.sheetName}"`);
-            this.showSuccess(`구글 시트 "${this.processedData.sheetName}"에 저장되었습니다.`);
+            const message = `구글 시트 "${sheetName}"에 저장 완료\n\n` +
+                           `✓ 덮어쓰기: ${updateRows.length}건\n` +
+                           `✓ 신규 추가: ${newRows.length}건\n` +
+                           `✓ 전체 주문: ${finalData.length}건`;
+            
+            this.showCenterMessage(message, 'success');
+            console.log(message.replace(/\n/g, ' '));
         } else {
             console.error('시트 저장 실패:', result.error);
-            this.showError('시트 저장 실패: ' + (result.error || '알 수 없는 오류'));
+            this.showCenterMessage('시트 저장 실패: ' + (result.error || '알 수 없는 오류'), 'error');
         }
         
     } catch (error) {
         console.error('저장 중 오류:', error);
-        this.showError('저장 중 오류 발생: ' + error.message);
+        this.showCenterMessage('저장 중 오류 발생: ' + error.message, 'error');
     } finally {
         this.hideLoading();
         window.isSaving = false;
     }
 },
-    
-    resetResults() {
-        if (!confirm('결과를 초기화하시겠습니까?')) return;
-        
-        this.processedData = null;
-document.getElementById('resultSection').style.display = 'none';
-        this.showSuccess('초기화 완료');
-    },
-    
-    showError(message) {
-        const el = document.getElementById('excelErrorMessage');
-        if (el) {
-            el.textContent = message;
-            el.classList.add('show');
-            setTimeout(() => el.classList.remove('show'), 3000);
-        }
-    },
-    
-    showSuccess(message) {
-        const el = document.getElementById('excelSuccessMessage');
-        if (el) {
-            el.textContent = message;
-            el.classList.add('show');
-            setTimeout(() => el.classList.remove('show'), 3000);
-        }
-    },
-    
-    showMessage(message, type) {
-        if (type === 'error') {
-            this.showError(message);
-        } else {
-            this.showSuccess(message);
-        }
-    },
-    
-    showLoading() {
-        if (window.OrderManage) {
-            window.OrderManage.showLoading();
-        }
-    },
-    
-    hideLoading() {
-        if (window.OrderManage) {
-            window.OrderManage.hideLoading();
-        }
-    },
 
-    fullReset() {
-    // 임시 주소 데이터만 초기화 (주문 데이터는 유지)
-    this.tempAddressData = {};
-    
-    // 캐시는 삭제하지 않음
-    // this.clearCache(); <- 제거
-    
-    // DOM 완전 재렌더링
-    const container = document.getElementById('om-panel-input');
-    if (container) {
-        container.innerHTML = '';
-        this.render();
-        this.setupEventListeners();
-        this.loadProductData();
-        this.loadFromCache(); // 캐시에서 다시 로드
+// 화면 중앙 메시지 표시 함수 추가
+showCenterMessage(message, type) {
+    // 기존 메시지 제거
+    const existingMsg = document.getElementById('centerMessage');
+    if (existingMsg) {
+        existingMsg.remove();
     }
     
-    console.log('OrderInputHandler 새로고침 완료 (저장되지 않은 주문 유지)');
+    const msgDiv = document.createElement('div');
+    msgDiv.id = 'centerMessage';
+    msgDiv.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 30px 40px;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        z-index: 10000;
+        min-width: 300px;
+        max-width: 500px;
+        text-align: center;
+        white-space: pre-line;
+        line-height: 1.6;
+        font-size: 14px;
+        border: 2px solid ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#2563eb'};
+    `;
+    
+    // 아이콘 추가
+    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+    
+    msgDiv.innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 20px;">${icon}</div>
+        <div style="color: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#2563eb'}; 
+                    font-weight: 500; font-size: 16px;">
+            ${message}
+        </div>
+    `;
+    
+    document.body.appendChild(msgDiv);
+    
+    // 3초 후 자동 제거
+    setTimeout(() => {
+        msgDiv.style.opacity = '0';
+        msgDiv.style.transition = 'opacity 0.3s';
+        setTimeout(() => msgDiv.remove(), 300);
+    }, 3000);
 }
 };
