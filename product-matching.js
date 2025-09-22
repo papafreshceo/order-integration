@@ -107,7 +107,7 @@ const ProductMatching = (function() {
         }
         
         const matchedProduct = matchOption(optionName);
-        const sellerPrice = getSellerPrice(optionName);
+
         
         if (matchedProduct) {
             // 매칭 성공 - 필드 채우기
