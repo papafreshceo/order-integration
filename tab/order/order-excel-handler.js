@@ -1630,9 +1630,14 @@ if (header !== '마켓명' && !td.textContent && !td.innerHTML) {
         this.ProductMatching = window.ProductMatching || parent.window?.ProductMatching;
     }
     
+    console.log('ProductMatching 존재:', !!this.ProductMatching);
+    
     if (this.ProductMatching) {
         await this.ProductMatching.loadProductData();
     }
+    
+    console.log('window.productData 존재:', !!window.productData);
+    console.log('window.productData 샘플:', Object.keys(window.productData || {}).slice(0, 5));
     
     let matchedCount = 0;
     let unmatchedCount = 0;
