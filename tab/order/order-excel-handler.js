@@ -2252,12 +2252,13 @@ console.log(`최종 처리: 덮어쓰기 ${updateRows.length}건, 신규 추가 
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                action: 'saveToSheet',
-                sheetName: sheetName,
-                values: values,
-                marketColors: marketColors,
-                spreadsheetId: 'SPREADSHEET_ID_ORDERS'
-            })
+    action: 'saveToSheet',
+    sheetName: sheetName,
+    values: values,
+    marketColors: marketColors,
+    spreadsheetId: '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg',
+    forceTextColumns: ['수령인', '수취인', '주문자전화번호', '수취인전화번호', '수령인전화번호']  // 텍스트로 저장할 컬럼 지정
+})
         });
         
         const result = await response.json();
