@@ -2082,18 +2082,14 @@ const existingData = getResult.data || [];
         
         // 중복 체크를 위한 키 생성 함수
 const createKey = (row) => {
+    // 각 필드를 가져오되, 없으면 빈 문자열로 처리
     const orderNo = row['주문번호'] || '';
     const orderer = row['주문자'] || '';
     const recipient = row['수령인'] || row['수취인'] || '';
-    const market = row['마켓'] || '';
+    const optionName = row['옵션명'] || '';
     
-    // 모든 필드가 비어있으면 중복으로 처리하지 않음
-    if (!orderNo && !orderer && !recipient && !market) {
-        // 빈 데이터는 각각 고유한 것으로 처리하기 위해 임시 ID 추가
-        return `empty_${Math.random().toString(36).substr(2, 9)}`;
-    }
-    
-    return `${orderNo}_${orderer}_${recipient}_${market}`;
+    // 키 생성 - 주문번호_주문자_수령인_옵션명
+    return `${orderNo}_${orderer}_${recipient}_${optionName}`;
 };
         
         // 기존 데이터 맵 생성 (키 -> 행 인덱스)
