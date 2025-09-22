@@ -834,116 +834,124 @@ if (fileName.endsWith('.csv')) {
 }
     },
     
-    async processExcelData(rawRows, file) {
-        const cleanRows = rawRows.filter(row => 
-            row && row.some(cell => cell !== null && cell !== undefined && cell !== '')
-        );
-        
-        if (cleanRows.length === 0) {
-            this.showError(`${file.name}: 데이터가 없습니다.`);
-            return;
-        }
-        
-// 헤더 위치 판단 - 매핑 시트의 헤더행 값 우선 사용
-let headerRowIndex = 0;
-const fileName = file.name.toLowerCase();
-
-// 마켓 감지를 위한 임시 헤더 추출 - detectMarket 호출 전에 임시 마켓 감지
-let tempMarketName = null;
-
-// 파일명으로 마켓 추측
-if (this.mappingData && this.mappingData.markets) {
-    for (const [marketName, market] of Object.entries(this.mappingData.markets)) {
-        // 감지문자열로 확인
-        const detectStrings = [
-            market.detectString1,
-            market.detectString2,
-            marketName.toLowerCase()
-        ].filter(s => s);
-        
-        if (detectStrings.some(str => fileName.includes(str.toLowerCase()))) {
-            tempMarketName = marketName;
-            break;
+async processExcelData(rawRows, file) {
+    // rawRows가 비어있는지만 확인
+    if (!rawRows || rawRows.length === 0) {
+        this.showError(`${file.name}: 파일이 비어있습니다.`);
+        return;
+    }
+    
+    // 헤더 위치 판단 - 매핑 시트의 헤더행 값 우선 사용
+    let headerRowIndex = 0;
+    const fileName = file.name.toLowerCase();
+    
+    // 마켓 감지를 위한 임시 헤더 추출
+    let tempMarketName = null;
+    
+    // 파일명으로 마켓 추측
+    if (this.mappingData && this.mappingData.markets) {
+        for (const [marketName, market] of Object.entries(this.mappingData.markets)) {
+            // 감지문자열로 확인
+            const detectStrings = [
+                market.detectString1,
+                market.detectString2,
+                marketName.toLowerCase()
+            ].filter(s => s);
+            
+            if (detectStrings.some(str => fileName.includes(str.toLowerCase()))) {
+                tempMarketName = marketName;
+                break;
+            }
         }
     }
-}
-
-// 디버그: 감지된 마켓 확인
-console.log(`=== 헤더행 판단 시작 ===`);
-console.log(`파일명: ${file.name}`);
-console.log(`임시 감지 마켓: ${tempMarketName || '없음'}`);
-
-// 매핑 데이터에서 헤더행 값 가져오기
-if (tempMarketName && this.mappingData?.markets?.[tempMarketName]?.headerRow) {
-    const headerRowValue = this.mappingData.markets[tempMarketName].headerRow;
-    headerRowIndex = Math.max(0, parseInt(headerRowValue) - 1); // 1-based를 0-based 인덱스로 변환
-    console.log(`매핑시트 헤더행 값: ${headerRowValue} → 인덱스: ${headerRowIndex}`);
     
-    // 디버그: 실제 행 데이터 확인
-    console.log(`1행 데이터:`, cleanRows[0]?.slice(0, 5));
-    console.log(`2행 데이터:`, cleanRows[1]?.slice(0, 5));
-    if (cleanRows[2]) console.log(`3행 데이터:`, cleanRows[2]?.slice(0, 5));
-} else {
-    // 매핑 데이터가 없으면 기본 로직 사용
-    console.log(`매핑 데이터 없음 - 기본 로직 사용`);
+    // 디버그: 감지된 마켓 확인
+    console.log(`=== 헤더행 판단 시작 ===`);
+    console.log(`파일명: ${file.name}`);
+    console.log(`임시 감지 마켓: ${tempMarketName || '없음'}`);
     
-    // 파일명 기반 기본 판단
-    if (fileName.includes('전화주문') || fileName.includes('cs발송') || fileName.includes('cs재발송')) {
-        headerRowIndex = 1;
-    } else if (fileName.includes('스마트스토어') || fileName.includes('네이버')) {
-        headerRowIndex = 1;
-    } else if (fileName.includes('주문내역') && fileName.includes('상품준비중')) {
-        headerRowIndex = 1;  // 토스 파일 패턴
-        console.log(`토스 파일 패턴 감지 - 헤더행 2 설정`);
+    // 매핑 데이터에서 헤더행 값 가져오기
+    if (tempMarketName && this.mappingData?.markets?.[tempMarketName]?.headerRow) {
+        const headerRowValue = this.mappingData.markets[tempMarketName].headerRow;
+        headerRowIndex = Math.max(0, parseInt(headerRowValue) - 1); // 1-based를 0-based 인덱스로 변환
+        console.log(`매핑시트 헤더행 값: ${headerRowValue} → 인덱스: ${headerRowIndex}`);
+        
+        // 디버그: 실제 행 데이터 확인
+        console.log(`1행 데이터:`, rawRows[0]?.slice(0, 5));
+        console.log(`2행 데이터:`, rawRows[1]?.slice(0, 5));
+        if (rawRows[2]) console.log(`3행 데이터:`, rawRows[2]?.slice(0, 5));
     } else {
-        headerRowIndex = 0;
-    }
-}
-
-console.log(`최종 헤더행 인덱스: ${headerRowIndex} (실제 ${headerRowIndex + 1}행)`);
-console.log(`=== 헤더행 판단 완료 ===`);
-
-
-    
+        // 매핑 데이터가 없으면 기본 로직 사용
+        console.log(`매핑 데이터 없음 - 기본 로직 사용`);
         
-        const headers = cleanRows[headerRowIndex].map(h => String(h || '').trim());
-        const dataRows = cleanRows.slice(headerRowIndex + 1);
-        
-        // 마켓 감지
-        const marketName = await this.detectMarket(file.name, headers, dataRows[0] || []);
-        
-        if (!marketName) {
-            this.showError(`${file.name}: 마켓을 인식할 수 없습니다.`);
-            return;
+        // 파일명 기반 기본 판단
+        if (fileName.includes('전화주문') || fileName.includes('cs발송') || fileName.includes('cs재발송')) {
+            headerRowIndex = 1;
+        } else if (fileName.includes('스마트스토어') || fileName.includes('네이버')) {
+            headerRowIndex = 1;
+        } else if (fileName.includes('주문내역') && fileName.includes('상품준비중')) {
+            headerRowIndex = 1;  // 토스 파일 패턴
+            console.log(`토스 파일 패턴 감지 - 헤더행 2 설정`);
+        } else {
+            headerRowIndex = 0;
         }
-        
-        // 날짜 확인
-        const fileDate = new Date(file.lastModified);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        fileDate.setHours(0, 0, 0, 0);
-        const isToday = fileDate.getTime() === today.getTime();
-        
-        // 파일 정보 저장
-        const fileInfo = {
-            name: file.name,
-            marketName: marketName,
-            lastModified: file.lastModified,
-            isToday: isToday,
-            headers: headers,
-            data: dataRows.map(row => {
-                const obj = {};
-                headers.forEach((h, i) => {
-                    obj[h] = row[i] !== undefined ? row[i] : '';
-                });
-                return obj;
-            }),
-            rowCount: dataRows.length
-        };
-        
-        this.uploadedFiles.push(fileInfo);
-        this.updateFileList();
-    },
+    }
+    
+    console.log(`최종 헤더행 인덱스: ${headerRowIndex} (실제 ${headerRowIndex + 1}행)`);
+    console.log(`=== 헤더행 판단 완료 ===`);
+    
+    // rawRows에서 직접 헤더 추출 (빈 행 포함된 상태)
+    const headers = rawRows[headerRowIndex]?.map(h => String(h || '').trim()) || [];
+    
+    // 헤더 이후의 데이터 행만 필터링 (빈 행 제거)
+    const dataRows = [];
+    for (let i = headerRowIndex + 1; i < rawRows.length; i++) {
+        const row = rawRows[i];
+        if (row && row.some(cell => cell !== null && cell !== undefined && cell !== '')) {
+            dataRows.push(row);
+        }
+    }
+    
+    if (headers.length === 0 || dataRows.length === 0) {
+        this.showError(`${file.name}: 유효한 데이터가 없습니다.`);
+        return;
+    }
+    
+    // 마켓 감지
+    const marketName = await this.detectMarket(file.name, headers, dataRows[0] || []);
+    
+    if (!marketName) {
+        this.showError(`${file.name}: 마켓을 인식할 수 없습니다.`);
+        return;
+    }
+    
+    // 날짜 확인
+    const fileDate = new Date(file.lastModified);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    fileDate.setHours(0, 0, 0, 0);
+    const isToday = fileDate.getTime() === today.getTime();
+    
+    // 파일 정보 저장
+    const fileInfo = {
+        name: file.name,
+        marketName: marketName,
+        lastModified: file.lastModified,
+        isToday: isToday,
+        headers: headers,
+        data: dataRows.map(row => {
+            const obj = {};
+            headers.forEach((h, i) => {
+                obj[h] = row[i] !== undefined ? row[i] : '';
+            });
+            return obj;
+        }),
+        rowCount: dataRows.length
+    };
+    
+    this.uploadedFiles.push(fileInfo);
+    this.updateFileList();
+},
     
     async detectMarket(fileName, headers, firstDataRow) {
         try {
