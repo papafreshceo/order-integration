@@ -1652,16 +1652,21 @@ if (header.includes('금액') || header.includes('공급가') || header === '셀
         return;
     }
     
-    // processedData를 전달해야 함
-    const result = await this.ProductMatching.verifyOptions(this.processedData.data);
-    
-    if (result.unmatchedOptions && result.unmatchedOptions.length > 0) {
-        this.showError(`매칭 실패: ${result.unmatchedOptions.length}개 옵션`);
-    } else {
-        this.showSuccess('모든 옵션명 매칭 성공');
+    try {
+        // processedData를 전역으로 임시 설정
+        window.processedData = this.processedData;
+        
+        // ProductMatching의 verifyOptions 호출
+        await this.ProductMatching.verifyOptions();
+        
+    } catch (error) {
+        console.error('옵션명 검증 오류:', error);
+        this.showError('옵션명 검증 중 오류가 발생했습니다.');
+    } finally {
+        // 검증 후 정리
+        delete window.processedData;
+        this.displayResults();
     }
-    
-    this.displayResults();
 },
     
 async verifyDuplicate() {

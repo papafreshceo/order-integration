@@ -263,13 +263,21 @@ if (row['셀러'] && matchedProduct['셀러공급가']) {
             const loadResult = await loadProductData();
             console.log('제품 데이터 로드 결과:', loadResult);
             
-            if (!processedData || !processedData.data) {
-                console.error('processedData 상태:', {
-                    exists: !!processedData,
-                    hasData: processedData ? !!processedData.data : false
-                });
-                throw new Error('처리된 데이터가 없습니다.');
-            }
+            // OrderExcelHandler에서 전달받은 데이터 사용
+let dataToVerify = window.processedData || 
+                   window.OrderExcelHandler?.processedData || 
+                   (window.OrderExcelHandler?.getProcessedData ? window.OrderExcelHandler.getProcessedData() : null);
+
+if (!dataToVerify || !dataToVerify.data) {
+    console.error('processedData 상태:', {
+        exists: !!dataToVerify,
+        hasData: dataToVerify ? !!dataToVerify.data : false
+    });
+    throw new Error('처리된 데이터가 없습니다.');
+}
+
+// processedData를 dataToVerify로 사용
+const processedData = dataToVerify;
             
             let matchedCount = 0;
             let unmatchedCount = 0;
