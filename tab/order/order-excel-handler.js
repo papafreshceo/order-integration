@@ -901,7 +901,11 @@ else if (tempMarketName && this.mappingData?.markets?.[tempMarketName]?.headerRo
     console.log(`rawRows[0] (1행):`, rawRows[0]?.slice(0, 5));
     console.log(`rawRows[1] (2행):`, rawRows[1]?.slice(0, 5));
     if (rawRows[2]) console.log(`rawRows[2] (3행):`, rawRows[2]?.slice(0, 5));
+
+
+    
 } else {
+
     // 매핑 데이터가 없으면 기본 로직 사용
     console.log(`매핑 데이터 없음 - 기본 로직 사용`);
     
@@ -917,23 +921,6 @@ else if (tempMarketName && this.mappingData?.markets?.[tempMarketName]?.headerRo
         headerRowIndex = 0;
     }
 }
-
-else {
-        // 매핑 데이터가 없으면 기본 로직 사용
-        console.log(`매핑 데이터 없음 - 기본 로직 사용`);
-        
-        // 파일명 기반 기본 판단
-        if (fileName.includes('전화주문') || fileName.includes('cs발송') || fileName.includes('cs재발송')) {
-            headerRowIndex = 1;
-        } else if (fileName.includes('스마트스토어') || fileName.includes('네이버')) {
-            headerRowIndex = 1;
-        } else if (fileName.includes('주문내역') && fileName.includes('상품준비중')) {
-            headerRowIndex = 1;  // 토스 파일 패턴
-            console.log(`토스 파일 패턴 감지 - 헤더행 2 설정`);
-        } else {
-            headerRowIndex = 0;
-        }
-    }
     
     console.log(`최종 헤더행 인덱스: ${headerRowIndex} (실제 ${headerRowIndex + 1}행)`);
     console.log(`=== 헤더행 판단 완료 ===`);
