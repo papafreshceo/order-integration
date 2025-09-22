@@ -1211,7 +1211,7 @@ this.processedData = {
 
 // 전역 변수 확실하게 설정
 window.processedData = this.processedData;
-console.log('window.processedData 설정 완료:', window.processedData);;
+console.log('window.processedData 설정 완료:', window.processedData);
 
 this.displayResults();
 this.showSuccess(`${enrichedData.length}개 주문 통합 완료`);
@@ -1625,23 +1625,75 @@ if (header !== '마켓명' && !td.textContent && !td.innerHTML) {
         return;
     }
     
-    // 예전 방식: 전역 변수로 직접 설정
-    window.processedData = this.processedData;
-    
-    // ProductMatching이 window에 있는지 확인
-    if (typeof window.ProductMatching !== 'undefined') {
-        await window.ProductMatching.verifyOptions();
-    } else {
-        console.error('ProductMatching을 찾을 수 없습니다');
-        this.showError('옵션명 검증 모듈을 찾을 수 없습니다.');
-        return;
+    // ProductMatching 데이터 로드
+    if (!this.ProductMatching) {
+        this.ProductMatching = window.ProductMatching || parent.window?.ProductMatching;
     }
     
-    // 변경된 데이터 다시 가져오기
-    this.processedData = window.processedData;
+    if (this.ProductMatching) {
+        await this.ProductMatching.loadProductData();
+    }
     
-    // 테이블 다시 그리기
+    let matchedCount = 0;
+    let unmatchedCount = 0;
+    let modifiedMatchedCount = 0;
+    
+    // 모든 행 검증
+    this.processedData.data.forEach((row, index) => {
+        const optionName = row['옵션명'];
+        
+        if (!optionName) {
+            unmatchedCount++;
+            row['_matchStatus'] = 'unmatched';
+            return;
+        }
+        
+        // ProductMatching 있으면 매칭 시도
+        let matchedProduct = null;
+        if (this.ProductMatching && window.productData) {
+            const trimmedOption = optionName.trim();
+            matchedProduct = window.productData[trimmedOption];
+            
+            if (!matchedProduct) {
+                // 대소문자 무시 매칭
+                const lowerOption = trimmedOption.toLowerCase();
+                for (const [key, value] of Object.entries(window.productData)) {
+                    if (key.toLowerCase() === lowerOption) {
+                        matchedProduct = value;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (matchedProduct) {
+            matchedCount++;
+            row['_matchStatus'] = 'matched';
+            
+            // 제품 정보 업데이트
+            row['셀러공급가'] = matchedProduct['셀러공급가'] || row['셀러공급가'] || '';
+            row['출고처'] = matchedProduct.출고처 || row['출고처'] || '';
+            row['송장주체'] = matchedProduct.송장주체 || row['송장주체'] || '';
+            row['벤더사'] = matchedProduct.벤더사 || row['벤더사'] || '';
+            row['발송지명'] = matchedProduct.발송지명 || row['발송지명'] || '';
+            row['발송지주소'] = matchedProduct.발송지주소 || row['발송지주소'] || '';
+            row['발송지연락처'] = matchedProduct.발송지연락처 || row['발송지연락처'] || '';
+            row['출고비용'] = matchedProduct.출고비용 || 0;
+        } else {
+            unmatchedCount++;
+            row['_matchStatus'] = 'unmatched';
+        }
+    });
+    
+    // 결과 표시
     this.displayResults();
+    
+    // 결과 메시지
+    const message = `옵션명 검증 완료\n\n` +
+                   `✓ 정상 매칭: ${matchedCount}개\n` +
+                   `✗ 매칭 실패: ${unmatchedCount}개`;
+    
+    this.showSuccess(message.replace(/\n/g, ' '));
 },
 
 async verifyDuplicate() {
