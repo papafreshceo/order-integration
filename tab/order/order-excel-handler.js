@@ -487,6 +487,30 @@ window.OrderExcelHandler = {
                     background: #d1fae5;
                     border-color: #10b981;
                 }
+
+
+                /* 매칭 상태 아이콘을 ::after 가상 요소로 표시 */
+.unmatched-cell::after {
+    content: '⚠️';
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    pointer-events: none;
+}
+
+.modified-cell::after {
+    content: '✏️';
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    pointer-events: none;
+}
+
+
             </style>
             
             <div class="excel-container">
@@ -1561,24 +1585,38 @@ if (header === '마켓명') {
 
 // 옵션명 매칭 상태 표시
 if (header === '옵션명') {
+    // 텍스트만 설정
+    td.textContent = String(value);
+    
     if (row['_matchStatus'] === 'unmatched') {
         td.classList.add('unmatched-cell', 'editable-cell');
-        td.innerHTML = `<span>${String(value)}</span> <span style="color: #dc3545; font-size: 12px;">⚠️</span>`;
         td.contentEditable = true;
+        td.style.position = 'relative';
+        td.style.paddingRight = '20px';  // 아이콘 공간 확보
+        
+        // 아이콘을 절대 위치로 배치
+        td.title = '⚠️ 매칭 실패 - 클릭하여 수정';
         
         td.addEventListener('blur', () => {
-            const textContent = td.querySelector('span:first-child')?.textContent || td.textContent;
-            row['옵션명'] = textContent.trim().replace('⚠️', '').replace('✏️', '');
+            row['옵션명'] = td.textContent.trim();
             row['_matchStatus'] = 'modified';
             td.classList.remove('unmatched-cell');
             td.classList.add('modified-cell');
-            td.innerHTML = `<span>${row['옵션명']}</span> <span style="color: #f59e0b; font-size: 12px;">✏️</span>`;
+            td.title = '✏️ 수정됨';
         });
+        
+        // Enter 키 처리
+        td.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                td.blur();
+            }
+        });
+        
     } else if (row['_matchStatus'] === 'modified') {
         td.classList.add('modified-cell');
-        td.innerHTML = `<span>${String(value)}</span> <span style="color: #f59e0b; font-size: 12px;">✏️</span>`;
-    } else {
-        td.textContent = String(value);
+        td.style.paddingRight = '20px';
+        td.title = '✏️ 수정됨';
     }
 }
                 
