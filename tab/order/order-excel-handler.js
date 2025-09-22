@@ -851,7 +851,7 @@ if (tempMarketName && this.mappingData?.markets?.[tempMarketName]?.headerRow) {
     } else if (fileName.includes('스마트스토어') || fileName.includes('네이버')) {
         headerRowIndex = 1;
     } else if (fileName.includes('토스') || (fileName.includes('주문내역') && fileName.includes('상품준비중'))) {
-        headerRowIndex = 1;
+        headerRowIndex = 1;  // 토스는 2행이 헤더 (0-based index에서 1)
     } else {
         headerRowIndex = 0;
     }
