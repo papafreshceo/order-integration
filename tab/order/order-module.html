@@ -85,9 +85,38 @@
         }
 
         /* 호버 시 아이콘 애니메이션 */
-        .om-tab-btn:hover svg {
-            transform: scale(1.1);
-        }
+.om-tab-btn:hover svg {
+    transform: scale(1.1);
+}
+
+/* 새로고침 버튼 스타일 */
+.refresh-button {
+    position: absolute;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #495057;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.refresh-button:hover {
+    border-color: #2563eb;
+    color: #2563eb;
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.om-header {
+    position: relative;
+}
     </style>
 </head>
 <body>
