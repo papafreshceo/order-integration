@@ -111,12 +111,14 @@ const ProductMatching = (function() {
                 if (!row['발송지연락처']) row['발송지연락처'] = matchedProduct.발송지연락처 || '';
                 if (!row['출고비용']) row['출고비용'] = matchedProduct.출고비용 || 0;
                 
-                // 셀러공급가 설정 - 통합상품마스터에서 직접 가져오기
-                if (row['셀러'] && matchedProduct['셀러공급가']) {
-                    const quantity = parseInt(row['수량']) || 1;
-                    const unitPrice = parseFloat(matchedProduct['셀러공급가']) || 0;
-                    row['셀러공급가'] = unitPrice * quantity;
-                }
+                // 셀러공급가 설정 - 천단위 콤마 제거 후 계산
+if (row['셀러'] && matchedProduct['셀러공급가']) {
+    const quantity = parseInt(row['수량']) || 1;
+    // 천단위 콤마 제거 후 숫자 변환
+    const priceString = String(matchedProduct['셀러공급가']).replace(/,/g, '');
+    const unitPrice = parseFloat(priceString) || 0;
+    row['셀러공급가'] = unitPrice * quantity;
+}
                 
                 row['_matchStatus'] = 'matched';
                 
