@@ -1548,8 +1548,13 @@ const amountFields = ['셀러공급가', '출고비용', '정산예정금액', '
 if (amountFields.some(field => header.includes(field))) {
     const numValue = parseFloat(String(value).replace(/[^0-9.-]/g, ''));
     if (!isNaN(numValue)) {
-        value = numValue.toLocaleString('ko-KR');
-        td.style.textAlign = 'right';  // 우측 정렬 강제 적용
+        // 0인 경우 빈 문자열로 처리
+        if (numValue === 0) {
+            value = '';
+        } else {
+            value = numValue.toLocaleString('ko-KR');
+        }
+        td.style.textAlign = 'right';
         td.classList.add('amount-field');
     }
 }
@@ -1645,10 +1650,15 @@ if (header.includes('금액') || header.includes('공급가') || header === '셀
                 
                 
         
-        // 기본값 설정 (마켓명이 아니고 특별한 처리가 없는 경우)
-    if (header !== '마켓명' && !td.textContent && !td.innerHTML) {
+        // 기본값 설정 (0은 빈 문자열로)
+if (header !== '마켓명' && !td.textContent && !td.innerHTML) {
+    // 숫자 0인 경우 빈 셀로 처리
+    if (value === 0 || value === '0') {
+        td.textContent = '';
+    } else {
         td.textContent = String(value);
     }
+}
     
     tr.appendChild(td);
     });
