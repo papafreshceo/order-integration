@@ -2209,20 +2209,40 @@ console.log(`최종 처리: 덮어쓰기 ${updateRows.length}건, 신규 추가 
         if (result.success) {
     // 실제 처리된 건수 계산
     const duplicateNotSaved = duplicateKeys.length - updateRows.length;
-    const existingOrderCount = existingData.length - updateRows.length; // 기존 주문 중 덮어쓰지 않은 것
-    const totalOrderCount = existingOrderCount + updateRows.length + newRows.length;
+    const totalOrderCount = finalData.length;
+    
+    // 중복 주문 상세 정보 생성 (최대 5개)
+    let duplicateDetails = '';
+    if (duplicateKeys.length > 0) {
+        duplicateDetails = `\n📋 중복 주문 상세\n` +
+                          `━━━━━━━━━━━━━━━━━━━━\n`;
+        
+        duplicateKeys.slice(0, 5).forEach((d, idx) => {
+            const row = d.row;
+            duplicateDetails += `${idx + 1}. 주문번호: ${row['주문번호']}\n` +
+                               `   수령인: ${row['수령인'] || row['수취인']}\n` +
+                               `   옵션명: ${row['옵션명']}\n` +
+                               `   상태: ${updateRows.some(u => u.index === d.index) ? '✅ 덮어쓰기됨' : '❌ 제외됨'}\n\n`;
+        });
+        
+        if (duplicateKeys.length > 5) {
+            duplicateDetails += `... 외 ${duplicateKeys.length - 5}건 더 있음\n`;
+        }
+    }
     
     const message = `구글 시트 "${sheetName}" 저장 완료\n\n` +
                    `📊 처리 결과\n` +
                    `━━━━━━━━━━━━━━━━━━━━\n` +
                    `✅ 신규 추가: ${newRows.length}건\n` +
-                   (updateRows.length > 0 ? `🔄 덮어쓰기 (중복): ${updateRows.length}건\n` : '') +
-                   (duplicateNotSaved > 0 ? `⚠️ 중복으로 미저장: ${duplicateNotSaved}건\n` : '') +
-                   `\n📈 누적 현황\n` +
+                   `🔍 중복 발견: ${duplicateKeys.length}건\n` +
+                   (updateRows.length > 0 ? `  ㄴ 🔄 덮어쓰기: ${updateRows.length}건\n` : '') +
+                   (duplicateNotSaved > 0 ? `  ㄴ ⚠️ 미저장: ${duplicateNotSaved}건\n` : '') +
+                   duplicateDetails +
+                   `\n📈 최종 현황\n` +
                    `━━━━━━━━━━━━━━━━━━━━\n` +
-                   `• 기존 주문: ${existingData.length}건\n` +
-                   `• 현재 처리: ${this.processedData.data.length}건\n` +
-                   `• 전체 누적: ${totalOrderCount}건`;
+                   `• 처리 전 주문: ${existingData.length}건\n` +
+                   `• 처리 후 주문: ${totalOrderCount}건\n` +
+                   `• 증가: +${totalOrderCount - existingData.length}건`;
     
     this.showCenterMessage(message, 'success');
     console.log(message.replace(/\n/g, ' '));
