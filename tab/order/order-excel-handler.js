@@ -1133,19 +1133,56 @@ orderCount.innerHTML = `<strong style="color: #2563eb; font-weight: 600;">${file
             // 데이터 통합
             const mergedData = await this.mergeOrderData(todayFiles);
             
-            // 제품 정보 적용 (옵션명으로 셀러공급가 등 매칭)
+// 제품 정보 적용 (옵션명으로 통합상품마스터 필드 매칭)
 let enrichedData = mergedData;
+
+// ProductMatching 로드 확인
+if (!this.ProductMatching) {
+    if (parent.window !== window && parent.window.ProductMatching) {
+        this.ProductMatching = parent.window.ProductMatching;
+    } else if (window.ProductMatching) {
+        this.ProductMatching = window.ProductMatching;
+    }
+}
+
 if (this.ProductMatching) {
     console.log('ProductMatching 적용 시작');
+    
+    // ProductMatching 데이터 로드 확인
+    if (!this.ProductMatching.isLoaded) {
+        await this.ProductMatching.loadProductData();
+    }
+    
     enrichedData = await this.ProductMatching.applyProductInfo(mergedData);
     
-    // 셀러공급가가 제대로 적용되었는지 확인
-    const sampleRow = enrichedData[0];
-    if (sampleRow) {
-        console.log('샘플 데이터 - 옵션명:', sampleRow['옵션명'], '셀러공급가:', sampleRow['셀러공급가']);
-    }
+    // 통합상품마스터 필드 매칭 검증
+    const requiredFields = ['셀러공급가', '출고처', '송장주체', '벤더사', 
+                           '발송지명', '발송지주소', '발송지연락처', '출고비용'];
+    
+    let matchedCount = 0;
+    enrichedData.forEach(row => {
+        // 최소 하나 이상의 필드가 매칭되었는지 확인
+        const hasMatchedField = requiredFields.some(field => 
+            row[field] && row[field] !== '' && row[field] !== 0
+        );
+        if (hasMatchedField) matchedCount++;
+    });
+    
+    console.log(`ProductMatching 결과: ${matchedCount}/${enrichedData.length}개 행에서 통합상품마스터 매칭됨`);
 } else {
-    console.log('ProductMatching이 없어서 제품 정보를 적용할 수 없습니다');
+    console.error('ProductMatching 모듈을 찾을 수 없습니다');
+    
+    // ProductMatching 없을 때 기본값 설정
+    enrichedData.forEach(row => {
+        row['셀러공급가'] = row['셀러공급가'] || '';
+        row['출고처'] = row['출고처'] || '';
+        row['송장주체'] = row['송장주체'] || '';
+        row['벤더사'] = row['벤더사'] || '';
+        row['발송지명'] = row['발송지명'] || '';
+        row['발송지주소'] = row['발송지주소'] || '';
+        row['발송지연락처'] = row['발송지연락처'] || '';
+        row['출고비용'] = row['출고비용'] || 0;
+    });
 }
             
             this.processedData = {
@@ -1467,14 +1504,20 @@ function getAlignment(fieldName) {
         }
     }
     
-    // 금액 포맷팅
-    if (rightAlignFields.includes(header)) {
-        const numValue = parseFloat(String(value).replace(/[^0-9.-]/g, ''));
-        if (!isNaN(numValue) && value !== '') {
-            value = numValue.toLocaleString('ko-KR');
-            td.classList.add('amount-field');
-        }
+// 금액 포맷팅 - 모든 금액 관련 필드 처리
+const amountFields = ['셀러공급가', '출고비용', '정산예정금액', '정산대상금액', 
+                      '상품금액', '최종결제금액', '할인금액', '마켓부담할인금액', 
+                      '판매자할인쿠폰할인', '구매쿠폰적용금액', '쿠폰할인금액', 
+                      '기타지원금할인금', '수수료1', '수수료2', '택배비'];
+
+if (amountFields.some(field => header.includes(field))) {
+    const numValue = parseFloat(String(value).replace(/[^0-9.-]/g, ''));
+    if (!isNaN(numValue)) {
+        value = numValue.toLocaleString('ko-KR');
+        td.style.textAlign = 'right';  // 우측 정렬 강제 적용
+        td.classList.add('amount-field');
     }
+}
     
     // 수량 강조
     if (header === '수량') {
