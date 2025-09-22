@@ -848,7 +848,7 @@ if (fileName.endsWith('.csv')) {
 let headerRowIndex = 0;
 const fileName = file.name.toLowerCase();
 
-// 마켓 감지를 위한 임시 헤더 추출 (1행과 2행 모두 확인)
+// 마켓 감지를 위한 임시 헤더 추출 - detectMarket 호출 전에 임시 마켓 감지
 let tempMarketName = null;
 
 // 파일명으로 마켓 추측
@@ -868,26 +868,40 @@ if (this.mappingData && this.mappingData.markets) {
     }
 }
 
+// 디버그: 감지된 마켓 확인
+console.log(`=== 헤더행 판단 시작 ===`);
+console.log(`파일명: ${file.name}`);
+console.log(`임시 감지 마켓: ${tempMarketName || '없음'}`);
+
 // 매핑 데이터에서 헤더행 값 가져오기
 if (tempMarketName && this.mappingData?.markets?.[tempMarketName]?.headerRow) {
     const headerRowValue = this.mappingData.markets[tempMarketName].headerRow;
     headerRowIndex = Math.max(0, parseInt(headerRowValue) - 1); // 1-based를 0-based 인덱스로 변환
-    console.log(`${file.name}: ${tempMarketName} - 매핑시트 헤더행 ${headerRowValue} 사용`);
+    console.log(`매핑시트 헤더행 값: ${headerRowValue} → 인덱스: ${headerRowIndex}`);
+    
+    // 디버그: 실제 행 데이터 확인
+    console.log(`1행 데이터:`, cleanRows[0]?.slice(0, 5));
+    console.log(`2행 데이터:`, cleanRows[1]?.slice(0, 5));
+    if (cleanRows[2]) console.log(`3행 데이터:`, cleanRows[2]?.slice(0, 5));
 } else {
     // 매핑 데이터가 없으면 기본 로직 사용
-    console.log(`${file.name}: 매핑 데이터 없음 - 기본 헤더 위치 판단`);
+    console.log(`매핑 데이터 없음 - 기본 로직 사용`);
     
     // 파일명 기반 기본 판단
     if (fileName.includes('전화주문') || fileName.includes('cs발송') || fileName.includes('cs재발송')) {
         headerRowIndex = 1;
     } else if (fileName.includes('스마트스토어') || fileName.includes('네이버')) {
         headerRowIndex = 1;
-    } else if (fileName.includes('토스') || (fileName.includes('주문내역') && fileName.includes('상품준비중'))) {
-        headerRowIndex = 1;  // 토스는 2행이 헤더 (0-based index에서 1)
+    } else if (fileName.includes('주문내역') && fileName.includes('상품준비중')) {
+        headerRowIndex = 1;  // 토스 파일 패턴
+        console.log(`토스 파일 패턴 감지 - 헤더행 2 설정`);
     } else {
         headerRowIndex = 0;
     }
 }
+
+console.log(`최종 헤더행 인덱스: ${headerRowIndex} (실제 ${headerRowIndex + 1}행)`);
+console.log(`=== 헤더행 판단 완료 ===`);
 
 
     
