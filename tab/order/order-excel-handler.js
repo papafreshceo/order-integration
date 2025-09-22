@@ -1201,16 +1201,16 @@ if (this.ProductMatching) {
     });
 }
             
-            this.processedData = {
+            // 예전 방식: 전역 변수와 로컬 변수 동시 설정
+this.processedData = {
     data: enrichedData,
     headers: this.mappingData?.standardFields || Object.keys(enrichedData[0] || {}),
     standardFields: this.mappingData?.standardFields || Object.keys(enrichedData[0] || {}),
     sheetName: new Date().toISOString().slice(0, 10).replace(/-/g, '')
 };
 
-// 전역 변수 설정
+// 전역 변수 즉시 설정 (예전 방식)
 window.processedData = this.processedData;
-console.log('processedData 설정 완료:', window.processedData);
 
 this.displayResults();
 this.showSuccess(`${enrichedData.length}개 주문 통합 완료`);
@@ -1624,36 +1624,17 @@ if (header !== '마켓명' && !td.textContent && !td.innerHTML) {
         return;
     }
     
-    console.log('검증 시작 - processedData:', this.processedData);
+    // 예전 방식: 전역 변수로 직접 설정
+    window.processedData = this.processedData;
     
-    try {
-        // 전역 변수 설정
-        window.processedData = this.processedData;
-        console.log('전역 processedData 설정:', window.processedData);
-        
-        // ProductMatching 확인
-        if (!this.ProductMatching) {
-            if (parent.window !== window && parent.window.ProductMatching) {
-                this.ProductMatching = parent.window.ProductMatching;
-            } else if (window.ProductMatching) {
-                this.ProductMatching = window.ProductMatching;
-            }
-        }
-        
-        // ProductMatching의 verifyOptions 호출
-        await this.ProductMatching.verifyOptions();
-        
-        // 수정된 데이터 반영
-        if (window.processedData) {
-            this.processedData = window.processedData;
-        }
-        
-    } catch (error) {
-        console.error('옵션명 검증 오류:', error);
-        this.showError('옵션명 검증 중 오류가 발생했습니다.');
-    } finally {
-        this.displayResults();
-    }
+    // ProductMatching 직접 호출
+    await ProductMatching.verifyOptions();
+    
+    // 변경된 데이터 다시 가져오기
+    this.processedData = window.processedData;
+    
+    // 테이블 다시 그리기
+    this.displayResults();
 },
 
 async verifyDuplicate() {
