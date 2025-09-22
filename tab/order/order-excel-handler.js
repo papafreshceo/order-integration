@@ -903,7 +903,7 @@ else if (tempMarketName && this.mappingData?.markets?.[tempMarketName]?.headerRo
     if (rawRows[2]) console.log(`rawRows[2] (3행):`, rawRows[2]?.slice(0, 5));
 
 
-    
+
 } else {
 
     // 매핑 데이터가 없으면 기본 로직 사용
@@ -1133,9 +1133,20 @@ orderCount.innerHTML = `<strong style="color: #2563eb; font-weight: 600;">${file
             // 데이터 통합
             const mergedData = await this.mergeOrderData(todayFiles);
             
-            // 제품 정보 적용
-            const enrichedData = this.ProductMatching ? 
-                await this.ProductMatching.applyProductInfo(mergedData) : mergedData;
+            // 제품 정보 적용 (옵션명으로 셀러공급가 등 매칭)
+let enrichedData = mergedData;
+if (this.ProductMatching) {
+    console.log('ProductMatching 적용 시작');
+    enrichedData = await this.ProductMatching.applyProductInfo(mergedData);
+    
+    // 셀러공급가가 제대로 적용되었는지 확인
+    const sampleRow = enrichedData[0];
+    if (sampleRow) {
+        console.log('샘플 데이터 - 옵션명:', sampleRow['옵션명'], '셀러공급가:', sampleRow['셀러공급가']);
+    }
+} else {
+    console.log('ProductMatching이 없어서 제품 정보를 적용할 수 없습니다');
+}
             
             this.processedData = {
                 data: enrichedData,
@@ -1512,13 +1523,13 @@ if (header === '옵션명') {
     }
 }
                 
-                // 금액 포맷팅
-                if (header.includes('금액') || header.includes('공급가')) {
-                    const numValue = parseFloat(String(value).replace(/[^0-9.-]/g, ''));
-                    if (!isNaN(numValue)) {
-                        value = numValue.toLocaleString('ko-KR');
-                    }
-                }
+                // 금액 포맷팅 - 셀러공급가 포함 모든 금액 필드
+if (header.includes('금액') || header.includes('공급가') || header === '셀러공급가' || header === '출고비용' || header === '택배비') {
+    const numValue = parseFloat(String(value).replace(/[^0-9.-]/g, ''));
+    if (!isNaN(numValue) && value !== '') {
+        value = numValue.toLocaleString('ko-KR');
+    }
+}
                 
                 
         
