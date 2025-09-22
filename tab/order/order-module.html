@@ -176,12 +176,12 @@
                         </svg>
                         기타
                     </button>
-                    <button class="refresh-button" onclick="location.reload()" title="새로고침">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="23 4 23 10 17 10"></polyline>
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-        </svg>
-    </button>
+                    <button class="refresh-button" onclick="OrderManage.refreshCurrentTab()" title="새로고침">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+    </svg>
+</button>
                 </div>
             </div>
         </div>
@@ -348,8 +348,23 @@
             },
             
             hideLoading() {
-                document.getElementById('om-loading').classList.remove('show');
-            }
+    document.getElementById('om-loading').classList.remove('show');
+},
+
+refreshCurrentTab() {
+    // 현재 활성 탭의 패널 내용만 비우고 다시 로드
+    const currentPanel = document.getElementById(`om-panel-${this.currentTab}`);
+    if (currentPanel) {
+        // 패널 내용 초기화
+        currentPanel.innerHTML = '';
+        
+        // 모듈 캐시에서 제거
+        delete this.modules[this.currentTab];
+        
+        // 모듈 다시 로드
+        this.loadModule(this.currentTab);
+    }
+}
         };
         
         // 초기화
