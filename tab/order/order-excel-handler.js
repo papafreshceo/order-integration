@@ -1692,15 +1692,107 @@ if (this.ProductMatching && Object.keys(productData).length > 0) {
         }
     });
     
-    // 결과 표시
-    this.displayResults();
-    
-    // 결과 메시지
-    const message = `옵션명 검증 완료\n\n` +
-                   `✓ 정상 매칭: ${matchedCount}개\n` +
-                   `✗ 매칭 실패: ${unmatchedCount}개`;
-    
-    this.showSuccess(message.replace(/\n/g, ' '));
+// 결과 표시
+this.displayResults();
+
+// 상세 통계 계산
+let modifiedCount = 0;
+let modifiedMatchedCount = 0;
+let modifiedUnmatchedCount = 0;
+let notModifiedCount = unmatchedCount;
+
+this.processedData.data.forEach(row => {
+    if (row['_matchStatus'] === 'modified-matched') {
+        modifiedMatchedCount++;
+        modifiedCount++;
+    } else if (row['_matchStatus'] === 'modified') {
+        modifiedUnmatchedCount++;
+        modifiedCount++;
+    }
+});
+
+// 모달 창 생성
+const modal = document.createElement('div');
+modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+`;
+
+const modalContent = document.createElement('div');
+modalContent.style.cssText = `
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 500px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+`;
+
+modalContent.innerHTML = `
+    <h3 style="margin-bottom: 20px; font-size: 20px; font-weight: 500; color: #2563eb;">
+        옵션명 검증 결과
+    </h3>
+    <div style="line-height: 2; font-size: 14px;">
+        <div style="padding: 8px; background: #f8f9fa; border-radius: 8px; margin-bottom: 10px;">
+            <div style="color: #10b981;">✓ 매칭 성공: <strong>${matchedCount}개</strong></div>
+            <div style="color: #f59e0b;">✏ 수정한 옵션명: <strong>${modifiedCount}개</strong></div>
+            <div style="color: #10b981;">✓ 수정 후 매칭 성공: <strong>${modifiedMatchedCount}개</strong></div>
+            <div style="color: #dc3545;">✗ 수정 후 매칭 실패: <strong>${modifiedUnmatchedCount}개</strong></div>
+            <div style="color: #dc3545;">✗ 수정 안된 옵션명: <strong>${notModifiedCount - modifiedUnmatchedCount}개</strong></div>
+        </div>
+        <div style="margin-top: 10px; font-size: 13px; color: #6c757d;">
+            ${modifiedMatchedCount > 0 ? '• 수정 후 매칭 성공: 초록색 표시' : ''}
+            ${unmatchedCount > 0 ? '<br>• 매칭 실패: 빨간색 표시' : ''}
+            ${modifiedUnmatchedCount > 0 ? '<br>• 수정 후 실패: 노란색 표시' : ''}
+        </div>
+    </div>
+`;
+
+const closeButton = document.createElement('button');
+closeButton.textContent = '닫기';
+closeButton.style.cssText = `
+    margin-top: 20px;
+    padding: 10px 24px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 100%;
+    transition: all 0.2s;
+`;
+
+closeButton.onmouseover = () => {
+    closeButton.style.background = '#1d4ed8';
+};
+closeButton.onmouseout = () => {
+    closeButton.style.background = '#2563eb';
+};
+
+closeButton.onclick = () => {
+    document.body.removeChild(modal);
+};
+
+modalContent.appendChild(closeButton);
+modal.appendChild(modalContent);
+document.body.appendChild(modal);
+
+// ESC 키로 닫기
+const escHandler = (e) => {
+    if (e.key === 'Escape') {
+        document.body.removeChild(modal);
+        document.removeEventListener('keydown', escHandler);
+    }
+};
+document.addEventListener('keydown', escHandler);
 },
 
 async verifyDuplicate() {
