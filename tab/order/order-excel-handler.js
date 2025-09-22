@@ -1433,9 +1433,9 @@ function getAlignment(fieldName) {
         }
     }
                 
-                // 마켓명 배지 표시
+// 마켓명 배지 표시
 if (header === '마켓명') {
-    const marketName = value;
+    const marketName = String(value);
     if (this.mappingData?.markets?.[marketName]) {
         const market = this.mappingData.markets[marketName];
         const colorValue = `rgb(${market.color})`;
@@ -1443,7 +1443,7 @@ if (header === '마켓명') {
         const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
         const textColor = brightness > 128 ? '#000' : '#fff';
         
-        const marketBadge = `
+        td.innerHTML = `
             <span style="
                 display: inline-block;
                 padding: 4px 10px;
@@ -1455,76 +1455,36 @@ if (header === '마켓명') {
                 white-space: nowrap;
             ">${marketName}</span>
         `;
-        
-        td.innerHTML = marketBadge;
         td.style.textAlign = 'center';
-        td.style.background = '#ffffff';  // 셀 배경은 흰색 유지
+        td.style.background = '#ffffff';
     } else {
         td.textContent = marketName;
         td.style.textAlign = 'center';
     }
-
-} else {
-    td.textContent = String(value);
 }
                 
-                // 옵션명 매칭 상태 표시
+
+// 옵션명 매칭 상태 표시
 if (header === '옵션명') {
-    const optionContent = document.createElement('div');
-    optionContent.style.display = 'flex';
-    optionContent.style.alignItems = 'center';
-    optionContent.style.gap = '4px';
-    
-    const optionText = document.createElement('span');
-    optionText.textContent = String(value);
-    optionText.style.overflow = 'hidden';
-    optionText.style.textOverflow = 'ellipsis';
-    optionText.style.flex = '1';
-    
     if (row['_matchStatus'] === 'unmatched') {
         td.classList.add('unmatched-cell', 'editable-cell');
-        
-        // 경고 아이콘 추가
-        const warningIcon = document.createElement('span');
-        warningIcon.innerHTML = '⚠️';
-        warningIcon.style.fontSize = '12px';
-        warningIcon.title = '매칭 실패';
-        
-        optionContent.appendChild(optionText);
-        optionContent.appendChild(warningIcon);
-        td.appendChild(optionContent);
-        
+        td.innerHTML = `<span>${String(value)}</span> <span style="color: #dc3545; font-size: 12px;">⚠️</span>`;
         td.contentEditable = true;
+        
         td.addEventListener('blur', () => {
-            row['옵션명'] = td.textContent.trim();
+            const textContent = td.querySelector('span:first-child')?.textContent || td.textContent;
+            row['옵션명'] = textContent.trim().replace('⚠️', '').replace('✏️', '');
             row['_matchStatus'] = 'modified';
             td.classList.remove('unmatched-cell');
             td.classList.add('modified-cell');
-            
-            // 아이콘을 연필로 변경
-            const icon = td.querySelector('span:last-child');
-            if (icon) {
-                icon.innerHTML = '✏️';
-                icon.title = '수정됨';
-            }
+            td.innerHTML = `<span>${row['옵션명']}</span> <span style="color: #f59e0b; font-size: 12px;">✏️</span>`;
         });
     } else if (row['_matchStatus'] === 'modified') {
         td.classList.add('modified-cell');
-        
-        // 연필 아이콘 추가
-        const editIcon = document.createElement('span');
-        editIcon.innerHTML = '✏️';
-        editIcon.style.fontSize = '12px';
-        editIcon.title = '수정됨';
-        
-        optionContent.appendChild(optionText);
-        optionContent.appendChild(editIcon);
-        td.appendChild(optionContent);
+        td.innerHTML = `<span>${String(value)}</span> <span style="color: #f59e0b; font-size: 12px;">✏️</span>`;
     } else {
         td.textContent = String(value);
     }
-} else {
-    td.textContent = String(value);
 }
                 
                 // 금액 포맷팅
