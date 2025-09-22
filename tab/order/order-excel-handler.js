@@ -2024,4 +2024,22 @@ document.getElementById('resultSection').style.display = 'none';
             window.OrderManage.hideLoading();
         }
     }
+    
+    fullReset() {
+        // 모든 데이터 초기화
+        this.uploadedFiles = [];
+        this.processedData = null;
+        this.batchEditData = {};
+        
+        // DOM 완전 재렌더링
+        const container = document.getElementById('om-panel-excel');
+        if (container) {
+            container.innerHTML = '';
+            this.render();
+            this.setupEventListeners();
+        }
+        
+        console.log('OrderExcelHandler 완전 초기화 완료');
+    }
+
 };
