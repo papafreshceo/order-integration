@@ -266,13 +266,17 @@ if (row['셀러'] && matchedProduct['셀러공급가']) {
             // OrderExcelHandler에서 전달받은 데이터 사용
 let dataToVerify = window.processedData || 
                    window.OrderExcelHandler?.processedData || 
+                   parent.window?.processedData ||
                    (window.OrderExcelHandler?.getProcessedData ? window.OrderExcelHandler.getProcessedData() : null);
 
+console.log('데이터 소스 확인:', {
+    windowData: !!window.processedData,
+    handlerData: !!window.OrderExcelHandler?.processedData,
+    parentData: !!parent.window?.processedData
+});
+
 if (!dataToVerify || !dataToVerify.data) {
-    console.error('processedData 상태:', {
-        exists: !!dataToVerify,
-        hasData: dataToVerify ? !!dataToVerify.data : false
-    });
+    console.error('처리된 데이터를 찾을 수 없습니다');
     throw new Error('처리된 데이터가 없습니다.');
 }
 
