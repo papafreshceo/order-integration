@@ -2238,5 +2238,103 @@ showCenterMessage(message, type) {
         msgDiv.style.transition = 'opacity 0.3s';
         setTimeout(() => msgDiv.remove(), 300);
     }, 3000);
+},
+
+showLoading() {
+    // 기존 로딩 요소 확인
+    let loading = document.getElementById('excelLoading');
+    if (!loading) {
+        loading = document.createElement('div');
+        loading.id = 'excelLoading';
+        loading.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        `;
+        loading.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="
+                    width: 40px;
+                    height: 40px;
+                    border: 4px solid #f3f3f3;
+                    border-top: 4px solid #2563eb;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                "></div>
+                <span style="font-size: 14px; color: #495057;">처리 중...</span>
+            </div>
+            <style>
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            </style>
+        `;
+        document.body.appendChild(loading);
+    }
+    loading.style.display = 'block';
+},
+
+hideLoading() {
+    const loading = document.getElementById('excelLoading');
+    if (loading) {
+        loading.style.display = 'none';
+    }
+},
+
+showCenterMessage(message, type = 'info') {
+    // 기존 메시지 제거
+    const existingMsg = document.getElementById('centerMessage');
+    if (existingMsg) {
+        existingMsg.remove();
+    }
+    
+    const msgDiv = document.createElement('div');
+    msgDiv.id = 'centerMessage';
+    msgDiv.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 30px 40px;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        z-index: 10000;
+        min-width: 300px;
+        max-width: 500px;
+        text-align: center;
+        white-space: pre-line;
+        line-height: 1.6;
+        font-size: 14px;
+        border: 2px solid ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#2563eb'};
+    `;
+    
+    // 아이콘 추가
+    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+    
+    msgDiv.innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 20px;">${icon}</div>
+        <div style="color: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#2563eb'}; 
+                    font-weight: 500; font-size: 16px;">
+            ${message}
+        </div>
+    `;
+    
+    document.body.appendChild(msgDiv);
+    
+    // 3초 후 자동 제거
+    setTimeout(() => {
+        msgDiv.style.opacity = '0';
+        msgDiv.style.transition = 'opacity 0.3s';
+        setTimeout(() => msgDiv.remove(), 300);
+    }, 3000);
 }
+
 };
