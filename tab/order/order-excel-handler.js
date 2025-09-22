@@ -1663,23 +1663,23 @@ if (header.includes('금액') || header.includes('공급가') || header === '셀
         return;
     }
     
-    try {
-        // processedData를 전역으로 임시 설정
-        window.processedData = this.processedData;
-        
-        // ProductMatching의 verifyOptions 호출
-        await this.ProductMatching.verifyOptions();
-        
-    } catch (error) {
-        console.error('옵션명 검증 오류:', error);
-        this.showError('옵션명 검증 중 오류가 발생했습니다.');
-    } finally {
-        // 검증 후 정리
-        delete window.processedData;
-        this.displayResults();
-    }
-},
+    // processedData.data를 직접 전달
+    const result = await this.ProductMatching.verifyOptions(this.processedData.data);
     
+    if (result && result.unmatchedOptions && result.unmatchedOptions.length > 0) {
+        this.showError(`매칭 실패: ${result.unmatchedOptions.length}개 옵션`);
+        // 매칭 실패한 옵션들 표시
+        this.processedData.data.forEach(row => {
+            if (result.unmatchedOptions.includes(row['옵션명'])) {
+                row['_matchStatus'] = 'unmatched';
+            }
+        });
+    } else {
+        this.showSuccess('모든 옵션명 매칭 성공');
+    }
+    
+    this.displayResults();
+},
 async verifyDuplicate() {
     if (!this.processedData) {
         this.showError('검증할 데이터가 없습니다.');
