@@ -1585,24 +1585,33 @@ if (header === '마켓명') {
 
 // 옵션명 매칭 상태 표시
 if (header === '옵션명') {
-    // 텍스트만 설정
     td.textContent = String(value);
     
-    if (row['_matchStatus'] === 'unmatched') {
-        td.classList.add('unmatched-cell', 'editable-cell');
+    if (row['_matchStatus'] === 'unmatched' || row['_matchStatus'] === 'modified') {
+        td.classList.add(row['_matchStatus'] === 'unmatched' ? 'unmatched-cell' : 'modified-cell', 'editable-cell');
         td.contentEditable = true;
         td.style.position = 'relative';
-        td.style.paddingRight = '20px';  // 아이콘 공간 확보
+        td.style.paddingRight = '20px';
         
-        // 아이콘을 절대 위치로 배치
-        td.title = '⚠️ 매칭 실패 - 클릭하여 수정';
+        // 원본값 저장
+        const originalValue = td.textContent;
         
         td.addEventListener('blur', () => {
-            row['옵션명'] = td.textContent.trim();
-            row['_matchStatus'] = 'modified';
-            td.classList.remove('unmatched-cell');
-            td.classList.add('modified-cell');
-            td.title = '✏️ 수정됨';
+            const newValue = td.textContent.trim();
+            
+            // 실제로 변경되었을 때만 처리
+            if (newValue !== originalValue) {
+                row['옵션명'] = newValue;
+                row['_matchStatus'] = 'modified';
+                td.classList.remove('unmatched-cell');
+                td.classList.add('modified-cell');
+                td.title = '✏️ 수정됨';
+            } else {
+                // 변경 없으면 원래 상태 유지
+                if (row['_matchStatus'] === 'unmatched') {
+                    td.title = '⚠️ 매칭 실패 - 클릭하여 수정';
+                }
+            }
         });
         
         // Enter 키 처리
@@ -1612,11 +1621,6 @@ if (header === '옵션명') {
                 td.blur();
             }
         });
-        
-    } else if (row['_matchStatus'] === 'modified') {
-        td.classList.add('modified-cell');
-        td.style.paddingRight = '20px';
-        td.title = '✏️ 수정됨';
     }
 }
                 
