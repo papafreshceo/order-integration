@@ -33,17 +33,15 @@ async function loadProductData() {
         }
         
         productData = result.productData || {};
-        priceData = result.priceData || {};
-        
-        // window.productData에도 저장
-        window.productData = productData;
-        window.priceData = priceData;
-        
-        console.log('제품 데이터 로드 완료:', {
-            products: Object.keys(productData).length,
-            prices: Object.keys(priceData).length
-        });
-        
+priceData = result.priceData || {};
+
+console.log('프라이빗 productData 설정:', Object.keys(productData).length);
+
+// window.productData에도 저장
+window.productData = productData;
+window.priceData = priceData;
+
+console.log('window.productData 설정 후:', !!window.productData, Object.keys(window.productData || {}).length);
         return true;
     } catch (error) {
         console.error('제품 데이터 로드 오류:', error);
