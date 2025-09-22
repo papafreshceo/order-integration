@@ -498,6 +498,10 @@ window.OrderExcelHandler = {
     pointer-events: none;
 }
 
+.modified-matched-cell {
+    background: #d1fae5 !important;
+    color: #10b981;
+}
 
             </style>
             
@@ -1198,10 +1202,11 @@ if (this.ProductMatching) {
 }
             
             this.processedData = {
-                data: enrichedData,
-                headers: this.mappingData?.standardFields || Object.keys(enrichedData[0] || {}),
-                sheetName: new Date().toISOString().slice(0, 10).replace(/-/g, '')
-            };
+    data: enrichedData,
+    headers: this.mappingData?.standardFields || Object.keys(enrichedData[0] || {}),
+    standardFields: this.mappingData?.standardFields || Object.keys(enrichedData[0] || {}),
+    sheetName: new Date().toISOString().slice(0, 10).replace(/-/g, '')
+};
             
             this.processedData.standardFields = this.mappingData?.standardFields || Object.keys(enrichedData[0] || {});
 window.processedData = this.processedData;
@@ -1552,40 +1557,36 @@ if (header === '마켓명') {
 if (header === '옵션명') {
     td.textContent = String(value);
     
+    // 매칭 실패 또는 수정된 상태 확인
     if (row['_matchStatus'] === 'unmatched' || row['_matchStatus'] === 'modified') {
-        td.classList.add(row['_matchStatus'] === 'unmatched' ? 'unmatched-cell' : 'modified-cell', 'editable-cell');
+        td.classList.add(row['_matchStatus'] === 'unmatched' ? 'unmatched-cell' : 'modified-cell');
+        td.classList.add('editable-cell');
         td.contentEditable = true;
         td.style.position = 'relative';
         td.style.paddingRight = '20px';
         
-        // 원본값 저장
         const originalValue = td.textContent;
         
         td.addEventListener('blur', () => {
             const newValue = td.textContent.trim();
-            
-            // 실제로 변경되었을 때만 처리
             if (newValue !== originalValue) {
                 row['옵션명'] = newValue;
                 row['_matchStatus'] = 'modified';
                 td.classList.remove('unmatched-cell');
                 td.classList.add('modified-cell');
-                td.title = '✏️ 수정됨';
-            } else {
-                // 변경 없으면 원래 상태 유지
-                if (row['_matchStatus'] === 'unmatched') {
-                    td.title = '⚠️ 매칭 실패 - 클릭하여 수정';
-                }
             }
         });
         
-        // Enter 키 처리
         td.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 td.blur();
             }
         });
+    } else if (row['_matchStatus'] === 'modified-matched') {
+        td.classList.add('modified-matched-cell');
+        td.style.background = '#d1fae5';
+        td.style.color = '#10b981';
     }
 }
                 
@@ -1617,22 +1618,33 @@ if (header !== '마켓명' && !td.textContent && !td.innerHTML) {
 },
     
     async verifyOptions() {
-    if (!this.processedData || !this.ProductMatching) {
-        this.showError('검증할 데이터가 없습니다.');
+    if (!this.processedData) {
+        this.showError('처리된 주문 데이터가 없습니다. 먼저 주문 통합을 실행하세요.');
         return;
     }
     
-    console.log('검증 시작 - processedData 설정 전:', this.processedData);
-    
     try {
-        // processedData를 전역으로 설정 (삭제하지 말 것)
+        // 전역 변수 설정
         window.processedData = this.processedData;
-        console.log('전역 processedData 설정됨:', window.processedData);
+        
+        // ProductMatching이 없으면 로드
+        if (!this.ProductMatching) {
+            if (parent.window !== window && parent.window.ProductMatching) {
+                this.ProductMatching = parent.window.ProductMatching;
+            } else if (window.ProductMatching) {
+                this.ProductMatching = window.ProductMatching;
+            }
+        }
+        
+        if (!this.ProductMatching) {
+            this.showError('ProductMatching 모듈을 찾을 수 없습니다.');
+            return;
+        }
         
         // ProductMatching의 verifyOptions 호출
         await this.ProductMatching.verifyOptions();
         
-        // 검증 후 processedData 업데이트 (ProductMatching이 수정한 내용 반영)
+        // 수정된 데이터 반영
         if (window.processedData) {
             this.processedData = window.processedData;
         }
@@ -1643,7 +1655,6 @@ if (header !== '마켓명' && !td.textContent && !td.innerHTML) {
     } finally {
         // 테이블 재렌더링
         this.displayResults();
-        // window.processedData는 삭제하지 않음 (다른 기능에서 사용할 수 있음)
     }
 },
 
