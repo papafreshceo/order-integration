@@ -858,21 +858,7 @@ if (tempMarketName && this.mappingData?.markets?.[tempMarketName]?.headerRow) {
 }
 
 
-    const correctHeaderRow = parseInt(this.mappingData.markets[marketName].headerRow);
-    const correctIndex = Math.max(0, correctHeaderRow - 1);
     
-    // 현재 헤더 위치가 다르면 재조정
-    if (correctIndex !== headerRowIndex) {
-        console.log(`${file.name}: ${marketName} 헤더 위치 재조정 ${headerRowIndex + 1} → ${correctHeaderRow}`);
-        headerRowIndex = correctIndex;
-        
-        // 헤더와 데이터 다시 추출
-        if (cleanRows[headerRowIndex]) {
-            headers = cleanRows[headerRowIndex].map(h => String(h || '').trim());
-            dataRows = cleanRows.slice(headerRowIndex + 1);
-        }
-    }
-}
         
         const headers = cleanRows[headerRowIndex].map(h => String(h || '').trim());
         const dataRows = cleanRows.slice(headerRowIndex + 1);
@@ -1199,24 +1185,7 @@ if (tempMarketName && this.mappingData?.markets?.[tempMarketName]?.headerRow) {
         return 0;
     }
 }
-    const result = Function('"use strict"; return (' + calculation + ')')();
     
-    // 1원 단위로 반올림하여 정수 변환
-    let finalResult = 0;
-    if (!isNaN(result)) {
-        finalResult = Math.round(result);  // 반올림
-        // 또는 Math.floor(result);  // 버림
-        // 또는 Math.ceil(result);   // 올림
-    }
-    
-    console.log(`  계산 결과: ${finalResult} (원본: ${result})`);
-    return finalResult;  // 정수 반환
-    
-} catch (evalError) {
-    console.error(`  계산 실행 오류: ${evalError.message}`);
-    return 0;  // 오류시에도 정수 0 반환
-}
-    },
     
 displayResults() {
     const resultSection = document.getElementById('resultSection');
@@ -1346,16 +1315,16 @@ const rightAlignFields = ['셀러공급가', '출고비용', '정산예정금액
 const phoneFields = ['주문자전화번호', '수취인전화번호', '수령인전화번호', '주문자 전화번호', '수취인 전화번호', '수령인 전화번호'];
 
 function getAlignment(fieldName) {
-    if (rightAlignFields.includes(fieldName)) return 'right';
-    if (leftAlignFields.includes(fieldName)) return 'left';
-    if (centerAlignFields.includes(fieldName)) return 'center';
-    if (phoneFields.includes(fieldName)) return 'center';
-    return 'center';
-}
+        if (rightAlignFields.includes(fieldName)) return 'right';
+        if (leftAlignFields.includes(fieldName)) return 'left';
+        if (centerAlignFields.includes(fieldName)) return 'center';
+        if (phoneFields.includes(fieldName)) return 'center';
+        return 'center';
+    }
 
-this.processedData.headers.forEach((header, colIndex) => {
-    const td = document.createElement('td');
-    let value = row[header] || '';
+    this.processedData.headers.forEach((header, colIndex) => {
+        const td = document.createElement('td');
+        let value = row[header] || '';
     
     const width = columnWidths[header] || 100;
     td.style.width = `${width}px`;
@@ -1440,6 +1409,8 @@ if (header === '마켓명') {
         td.textContent = marketName;
         td.style.textAlign = 'center';
     }
+} else {
+    td.textContent = String(value);
 }
                 
                 // 옵션명 매칭 상태 표시
@@ -1467,13 +1438,16 @@ if (header === '마켓명') {
                     }
                 }
                 
-                td.textContent = String(value);
-                tr.appendChild(td);
-            });
-            
-            tbody.appendChild(tr);
-        });
-    },
+                } else {
+            td.textContent = String(value);
+        }
+        
+        tr.appendChild(td);
+    });
+    
+    tbody.appendChild(tr);
+});
+},
     
     async verifyOptions() {
     if (!this.processedData || !this.ProductMatching) {
