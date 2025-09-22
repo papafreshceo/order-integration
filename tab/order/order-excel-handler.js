@@ -2338,7 +2338,7 @@ showCenterMessage(message, type, autoClose = false) {
         animation: fadeIn 0.3s ease;
     `;
     
-    // 모달 컨테이너 - 가로로 넓게
+    // 모달 컨테이너
     const modalContent = document.createElement('div');
     modalContent.style.cssText = `
         background: #ffffff;
@@ -2347,254 +2347,199 @@ showCenterMessage(message, type, autoClose = false) {
         max-width: 900px;
         width: 80%;
         max-height: 80vh;
-        overflow: auto;
+        overflow: hidden;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         animation: slideUp 0.3s ease;
     `;
     
-    // 모달 헤더 - 컴팩트하게
-    const modalHeader = document.createElement('div');
-    modalHeader.style.cssText = `
-        padding: 20px 24px;
-        background: ${type === 'success' ? 'linear-gradient(135deg, #10b981, #059669)' : 
-                      type === 'error' ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 
-                      'linear-gradient(135deg, #2563eb, #1d4ed8)'};
-        color: white;
-        display: flex;
-        align-items: center;
-        gap: 16px;
-    `;
+    // 색상 설정
+    const colors = {
+        success: '#10b981',
+        error: '#ef4444',
+        info: '#2563eb'
+    };
+    const color = colors[type] || colors.info;
     
-    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
-    const title = type === 'success' ? '처리 완료' : type === 'error' ? '오류 발생' : '알림';
+    // 아이콘과 제목
+    const icons = {
+        success: '✅',
+        error: '❌',
+        info: 'ℹ️'
+    };
+    const titles = {
+        success: '처리 완료',
+        error: '오류 발생',
+        info: '알림'
+    };
     
-    modalHeader.innerHTML = `
-        <div style="font-size: 32px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">
-            ${icon}
-        </div>
-        <h2 style="margin: 0; font-size: 18px; font-weight: 600; letter-spacing: -0.5px; flex: 1;">
-            ${title}
-        </h2>
-        <button onclick="this.closest('#centerMessageModal').remove()" style="
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 0;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: background 0.2s;
-        " onmouseover="this.style.background='rgba(255,255,255,0.2)'" 
-           onmouseout="this.style.background='none'">×</button>
-    `;
+    // 메시지를 섹션별로 파싱
+    const lines = message.split('\n');
+    let processedMessage = '<div style="padding: 24px;">';
     
-    // 모달 바디 - 메시지 파싱 및 가로 레이아웃
-    const modalBody = document.createElement('div');
-    modalBody.style.cssText = `
-        padding: 24px;
-        background: #ffffff;
-    `;
+    // 처리 결과 섹션 찾기
+    let inResultSection = false;
+    let inDuplicateSection = false;
     
-    // 메시지 파싱하여 섹션별로 표시
-    const sections = message.split('━━━').filter(s => s.trim());
-    let bodyHTML = '';
-    
-    sections.forEach((section, index) => {
-        const lines = section.trim().split('\n').filter(l => l.trim());
-        
-        if (lines.length === 0) return;
-        
-        // 섹션 제목 찾기
-        const titleLine = lines[0];
-        const contentLines = lines.slice(1);
-        
-        if (titleLine.includes('처리 결과') || titleLine.includes('최종 현황')) {
-            // 가로 레이아웃 섹션
-            bodyHTML += `
-                <div style="margin-bottom: 20px;">
-                    <h3 style="font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 12px;">
-                        ${titleLine}
-                    </h3>
-                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-            `;
-            
-            contentLines.forEach(line => {
+    lines.forEach(line => {
+        if (line.includes('처리 결과')) {
+            processedMessage += `<h3 style="margin: 20px 0 16px; font-size: 16px; font-weight: 600; color: #212529;">${line}</h3>`;
+            processedMessage += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px;">';
+            inResultSection = true;
+            inDuplicateSection = false;
+        } else if (line.includes('중복 주문 상세')) {
+            if (inResultSection) processedMessage += '</div>';
+            processedMessage += `<h3 style="margin: 20px 0 16px; font-size: 16px; font-weight: 600; color: #212529;">${line}</h3>`;
+            processedMessage += '<div style="background: #f8f9fa; border-radius: 8px; padding: 16px; max-height: 200px; overflow-y: auto;">';
+            inResultSection = false;
+            inDuplicateSection = true;
+        } else if (line.includes('최종 현황')) {
+            if (inResultSection) processedMessage += '</div>';
+            if (inDuplicateSection) processedMessage += '</div>';
+            processedMessage += `<h3 style="margin: 20px 0 16px; font-size: 16px; font-weight: 600; color: #212529;">${line}</h3>`;
+            processedMessage += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">';
+            inResultSection = true;
+            inDuplicateSection = false;
+        } else if (line.includes('━━━')) {
+            // 구분선 무시
+        } else if (line.trim()) {
+            if (inResultSection) {
+                // 통계 카드로 표시
                 if (line.includes(':')) {
                     const [label, value] = line.split(':').map(s => s.trim());
-                    let bgColor = '#f8f9fa';
-                    let textColor = '#212529';
+                    let cardColor = '#f8f9fa';
+                    let textColor = '#495057';
                     
                     if (label.includes('✅') || label.includes('신규')) {
-                        bgColor = '#d1fae5';
+                        cardColor = '#d1fae5';
                         textColor = '#059669';
                     } else if (label.includes('🔄') || label.includes('덮어쓰기')) {
-                        bgColor = '#dbeafe';
+                        cardColor = '#dbeafe';
                         textColor = '#1d4ed8';
-                    } else if (label.includes('⚠️')) {
-                        bgColor = '#fef3c7';
+                    } else if (label.includes('🔍') || label.includes('중복')) {
+                        cardColor = '#fef3c7';
                         textColor = '#d97706';
                     }
                     
-                    bodyHTML += `
-                        <div style="
-                            flex: 1;
-                            min-width: 150px;
-                            padding: 12px 16px;
-                            background: ${bgColor};
-                            border-radius: 8px;
-                            display: flex;
-                            flex-direction: column;
-                            gap: 4px;
-                        ">
-                            <span style="font-size: 12px; color: #6c757d;">
-                                ${label.replace(/[✅🔄⚠️📈•]/g, '').trim()}
-                            </span>
-                            <span style="font-size: 18px; font-weight: 600; color: ${textColor};">
-                                ${value || '0'}
-                            </span>
+                    processedMessage += `
+                        <div style="background: ${cardColor}; padding: 12px; border-radius: 8px;">
+                            <div style="font-size: 12px; color: #6c757d; margin-bottom: 4px;">
+                                ${label.replace(/[✅🔄🔍📋📈•]/g, '').trim()}
+                            </div>
+                            <div style="font-size: 20px; font-weight: 600; color: ${textColor};">
+                                ${value}
+                            </div>
                         </div>
                     `;
                 }
-            });
-            
-            bodyHTML += `</div></div>`;
-            
-        } else if (titleLine.includes('중복 주문 상세')) {
-            // 중복 주문 리스트 - 테이블 형식
-            bodyHTML += `
-                <div style="margin-bottom: 20px;">
-                    <h3 style="font-size: 14px; font-weight: 600; color: #495057; margin-bottom: 12px;">
-                        ${titleLine}
-                    </h3>
-                    <div style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 8px;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                            <thead style="background: #f8f9fa; position: sticky; top: 0;">
-                                <tr>
-                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #dee2e6;">#</th>
-                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #dee2e6;">주문번호</th>
-                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #dee2e6;">수령인</th>
-                                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #dee2e6;">옵션명</th>
-                                    <th style="padding: 8px; text-align: center; border-bottom: 1px solid #dee2e6;">상태</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-            `;
-            
-            contentLines.forEach(line => {
-                if (line.match(/^\d+\./)) {
-                    const parts = line.split(/\s{2,}/);
-                    const num = parts[0];
-                    let orderNo = '', recipient = '', option = '', status = '';
-                    
-                    // 다음 줄들에서 정보 추출
-                    const nextIndex = contentLines.indexOf(line);
-                    for (let i = nextIndex; i < Math.min(nextIndex + 4, contentLines.length); i++) {
-                        const currentLine = contentLines[i];
-                        if (currentLine.includes('주문번호:')) {
-                            orderNo = currentLine.split(':')[1]?.trim() || '-';
-                        } else if (currentLine.includes('수령인:')) {
-                            recipient = currentLine.split(':')[1]?.trim() || '-';
-                        } else if (currentLine.includes('옵션명:')) {
-                            option = currentLine.split(':')[1]?.trim() || '-';
-                        } else if (currentLine.includes('상태:')) {
-                            status = currentLine.split(':')[1]?.trim() || '-';
-                        }
-                    }
-                    
-                    const statusBadge = status.includes('덮어쓰기') ? 
-                        '<span style="color: #1d4ed8;">🔄 덮어쓰기</span>' : 
-                        '<span style="color: #dc2626;">❌ 제외</span>';
-                    
-                    bodyHTML += `
-                        <tr style="border-bottom: 1px solid #f1f3f5;">
-                            <td style="padding: 8px;">${num}</td>
-                            <td style="padding: 8px; font-family: monospace;">${orderNo}</td>
-                            <td style="padding: 8px;">${recipient}</td>
-                            <td style="padding: 8px;">${option}</td>
-                            <td style="padding: 8px; text-align: center;">${statusBadge}</td>
-                        </tr>
-                    `;
-                }
-            });
-            
-            bodyHTML += `</tbody></table></div></div>`;
+            } else if (inDuplicateSection) {
+                // 중복 항목 리스트
+                processedMessage += `<div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #dee2e6;">`;
+                processedMessage += `<div style="line-height: 1.6;">${line.replace(/\s{2,}/g, '<br>')}</div>`;
+                processedMessage += `</div>`;
+            } else {
+                // 일반 텍스트
+                processedMessage += `<div style="margin-bottom: 8px; line-height: 1.6;">${line}</div>`;
+            }
         }
     });
     
-    modalBody.innerHTML = bodyHTML || `<div style="color: #212529; font-size: 14px; line-height: 1.8;">${message}</div>`;
+    if (inResultSection) processedMessage += '</div>';
+    if (inDuplicateSection) processedMessage += '</div>';
+    processedMessage += '</div>';
     
-    // 모달 푸터
-    const modalFooter = document.createElement('div');
-    modalFooter.style.cssText = `
-        padding: 16px 24px;
-        background: #f8f9fa;
-        display: flex;
-        justify-content: flex-end;
-        border-top: 1px solid #dee2e6;
+    // HTML 구성
+    modalContent.innerHTML = `
+        <div style="
+            padding: 20px 24px;
+            background: linear-gradient(135deg, ${color}, ${color}dd);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 32px;">${icons[type] || icons.info}</span>
+                <h2 style="margin: 0; font-size: 18px; font-weight: 600;">
+                    ${titles[type] || titles.info}
+                </h2>
+            </div>
+            <button onclick="document.getElementById('centerMessageModal').remove()" style="
+                background: none;
+                border: none;
+                color: white;
+                font-size: 28px;
+                cursor: pointer;
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 4px;
+                transition: background 0.2s;
+            " onmouseover="this.style.background='rgba(255,255,255,0.2)'" 
+               onmouseout="this.style.background='none'">×</button>
+        </div>
+        
+        <div style="max-height: calc(80vh - 140px); overflow-y: auto;">
+            ${processedMessage}
+        </div>
+        
+        <div style="
+            padding: 16px 24px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            text-align: right;
+        ">
+            <button onclick="document.getElementById('centerMessageModal').remove()" style="
+                padding: 10px 32px;
+                background: ${color};
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: opacity 0.2s;
+            " onmouseover="this.style.opacity='0.9'" 
+               onmouseout="this.style.opacity='1'">확인</button>
+        </div>
     `;
     
-    const closeButton = document.createElement('button');
-    closeButton.textContent = '확인';
-    closeButton.style.cssText = `
-        padding: 10px 28px;
-        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#2563eb'};
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-    `;
-    
-    closeButton.onmouseover = () => closeButton.style.opacity = '0.9';
-    closeButton.onmouseout = () => closeButton.style.opacity = '1';
-    
-    const closeModal = () => {
-        modalBackdrop.style.animation = 'fadeOut 0.3s ease';
-        modalContent.style.animation = 'slideDown 0.3s ease';
-        setTimeout(() => modalBackdrop.remove(), 300);
-    };
-    
-    closeButton.onclick = closeModal;
-    modalBackdrop.onclick = (e) => {
-        if (e.target === modalBackdrop) closeModal();
-    };
-    
-    modalFooter.appendChild(closeButton);
-    modalContent.appendChild(modalHeader);
-    modalContent.appendChild(modalBody);
-    modalContent.appendChild(modalFooter);
     modalBackdrop.appendChild(modalContent);
+    document.body.appendChild(modalBackdrop);
     
     // 애니메이션 스타일
     if (!document.getElementById('modalAnimations')) {
         const style = document.createElement('style');
         style.id = 'modalAnimations';
         style.textContent = `
-            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-            @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
-            @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-            @keyframes slideDown { from { transform: translateY(0); opacity: 1; } to { transform: translateY(20px); opacity: 0; } }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes slideUp {
+                from { transform: translateY(20px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
         `;
         document.head.appendChild(style);
     }
     
-    document.body.appendChild(modalBackdrop);
-    
-    // ESC 키로 닫기
-    const escHandler = (e) => {
-        if (e.key === 'Escape') {
-            closeModal();
-            document.removeEventListener('keydown', escHandler);
+    // 배경 클릭으로 닫기
+    modalBackdrop.onclick = (e) => {
+        if (e.target === modalBackdrop) {
+            modalBackdrop.remove();
         }
     };
-    document.addEventListener('keydown', escHandler);
+    
+    // ESC 키로 닫기
+    document.addEventListener('keydown', function escHandler(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('centerMessageModal');
+            if (modal) modal.remove();
+            document.removeEventListener('keydown', escHandler);
+        }
+    });
 },
 
 resetResults() {
