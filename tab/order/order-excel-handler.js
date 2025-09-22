@@ -335,7 +335,7 @@ window.OrderExcelHandler = {
     background: white;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 0;  /* text-overflow 작동을 위해 필요 */
+
 }
                 
                 /* 고정 컬럼 */
