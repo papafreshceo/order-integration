@@ -2114,6 +2114,36 @@ this.processedData.data.forEach(row => {
 
 console.log(`중복 ${duplicateKeys.length}건, 신규 ${newRows.length}건 발견`);
 
+
+// ===== 여기에 디버깅 코드 추가 =====
+console.log('===== 상세 중복 체크 결과 =====');
+console.log('전체 처리 데이터:', this.processedData.data.length);
+console.log('기존 시트 데이터:', existingData.length);
+console.log('중복 발견:', duplicateKeys.length);
+console.log('신규:', newRows.length);
+
+// 중복된 항목 상세
+if (duplicateKeys.length > 0) {
+    console.log('--- 중복 항목 ---');
+    duplicateKeys.forEach((d, idx) => {
+        console.log(`중복 ${idx + 1}: 주문번호=${d.row['주문번호']}, 수령인=${d.row['수령인'] || d.row['수취인']}, 마켓=${d.row['마켓']}`);
+    });
+}
+
+// 신규 항목 상세 (처음 5개만)
+if (newRows.length > 0) {
+    console.log('--- 신규 항목 (최대 5개) ---');
+    newRows.slice(0, 5).forEach((row, idx) => {
+        const key = createKey(row);
+        console.log(`신규 ${idx + 1}: 키=${key}`);
+        console.log(`  주문번호=${row['주문번호']}, 수령인=${row['수령인'] || row['수취인']}, 마켓=${row['마켓']}`);
+    });
+}
+
+console.log('=========================');
+// ===== 디버깅 코드 끝 =====
+
+
 // 중복이 있는 경우 사용자에게 확인
 if (duplicateKeys.length > 0) {
 const duplicateMessage = `⚠️ 중복 주문 발견\n\n` +
