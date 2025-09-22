@@ -2343,9 +2343,9 @@ showCenterMessage(message, type, autoClose = false) {
     modalContent.style.cssText = `
         background: #ffffff;
         border-radius: 16px;
-        min-width: 700px;
-        max-width: 1000px;
-        width: 85%;
+        min-width: 800px;
+        max-width: 1100px;
+        width: 90%;
         max-height: 80vh;
         overflow: hidden;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -2372,16 +2372,16 @@ showCenterMessage(message, type, autoClose = false) {
         info: '알림'
     };
     
-    // 메시지 파싱 및 처리
+    // 메시지 파싱
     const lines = message.split('\n');
     let processedMessage = '<div style="padding: 24px;">';
     
     let inResultSection = false;
     let inDuplicateSection = false;
     let duplicateItems = [];
-    let currentDuplicateItem = {};
+    let currentItem = null;
     
-    lines.forEach(line => {
+    lines.forEach((line, lineIndex) => {
         if (line.includes('처리 결과')) {
             processedMessage += `<h3 style="margin: 20px 0 16px; font-size: 16px; font-weight: 600; color: #212529;">${line}</h3>`;
             processedMessage += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px;">';
@@ -2393,26 +2393,30 @@ showCenterMessage(message, type, autoClose = false) {
             inResultSection = false;
             inDuplicateSection = true;
             duplicateItems = [];
+            currentItem = null;
         } else if (line.includes('최종 현황')) {
             if (inResultSection) processedMessage += '</div>';
-            if (inDuplicateSection) {
+            if (inDuplicateSection && duplicateItems.length > 0) {
                 // 중복 항목 테이블 생성
                 processedMessage += `
                     <div style="border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                            <thead>
-                                <tr style="background: #f8f9fa;">
-                                    <th style="padding: 8px 12px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6; width: 40px;">#</th>
-                                    <th style="padding: 8px 12px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">주문번호</th>
-                                    <th style="padding: 8px 12px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">수령인</th>
-                                    <th style="padding: 8px 12px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">옵션명</th>
-                                    <th style="padding: 8px 12px; text-align: center; font-weight: 500; border-bottom: 1px solid #dee2e6; width: 100px;">상태</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
+                        <div style="max-height: 300px; overflow-y: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                                <thead style="position: sticky; top: 0; background: #f8f9fa;">
+                                    <tr>
+                                        <th style="padding: 8px 10px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6; width: 35px;">#</th>
+                                        <th style="padding: 8px 10px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6; min-width: 120px;">주문번호</th>
+                                        <th style="padding: 8px 10px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">마켓명</th>
+                                        <th style="padding: 8px 10px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">주문자</th>
+                                        <th style="padding: 8px 10px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">수령인</th>
+                                        <th style="padding: 8px 10px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">옵션명</th>
+                                        <th style="padding: 8px 10px; text-align: center; font-weight: 500; border-bottom: 1px solid #dee2e6; width: 90px;">상태</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
                 
                 duplicateItems.forEach((item, idx) => {
-                    const statusBadge = item.status.includes('덮어쓰기') ? 
+                    const statusBadge = item.status && item.status.includes('덮어쓰기') ? 
                         '<span style="color: #1d4ed8; font-weight: 500;">🔄 덮어쓰기</span>' : 
                         '<span style="color: #dc2626; font-weight: 500;">❌ 제외</span>';
                     
@@ -2420,15 +2424,19 @@ showCenterMessage(message, type, autoClose = false) {
                     
                     processedMessage += `
                         <tr style="background: ${rowBg};">
-                            <td style="padding: 6px 12px; border-bottom: 1px solid #f1f3f5;">${item.num}</td>
-                            <td style="padding: 6px 12px; border-bottom: 1px solid #f1f3f5; font-family: monospace; font-size: 12px;">${item.orderNo || '-'}</td>
-                            <td style="padding: 6px 12px; border-bottom: 1px solid #f1f3f5;">${item.recipient || '-'}</td>
-                            <td style="padding: 6px 12px; border-bottom: 1px solid #f1f3f5;">${item.option || '-'}</td>
-                            <td style="padding: 6px 12px; border-bottom: 1px solid #f1f3f5; text-align: center;">${statusBadge}</td>
+                            <td style="padding: 6px 10px; border-bottom: 1px solid #f1f3f5;">${item.num}</td>
+                            <td style="padding: 6px 10px; border-bottom: 1px solid #f1f3f5; font-family: monospace; font-size: 11px;">
+                                ${item.orderNo || '(없음)'}
+                            </td>
+                            <td style="padding: 6px 10px; border-bottom: 1px solid #f1f3f5;">${item.marketName || '-'}</td>
+                            <td style="padding: 6px 10px; border-bottom: 1px solid #f1f3f5;">${item.orderer || '-'}</td>
+                            <td style="padding: 6px 10px; border-bottom: 1px solid #f1f3f5;">${item.recipient || '-'}</td>
+                            <td style="padding: 6px 10px; border-bottom: 1px solid #f1f3f5; font-size: 11px;">${item.option || '-'}</td>
+                            <td style="padding: 6px 10px; border-bottom: 1px solid #f1f3f5; text-align: center;">${statusBadge}</td>
                         </tr>`;
                 });
                 
-                processedMessage += '</tbody></table></div>';
+                processedMessage += '</tbody></table></div></div>';
             }
             processedMessage += `<h3 style="margin: 20px 0 16px; font-size: 16px; font-weight: 600; color: #212529;">${line}</h3>`;
             processedMessage += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">';
@@ -2455,10 +2463,12 @@ showCenterMessage(message, type, autoClose = false) {
                         textColor = '#d97706';
                     }
                     
+                    const cleanLabel = label.replace(/[✅🔄🔍📋📈•ㄴ]/g, '').trim();
+                    
                     processedMessage += `
                         <div style="background: ${cardColor}; padding: 12px; border-radius: 8px;">
                             <div style="font-size: 12px; color: #6c757d; margin-bottom: 4px;">
-                                ${label.replace(/[✅🔄🔍📋📈•ㄴ]/g, '').trim()}
+                                ${cleanLabel}
                             </div>
                             <div style="font-size: 20px; font-weight: 600; color: ${textColor};">
                                 ${value}
@@ -2467,18 +2477,45 @@ showCenterMessage(message, type, autoClose = false) {
                 }
             } else if (inDuplicateSection) {
                 // 중복 항목 파싱
-                if (/^\d+\./.test(line)) {
-                    currentDuplicateItem = { num: line.match(/^\d+/)[0] };
-                } else if (line.includes('주문번호:')) {
-                    currentDuplicateItem.orderNo = line.split(':')[1]?.trim() || '';
-                } else if (line.includes('수령인:')) {
-                    currentDuplicateItem.recipient = line.split(':')[1]?.trim() || '';
-                } else if (line.includes('옵션명:')) {
-                    currentDuplicateItem.option = line.split(':')[1]?.trim() || '';
-                } else if (line.includes('상태:')) {
-                    currentDuplicateItem.status = line.split(':')[1]?.trim() || '';
-                    duplicateItems.push(currentDuplicateItem);
-                    currentDuplicateItem = {};
+                const trimmedLine = line.trim();
+                
+                if (/^\d+\./.test(trimmedLine)) {
+                    // 새 항목 시작
+                    if (currentItem) {
+                        duplicateItems.push(currentItem);
+                    }
+                    currentItem = { 
+                        num: trimmedLine.match(/^\d+/)[0],
+                        orderNo: '',
+                        marketName: '',
+                        orderer: '',
+                        recipient: '',
+                        option: '',
+                        status: ''
+                    };
+                    
+                    // 같은 줄에 주문번호가 있을 수 있음
+                    if (trimmedLine.includes('주문번호:')) {
+                        const parts = trimmedLine.split('주문번호:');
+                        if (parts[1]) {
+                            currentItem.orderNo = parts[1].trim().split(/\s{2,}/)[0] || '';
+                        }
+                    }
+                } else if (currentItem) {
+                    // 현재 항목에 정보 추가
+                    if (trimmedLine.includes('주문번호:') && !currentItem.orderNo) {
+                        currentItem.orderNo = trimmedLine.split('주문번호:')[1]?.trim() || '';
+                    } else if (trimmedLine.includes('마켓명:')) {
+                        currentItem.marketName = trimmedLine.split('마켓명:')[1]?.trim() || '';
+                    } else if (trimmedLine.includes('주문자:')) {
+                        currentItem.orderer = trimmedLine.split('주문자:')[1]?.trim() || '';
+                    } else if (trimmedLine.includes('수령인:')) {
+                        currentItem.recipient = trimmedLine.split('수령인:')[1]?.trim() || '';
+                    } else if (trimmedLine.includes('옵션명:')) {
+                        currentItem.option = trimmedLine.split('옵션명:')[1]?.trim() || '';
+                    } else if (trimmedLine.includes('상태:')) {
+                        currentItem.status = trimmedLine.split('상태:')[1]?.trim() || '';
+                    }
                 }
             } else {
                 // 일반 텍스트
@@ -2487,7 +2524,55 @@ showCenterMessage(message, type, autoClose = false) {
         }
     });
     
+    // 마지막 항목 처리
+    if (currentItem && inDuplicateSection) {
+        duplicateItems.push(currentItem);
+    }
+    
     if (inResultSection) processedMessage += '</div>';
+    if (inDuplicateSection && duplicateItems.length > 0 && !message.includes('최종 현황')) {
+        // 최종 현황이 없는 경우 중복 테이블 생성
+        processedMessage += `
+            <div style="border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                <div style="max-height: 300px; overflow-y: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                        <thead style="position: sticky; top: 0; background: #f8f9fa;">
+                            <tr>
+                                <th style="padding: 8px 10px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6; width: 35px;">#</th>
+                                <th style="padding: 8px 10px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6; min-width: 120px;">주문번호</th>
+                                <th style="padding: 8px 10px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">마켓명</th>
+                                <th style="padding: 8px 10px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">주문자</th>
+                                <th style="padding: 8px 10px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">수령인</th>
+                                <th style="padding: 8px 10px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">옵션명</th>
+                                <th style="padding: 8px 10px; text-align: center; font-weight: 500; border-bottom: 1px solid #dee2e6; width: 90px;">상태</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+        
+        duplicateItems.forEach((item, idx) => {
+            const statusBadge = item.status && item.status.includes('덮어쓰기') ? 
+                '<span style="color: #1d4ed8; font-weight: 500;">🔄 덮어쓰기</span>' : 
+                '<span style="color: #dc2626; font-weight: 500;">❌ 제외</span>';
+            
+            const rowBg = idx % 2 === 0 ? '#ffffff' : '#fafafa';
+            
+            processedMessage += `
+                <tr style="background: ${rowBg};">
+                    <td style="padding: 6px 10px; border-bottom: 1px solid #f1f3f5;">${item.num}</td>
+                    <td style="padding: 6px 10px; border-bottom: 1px solid #f1f3f5; font-family: monospace; font-size: 11px;">
+                        ${item.orderNo || '(없음)'}
+                    </td>
+                    <td style="padding: 6px 10px; border-bottom: 1px solid #f1f3f5;">${item.marketName || '-'}</td>
+                    <td style="padding: 6px 10px; border-bottom: 1px solid #f1f3f5;">${item.orderer || '-'}</td>
+                    <td style="padding: 6px 10px; border-bottom: 1px solid #f1f3f5;">${item.recipient || '-'}</td>
+                    <td style="padding: 6px 10px; border-bottom: 1px solid #f1f3f5; font-size: 11px;">${item.option || '-'}</td>
+                    <td style="padding: 6px 10px; border-bottom: 1px solid #f1f3f5; text-align: center;">${statusBadge}</td>
+                </tr>`;
+        });
+        
+        processedMessage += '</tbody></table></div></div>';
+    }
+    
     processedMessage += '</div>';
     
     // HTML 구성
