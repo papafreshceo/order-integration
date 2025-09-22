@@ -2160,12 +2160,11 @@ if (duplicateKeys.length > 0) {
 const duplicateMessage = `⚠️ 중복 주문 발견\n\n` +
     `기존 시트에서 ${duplicateKeys.length}건의 중복을 발견했습니다.\n` +
     `━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `📋 중복 주문 상세 (최대 5개)\n` +
-    duplicateKeys.slice(0, 5).map((d, idx) => {
-        const row = d.row;
-        return `${idx + 1}. 주문번호: ${row['주문번호']}\n   수령인: ${row['수령인'] || row['수취인']}\n   마켓: ${row['마켓']}`;
-    }).join('\n\n') +
-    (duplicateKeys.length > 5 ? `\n\n... 외 ${duplicateKeys.length - 5}건 더 있음` : '') +
+`📋 중복 주문 상세 (총 ${duplicateKeys.length}건)\n` +
+duplicateKeys.map((d, idx) => {
+    const row = d.row;
+    return `${idx + 1}. 주문번호: ${row['주문번호']}\n   수령인: ${row['수령인'] || row['수취인']}\n   마켓: ${row['마켓']}`;
+}).join('\n\n') +
     `\n\n━━━━━━━━━━━━━━━━━━━━\n` +
     `선택 옵션:\n` +
     `• 확인: 중복 주문을 덮어씁니다\n` +
@@ -2258,17 +2257,13 @@ console.log(`최종 처리: 덮어쓰기 ${updateRows.length}건, 신규 추가 
         duplicateDetails = `\n📋 중복 주문 상세\n` +
                           `━━━━━━━━━━━━━━━━━━━━\n`;
         
-        duplicateKeys.slice(0, 5).forEach((d, idx) => {
-            const row = d.row;
-            duplicateDetails += `${idx + 1}. 주문번호: ${row['주문번호']}\n` +
-                               `   수령인: ${row['수령인'] || row['수취인']}\n` +
-                               `   옵션명: ${row['옵션명']}\n` +
-                               `   상태: ${updateRows.some(u => u.index === d.index) ? '✅ 덮어쓰기됨' : '❌ 제외됨'}\n\n`;
-        });
-        
-        if (duplicateKeys.length > 5) {
-            duplicateDetails += `... 외 ${duplicateKeys.length - 5}건 더 있음\n`;
-        }
+        duplicateKeys.forEach((d, idx) => {
+    const row = d.row;
+    duplicateDetails += `${idx + 1}. 주문번호: ${row['주문번호']}\n` +
+                       `   수령인: ${row['수령인'] || row['수취인']}\n` +
+                       `   옵션명: ${row['옵션명']}\n` +
+                       `   상태: ${updateRows.some(u => u.index === d.index) ? '✅ 덮어쓰기됨' : '❌ 제외됨'}\n\n`;
+});
     }
     
     const message = `구글 시트 "${sheetName}" 저장 완료\n\n` +
