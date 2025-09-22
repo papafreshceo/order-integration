@@ -2081,9 +2081,20 @@ const existingData = getResult.data || [];
         console.log(`기존 데이터: ${existingData.length}건`);
         
         // 중복 체크를 위한 키 생성 함수
-        const createKey = (row) => {
-            return `${row['주문번호']}_${row['주문자']}_${row['수령인'] || row['수취인']}_${row['마켓']}`;
-        };
+const createKey = (row) => {
+    const orderNo = row['주문번호'] || '';
+    const orderer = row['주문자'] || '';
+    const recipient = row['수령인'] || row['수취인'] || '';
+    const market = row['마켓'] || '';
+    
+    // 모든 필드가 비어있으면 중복으로 처리하지 않음
+    if (!orderNo && !orderer && !recipient && !market) {
+        // 빈 데이터는 각각 고유한 것으로 처리하기 위해 임시 ID 추가
+        return `empty_${Math.random().toString(36).substr(2, 9)}`;
+    }
+    
+    return `${orderNo}_${orderer}_${recipient}_${market}`;
+};
         
         // 기존 데이터 맵 생성 (키 -> 행 인덱스)
         const existingMap = new Map();
