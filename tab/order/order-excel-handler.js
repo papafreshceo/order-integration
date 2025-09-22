@@ -2343,9 +2343,9 @@ showCenterMessage(message, type, autoClose = false) {
     modalContent.style.cssText = `
         background: #ffffff;
         border-radius: 16px;
-        min-width: 600px;
-        max-width: 900px;
-        width: 80%;
+        min-width: 700px;
+        max-width: 1000px;
+        width: 85%;
         max-height: 80vh;
         overflow: hidden;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -2372,13 +2372,14 @@ showCenterMessage(message, type, autoClose = false) {
         info: '알림'
     };
     
-    // 메시지를 섹션별로 파싱
+    // 메시지 파싱 및 처리
     const lines = message.split('\n');
     let processedMessage = '<div style="padding: 24px;">';
     
-    // 처리 결과 섹션 찾기
     let inResultSection = false;
     let inDuplicateSection = false;
+    let duplicateItems = [];
+    let currentDuplicateItem = {};
     
     lines.forEach(line => {
         if (line.includes('처리 결과')) {
@@ -2388,13 +2389,47 @@ showCenterMessage(message, type, autoClose = false) {
             inDuplicateSection = false;
         } else if (line.includes('중복 주문 상세')) {
             if (inResultSection) processedMessage += '</div>';
-            processedMessage += `<h3 style="margin: 20px 0 16px; font-size: 16px; font-weight: 600; color: #212529;">${line}</h3>`;
-            processedMessage += '<div style="background: #f8f9fa; border-radius: 8px; padding: 16px; max-height: 200px; overflow-y: auto;">';
+            processedMessage += `<h3 style="margin: 20px 0 12px; font-size: 16px; font-weight: 600; color: #212529;">${line}</h3>`;
             inResultSection = false;
             inDuplicateSection = true;
+            duplicateItems = [];
         } else if (line.includes('최종 현황')) {
             if (inResultSection) processedMessage += '</div>';
-            if (inDuplicateSection) processedMessage += '</div>';
+            if (inDuplicateSection) {
+                // 중복 항목 테이블 생성
+                processedMessage += `
+                    <div style="border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                            <thead>
+                                <tr style="background: #f8f9fa;">
+                                    <th style="padding: 8px 12px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6; width: 40px;">#</th>
+                                    <th style="padding: 8px 12px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">주문번호</th>
+                                    <th style="padding: 8px 12px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">수령인</th>
+                                    <th style="padding: 8px 12px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">옵션명</th>
+                                    <th style="padding: 8px 12px; text-align: center; font-weight: 500; border-bottom: 1px solid #dee2e6; width: 100px;">상태</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                
+                duplicateItems.forEach((item, idx) => {
+                    const statusBadge = item.status.includes('덮어쓰기') ? 
+                        '<span style="color: #1d4ed8; font-weight: 500;">🔄 덮어쓰기</span>' : 
+                        '<span style="color: #dc2626; font-weight: 500;">❌ 제외</span>';
+                    
+                    const rowBg = idx % 2 === 0 ? '#ffffff' : '#fafafa';
+                    
+                    processedMessage += `
+                        <tr style="background: ${rowBg};">
+                            <td style="padding: 6px 12px; border-bottom: 1px solid #f1f3f5;">${item.num}</td>
+                            <td style="padding: 6px 12px; border-bottom: 1px solid #f1f3f5; font-family: monospace; font-size: 12px;">${item.orderNo || '-'}</td>
+                            <td style="padding: 6px 12px; border-bottom: 1px solid #f1f3f5;">${item.recipient || '-'}</td>
+                            <td style="padding: 6px 12px; border-bottom: 1px solid #f1f3f5;">${item.option || '-'}</td>
+                            <td style="padding: 6px 12px; border-bottom: 1px solid #f1f3f5; text-align: center;">${statusBadge}</td>
+                        </tr>`;
+                });
+                
+                processedMessage += '</tbody></table></div>';
+            }
             processedMessage += `<h3 style="margin: 20px 0 16px; font-size: 16px; font-weight: 600; color: #212529;">${line}</h3>`;
             processedMessage += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">';
             inResultSection = true;
@@ -2403,7 +2438,7 @@ showCenterMessage(message, type, autoClose = false) {
             // 구분선 무시
         } else if (line.trim()) {
             if (inResultSection) {
-                // 통계 카드로 표시
+                // 통계 카드
                 if (line.includes(':')) {
                     const [label, value] = line.split(':').map(s => s.trim());
                     let cardColor = '#f8f9fa';
@@ -2423,19 +2458,28 @@ showCenterMessage(message, type, autoClose = false) {
                     processedMessage += `
                         <div style="background: ${cardColor}; padding: 12px; border-radius: 8px;">
                             <div style="font-size: 12px; color: #6c757d; margin-bottom: 4px;">
-                                ${label.replace(/[✅🔄🔍📋📈•]/g, '').trim()}
+                                ${label.replace(/[✅🔄🔍📋📈•ㄴ]/g, '').trim()}
                             </div>
                             <div style="font-size: 20px; font-weight: 600; color: ${textColor};">
                                 ${value}
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 }
             } else if (inDuplicateSection) {
-                // 중복 항목 리스트
-                processedMessage += `<div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #dee2e6;">`;
-                processedMessage += `<div style="line-height: 1.6;">${line.replace(/\s{2,}/g, '<br>')}</div>`;
-                processedMessage += `</div>`;
+                // 중복 항목 파싱
+                if (/^\d+\./.test(line)) {
+                    currentDuplicateItem = { num: line.match(/^\d+/)[0] };
+                } else if (line.includes('주문번호:')) {
+                    currentDuplicateItem.orderNo = line.split(':')[1]?.trim() || '';
+                } else if (line.includes('수령인:')) {
+                    currentDuplicateItem.recipient = line.split(':')[1]?.trim() || '';
+                } else if (line.includes('옵션명:')) {
+                    currentDuplicateItem.option = line.split(':')[1]?.trim() || '';
+                } else if (line.includes('상태:')) {
+                    currentDuplicateItem.status = line.split(':')[1]?.trim() || '';
+                    duplicateItems.push(currentDuplicateItem);
+                    currentDuplicateItem = {};
+                }
             } else {
                 // 일반 텍스트
                 processedMessage += `<div style="margin-bottom: 8px; line-height: 1.6;">${line}</div>`;
@@ -2444,7 +2488,6 @@ showCenterMessage(message, type, autoClose = false) {
     });
     
     if (inResultSection) processedMessage += '</div>';
-    if (inDuplicateSection) processedMessage += '</div>';
     processedMessage += '</div>';
     
     // HTML 구성
@@ -2502,8 +2545,7 @@ showCenterMessage(message, type, autoClose = false) {
                 transition: opacity 0.2s;
             " onmouseover="this.style.opacity='0.9'" 
                onmouseout="this.style.opacity='1'">확인</button>
-        </div>
-    `;
+        </div>`;
     
     modalBackdrop.appendChild(modalContent);
     document.body.appendChild(modalBackdrop);
@@ -2513,23 +2555,15 @@ showCenterMessage(message, type, autoClose = false) {
         const style = document.createElement('style');
         style.id = 'modalAnimations';
         style.textContent = `
-            @keyframes fadeIn {
-                from { opacity: 0; }
-                to { opacity: 1; }
-            }
-            @keyframes slideUp {
-                from { transform: translateY(20px); opacity: 0; }
-                to { transform: translateY(0); opacity: 1; }
-            }
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         `;
         document.head.appendChild(style);
     }
     
     // 배경 클릭으로 닫기
     modalBackdrop.onclick = (e) => {
-        if (e.target === modalBackdrop) {
-            modalBackdrop.remove();
-        }
+        if (e.target === modalBackdrop) modalBackdrop.remove();
     };
     
     // ESC 키로 닫기
