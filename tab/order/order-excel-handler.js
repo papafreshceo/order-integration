@@ -1653,11 +1653,12 @@ if (header !== '마켓명' && !td.textContent && !td.innerHTML) {
             return;
         }
         
-        // ProductMatching 있으면 매칭 시도
-        let matchedProduct = null;
-        if (this.ProductMatching && window.productData) {
-            const trimmedOption = optionName.trim();
-            matchedProduct = window.productData[trimmedOption];
+// ProductMatching 있으면 매칭 시도
+let matchedProduct = null;
+const productData = this.ProductMatching?.getProductData() || window.productData;
+if (this.ProductMatching && productData) {
+    const trimmedOption = optionName.trim();
+    matchedProduct = productData[trimmedOption];
             
             if (!matchedProduct) {
                 // 대소문자 무시 매칭
