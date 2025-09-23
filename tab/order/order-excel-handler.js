@@ -1034,6 +1034,14 @@ orderCount.innerHTML = `<strong style="color: #2563eb; font-weight: 600;">${file
         processBtn.style.display = 'inline-block';
         
         this.checkWarnings();
+        
+        // 파일 리스트 표시 후 아래로 스크롤
+        setTimeout(() => {
+            const processBtn = document.getElementById('processBtn');
+            if (processBtn && processBtn.style.display !== 'none') {
+                processBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 100);
     },
     
     removeFile(index) {
