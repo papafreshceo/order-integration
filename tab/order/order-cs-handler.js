@@ -534,12 +534,16 @@ window.OrderCsHandler = {
     },
     
     search() {
+        console.log('검색 시작');  // 디버깅용
+        
         const startDate = document.getElementById('searchStartDate').value;
         const endDate = document.getElementById('searchEndDate').value;
         const csType = document.getElementById('searchCsType').value;
         const orderNo = document.getElementById('searchOrderNo').value.toLowerCase();
         const searchName = document.getElementById('searchName').value.toLowerCase();
         const status = document.getElementById('searchStatus').value;
+        
+        console.log('검색 조건:', { startDate, endDate, csType, orderNo, searchName, status });  // 디버깅용
         
         this.filteredRecords = this.csRecords.filter(record => {
             // 날짜 필터
@@ -570,6 +574,8 @@ window.OrderCsHandler = {
             
             return true;
         });
+        
+        console.log('필터링 결과:', this.filteredRecords.length + '건');  // 디버깅용
         
         this.currentPage = 1;
         this.displayRecords();
