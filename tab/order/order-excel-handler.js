@@ -2364,7 +2364,7 @@ showCenterMessage(message, type, autoClose = false) {
                 currentItem = null;
             }
             if (inDuplicateSection && duplicateItems.length > 0) {
-            if (inDuplicateSection && duplicateItems.length > 0) {
+
                 processedMessage += `
                     <div style="border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
                         <div style="max-height: 300px; overflow-y: auto;">
