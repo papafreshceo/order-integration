@@ -1579,6 +1579,8 @@ async submitCs() {
         const customerRequest = document.getElementById('csCustomerRequest').value;
         const solution = document.getElementById('csSolution').value;
         
+        console.log('모달에서 입력한 CS 내용:', customerRequest);
+        
         if (!customerRequest || !solution) {
             this.showMessage('필수 항목을 모두 입력하세요.', 'error');
             return;

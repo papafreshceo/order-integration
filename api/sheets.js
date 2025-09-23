@@ -33,6 +33,7 @@ case 'saveCsRecord':
           const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
           
           console.log('CS 기록 저장 시작:', data);
+          console.log('CS 내용 필드 확인:', data['CS 내용']);
           
           // 고정된 헤더 순서 사용
           const headers = ['연번', '마켓', '접수일', '해결방법', '재발송상품', '재발송수량', 
