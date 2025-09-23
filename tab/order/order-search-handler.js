@@ -1785,23 +1785,26 @@ if (!orderResult.success) {
     // fullReset 추가
 fullReset() {
     // 모든 데이터 초기화
-    this.manualOrders = [];
-    this.tempAddressData = {};
-    this.productData = {};
+    this.currentOrders = [];
+    this.marketColors = {};
+    this.tableHeaders = [];
+    this.currentCsOrder = null;
     
-    // 캐시 삭제
-    this.clearCache();
+    // 필터 초기화
+    this.resetFilters();
     
     // DOM 완전 재렌더링
-    const container = document.getElementById('om-panel-input');
+    const container = document.getElementById('om-panel-search');
     if (container) {
         container.innerHTML = '';
         this.render();
-        this.setupEventListeners();
-        this.loadProductData();
+        this.initializeFilters();
+        this.loadMarketList().then(() => {
+            this.loadOrders();
+        });
     }
     
-    console.log('OrderInputHandler 완전 초기화 완료');
+    console.log('OrderSearchHandler 완전 초기화 완료');
 },
 
 async checkDuplicateCs() {
