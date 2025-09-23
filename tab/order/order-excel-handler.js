@@ -1404,7 +1404,7 @@ const resultSection = document.getElementById('resultSection');
     resultSection.style.display = 'block';
     
     // 열너비 설정
-    const widths = {
+    const columnWidths = {
         '연번': 50, '마켓명': 100, '마켓': 60, '결제일': 150, '주문번호': 140,
         '상품주문번호': 140, '주문자': 70, '수취인': 70, '수령인': 70,
         '주문자전화번호': 150, '수취인전화번호': 150, '수령인전화번호': 150,
@@ -1421,22 +1421,24 @@ const resultSection = document.getElementById('resultSection');
         '발송일(송장입력일)': 150, '택배사': 80, '송장번호': 140
     };
     
-    // 테이블 HTML 직접 생성
+// 테이블 HTML 직접 생성
     const table = document.getElementById('excelResultTable');
-    const totalWidth = this.processedData.headers.reduce((sum, h) => sum + (widths[h] || 100), 0);
+    const totalWidth = this.processedData.headers.reduce((sum, h) => sum + (columnWidths[h] || 100), 0);
     
     // colgroup HTML
     let html = '<colgroup>';
     this.processedData.headers.forEach(h => {
-        html += `<col style="width:${widths[h] || 100}px">`;
+        html += `<col style="width:${columnWidths[h] || 100}px">`;
     });
     html += '</colgroup>';
     
     // thead HTML
     html += '<thead id="excelResultHead"><tr>';
     this.processedData.headers.forEach(h => {
-        html += `<th style="width:${widths[h] || 100}px">${h}</th>`;
+        html += `<th style="width:${columnWidths[h] || 100}px">${h}</th>`;
     });
+
+
     html += '</tr></thead><tbody id="excelResultBody"></tbody>';
     
     // 테이블에 적용
@@ -1491,8 +1493,8 @@ function getAlignment(fieldName) {
 const td = document.createElement('td');
     let value = row[header] || '';
     
-    td.style.width = columnWidths[colIndex] + 'px';
-    td.style.minWidth = columnWidths[colIndex] + 'px';
+    td.style.width = (columnWidths[header] || 100) + 'px';
+    td.style.minWidth = (columnWidths[header] || 100) + 'px';
     td.style.textAlign = getAlignment(header);
     
     // 날짜 포맷팅
