@@ -37,29 +37,54 @@ case 'saveCsRecord':
             data: data 
           });
           
-          // CS기록 시트에 데이터 추가
-          const rowData = [[
-            data.마켓명 || '',
-            '', // 연번은 시트에서 수식으로 자동 계산
-            data.접수일 || new Date().toLocaleDateString('ko-KR'),
-            data.해결방법 || '',
-            data.결제일 || '',
-            data.주문번호 || '',
-            data.주문자 || '',
-            data['주문자 전화번호'] || '',
-            data.수령인 || '',
-            data['수령인 전화번호'] || '',
-            data.주소 || '',
-            data.배송메세지 || '',
-            data.옵션명 || '',
-            data.수량 || '',
-            data.재발송상품 || '',
-            data.재발송수량 || '',
-            data.부분환불금액 || ''
-          ]];
+          // CS기록 시트의 헤더 가져오기
+          let headers = [];
+          try {
+            const headerData = await getOrderData('CS기록!1:1', ordersSpreadsheetId);
+            if (headerData && headerData.length > 0) {
+              headers = headerData[0];
+            }
+          } catch (err) {
+            // 헤더를 못 가져온 경우 기본 헤더 사용
+            headers = ['마켓명', '연번', '접수일', '해결방법', '재발송상품', '재발송수량', 
+                      'CS 내용', '부분환불금액', '결제일', '주문번호', '주문자', 
+                      '주문자 전화번호', '수령인', '수령인 전화번호', '주소', 
+                      '배송메세지', '옵션명', '수량', '특이/요청사항', '발송요청일'];
+          }
           
-          // appendSheetData 함수 호출 - 세 번째 매개변수로 spreadsheetId 전달
-          const result = await appendSheetData('CS기록!A:Q', rowData, ordersSpreadsheetId);
+          // 헤더에 맞춰 데이터 행 생성
+          const rowData = [headers.map(header => {
+            // 헤더를 안전하게 문자열로 변환
+            const headerStr = String(header || '').trim();
+            
+            // 연번은 빈값 (시트에서 자동 계산)
+            if (headerStr === '연번') {
+              return '';
+            }
+            
+            // 접수일은 오늘 날짜
+            if (headerStr === '접수일') {
+              return new Date().toLocaleDateString('ko-KR');
+            }
+            
+            // 헤더에 맞는 데이터 찾기
+            if (data[headerStr] !== undefined) {
+              return data[headerStr] || '';
+            }
+            
+            // 공백 제거한 키로도 찾기
+            const normalizedHeader = headerStr.replace(/\s/g, '');
+            for (const key of Object.keys(data)) {
+              if (key.replace(/\s/g, '') === normalizedHeader) {
+                return data[key] || '';
+              }
+            }
+            
+            return '';
+          })];
+          
+          // 데이터 저장
+          const result = await appendSheetData('CS기록!A:Z', rowData, ordersSpreadsheetId);
           
           console.log('CS 기록 저장 완료:', result);
           

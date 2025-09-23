@@ -1590,8 +1590,8 @@ onSolutionChange() {
             // CS 데이터 준비
             const csData = {
                 마켓명: this.currentCsOrder['마켓명'],
-                접수일: new Date().toLocaleDateString('ko-KR'),
                 해결방법: this.getSolutionText(solution),
+                'CS 내용': customerRequest,  // CS 내용 추가
                 결제일: this.currentCsOrder['결제일'],
                 주문번호: this.currentCsOrder['주문번호'],
                 주문자: this.currentCsOrder['주문자'],
@@ -1604,7 +1604,10 @@ onSolutionChange() {
                 수량: this.currentCsOrder['수량'],
                 재발송상품: '',
                 재발송수량: '',
-                부분환불금액: ''
+                부분환불금액: '',
+                '특이/요청사항': '',
+                발송요청일: ''
+            };부분환불금액: ''
             };
 
             // 해결방법별 추가 데이터
