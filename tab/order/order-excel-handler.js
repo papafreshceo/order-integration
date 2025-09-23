@@ -2353,7 +2353,7 @@ showCenterMessage(message, type, autoClose = false) {
         animation: fadeIn 0.3s ease;
     `;
     
-    showConfirmModal(message, onConfirm, onCancel) {
+showConfirmModal(message, onConfirm, onCancel) {
     // 기존 모달 제거
     const existingModal = document.getElementById('confirmModal');
     if (existingModal) existingModal.remove();
