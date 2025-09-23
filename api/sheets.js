@@ -193,10 +193,21 @@ case 'addCsOrder':
           const csOrderNumber = `${dateStr}CS${String(csNumber).padStart(3, '0')}`;
           
           // 임시저장 데이터 추가
+          // 한국 시간 생성
+          const koreaTime = new Date().toLocaleString('ko-KR', {
+              timeZone: 'Asia/Seoul',
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
+          });
+          
           const tempRowData = [[
               data['userEmail'] || '',  // 로그인한 사용자 이메일
               csOrderNumber,  // 접수번호
-              new Date().toISOString(),  // 저장시간
+              koreaTime,  // 한국 시간으로 저장
               data['마켓명'] || 'CS재발송',
               data['옵션명'] || '',
               data['수량'] || '1',
