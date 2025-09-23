@@ -1488,24 +1488,14 @@ function getAlignment(fieldName) {
     }
 
     this.processedData.headers.forEach((header, colIndex) => {
-    const td = document.createElement('td');
+const td = document.createElement('td');
     let value = row[header] || '';
     
-    const width = columnWidths[header] || 100;
-    td.style.cssText = `
-        width: ${width}px !important;
-        min-width: ${width}px !important;
-        max-width: ${width}px !important;
-        padding: 6px 8px;
-        border: 1px solid #dee2e6;
-        white-space: nowrap;
-        background: white;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        text-align: ${getAlignment(header)};
-    `;
-    
-    // 열 너비는 thead에서 이미 설정됨
+    // 위에서 정의한 columnWidths 사용
+    const cellWidth = columnWidths[header] || '100px';
+    td.style.width = cellWidth;
+    td.style.minWidth = cellWidth;
+    td.style.maxWidth = cellWidth;
     td.style.textAlign = getAlignment(header);
     
     // 날짜 포맷팅
