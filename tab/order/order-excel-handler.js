@@ -1401,10 +1401,7 @@ function getAlignment(fieldName) {
     const td = document.createElement('td');
     let value = row[header] || '';
     
-    const width = columnWidths[header] || 100;
-    td.style.width = `${width}px`;
-    td.style.minWidth = `${width}px`;
-    td.style.maxWidth = `${width}px`;
+    // 열 너비는 thead에서 이미 설정됨
     td.style.textAlign = getAlignment(header);
     
     // 날짜 포맷팅
