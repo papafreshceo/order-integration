@@ -13,20 +13,29 @@ window.OrderCsHandler = {
 
 
     setDefaultDateRange() {
-        const today = new Date();
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(today.getDate() - 7);
-        
-        // 날짜 포맷 (YYYY-MM-DD)
-        const formatDate = (date) => {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        };
-        
-        document.getElementById('searchStartDate').value = formatDate(sevenDaysAgo);
-        document.getElementById('searchEndDate').value = formatDate(today);
+        // setTimeout으로 DOM이 완전히 로드된 후 실행
+        setTimeout(() => {
+            const today = new Date();
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(today.getDate() - 7);
+            
+            // 날짜 포맷 (YYYY-MM-DD)
+            const formatDate = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+            
+            const startDateInput = document.getElementById('searchStartDate');
+            const endDateInput = document.getElementById('searchEndDate');
+            
+            if (startDateInput && endDateInput) {
+                startDateInput.value = formatDate(sevenDaysAgo);
+                endDateInput.value = formatDate(today);
+                console.log('날짜 설정 완료:', formatDate(sevenDaysAgo), '~', formatDate(today));
+            }
+        }, 100);
     },
 
 
@@ -558,11 +567,22 @@ window.OrderCsHandler = {
     },
     
     resetSearch() {
-        document.getElementById('searchStartDate').value = '';
-        document.getElementById('searchEndDate').value = '';
+        const today = new Date();
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(today.getDate() - 7);
+        
+        const formatDate = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        
+        document.getElementById('searchStartDate').value = formatDate(sevenDaysAgo);
+        document.getElementById('searchEndDate').value = formatDate(today);
         document.getElementById('searchCsType').value = '';
         document.getElementById('searchOrderNo').value = '';
-        document.getElementById('searchReceiver').value = '';
+        document.getElementById('searchName').value = '';
         document.getElementById('searchStatus').value = '';
         
         this.filteredRecords = [...this.csRecords];
