@@ -1399,119 +1399,54 @@ setTimeout(() => {
     
     
 displayResults() {
-// ===== 위 유지코드: displayResults() { =====
-    const resultSection = document.getElementById('resultSection');
+
+const resultSection = document.getElementById('resultSection');
     resultSection.style.display = 'block';
-        
-        const thead = document.getElementById('excelResultHead');
-        const tbody = document.getElementById('excelResultBody');
-        
-        // 고정 열너비 설정 (숫자로)
-        const fixedWidths = {
-            '연번': 50,
-            '마켓명': 100,
-            '마켓': 60,
-            '결제일': 150,
-            '주문번호': 140,
-            '상품주문번호': 140,
-            '주문자': 70,
-            '수취인': 70,
-            '수령인': 70,
-            '주문자전화번호': 150,
-            '수취인전화번호': 150,
-            '수령인전화번호': 150,
-            '주소': 300,
-            '수취인주소': 300,
-            '수령인주소': 300,
-            '배송메세지': 100,
-            '배송메시지': 100,
-            '옵션명': 160,
-            '수량': 60,
-            '특이/요청사항': 300,
-            '발송요청일': 150,
-            '확인': 160,
-            '셀러': 80,
-            '셀러공급가': 80,
-            '출고처': 80,
-            '송장주체': 60,
-            '벤더사': 100,
-            '발송지명': 100,
-            '발송지주소': 300,
-            '발송지연락처': 120,
-            '출고비용': 90,
-            '정산예정금액': 90,
-            '정산대상금액': 90,
-            '상품금액': 80,
-            '최종결제금액': 90,
-            '할인금액': 90,
-            '마켓부담할인금액': 120,
-            '판매자할인쿠폰할인': 120,
-            '구매쿠폰적용금액': 120,
-            '쿠폰할인금액': 100,
-            '기타지원금할인금': 120,
-            '수수료1': 70,
-            '수수료2': 70,
-            '판매아이디': 120,
-            '분리배송 Y/N': 100,
-            '택배비': 80,
-            '발송일(송장입력일)': 150,
-            '택배사': 80,
-            '송장번호': 140
-        };
-        
-        // 열너비 배열 생성
-        const columnWidths = [];
-        this.processedData.headers.forEach((header, index) => {
-            columnWidths[index] = fixedWidths[header] || 100;
-        });
-        
-        // 테이블 설정
-        const table = document.getElementById('excelResultTable');
-        const totalWidth = columnWidths.reduce((sum, width) => sum + width, 0);
-        
-        // 테이블 완전 초기화 후 재생성
-        table.innerHTML = '';
-        table.style.cssText = `
-            table-layout: fixed !important;
-            width: ${totalWidth}px !important;
-            min-width: ${totalWidth}px !important;
-            border-collapse: collapse;
-        `;
-        
-        // colgroup을 먼저 생성
-        const colgroup = document.createElement('colgroup');
-        this.processedData.headers.forEach((header, index) => {
-            const col = document.createElement('col');
-            col.style.width = columnWidths[index] + 'px';
-            colgroup.appendChild(col);
-        });
-        table.appendChild(colgroup);
-        
-        // thead 재생성
-        const newThead = document.createElement('thead');
-        newThead.id = 'excelResultHead';
-        table.appendChild(newThead);
-        thead = newThead;
-        
-        // tbody 재생성
-        const newTbody = document.createElement('tbody');
-        newTbody.id = 'excelResultBody';
-        table.appendChild(newTbody);
-        tbody = newTbody;
-        
-        // 헤더 생성
-        const headerRow = document.createElement('tr');
-        this.processedData.headers.forEach((header, index) => {
-            const th = document.createElement('th');
-            th.textContent = header;
-            th.style.width = columnWidths[index] + 'px';
-            th.style.minWidth = columnWidths[index] + 'px';
-            th.style.maxWidth = columnWidths[index] + 'px';
-            headerRow.appendChild(th);
-        });
-        
-        thead.innerHTML = '';
-        thead.appendChild(headerRow);
+    
+    // 열너비 설정
+    const widths = {
+        '연번': 50, '마켓명': 100, '마켓': 60, '결제일': 150, '주문번호': 140,
+        '상품주문번호': 140, '주문자': 70, '수취인': 70, '수령인': 70,
+        '주문자전화번호': 150, '수취인전화번호': 150, '수령인전화번호': 150,
+        '주소': 300, '수취인주소': 300, '수령인주소': 300, '배송메세지': 100,
+        '배송메시지': 100, '옵션명': 160, '수량': 60, '특이/요청사항': 300,
+        '발송요청일': 150, '확인': 160, '셀러': 80, '셀러공급가': 80,
+        '출고처': 80, '송장주체': 60, '벤더사': 100, '발송지명': 100,
+        '발송지주소': 300, '발송지연락처': 120, '출고비용': 90,
+        '정산예정금액': 90, '정산대상금액': 90, '상품금액': 80,
+        '최종결제금액': 90, '할인금액': 90, '마켓부담할인금액': 120,
+        '판매자할인쿠폰할인': 120, '구매쿠폰적용금액': 120, '쿠폰할인금액': 100,
+        '기타지원금할인금': 120, '수수료1': 70, '수수료2': 70,
+        '판매아이디': 120, '분리배송 Y/N': 100, '택배비': 80,
+        '발송일(송장입력일)': 150, '택배사': 80, '송장번호': 140
+    };
+    
+    // 테이블 HTML 직접 생성
+    const table = document.getElementById('excelResultTable');
+    const totalWidth = this.processedData.headers.reduce((sum, h) => sum + (widths[h] || 100), 0);
+    
+    // colgroup HTML
+    let html = '<colgroup>';
+    this.processedData.headers.forEach(h => {
+        html += `<col style="width:${widths[h] || 100}px">`;
+    });
+    html += '</colgroup>';
+    
+    // thead HTML
+    html += '<thead id="excelResultHead"><tr>';
+    this.processedData.headers.forEach(h => {
+        html += `<th style="width:${widths[h] || 100}px">${h}</th>`;
+    });
+    html += '</tr></thead><tbody id="excelResultBody"></tbody>';
+    
+    // 테이블에 적용
+    table.innerHTML = html;
+    table.style.tableLayout = 'fixed';
+    table.style.width = totalWidth + 'px';
+    
+    // 변수 재설정
+    const thead = document.getElementById('excelResultHead');
+    const tbody = document.getElementById('excelResultBody');
 
         
         // 마켓 순서대로 정렬
