@@ -1742,35 +1742,56 @@ async loadVendorTemplates() {
         }
     },
     
-    parseVendorTemplates(data) {
+        parseVendorTemplates(data) {
         const templates = {};
         
-        data.forEach(row => {
-            const vendorName = row['벤더사'];
-            if (!vendorName) return;
+        if (!data || data.length < 3) return templates;
+        
+        // 짝수 행(2, 4, 6...)은 벤더사 정보와 헤더
+        // 홀수 행(3, 5, 7...)은 표준필드 매핑
+        for (let i = 1; i < data.length; i += 2) {
+            const vendorRow = data[i];
+            const mappingRow = data[i + 1];
+            
+            if (!vendorRow || !mappingRow) continue;
+            
+            const vendorName = vendorRow[0]; // A열: 벤더사명
+            if (!vendorName) continue;
             
             templates[vendorName] = {
-                fileName: row['파일명형식'],
-                extension: row['파일확장자'],
-                encoding: row['인코딩'],
-                delimiter: row['구분자'],
-                hasHeader: row['헤더포함여부'] === 'Y',
-                headerRow: parseInt(row['헤더시작']) || 1,
+                fileName: vendorRow[1] || '발송_{날짜}.xlsx', // B열: 파일명형식
+                extension: vendorRow[2] || 'xlsx', // C열: 파일확장자
+                encoding: vendorRow[3] || 'UTF-8', // D열: 인코딩
+                delimiter: '', // 구분자는 없음
+                hasHeader: true,
                 fixedValues: {},
                 fieldMapping: {}
             };
             
-            // 고정값 필드 파싱
-            Object.keys(row).forEach(key => {
-                if (key.includes('(지정)')) {
-                    templates[vendorName].fixedValues[key] = row[key];
-                } else if (key.startsWith('표준필드_')) {
-                    const targetField = key.replace('표준필드_', '');
-                    templates[vendorName].fieldMapping[targetField] = row[key];
+            // F열부터 헤더와 표준필드 매핑
+            for (let j = 5; j < vendorRow.length; j++) {
+                const headerField = vendorRow[j]; // 벤더사 헤더 필드
+                const standardField = mappingRow[j]; // 표준필드
+                
+                if (!headerField) continue;
+                
+                // (지정) 표시가 있는 필드는 고정값으로 처리
+                if (headerField.includes('(지정)')) {
+                    const cleanField = headerField.replace('(지정)', '').trim();
+                    // 고정값은 표준필드 행에 있음
+                    if (standardField) {
+                        templates[vendorName].fixedValues[cleanField] = standardField;
+                    }
+                } else {
+                    // 일반 필드 매핑
+                    if (standardField) {
+                        templates[vendorName].fieldMapping[headerField] = standardField;
+                    }
                 }
-            });
-        });
+            }
+        }
         
+        console.log('파싱된 벤더사 템플릿:', templates);
         return templates;
     },
     
