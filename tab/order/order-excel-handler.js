@@ -1468,23 +1468,36 @@ displayResults() {
         // 테이블 설정
         const table = document.getElementById('excelResultTable');
         const totalWidth = columnWidths.reduce((sum, width) => sum + width, 0);
-        table.style.minWidth = totalWidth + 'px';
-        table.style.width = totalWidth + 'px';
-        table.style.tableLayout = 'fixed';
         
-        // colgroup 생성하여 열너비 강제 적용
-        let colgroup = table.querySelector('colgroup');
-        if (!colgroup) {
-            colgroup = document.createElement('colgroup');
-            table.insertBefore(colgroup, thead);
-        }
-        colgroup.innerHTML = '';
+        // 테이블 완전 초기화 후 재생성
+        table.innerHTML = '';
+        table.style.cssText = `
+            table-layout: fixed !important;
+            width: ${totalWidth}px !important;
+            min-width: ${totalWidth}px !important;
+            border-collapse: collapse;
+        `;
         
+        // colgroup을 먼저 생성
+        const colgroup = document.createElement('colgroup');
         this.processedData.headers.forEach((header, index) => {
             const col = document.createElement('col');
             col.style.width = columnWidths[index] + 'px';
             colgroup.appendChild(col);
         });
+        table.appendChild(colgroup);
+        
+        // thead 재생성
+        const newThead = document.createElement('thead');
+        newThead.id = 'excelResultHead';
+        table.appendChild(newThead);
+        thead = newThead;
+        
+        // tbody 재생성
+        const newTbody = document.createElement('tbody');
+        newTbody.id = 'excelResultBody';
+        table.appendChild(newTbody);
+        tbody = newTbody;
         
         // 헤더 생성
         const headerRow = document.createElement('tr');
