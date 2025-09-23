@@ -555,7 +555,7 @@ window.OrderCsHandler = {
         this.currentPage = 1;
         this.displayRecords();
         this.updateResultCount();
-    },테
+    },
     
     resetSearch() {
         document.getElementById('searchStartDate').value = '';
@@ -775,7 +775,7 @@ window.OrderCsHandler = {
         }
     },
 
-    
+
     
     closeDetail() {
         document.getElementById('csDetailModal').classList.remove('show');
