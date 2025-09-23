@@ -127,228 +127,83 @@ case 'saveCsRecord':
 case 'addCsOrder':
         try {
           const { data } = req.body;
+          const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
           
-          // CS 접수일자로 시트명 생성 (오늘 날짜)
+          console.log('CS 재발송 임시저장 시작:', data);
+          
+          // 임시저장 시트 확인 및 생성
+          let tempHeaders = [];
+          try {
+              const tempData = await getOrderData('임시저장!1:1', ordersSpreadsheetId);
+              if (tempData && tempData.length > 0) {
+                  tempHeaders = tempData[0];
+              }
+          } catch (err) {
+              // 시트가 없으면 생성
+              console.log('임시저장 시트 생성 필요');
+              await createOrderSheet('임시저장', ordersSpreadsheetId);
+              tempHeaders = ['사용자이메일', '저장시간', '마켓명', '옵션명', '수량', '단가', '택배비', 
+                            '상품금액', '주문자', '주문자 전화번호', '수령인', '수령인 전화번호', 
+                            '주소', '배송메세지', '발송요청일'];
+              await saveOrderData('임시저장!A1', [tempHeaders], ordersSpreadsheetId);
+          }
+          
+          // CS번호 생성
           const today = new Date();
-          const sheetName = today.getFullYear() + 
+          const dateStr = today.getFullYear() + 
             String(today.getMonth() + 1).padStart(2, '0') + 
             String(today.getDate()).padStart(2, '0');
-          
-          console.log('CS 주문 접수 - 시트명:', sheetName);
-          
-          // 1. 날짜 시트 존재 확인
-          let sheetExists = false;
-          let headers = [];
-          
+            
+          let csNumber = 1;
           try {
-            const existingData = await getOrderData(`${sheetName}!1:1`);
-            if (existingData && existingData.length > 0) {
-              sheetExists = true;
-              headers = existingData[0];
-            }
+              const existingData = await getOrderData('임시저장!A:C', ordersSpreadsheetId);
+              if (existingData && existingData.length > 1) {
+                  for (let i = 1; i < existingData.length; i++) {
+                      const email = existingData[i][0] || '';
+                      if (email.startsWith('CS')) {
+                          const match = email.match(/CS(\d+)/);
+                          if (match) {
+                              const num = parseInt(match[1]);
+                              if (num >= csNumber) {
+                                  csNumber = num + 1;
+                              }
+                          }
+                      }
+                  }
+              }
           } catch (err) {
-            sheetExists = false;
+              console.log('CS 번호 확인 실패, 기본값 사용');
           }
           
-          // 2. 시트가 없으면 생성
-          if (!sheetExists) {
-            console.log('새 시트 생성 필요');
-            
-            // mapping.js와 동일한 방식으로 표준필드 가져오기
-            const mappingData = await getSheetData('매핑!A:AZ');
-            console.log('매핑 시트 데이터 행 수:', mappingData.length);
-
-            headers = [];
-
-            if (mappingData.length >= 2) {
-              // 2행(인덱스 1)에서 "표준필드시작" 마커 찾기
-              const markerRow = mappingData[1];
-              let standardFieldsStartCol = -1;
-              
-              for (let i = 0; i < markerRow.length; i++) {
-                if (String(markerRow[i]).trim() === '표준필드시작') {
-                  standardFieldsStartCol = i + 1;
-                  break;
-                }
-              }
-              
-              console.log('표준필드시작 열 인덱스:', standardFieldsStartCol);
-              
-              if (standardFieldsStartCol !== -1) {
-                // 표준필드 목록 생성 (표준필드시작 다음 열부터)
-                for (let i = standardFieldsStartCol; i < markerRow.length; i++) {
-                  const fieldName = String(markerRow[i] || '').trim();
-                  if (fieldName === '') break;  // 빈 값이면 중단
-                  headers.push(fieldName);
-                }
-              }
-            }
-
-            console.log('추출된 표준필드:', headers);
-            console.log('표준필드 개수:', headers.length);
-
-            // 표준필드를 못 찾았거나 비어있으면 기본 헤더 사용
-            if (headers.length === 0) {
-              console.log('표준필드를 찾을 수 없어 기본 헤더 사용');
-              headers = [
-                '연번', '마켓명', '마켓', '결제일', '주문번호', '상품주문번호',
-                '주문자', '주문자전화번호', '수령인', '수령인전화번호', '주소',
-                '배송메세지', '옵션명', '수량', '특이/요청사항', '발송요청일',
-                '확인', '셀러', '셀러공급가', '출고처', '송장주체', '벤더사',
-                '발송지명', '발송지주소', '발송지연락처', '출고비용',
-                '정산예정금액', '정산대상금액', '상품금액', '최종결제금액',
-                '할인금액', '마켓부담할인금액', '판매자할인쿠폰할인',
-                '구매쿠폰적용금액', '쿠폰할인금액', '기타지원금할인금',
-                '수수료1', '수수료2', '판매아이디', '분리배송 Y/N',
-                '택배비', '발송일(송장입력일)', '택배사', '송장번호'
-              ];
-            }
-            
-            // 새 시트 생성
-            await createOrderSheet(sheetName);
-            
-            // 표준필드 헤더 설정
-            await saveOrderData(`${sheetName}!A1`, [headers]);
-            console.log('시트 생성 및 헤더 설정 완료');
-          }
+          const csOrderNumber = `${dateStr}CS${String(csNumber).padStart(3, '0')}`;
           
-          // 3. 제품 정보 가져오기 (재발송 상품 기준)
-let productInfo = {};
-if (data['옵션명']) {
-    try {
-        const productSpreadsheetId = process.env.SPREADSHEET_ID_PRODUCTS || '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg';
-
-        
-        const productSheetData = await getSheetData('통합상품마스터!A:DZ', productSpreadsheetId);
-        
-        if (productSheetData && productSheetData.length > 1) {
-            const headers = productSheetData[0];
-            const optionIdx = headers.indexOf('옵션명');
-            const 출고처Idx = headers.indexOf('출고처');
-            const 송장주체Idx = headers.indexOf('송장주체');
-            const 벤더사Idx = headers.indexOf('벤더사');
-            const 발송지명Idx = headers.indexOf('발송지명');
-            const 발송지주소Idx = headers.indexOf('발송지주소');
-            const 발송지연락처Idx = headers.indexOf('발송지연락처');
-            
-            // 옵션명으로 제품 찾기
-            for (let i = 1; i < productSheetData.length; i++) {
-                const optionName = String(productSheetData[i][optionIdx] || '').trim();
-                if (optionName === data['옵션명']) {
-                    productInfo = {
-                        출고처: productSheetData[i][출고처Idx] || '',
-                        송장주체: productSheetData[i][송장주체Idx] || '',
-                        벤더사: productSheetData[i][벤더사Idx] || '',
-                        발송지명: productSheetData[i][발송지명Idx] || '',
-                        발송지주소: productSheetData[i][발송지주소Idx] || '',
-                        발송지연락처: productSheetData[i][발송지연락처Idx] || ''
-                    };
-                    console.log(`제품 정보 찾음: ${data['옵션명']}`, productInfo);
-                    break;
-                }
-            }
-        }
-    } catch (error) {
-        console.error('제품 정보 조회 오류:', error);
-    }
-}
-
-// 4. CS 번호 생성 (마켓 필드에 CS001, CS002...)
-const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
-const allRows = await getOrderData(`${sheetName}!A:E`);
-let csNumber = 1;
-
-if (allRows && allRows.length > 1) {
-    // 마켓 컬럼 찾기
-    const marketIdx = headers.indexOf('마켓');
-    
-    // 기존 CS 번호 확인
-    for (let i = 1; i < allRows.length; i++) {
-        const market = allRows[i][marketIdx] || '';
-        if (market.startsWith('CS')) {
-            const num = parseInt(market.replace('CS', ''));
-            if (!isNaN(num) && num >= csNumber) {
-                csNumber = num + 1;
-            }
-        }
-    }
-}
-
-const csMarketNumber = `CS${String(csNumber).padStart(3, '0')}`;
-const csOrderNumber = `${sheetName}CS${String(csNumber).padStart(3, '0')}`;
-console.log('생성된 CS 마켓번호:', csMarketNumber);
-console.log('생성된 CS 주문번호:', csOrderNumber);
-
-// 5. 연번 계산
-const existingRows = await getOrderData(`${sheetName}!A:A`, ordersSpreadsheetId);
-const nextSerial = existingRows ? existingRows.length : 1;
+          // 임시저장 데이터 추가
+          const tempRowData = [[
+              `CS${String(csNumber).padStart(3, '0')}`,  // CS001, CS002 형태로 저장
+              new Date().toISOString(),  // 저장시간
+              data['마켓명'] || 'CS재발송',
+              data['옵션명'] || '',
+              data['수량'] || '1',
+              '',  // 단가
+              '',  // 택배비
+              '',  // 상품금액
+              data['주문자'] || '',
+              data['주문자 전화번호'] || '',
+              data['수령인'] || '',
+              data['수령인 전화번호'] || '',
+              data['주소'] || '',
+              data['배송메세지'] || '',
+              data['발송요청일'] || ''
+          ]];
           
-          // 6. 데이터 행 생성
-const rowData = headers.map(header => {
-    // header가 문자열이 아닌 경우 처리
-    const headerStr = String(header || '');
-    
-    if (headerStr === '연번') {
-        return nextSerial;
-    }
-    if (headerStr === '마켓') {
-        return csMarketNumber;  // CS001, CS002...
-    }
-    if (headerStr === '주문번호') {
-        return csOrderNumber;  // CS 주문번호 사용
-    }
-    if (headerStr === '발송요청일') {
-        return data['발송요청일'] || '';  // 비어있으면 빈 값으로
-    }
-    
-    // 제품 정보에서 가져올 필드들
-    if (productInfo[headerStr]) {
-        return productInfo[headerStr];
-    }
-    
-    // 헤더명 정규화하여 데이터 매칭
-    const normalizedHeader = headerStr.replace(/\s/g, '').replace(/[_-]/g, '');
-    
-    // 먼저 정확한 매칭 시도
-    if (data[headerStr] !== undefined) {
-        return data[headerStr] || '';
-    }
-    
-    // 정규화된 키로 매칭
-    for (const key of Object.keys(data)) {
-        const normalizedKey = key.replace(/\s/g, '').replace(/[_-]/g, '');
-        if (normalizedKey === normalizedHeader) {
-            return data[key] || '';
-        }
-    }
-    
-    // 특수 케이스 처리
-    if (headerStr === '주문자전화번호' && data['주문자 전화번호']) {
-        return data['주문자 전화번호'];
-    }
-    if (headerStr === '수령인전화번호' && data['수령인 전화번호']) {
-        return data['수령인 전화번호'];
-    }
-    
-    return '';
-});
-    
-
-
-          console.log('저장할 CS 주문 데이터:', rowData);
+          await appendSheetData('임시저장!A:O', tempRowData, ordersSpreadsheetId);
           
-          // 6. 데이터 저장
-          const targetRow = existingRows ? existingRows.length + 1 : 2;
-          await saveOrderData(`${sheetName}!A${targetRow}`, [rowData]);
-          
-          console.log('CS 주문 저장 완료');
+          console.log('CS 재발송 임시저장 완료:', csOrderNumber);
           
           return res.status(200).json({
             success: true,
-            message: 'CS 재발송 주문이 접수되었습니다',
-            sheetName: sheetName,
-            csOrderNumber: csOrderNumber,
-            row: targetRow
+            message: 'CS 재발송이 임시저장되었습니다',
+            csOrderNumber: csOrderNumber
           });
           
         } catch (error) {
