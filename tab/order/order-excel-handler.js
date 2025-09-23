@@ -1221,14 +1221,21 @@ if (this.ProductMatching) {
     
     // 출고비용 필드 명시적 처리
     enrichedData.forEach(row => {
-        const optionName = row['옵션명'];
-        if (optionName && this.ProductMatching.productData[optionName]) {
-            const productInfo = this.ProductMatching.productData[optionName];
-            // 출고비용을 숫자로 변환하여 저장
-            const outboundCost = productInfo['출고비용'] || productInfo.출고비용 || 0;
-            row['출고비용'] = typeof outboundCost === 'string' ? 
-                parseFloat(outboundCost.replace(/[^0-9.-]/g, '')) || 0 : 
-                outboundCost;
+        try {
+            const optionName = row['옵션명'];
+            if (optionName && this.ProductMatching && this.ProductMatching.productData) {
+                const productInfo = this.ProductMatching.productData[optionName];
+                if (productInfo) {
+                    // 출고비용을 안전하게 처리
+                    const outboundCost = productInfo['출고비용'] || productInfo.출고비용 || 0;
+                    row['출고비용'] = typeof outboundCost === 'string' ? 
+                        parseFloat(String(outboundCost).replace(/[^0-9.-]/g, '')) || 0 : 
+                        outboundCost || 0;
+                }
+            }
+        } catch (err) {
+            console.log(`옵션명 '${row['옵션명']}' 처리 중 오류 (무시):`, err.message);
+            row['출고비용'] = row['출고비용'] || 0;
         }
     });
     
