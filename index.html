@@ -295,6 +295,11 @@
             border: none;
         }
     </style>
+    <script>
+    // 한국 시간 전역 함수
+    window.KDate = () => new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Seoul"}));
+    </script>
+
 </head>
 <body>
     <!-- 초기 로딩 화면 -->
