@@ -372,6 +372,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 24px;
+            margin-bottom: 32px;
         }
 
         @media (max-width: 1200px) {
@@ -438,6 +439,154 @@
         canvas {
             max-width: 100%;
             max-height: 100%;
+        }
+
+        /* ========================================
+           통계 테이블 섹션
+           ======================================== */
+        .statistics-section {
+            margin-bottom: 32px;
+        }
+
+        .stat-table-card {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+        }
+
+        .stat-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            min-width: 1200px;
+        }
+
+        .stat-table thead th {
+            background: #f8f9fa;
+            padding: 8px;
+            font-size: 12px;
+            font-weight: 400;
+            color: #495057;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+
+        .stat-table tbody td {
+            padding: 8px;
+            font-size: 12px;
+            border: 1px solid #f1f3f5;
+            text-align: center;
+        }
+
+        .stat-table tbody td:first-child {
+            font-weight: 500;
+            text-align: left;
+            background: #fafafa;
+        }
+
+        .stat-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .stat-table .total-row {
+            background: #f0f3ff;
+            font-weight: 600;
+        }
+
+        /* ========================================
+           피벗테이블 섹션
+           ======================================== */
+        .pivot-section {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .pivot-controls {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .pivot-control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pivot-control-group label {
+            font-size: 13px;
+            font-weight: 400;
+            color: #495057;
+        }
+
+        .pivot-control-group select {
+            padding: 6px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 13px;
+            background: #ffffff;
+        }
+
+        .btn-update-pivot {
+            padding: 8px 16px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-update-pivot:hover {
+            background: #1d4ed8;
+        }
+
+        #pivotTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #pivotTable thead th {
+            background: #f5f5f5;
+            padding: 10px;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+
+        #pivotTable tbody td {
+            padding: 8px;
+            font-size: 12px;
+            border: 1px solid #f1f3f5;
+            text-align: right;
+        }
+
+        #pivotTable tbody td:first-child {
+            font-weight: 500;
+            text-align: left;
+            background: white;
+            position: sticky;
+            left: 0;
+            z-index: 1;
+        }
+
+        #pivotTable tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        #pivotTable .total-row {
+            background: #e8f5e9;
+            font-weight: 600;
         }
 
         /* ========================================
@@ -706,6 +855,183 @@
                 </div>
             </div>
         </div>
+        
+        <!-- 통계 테이블 섹션 -->
+        <div class="statistics-section">
+            <!-- 마켓별 통계 -->
+            <div class="stat-table-card">
+                <div class="card-header">
+                    <h3 class="card-title">마켓별 통계</h3>
+                </div>
+                <table class="stat-table" id="marketStats">
+                    <thead>
+                        <tr>
+                            <th rowspan="3" style="width: 120px;">마켓명</th>
+                            <th colspan="3" rowspan="2">전체</th>
+                            <th colspan="6">공급처</th>
+                            <th colspan="6">판매처</th>
+                            <th colspan="6">발송</th>
+                            <th colspan="6">미발송</th>
+                        </tr>
+                        <tr>
+                            <th colspan="3">자사</th>
+                            <th colspan="3">벤더사</th>
+                            <th colspan="3">자사</th>
+                            <th colspan="3">셀러</th>
+                            <th colspan="3">자사</th>
+                            <th colspan="3">벤더사</th>
+                            <th colspan="3">자사</th>
+                            <th colspan="3">벤더사</th>
+                        </tr>
+                        <tr>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <!-- 옵션별 통계 -->
+            <div class="stat-table-card">
+                <div class="card-header">
+                    <h3 class="card-title">옵션별 통계</h3>
+                </div>
+                <table class="stat-table" id="optionStats">
+                    <thead>
+                        <tr>
+                            <th rowspan="3" style="width: 180px;">옵션명</th>
+                            <th colspan="3" rowspan="2">전체</th>
+                            <th colspan="6">공급처</th>
+                            <th colspan="6">판매처</th>
+                            <th colspan="6">발송</th>
+                            <th colspan="6">미발송</th>
+                        </tr>
+                        <tr>
+                            <th colspan="3">자사</th>
+                            <th colspan="3">벤더사</th>
+                            <th colspan="3">자사</th>
+                            <th colspan="3">셀러</th>
+                            <th colspan="3">자사</th>
+                            <th colspan="3">벤더사</th>
+                            <th colspan="3">자사</th>
+                            <th colspan="3">벤더사</th>
+                        </tr>
+                        <tr>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                            <th>건수</th>
+                            <th>수량</th>
+                            <th>금액</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 피벗테이블 섹션 -->
+        <div class="pivot-section">
+            <div class="card-header">
+                <h3 class="card-title">피벗테이블</h3>
+            </div>
+            <div class="pivot-controls">
+                <div class="pivot-control-group">
+                    <label>행:</label>
+                    <select id="pivotRowField">
+                        <option value="마켓명">마켓명</option>
+                        <option value="옵션명">옵션명</option>
+                        <option value="셀러">셀러</option>
+                        <option value="벤더사">벤더사</option>
+                        <option value="송장번호유무">송장유무</option>
+                    </select>
+                </div>
+                <div class="pivot-control-group">
+                    <label>열:</label>
+                    <select id="pivotColField">
+                        <option value="none">없음</option>
+                        <option value="마켓명">마켓명</option>
+                        <option value="옵션명">옵션명</option>
+                        <option value="셀러">셀러</option>
+                        <option value="벤더사">벤더사</option>
+                        <option value="송장번호유무">송장유무</option>
+                    </select>
+                </div>
+                <div class="pivot-control-group">
+                    <label>열2:</label>
+                    <select id="pivotColField2">
+                        <option value="none">없음</option>
+                        <option value="마켓명">마켓명</option>
+                        <option value="옵션명">옵션명</option>
+                        <option value="셀러">셀러</option>
+                        <option value="벤더사">벤더사</option>
+                        <option value="송장번호유무">송장유무</option>
+                    </select>
+                </div>
+                <div class="pivot-control-group">
+                    <label>값:</label>
+                    <select id="pivotValueField">
+                        <option value="count">건수</option>
+                        <option value="수량">수량</option>
+                        <option value="정산예정금액">금액</option>
+                    </select>
+                </div>
+                <button class="btn-update-pivot" onclick="updatePivotTable()">피벗 업데이트</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="pivotTable">
+                    <thead></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <!-- 로딩 -->
@@ -737,251 +1063,608 @@
         });
 
         // 대시보드 데이터 로드 (서버 API 사용)
-async function loadDashboardData() {
-    console.log('대시보드 데이터 로딩 중...');
-    showLoading();
-    
-    try {
-        const response = await fetch('/api/sheets', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'getMarketData',
-                useMainSpreadsheet: true
-            })
-        });
-
-        const result = await response.json();
-        console.log('API 전체 응답:', result);
-        
-        if (result.success) {
-            // 다양한 응답 구조 처리
-            let orderData = [];
+        async function loadDashboardData() {
+            console.log('대시보드 데이터 로딩 중...');
+            showLoading();
             
-            // result.data가 직접 배열인 경우
-            if (Array.isArray(result.data)) {
-                orderData = result.data;
-            }
-            // result.values가 있는 경우 (구글시트 형식)
-            else if (result.values && Array.isArray(result.values)) {
-                // 첫 행이 헤더인 경우
-                if (result.values.length > 1) {
-                    const headers = result.values[0];
-                    orderData = result.values.slice(1).map(row => {
-                        const obj = {};
-                        headers.forEach((header, index) => {
-                            obj[header] = row[index] || '';
-                        });
-                        return obj;
-                    });
+            try {
+                const response = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'getMarketData',
+                        useMainSpreadsheet: true
+                    })
+                });
+
+                const result = await response.json();
+                console.log('API 전체 응답:', result);
+                
+                if (result.success) {
+                    // 다양한 응답 구조 처리
+                    let orderData = [];
+                    
+                    if (Array.isArray(result.data)) {
+                        orderData = result.data;
+                    } else if (result.values && Array.isArray(result.values)) {
+                        if (result.values.length > 1) {
+                            const headers = result.values[0];
+                            orderData = result.values.slice(1).map(row => {
+                                const obj = {};
+                                headers.forEach((header, index) => {
+                                    obj[header] = row[index] || '';
+                                });
+                                return obj;
+                            });
+                        }
+                    } else if (result.orders && Array.isArray(result.orders)) {
+                        orderData = result.orders;
+                    }
+                    
+                    dashboardState.orderData = orderData;
+                    dashboardState.marketColors = result.colors || {};
+                    
+                    console.log('처리된 주문 데이터:', orderData.length, '건');
+                    
+                    // 통계 계산 및 업데이트
+                    calculateStatistics();
+                    updateCharts();
+                    updateCalendarData();
+                    displayStatistics();
+                    updatePivotTable();
+                } else {
+                    console.error('데이터 로드 실패:', result.error);
+                    loadOrdersDirectly();
                 }
+            } catch (error) {
+                console.error('로드 오류:', error);
+                showMessage('데이터 로드 중 오류가 발생했습니다.', 'error');
+            } finally {
+                hideLoading();
             }
-            // result.orders가 있는 경우
-            else if (result.orders && Array.isArray(result.orders)) {
-                orderData = result.orders;
-            }
-            
-            dashboardState.orderData = orderData;
-            dashboardState.marketColors = result.colors || {};
-            
-            console.log('처리된 주문 데이터:', orderData.length, '건');
-            if (orderData.length > 0) {
-                console.log('첫 번째 주문 샘플:', orderData[0]);
-            }
-            
-            // 통계 계산 및 업데이트
-            calculateStatistics();
-            updateCharts();
-            updateCalendarData();
-        } else {
-            console.error('데이터 로드 실패:', result.error);
-            
-            // 대체 방법: 직접 주문 시트에서 가져오기
-            loadOrdersDirectly();
         }
-    } catch (error) {
-        console.error('로드 오류:', error);
-        showMessage('데이터 로드 중 오류가 발생했습니다.', 'error');
-    } finally {
-        hideLoading();
-    }
-}
 
-// 대체 방법: 오늘 날짜 시트에서 직접 가져오기
-async function loadOrdersDirectly() {
-    try {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        const sheetName = `${year}${month}${day}`;
-        
-        console.log('직접 로드 시도:', sheetName);
-        
-        const response = await fetch('/api/sheets', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'getOrdersByDate',
-                sheetName: sheetName
-            })
-        });
-        
-        const result = await response.json();
-        console.log('직접 로드 결과:', result);
-        
-        if (result.success && result.data) {
-            dashboardState.orderData = result.data;
-            console.log('직접 로드 성공:', result.data.length, '건');
+        // 통계 계산
+        function calculateStatistics() {
+            const orders = dashboardState.orderData || [];
+            console.log('통계 계산 시작, 주문 수:', orders.length);
             
-            calculateStatistics();
-            updateCharts();
-            updateCalendarData();
-        }
-    } catch (error) {
-        console.error('직접 로드 실패:', error);
-    }
-}
-
-
-// 통계 계산
-function calculateStatistics() {
-    const orders = dashboardState.orderData || [];
-    console.log('통계 계산 시작, 주문 수:', orders.length);
-    
-    if (orders.length === 0) {
-        console.log('주문 데이터가 없습니다. 기본값 설정');
-        updateStatCards({
-            todayOrders: 0,
-            todayChange: 0,
-            completedShipping: 0,
-            pendingOrders: 0,
-            monthOrders: 0,
-            monthlyChange: 0,
-            processingOrders: 0
-        });
-        return;
-    }
-    
-    // 첫 번째 주문 데이터 구조 확인
-    console.log('첫 번째 주문 데이터:', orders[0]);
-    console.log('사용 가능한 컬럼:', Object.keys(orders[0]));
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    let todayOrders = 0;
-    let yesterdayOrders = 0;
-    let monthOrders = 0;
-    let completedShipping = 0;
-    let pendingOrders = 0;
-    let processingOrders = 0;
-    
-    orders.forEach((order, index) => {
-        // 날짜 필드 찾기
-        let orderDateStr = order['주문일시'] || order['날짜'] || order['주문일'] || order['결제일'] || '';
-        
-        if (index < 5) {
-            console.log(`주문 ${index} 날짜:`, orderDateStr);
-        }
-        
-        const orderDate = parseDate(orderDateStr);
-        
-        // 송장번호 체크
-        const hasTracking = (order['송장번호'] && String(order['송장번호']).trim() !== '' && order['송장번호'] !== '-') ||
-                           (order['운송장번호'] && String(order['운송장번호']).trim() !== '' && order['운송장번호'] !== '-');
-        
-        // 오늘 주문
-        if (isSameDay(orderDate, today)) {
-            todayOrders++;
-        }
-        
-        // 어제 주문
-        if (isSameDay(orderDate, yesterday)) {
-            yesterdayOrders++;
-        }
-        
-        // 이번 달 주문
-        if (orderDate >= monthStart && orderDate <= today) {
-            monthOrders++;
-            
-            if (hasTracking) {
-                completedShipping++;
-            } else {
-                pendingOrders++;
+            if (orders.length === 0) {
+                updateStatCards({
+                    todayOrders: 0,
+                    todayChange: 0,
+                    completedShipping: 0,
+                    pendingOrders: 0,
+                    monthOrders: 0,
+                    monthlyChange: 0,
+                    processingOrders: 0
+                });
+                return;
             }
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            let todayOrders = 0;
+            let yesterdayOrders = 0;
+            let monthOrders = 0;
+            let completedShipping = 0;
+            let pendingOrders = 0;
+            let processingOrders = 0;
+            
+            orders.forEach((order, index) => {
+                const orderDateStr = order['주문일시'] || order['날짜'] || order['주문일'] || order['결제일'] || '';
+                const orderDate = parseDate(orderDateStr);
+                const hasTracking = (order['송장번호'] && String(order['송장번호']).trim() !== '' && order['송장번호'] !== '-');
+                
+                if (isSameDay(orderDate, today)) {
+                    todayOrders++;
+                }
+                
+                if (isSameDay(orderDate, yesterday)) {
+                    yesterdayOrders++;
+                }
+                
+                if (orderDate >= monthStart && orderDate <= today) {
+                    monthOrders++;
+                    
+                    if (hasTracking) {
+                        completedShipping++;
+                    } else {
+                        pendingOrders++;
+                    }
+                }
+                
+                const threeDaysAgo = new Date(today);
+                threeDaysAgo.setDate(today.getDate() - 3);
+                if (orderDate >= threeDaysAgo && orderDate <= today && !hasTracking) {
+                    processingOrders++;
+                }
+            });
+            
+            const todayChange = yesterdayOrders > 0 ? 
+                ((todayOrders - yesterdayOrders) / yesterdayOrders * 100).toFixed(0) : 0;
+            
+            updateStatCards({
+                todayOrders,
+                todayChange,
+                completedShipping,
+                pendingOrders,
+                monthOrders,
+                monthlyChange: 0,
+                processingOrders
+            });
         }
-        
-        // 처리 중 (최근 3일 내 주문 중 송장 없음)
-        const threeDaysAgo = new Date(today);
-        threeDaysAgo.setDate(today.getDate() - 3);
-        if (orderDate >= threeDaysAgo && orderDate <= today && !hasTracking) {
-            processingOrders++;
-        }
-    });
-    
-    console.log('계산 결과:', {
-        todayOrders,
-        yesterdayOrders,
-        monthOrders,
-        completedShipping,
-        pendingOrders,
-        processingOrders
-    });
-    
-    // 전일 대비 계산
-    const todayChange = yesterdayOrders > 0 ? 
-        ((todayOrders - yesterdayOrders) / yesterdayOrders * 100).toFixed(0) : 0;
-    
-    // UI 업데이트
-    updateStatCards({
-        todayOrders,
-        todayChange,
-        completedShipping,
-        pendingOrders,
-        monthOrders,
-        monthlyChange: 0,
-        processingOrders
-    });
-}
 
         // 통계 카드 업데이트
         function updateStatCards(stats) {
-            // 오늘 주문
             document.getElementById('todayOrders').textContent = stats.todayOrders.toLocaleString('ko-KR');
             const todayChangeEl = document.getElementById('todayChange');
             todayChangeEl.textContent = stats.todayChange >= 0 ? 
                 `+${stats.todayChange}% 전일 대비` : `${stats.todayChange}% 전일 대비`;
             todayChangeEl.className = stats.todayChange >= 0 ? 'stats-change positive' : 'stats-change negative';
             
-            // 발송 완료
             document.getElementById('completedShipping').textContent = stats.completedShipping.toLocaleString('ko-KR');
-            
-            // 처리 대기
             document.getElementById('pendingOrders').textContent = stats.pendingOrders.toLocaleString('ko-KR');
-            
-            // 월간 주문
             document.getElementById('monthlyOrders').textContent = stats.monthOrders.toLocaleString('ko-KR');
-            const monthlyChangeEl = document.getElementById('monthlyChange');
-            monthlyChangeEl.textContent = stats.monthlyChange >= 0 ? 
-                `+${stats.monthlyChange}% 전월 대비` : `${stats.monthlyChange}% 전월 대비`;
-            monthlyChangeEl.className = stats.monthlyChange >= 0 ? 'stats-change positive' : 'stats-change negative';
             
-            // 배송 현황
             document.getElementById('deliveryReceived').textContent = stats.pendingOrders;
             document.getElementById('deliveryProcessing').textContent = stats.processingOrders;
             document.getElementById('deliveryShipping').textContent = '0';
             document.getElementById('deliveryCompleted').textContent = stats.completedShipping;
             
-            // 진행률
             const total = stats.pendingOrders + stats.completedShipping;
             const percent = total > 0 ? Math.round((stats.completedShipping / total) * 100) : 0;
             document.getElementById('progressPercent').textContent = `${percent}%`;
             document.getElementById('progressBar').style.width = `${percent}%`;
+        }
+
+        // 통계 테이블 표시
+        function displayStatistics() {
+            const orders = dashboardState.orderData;
+            if (!orders || orders.length === 0) return;
+            
+            const marketStats = {};
+            const optionStats = {};
+            
+            orders.forEach(order => {
+                const market = order['마켓명'] || '기타';
+                const option = order['옵션명'] || '기타';
+                const quantity = parseInt(order['수량']) || 1;
+                const amount = parseFloat(order['정산예정금액']) || parseFloat(order['상품금액']) || 0;
+                const vendor = String(order['벤더사'] || '').trim();
+                const seller = String(order['셀러'] || '').trim();
+                const hasInvoice = order['송장번호'] && String(order['송장번호']).trim() !== '';
+                
+                // 마켓별 통계
+                if (!marketStats[market]) {
+                    marketStats[market] = createEmptyStats();
+                }
+                updateStats(marketStats[market], order, quantity, amount, vendor, seller, hasInvoice);
+                
+                // 옵션별 통계
+                if (!optionStats[option]) {
+                    optionStats[option] = createEmptyStats();
+                }
+                updateStats(optionStats[option], order, quantity, amount, vendor, seller, hasInvoice);
+            });
+            
+            displayCategorizedStats('marketStats', marketStats);
+            displayCategorizedStats('optionStats', optionStats);
+        }
+        
+        function createEmptyStats() {
+            return {
+                overall: { count: 0, quantity: 0, amount: 0 },
+                companyProduct: { count: 0, quantity: 0, amount: 0 },
+                vendorProduct: { count: 0, quantity: 0, amount: 0 },
+                companySales: { count: 0, quantity: 0, amount: 0 },
+                sellerSales: { count: 0, quantity: 0, amount: 0 },
+                sentCompany: { count: 0, quantity: 0, amount: 0 },
+                sentVendor: { count: 0, quantity: 0, amount: 0 },
+                unsentCompany: { count: 0, quantity: 0, amount: 0 },
+                unsentVendor: { count: 0, quantity: 0, amount: 0 }
+            };
+        }
+        
+        function updateStats(stats, order, quantity, amount, vendor, seller, hasInvoice) {
+            const isCompanyProduct = !vendor || vendor === '달래마켓';
+            const isSellerSales = !!seller;
+            
+            stats.overall.count++;
+            stats.overall.quantity += quantity;
+            stats.overall.amount += amount;
+            
+            if (isCompanyProduct) {
+                stats.companyProduct.count++;
+                stats.companyProduct.quantity += quantity;
+                stats.companyProduct.amount += amount;
+            } else {
+                stats.vendorProduct.count++;
+                stats.vendorProduct.quantity += quantity;
+                stats.vendorProduct.amount += amount;
+            }
+            
+            if (isSellerSales) {
+                stats.sellerSales.count++;
+                stats.sellerSales.quantity += quantity;
+                stats.sellerSales.amount += amount;
+            } else {
+                stats.companySales.count++;
+                stats.companySales.quantity += quantity;
+                stats.companySales.amount += amount;
+            }
+            
+            if (hasInvoice) {
+                if (isCompanyProduct) {
+                    stats.sentCompany.count++;
+                    stats.sentCompany.quantity += quantity;
+                    stats.sentCompany.amount += amount;
+                } else {
+                    stats.sentVendor.count++;
+                    stats.sentVendor.quantity += quantity;
+                    stats.sentVendor.amount += amount;
+                }
+            } else {
+                if (isCompanyProduct) {
+                    stats.unsentCompany.count++;
+                    stats.unsentCompany.quantity += quantity;
+                    stats.unsentCompany.amount += amount;
+                } else {
+                    stats.unsentVendor.count++;
+                    stats.unsentVendor.quantity += quantity;
+                    stats.unsentVendor.amount += amount;
+                }
+            }
+        }
+        
+        function displayCategorizedStats(tableId, stats) {
+            const tbody = document.querySelector(`#${tableId} tbody`);
+            tbody.innerHTML = '';
+            
+            const totals = createEmptyStats();
+            
+            Object.keys(stats).sort().forEach(key => {
+                const tr = document.createElement('tr');
+                const stat = stats[key];
+                
+                tr.innerHTML = `
+                    <td>${key}</td>
+                    <td>${stat.overall.count}</td>
+                    <td>${stat.overall.quantity}</td>
+                    <td>${stat.overall.amount.toLocaleString()}</td>
+                    <td>${stat.companyProduct.count}</td>
+                    <td>${stat.companyProduct.quantity}</td>
+                    <td>${stat.companyProduct.amount.toLocaleString()}</td>
+                    <td>${stat.vendorProduct.count}</td>
+                    <td>${stat.vendorProduct.quantity}</td>
+                    <td>${stat.vendorProduct.amount.toLocaleString()}</td>
+                    <td>${stat.companySales.count}</td>
+                    <td>${stat.companySales.quantity}</td>
+                    <td>${stat.companySales.amount.toLocaleString()}</td>
+                    <td>${stat.sellerSales.count}</td>
+                    <td>${stat.sellerSales.quantity}</td>
+                    <td>${stat.sellerSales.amount.toLocaleString()}</td>
+                    <td>${stat.sentCompany.count}</td>
+                    <td>${stat.sentCompany.quantity}</td>
+                    <td>${stat.sentCompany.amount.toLocaleString()}</td>
+                    <td>${stat.sentVendor.count}</td>
+                    <td>${stat.sentVendor.quantity}</td>
+                    <td>${stat.sentVendor.amount.toLocaleString()}</td>
+                    <td>${stat.unsentCompany.count}</td>
+                    <td>${stat.unsentCompany.quantity}</td>
+                    <td>${stat.unsentCompany.amount.toLocaleString()}</td>
+                    <td>${stat.unsentVendor.count}</td>
+                    <td>${stat.unsentVendor.quantity}</td>
+                    <td>${stat.unsentVendor.amount.toLocaleString()}</td>
+                `;
+                
+                tbody.appendChild(tr);
+                
+                // 합계 누적
+                Object.keys(totals).forEach(k => {
+                    totals[k].count += stat[k].count;
+                    totals[k].quantity += stat[k].quantity;
+                    totals[k].amount += stat[k].amount;
+                });
+            });
+            
+            // 합계 행
+            const totalRow = document.createElement('tr');
+            totalRow.className = 'total-row';
+            totalRow.innerHTML = `
+                <td>합계</td>
+                <td>${totals.overall.count}</td>
+                <td>${totals.overall.quantity}</td>
+                <td>${totals.overall.amount.toLocaleString()}</td>
+                <td>${totals.companyProduct.count}</td>
+                <td>${totals.companyProduct.quantity}</td>
+                <td>${totals.companyProduct.amount.toLocaleString()}</td>
+                <td>${totals.vendorProduct.count}</td>
+                <td>${totals.vendorProduct.quantity}</td>
+                <td>${totals.vendorProduct.amount.toLocaleString()}</td>
+                <td>${totals.companySales.count}</td>
+                <td>${totals.companySales.quantity}</td>
+                <td>${totals.companySales.amount.toLocaleString()}</td>
+                <td>${totals.sellerSales.count}</td>
+                <td>${totals.sellerSales.quantity}</td>
+                <td>${totals.sellerSales.amount.toLocaleString()}</td>
+                <td>${totals.sentCompany.count}</td>
+                <td>${totals.sentCompany.quantity}</td>
+                <td>${totals.sentCompany.amount.toLocaleString()}</td>
+                <td>${totals.sentVendor.count}</td>
+                <td>${totals.sentVendor.quantity}</td>
+                <td>${totals.sentVendor.amount.toLocaleString()}</td>
+                <td>${totals.unsentCompany.count}</td>
+                <td>${totals.unsentCompany.quantity}</td>
+                <td>${totals.unsentCompany.amount.toLocaleString()}</td>
+                <td>${totals.unsentVendor.count}</td>
+                <td>${totals.unsentVendor.quantity}</td>
+                <td>${totals.unsentVendor.amount.toLocaleString()}</td>
+            `;
+            tbody.appendChild(totalRow);
+        }
+
+        // 피벗테이블 업데이트
+        function updatePivotTable() {
+            const orders = dashboardState.orderData;
+            if (!orders || orders.length === 0) return;
+            
+            const rowField = document.getElementById('pivotRowField').value;
+            const colField = document.getElementById('pivotColField').value;
+            const colField2 = document.getElementById('pivotColField2').value;
+            const valueField = document.getElementById('pivotValueField').value;
+            
+            const pivotData = createPivotData(orders, rowField, colField, colField2, valueField);
+            displayPivotTable(pivotData, rowField, colField, colField2, valueField);
+        }
+        
+        function createPivotData(data, rowField, colField, colField2, valueField) {
+            const pivot = {};
+            const colValues = new Set();
+            const colValues2 = new Set();
+            
+            data.forEach(row => {
+                let rowKey = String(row[rowField] || '(빈값)').trim();
+                if (rowField === '송장번호유무') {
+                    rowKey = (row['송장번호'] && String(row['송장번호']).trim() !== '') ? '송장있음' : '송장없음';
+                }
+                
+                if (!pivot[rowKey]) pivot[rowKey] = {};
+                
+                if (colField === 'none') {
+                    if (!pivot[rowKey]['전체']) pivot[rowKey]['전체'] = {};
+                    if (!pivot[rowKey]['전체']['전체']) pivot[rowKey]['전체']['전체'] = [];
+                    pivot[rowKey]['전체']['전체'].push(row);
+                } else {
+                    let colKey = String(row[colField] || '(빈값)').trim();
+                    if (colField === '송장번호유무') {
+                        colKey = (row['송장번호'] && String(row['송장번호']).trim() !== '') ? '송장있음' : '송장없음';
+                    }
+                    
+                    colValues.add(colKey);
+                    if (!pivot[rowKey][colKey]) pivot[rowKey][colKey] = {};
+                    
+                    if (colField2 === 'none') {
+                        if (!pivot[rowKey][colKey]['전체']) pivot[rowKey][colKey]['전체'] = [];
+                        pivot[rowKey][colKey]['전체'].push(row);
+                    } else {
+                        let colKey2 = String(row[colField2] || '(빈값)').trim();
+                        if (colField2 === '송장번호유무') {
+                            colKey2 = (row['송장번호'] && String(row['송장번호']).trim() !== '') ? '송장있음' : '송장없음';
+                        }
+                        
+                        colValues2.add(colKey2);
+                        if (!pivot[rowKey][colKey][colKey2]) pivot[rowKey][colKey][colKey2] = [];
+                        pivot[rowKey][colKey][colKey2].push(row);
+                    }
+                }
+            });
+            
+            return {
+                data: pivot,
+                columns: colField === 'none' ? ['전체'] : Array.from(colValues).sort(),
+                columns2: colField2 === 'none' ? ['전체'] : Array.from(colValues2).sort()
+            };
+        }
+        
+        function displayPivotTable(pivotData, rowField, colField, colField2, valueField) {
+            const table = document.getElementById('pivotTable');
+            const thead = table.querySelector('thead');
+            const tbody = table.querySelector('tbody');
+            
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+            
+            // 헤더 생성
+            if (colField2 === 'none' || pivotData.columns2.length === 1) {
+                const headerRow = document.createElement('tr');
+                
+                const th1 = document.createElement('th');
+                th1.textContent = rowField;
+                th1.style.position = 'sticky';
+                th1.style.left = '0';
+                th1.style.background = '#f5f5f5';
+                th1.style.zIndex = '10';
+                headerRow.appendChild(th1);
+                
+                pivotData.columns.forEach(col => {
+                    const th = document.createElement('th');
+                    th.textContent = col;
+                    th.style.background = '#f5f5f5';
+                    headerRow.appendChild(th);
+                });
+                
+                const thTotal = document.createElement('th');
+                thTotal.textContent = '합계';
+                thTotal.style.background = '#e8f5e9';
+                thTotal.style.fontWeight = 'bold';
+                headerRow.appendChild(thTotal);
+                
+                thead.appendChild(headerRow);
+            } else {
+                const headerRow1 = document.createElement('tr');
+                const headerRow2 = document.createElement('tr');
+                
+                const th1 = document.createElement('th');
+                th1.textContent = rowField;
+                th1.rowSpan = 2;
+                th1.style.position = 'sticky';
+                th1.style.left = '0';
+                th1.style.background = '#f5f5f5';
+                th1.style.zIndex = '10';
+                headerRow1.appendChild(th1);
+                
+                pivotData.columns.forEach(col => {
+                    const th = document.createElement('th');
+                    th.textContent = col;
+                    th.colSpan = pivotData.columns2.length;
+                    th.style.background = '#f5f5f5';
+                    th.style.borderBottom = '1px solid #ddd';
+                    headerRow1.appendChild(th);
+                });
+                
+                const thTotal1 = document.createElement('th');
+                thTotal1.textContent = '합계';
+                thTotal1.rowSpan = 2;
+                thTotal1.style.background = '#e8f5e9';
+                thTotal1.style.fontWeight = 'bold';
+                headerRow1.appendChild(thTotal1);
+                
+                pivotData.columns.forEach(col => {
+                    pivotData.columns2.forEach(col2 => {
+                        const th = document.createElement('th');
+                        th.textContent = col2;
+                        th.style.background = '#f9f9f9';
+                        th.style.fontSize = '0.9em';
+                        headerRow2.appendChild(th);
+                    });
+                });
+                
+                thead.appendChild(headerRow1);
+                thead.appendChild(headerRow2);
+            }
+            
+            // 데이터 행 생성
+            const colTotals = {};
+            let grandTotal = 0;
+            
+            Object.keys(pivotData.data).sort().forEach(rowKey => {
+                const tr = document.createElement('tr');
+                
+                const td1 = document.createElement('td');
+                td1.textContent = rowKey;
+                td1.style.fontWeight = 'bold';
+                td1.style.position = 'sticky';
+                td1.style.left = '0';
+                td1.style.background = 'white';
+                td1.style.borderRight = '2px solid #ddd';
+                tr.appendChild(td1);
+                
+                let rowTotal = 0;
+                
+                pivotData.columns.forEach(col => {
+                    if (colField2 === 'none' || pivotData.columns2.length === 1) {
+                        const td = document.createElement('td');
+                        const cellData = pivotData.data[rowKey][col] ? 
+                            (pivotData.data[rowKey][col]['전체'] || pivotData.data[rowKey][col]) : [];
+                        const value = calculateValue(Array.isArray(cellData) ? cellData : [], valueField);
+                        td.textContent = formatValue(value, valueField);
+                        td.style.textAlign = 'right';
+                        tr.appendChild(td);
+                        
+                        rowTotal += value;
+                        const colKey = col;
+                        if (!colTotals[colKey]) colTotals[colKey] = 0;
+                        colTotals[colKey] += value;
+                    } else {
+                        pivotData.columns2.forEach(col2 => {
+                            const td = document.createElement('td');
+                            const cellData = pivotData.data[rowKey][col] && pivotData.data[rowKey][col][col2] ? 
+                                pivotData.data[rowKey][col][col2] : [];
+                            const value = calculateValue(cellData, valueField);
+                            td.textContent = formatValue(value, valueField);
+                            td.style.textAlign = 'right';
+                            tr.appendChild(td);
+                            
+                            rowTotal += value;
+                            const colKey = `${col}_${col2}`;
+                            if (!colTotals[colKey]) colTotals[colKey] = 0;
+                            colTotals[colKey] += value;
+                        });
+                    }
+                });
+                
+                const tdRowTotal = document.createElement('td');
+
+                tdRowTotal.textContent = formatValue(rowTotal, valueField);
+                tdRowTotal.style.textAlign = 'right';
+                tdRowTotal.style.background = '#f8f9fa';
+                tdRowTotal.style.fontWeight = 'bold';
+                tr.appendChild(tdRowTotal);
+                
+                tbody.appendChild(tr);
+                grandTotal += rowTotal;
+            });
+            
+            // 합계 행
+            const totalRow = document.createElement('tr');
+            totalRow.style.borderTop = '2px solid #4CAF50';
+            totalRow.style.background = '#e8f5e9';
+            totalRow.style.fontWeight = 'bold';
+            
+            const tdTotalLabel = document.createElement('td');
+            tdTotalLabel.textContent = '합계';
+            tdTotalLabel.style.position = 'sticky';
+            tdTotalLabel.style.left = '0';
+            tdTotalLabel.style.background = '#e8f5e9';
+            totalRow.appendChild(tdTotalLabel);
+            
+            if (colField2 === 'none' || pivotData.columns2.length === 1) {
+                pivotData.columns.forEach(col => {
+                    const td = document.createElement('td');
+                    td.textContent = formatValue(colTotals[col] || 0, valueField);
+                    td.style.textAlign = 'right';
+                    totalRow.appendChild(td);
+                });
+            } else {
+                pivotData.columns.forEach(col => {
+                    pivotData.columns2.forEach(col2 => {
+                        const td = document.createElement('td');
+                        const colKey = `${col}_${col2}`;
+                        td.textContent = formatValue(colTotals[colKey] || 0, valueField);
+                        td.style.textAlign = 'right';
+                        totalRow.appendChild(td);
+                    });
+                });
+            }
+            
+            const tdGrandTotal = document.createElement('td');
+            tdGrandTotal.textContent = formatValue(grandTotal, valueField);
+            tdGrandTotal.style.textAlign = 'right';
+            tdGrandTotal.style.background = '#c8e6c9';
+            totalRow.appendChild(tdGrandTotal);
+            
+            tbody.appendChild(totalRow);
+        }
+        
+        function calculateValue(data, valueField) {
+            if (valueField === 'count') {
+                return data.length;
+            }
+            
+            return data.reduce((sum, row) => {
+                const val = parseFloat(row[valueField]) || 0;
+                return sum + val;
+            }, 0);
+        }
+        
+        function formatValue(value, valueField) {
+            return value.toLocaleString('ko-KR');
         }
 
         // 차트 업데이트
@@ -1021,7 +1704,6 @@ function calculateStatistics() {
                 }
             }
             
-            // 차트 그리기
             canvas.width = canvas.parentElement.offsetWidth;
             canvas.height = 200;
             
@@ -1055,7 +1737,6 @@ function calculateStatistics() {
             const ctx = canvas.getContext('2d');
             const orders = dashboardState.orderData;
             
-            // 마켓별 집계
             const marketStats = {};
             orders.forEach(order => {
                 const market = order['마켓명'] || '기타';
@@ -1074,7 +1755,6 @@ function calculateStatistics() {
                 return;
             }
             
-            // 상위 5개 마켓만 표시
             const sortedMarkets = Object.entries(marketStats)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 5);
@@ -1097,7 +1777,6 @@ function calculateStatistics() {
                 const percentage = (count / total) * 100;
                 const angle = (percentage / 100) * Math.PI * 2;
                 
-                // 도넛 차트 그리기
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + angle);
                 ctx.arc(centerX, centerY, innerRadius, currentAngle + angle, currentAngle, true);
@@ -1108,7 +1787,6 @@ function calculateStatistics() {
                 currentAngle += angle;
             });
             
-            // 범례
             let legendY = 20;
             sortedMarkets.forEach(([market, count], index) => {
                 const percentage = ((count / total) * 100).toFixed(1);
@@ -1138,14 +1816,12 @@ function calculateStatistics() {
             const calendarGrid = document.getElementById('calendarGrid');
             calendarGrid.innerHTML = '';
             
-            // 빈 칸
             for (let i = 0; i < firstDay; i++) {
                 const emptyDay = document.createElement('div');
                 emptyDay.className = 'calendar-day empty';
                 calendarGrid.appendChild(emptyDay);
             }
             
-            // 날짜
             for (let date = 1; date <= lastDate; date++) {
                 const dayElement = document.createElement('div');
                 dayElement.className = 'calendar-day';
@@ -1170,7 +1846,6 @@ function calculateStatistics() {
                 dateDiv.textContent = date;
                 dayElement.appendChild(dateDiv);
                 
-                // 해당 날짜의 주문 수 표시
                 if (dashboardState.orderData.length > 0) {
                     const dayOrders = dashboardState.orderData.filter(order => {
                         const orderDate = parseDate(order['주문일시'] || order['날짜']);
@@ -1206,7 +1881,6 @@ function calculateStatistics() {
             
             event.target.closest('.calendar-day').classList.add('selected');
             
-            // 선택한 날짜의 주문 표시
             const selectedOrders = dashboardState.orderData.filter(order => {
                 const orderDate = parseDate(order['주문일시'] || order['날짜']);
                 return isSameDay(orderDate, dashboardState.selectedDate);
@@ -1241,52 +1915,73 @@ function calculateStatistics() {
             updateMarketChart();
         }
 
+        // 대체 방법: 오늘 날짜 시트에서 직접 가져오기
+        async function loadOrdersDirectly() {
+            try {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const sheetName = `${year}${month}${day}`;
+                
+                console.log('직접 로드 시도:', sheetName);
+                
+                const response = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'getOrdersByDate',
+                        sheetName: sheetName
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('직접 로드 결과:', result);
+                
+                if (result.success && result.data) {
+                    dashboardState.orderData = result.data;
+                    calculateStatistics();
+                    updateCharts();
+                    updateCalendarData();
+                    displayStatistics();
+                    updatePivotTable();
+                }
+            } catch (error) {
+                console.error('직접 로드 실패:', error);
+            }
+        }
+
         // 유틸리티 함수들
         function parseDate(dateStr) {
-    if (!dateStr) return new Date(0);
-    
-    const str = String(dateStr).trim();
-    console.log('parseDate 입력:', str);
-    
-    // YYYYMMDD 형식 (예: 20250120)
-    if (str.match(/^\d{8}$/)) {
-        const year = str.substring(0, 4);
-        const month = str.substring(4, 6);
-        const day = str.substring(6, 8);
-        const result = new Date(year, parseInt(month) - 1, parseInt(day));
-        console.log('YYYYMMDD 형식 파싱:', result);
-        return result;
-    }
-    
-    // 엑셀 시리얼 날짜 처리
-    if (!isNaN(str) && str.length <= 6) {
-        const excelDate = parseInt(str);
-        const date = new Date((excelDate - 25569) * 86400 * 1000);
-        console.log('엑셀 시리얼 파싱:', date);
-        return date;
-    }
-    
-    // YYYY-MM-DD 또는 YYYY/MM/DD 형식
-    if (str.match(/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/)) {
-        const cleanStr = str.split(' ')[0].replace(/\//g, '-');
-        const result = new Date(cleanStr + 'T00:00:00');
-        console.log('YYYY-MM-DD 형식 파싱:', result);
-        return result;
-    }
-    
-    // MM/DD/YYYY 형식
-    if (str.match(/^\d{1,2}\/\d{1,2}\/\d{4}/)) {
-        const parts = str.split('/');
-        const result = new Date(parts[2], parseInt(parts[0]) - 1, parseInt(parts[1]));
-        console.log('MM/DD/YYYY 형식 파싱:', result);
-        return result;
-    }
-    
-    // 기본 파싱 시도
-    const parsed = new Date(str);
-    console.log('기본 파싱:', parsed);
-    return isNaN(parsed.getTime()) ? new Date(0) : parsed;
-}
+            if (!dateStr) return new Date(0);
+            
+            const str = String(dateStr).trim();
+            
+            if (str.match(/^\d{8}$/)) {
+                const year = str.substring(0, 4);
+                const month = str.substring(4, 6);
+                const day = str.substring(6, 8);
+                return new Date(year, parseInt(month) - 1, parseInt(day));
+            }
+            
+            if (!isNaN(str) && str.length <= 6) {
+                const excelDate = parseInt(str);
+                return new Date((excelDate - 25569) * 86400 * 1000);
+            }
+            
+            if (str.match(/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/)) {
+                const cleanStr = str.split(' ')[0].replace(/\//g, '-');
+                return new Date(cleanStr + 'T00:00:00');
+            }
+            
+            if (str.match(/^\d{1,2}\/\d{1,2}\/\d{4}/)) {
+                const parts = str.split('/');
+                return new Date(parts[2], parseInt(parts[0]) - 1, parseInt(parts[1]));
+            }
+            
+            const parsed = new Date(str);
+            return isNaN(parsed.getTime()) ? new Date(0) : parsed;
+        }
 
         function isSameDay(date1, date2) {
             return date1.getFullYear() === date2.getFullYear() &&
