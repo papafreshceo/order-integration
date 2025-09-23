@@ -794,7 +794,41 @@ const rowData = headers.map(header => {
           });
         }
 
-      case 'getMarketFormats':
+     
+
+      case 'getVendorTemplates':
+        try {
+          const { range } = req.body;
+          
+          if (!range) {
+            return res.status(400).json({ 
+              success: false, 
+              error: 'range가 필요합니다.' 
+            });
+          }
+          
+          // 환경변수에서 SPREADSHEET_ID 가져오기
+          const templateData = await getSheetData(range);
+          
+          if (!templateData || templateData.length === 0) {
+            return res.status(200).json({ 
+              success: true, 
+              data: [] 
+            });
+          }
+          
+          return res.status(200).json({ 
+            success: true, 
+            data: templateData
+          });
+          
+        } catch (error) {
+          console.error('벤더 템플릿 조회 오류:', error);
+          return res.status(500).json({ 
+            success: false, 
+            error: error.message || '벤더 템플릿 조회 실패'
+          });
+        }
 
       case 'getMarketFormats':
         try {

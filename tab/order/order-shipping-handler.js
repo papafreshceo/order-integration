@@ -1727,9 +1727,8 @@ async loadVendorTemplates() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    action: 'fetchVendorTemplates',
+                    action: 'getVendorTemplates',
                     range: '벤더사템플릿!A:Z'
-                    // spreadsheetId는 서버에서 환경변수로 처리
                 })
             });
             
@@ -1737,6 +1736,7 @@ async loadVendorTemplates() {
             
             if (result.success && result.data) {
                 this.vendorTemplates = this.parseVendorTemplates(result.data);
+                console.log('벤더사 템플릿 로드 성공:', this.vendorTemplates);
             }
         } catch (error) {
             console.error('벤더사 템플릿 로드 오류:', error);
