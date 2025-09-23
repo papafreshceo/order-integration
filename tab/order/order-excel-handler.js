@@ -2141,36 +2141,9 @@ this.processedData.data.forEach(row => {
 });
 
 console.log(`중복 ${duplicateKeys.length}건, 신규 ${newRows.length}건 발견`);
-// ===== 상세 디버깅 추가 =====
-console.log('기존 데이터 맵의 모든 키:');
-existingMap.forEach((value, key) => {
-    console.log(`  [${value}] ${key}`);
-});
 
 
 
-console.log('신규 데이터 처리 과정:');
-this.processedData.data.forEach((row, idx) => {
-    const key = createKey(row);
-    const isExisting = existingMap.has(key);
-    
-    if (row['주문자'] === '김준호') {
-        console.log(`김준호 발견!`);
-        console.log(`  생성된 키: "${key}"`);
-        console.log(`  기존 맵에 있나? ${isExisting}`);
-        console.log(`  주문번호: "${row['주문번호']}"`);
-        console.log(`  수령인: "${row['수령인']}"`);
-        console.log(`  옵션명: "${row['옵션명']}"`);
-    }
-});
-// ===== 디버깅 끝 =====
-
-// ===== 여기에 디버깅 코드 추가 =====
-console.log('===== 상세 중복 체크 결과 =====');
-console.log('전체 처리 데이터:', this.processedData.data.length);
-console.log('기존 시트 데이터:', existingData.length);
-console.log('중복 발견:', duplicateKeys.length);
-console.log('신규:', newRows.length);
 
 // 중복된 항목 상세
 if (duplicateKeys.length > 0) {
@@ -2194,7 +2167,6 @@ if (newRows.length > 0) {
 
 
 console.log('=========================');
-// ===== 디버깅 코드 끝 =====
 
 
 // 중복이 있는 경우 사용자에게 확인
