@@ -453,6 +453,12 @@ window.OrderCsHandler = {
     
     async loadCsRecords() {
         try {
+            // 로딩 표시
+            const tbody = document.getElementById('csTableBody');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px;">데이터를 불러오는 중...</td></tr>';
+            }
+            
             const response = await fetch('/api/sheets', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -462,14 +468,24 @@ window.OrderCsHandler = {
             });
             
             const result = await response.json();
+            console.log('CS 기록 로드 결과:', result);
+            
             if (result.success && result.data) {
                 this.csRecords = result.data;
                 this.filteredRecords = [...this.csRecords];
                 this.updateStats();
                 this.displayRecords();
+            } else {
+                this.csRecords = [];
+                this.filteredRecords = [];
+                this.displayRecords();
             }
         } catch (error) {
             console.error('CS 기록 로드 실패:', error);
+            const tbody = document.getElementById('csTableBody');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px; color: red;">데이터 로드 실패</td></tr>';
+            }
         }
     },
     

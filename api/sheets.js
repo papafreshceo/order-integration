@@ -939,7 +939,81 @@ case 'checkCsDuplicate':
           });
         }
 
-
+case 'getCsRecords':
+        try {
+          const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
+          
+          // CS기록 시트의 모든 데이터 가져오기
+          const csData = await getOrderData('CS기록!A:T', ordersSpreadsheetId);
+          
+          if (!csData || csData.length < 2) {
+            return res.status(200).json({ 
+              success: true, 
+              data: [] 
+            });
+          }
+          
+          // 첫 번째 행은 헤더
+          const headers = csData[0];
+          const rows = csData.slice(1);
+          
+          // 데이터를 객체 배열로 변환
+          const formattedData = rows.map(row => {
+            const obj = {};
+            
+            // 헤더와 데이터 매핑
+            headers.forEach((header, index) => {
+              obj[header] = row[index] || '';
+            });
+            
+            // 날짜 포맷 조정 (접수일)
+            if (obj['접수일']) {
+              obj['처리일시'] = obj['접수일'];
+            }
+            
+            // CS구분 설정 (해결방법 기반)
+            if (obj['해결방법']) {
+              if (obj['해결방법'].includes('재발송')) {
+                obj['CS구분'] = '재발송';
+              } else if (obj['해결방법'].includes('환불')) {
+                obj['CS구분'] = '반품';
+              } else if (obj['해결방법'].includes('교환')) {
+                obj['CS구분'] = '교환';
+              } else {
+                obj['CS구분'] = '기타';
+              }
+            }
+            
+            // 처리상태 설정
+            obj['처리상태'] = obj['처리상태'] || '접수';
+            
+            // CS사유 설정
+            obj['CS사유'] = obj['CS 내용'] || '';
+            
+            // 처리내용 설정
+            obj['처리내용'] = obj['해결방법'] || '';
+            
+            // 담당자 (향후 추가 가능)
+            obj['담당자'] = '-';
+            
+            return obj;
+          }).filter(row => row['주문번호']); // 빈 행 제거
+          
+          // 최신순 정렬
+          formattedData.reverse();
+          
+          return res.status(200).json({ 
+            success: true, 
+            data: formattedData 
+          });
+          
+        } catch (error) {
+          console.error('getCsRecords 오류:', error);
+          return res.status(500).json({ 
+            success: false, 
+            error: error.message || 'CS 기록 조회 실패' 
+          });
+        }
 
 
         case 'getTempOrders':
