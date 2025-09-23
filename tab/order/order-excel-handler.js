@@ -1353,8 +1353,8 @@ displayResults() {
         const thead = document.getElementById('excelResultHead');
  const tbody = document.getElementById('excelResultBody');
         
-        // 열너비 매핑 객체
-        const columnWidths = {
+// 고정 열너비 설정
+        const fixedWidths = {
             '연번': 50,
             '마켓명': 100,
             '마켓': 60,
@@ -1406,46 +1406,44 @@ displayResults() {
             '송장번호': 140
         };
         
-        // 테이블 전체 너비 계산
-        let totalWidth = 0;
-        this.processedData.headers.forEach(header => {
-            const width = columnWidths[header] || 100;
-            totalWidth += width;
+        // 열너비 배열 생성
+        const columnWidths = [];
+        this.processedData.headers.forEach((header, index) => {
+            columnWidths[index] = fixedWidths[header] || 100;
         });
         
-        // 테이블 스타일 설정
+        // 테이블 설정
         const table = document.getElementById('excelResultTable');
-        if (table) {
-            // 테이블 초기화
-            table.style.cssText = `
-                table-layout: fixed !important;
-                width: ${totalWidth}px !important;
-                border-collapse: collapse;
-                font-size: 13px;
-            `;
+        const totalWidth = columnWidths.reduce((sum, width) => sum + width, 0);
+        table.style.minWidth = totalWidth + 'px';
+        table.style.width = totalWidth + 'px';
+        table.style.tableLayout = 'fixed';
+        
+        // colgroup 생성하여 열너비 강제 적용
+        let colgroup = table.querySelector('colgroup');
+        if (!colgroup) {
+            colgroup = document.createElement('colgroup');
+            table.insertBefore(colgroup, thead);
         }
-
-        // 헤더 생성 - 인라인 스타일로 너비 강제 지정
+        colgroup.innerHTML = '';
+        
+        this.processedData.headers.forEach((header, index) => {
+            const col = document.createElement('col');
+            col.style.width = columnWidths[index] + 'px';
+            colgroup.appendChild(col);
+        });
+        
+        // 헤더 생성
         const headerRow = document.createElement('tr');
         this.processedData.headers.forEach((header, index) => {
             const th = document.createElement('th');
             th.textContent = header;
-            
-            const width = columnWidths[header] || 100;
-            th.style.cssText = `
-                width: ${width}px !important;
-                min-width: ${width}px !important;
-                max-width: ${width}px !important;
-                padding: 8px;
-                border: 1px solid #dee2e6;
-                text-align: center;
-                font-weight: 500;
-                white-space: nowrap;
-                overflow: hidden;
-            `;
-            
+            th.style.width = columnWidths[index] + 'px';
+            th.style.minWidth = columnWidths[index] + 'px';
+            th.style.maxWidth = columnWidths[index] + 'px';
             headerRow.appendChild(th);
         });
+        
         thead.innerHTML = '';
         thead.appendChild(headerRow);
         
@@ -1491,11 +1489,8 @@ function getAlignment(fieldName) {
 const td = document.createElement('td');
     let value = row[header] || '';
     
-    // 위에서 정의한 columnWidths 사용
-    const cellWidth = columnWidths[header] || '100px';
-    td.style.width = cellWidth;
-    td.style.minWidth = cellWidth;
-    td.style.maxWidth = cellWidth;
+    td.style.width = columnWidths[colIndex] + 'px';
+    td.style.minWidth = columnWidths[colIndex] + 'px';
     td.style.textAlign = getAlignment(header);
     
     // 날짜 포맷팅
