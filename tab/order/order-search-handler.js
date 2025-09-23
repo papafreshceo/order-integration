@@ -1781,7 +1781,7 @@ fullReset() {
     }
     
     console.log('OrderInputHandler 완전 초기화 완료');
-}
+},
 
 async checkDuplicateCs() {
         try {
