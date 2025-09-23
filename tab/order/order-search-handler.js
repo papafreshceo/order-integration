@@ -1650,6 +1650,7 @@ const minutes = String(now.getMinutes()).padStart(2, '0');
 const paymentDateTime = `${year}/${month}/${day} ${hours}:${minutes}`;
 
 const orderData = {
+    userEmail: window.currentUser?.email || '',  // 현재 로그인한 사용자 이메일
     마켓명: 'CS발송',
     결제일: paymentDateTime,  // YYYY/MM/DD HH:MM 형식
     주문자: this.currentCsOrder['주문자'],
@@ -1657,7 +1658,7 @@ const orderData = {
     수령인: document.getElementById('csResendReceiver').value,
     '수령인 전화번호': document.getElementById('csResendPhone').value,
     주소: document.getElementById('csResendAddress').value,
-    
+    배송메세지: this.currentCsOrder['배송메세지'] || this.currentCsOrder['배송메시지'] || '',
     옵션명: document.getElementById('csResendOption').value,
     수량: document.getElementById('csResendQty').value,
     '특이/요청사항': document.getElementById('csResendNote').value,

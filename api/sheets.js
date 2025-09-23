@@ -142,7 +142,7 @@ case 'addCsOrder':
               // 시트가 없으면 생성
               console.log('임시저장 시트 생성 필요');
               await createOrderSheet('임시저장', ordersSpreadsheetId);
-              tempHeaders = ['사용자이메일', '저장시간', '마켓명', '옵션명', '수량', '단가', '택배비', 
+              tempHeaders = ['사용자이메일', '접수번호', '저장시간', '마켓명', '옵션명', '수량', '단가', '택배비', 
                             '상품금액', '주문자', '주문자 전화번호', '수령인', '수령인 전화번호', 
                             '주소', '배송메세지', '발송요청일'];
               await saveOrderData('임시저장!A1', [tempHeaders], ordersSpreadsheetId);
@@ -179,7 +179,8 @@ case 'addCsOrder':
           
           // 임시저장 데이터 추가
           const tempRowData = [[
-              `CS${String(csNumber).padStart(3, '0')}`,  // CS001, CS002 형태로 저장
+              data['userEmail'] || '',  // 로그인한 사용자 이메일
+              csOrderNumber,  // 접수번호
               new Date().toISOString(),  // 저장시간
               data['마켓명'] || 'CS재발송',
               data['옵션명'] || '',
@@ -196,7 +197,7 @@ case 'addCsOrder':
               data['발송요청일'] || ''
           ]];
           
-          await appendSheetData('임시저장!A:O', tempRowData, ordersSpreadsheetId);
+          await appendSheetData('임시저장!A:P', tempRowData, ordersSpreadsheetId);
           
           console.log('CS 재발송 임시저장 완료:', csOrderNumber);
           
