@@ -9,7 +9,8 @@ const {
   clearOrderSheet,
   saveOrderData,
   mergeAndSaveOrderData,
-  getOrderData
+  getOrderData,
+  updateOrderCell
 } = require('../lib/google-sheets');
 
 export default async function handler(req, res) {
@@ -216,9 +217,9 @@ let productInfo = {};
 if (data['옵션명']) {
     try {
         const productSpreadsheetId = process.env.SPREADSHEET_ID_PRODUCTS || '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg';
-        const { getProductSheetData } = require('../lib/google-sheets');
+
         
-        const productSheetData = await getProductSheetData(productSpreadsheetId, '통합상품마스터!A:DZ');
+        const productSheetData = await getSheetData('통합상품마스터!A:DZ', productSpreadsheetId);
         
         if (productSheetData && productSheetData.length > 1) {
             const headers = productSheetData[0];
@@ -253,6 +254,7 @@ if (data['옵션명']) {
 }
 
 // 4. CS 번호 생성 (마켓 필드에 CS001, CS002...)
+const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
 const allRows = await getOrderData(`${sheetName}!A:E`);
 let csNumber = 1;
 
@@ -278,7 +280,7 @@ console.log('생성된 CS 마켓번호:', csMarketNumber);
 console.log('생성된 CS 주문번호:', csOrderNumber);
 
 // 5. 연번 계산
-const existingRows = await getOrderData(`${sheetName}!A:A`);
+const existingRows = await getOrderData(`${sheetName}!A:A`, ordersSpreadsheetId);
 const nextSerial = existingRows ? existingRows.length : 1;
           
           // 6. 데이터 행 생성
