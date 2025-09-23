@@ -10,6 +10,7 @@ window.OrderShippingHandler = {
         this.render();
         await this.loadTodayOrders();
         await this.loadMarketFormats();
+        await this.loadVendorTemplates();
     },
     
     render() {
@@ -449,6 +450,30 @@ window.OrderShippingHandler = {
                     background: #f8f9fa;
                     border-color: #adb5bd;
                 }
+
+
+                .vendor-excel-btn {
+                    padding: 6px 10px;
+                    background: #ffffff;
+                    border: 1px solid #10b981;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .vendor-excel-btn:hover {
+                    background: #10b981;
+                    transform: translateY(-1px);
+                    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+                }
+                
+                .vendor-excel-btn:hover svg {
+                    stroke: #ffffff;
+                }
+
             </style>
 
             <div class="shipping-container">
@@ -505,6 +530,7 @@ window.OrderShippingHandler = {
                                 <th style="text-align: center;">합계</th>
                                 <th style="text-align: center;">상품 준비중</th>
                                 <th style="text-align: center;">발송완료</th>
+                                <th style="text-align: center;">전송파일</th>
                             </tr>
                         </thead>
                         <tbody id="vendorTableBody">
@@ -951,7 +977,7 @@ window.OrderShippingHandler = {
         document.getElementById('statShipped').textContent = shipped;
     },
 
-    updateVendorTable() {
+        updateVendorTable() {
         const vendorStats = {};
         
         this.currentOrders.forEach(order => {
@@ -981,6 +1007,17 @@ window.OrderShippingHandler = {
                 <td style="text-align: center; font-weight: 500;">${total}</td>
                 <td style="text-align: center; color: #f59e0b;">${stats.preparing}</td>
                 <td style="text-align: center; color: #10b981;">${stats.shipped}</td>
+                <td style="text-align: center;">
+                    ${stats.preparing > 0 ? `
+                        <button class="vendor-excel-btn" onclick="OrderShippingHandler.downloadVendorExcel('${vendor}')" title="엑셀 다운로드">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#10b981"></path>
+                                <polyline points="14 2 14 8 20 8" stroke="#10b981"></polyline>
+                                <path d="M9 15l2 2 4-4" stroke="#10b981"></path>
+                            </svg>
+                        </button>
+                    ` : '<span style="color: #adb5bd;">-</span>'}
+                </td>
             `;
 
             totalPreparing += stats.preparing;
@@ -995,6 +1032,7 @@ window.OrderShippingHandler = {
             <td style="text-align: center; font-weight: 600;">${grandTotal}</td>
             <td style="text-align: center; color: #f59e0b; font-weight: 600;">${totalPreparing}</td>
             <td style="text-align: center; color: #10b981; font-weight: 600;">${totalShipped}</td>
+            <td style="text-align: center;">-</td>
         `;
     },
 
@@ -1660,6 +1698,136 @@ window.OrderShippingHandler = {
         }
     },
 
+async loadVendorTemplates() {
+        try {
+            const response = await fetch('/api/sheets', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'getVendorTemplates',
+                    spreadsheetId: '1kLjYKemytOfaH6kSXD7dqdiolx3j09Ir-V9deEnNImA',
+                    sheetName: '벤더사템플릿'
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success && result.data) {
+                this.vendorTemplates = this.parseVendorTemplates(result.data);
+            }
+        } catch (error) {
+            console.error('벤더사 템플릿 로드 오류:', error);
+        }
+    },
+    
+    parseVendorTemplates(data) {
+        const templates = {};
+        
+        data.forEach(row => {
+            const vendorName = row['벤더사'];
+            if (!vendorName) return;
+            
+            templates[vendorName] = {
+                fileName: row['파일명형식'],
+                extension: row['파일확장자'],
+                encoding: row['인코딩'],
+                delimiter: row['구분자'],
+                hasHeader: row['헤더포함여부'] === 'Y',
+                headerRow: parseInt(row['헤더시작']) || 1,
+                fixedValues: {},
+                fieldMapping: {}
+            };
+            
+            // 고정값 필드 파싱
+            Object.keys(row).forEach(key => {
+                if (key.includes('(지정)')) {
+                    templates[vendorName].fixedValues[key] = row[key];
+                } else if (key.startsWith('표준필드_')) {
+                    const targetField = key.replace('표준필드_', '');
+                    templates[vendorName].fieldMapping[targetField] = row[key];
+                }
+            });
+        });
+        
+        return templates;
+    },
+    
+    async downloadVendorExcel(vendorName) {
+        this.showLoading();
+        try {
+            // 템플릿이 없으면 먼저 로드
+            if (!this.vendorTemplates || Object.keys(this.vendorTemplates).length === 0) {
+                await this.loadVendorTemplates();
+            }
+            
+            const template = this.vendorTemplates[vendorName];
+            if (!template) {
+                this.showMessage(`${vendorName}의 템플릿 정보가 없습니다.`, 'error');
+                return;
+            }
+            
+            // 미발송 주문 필터링
+            const unshippedOrders = this.currentOrders.filter(order => 
+                order['벤더사'] === vendorName && !order['송장번호']
+            );
+            
+            if (unshippedOrders.length === 0) {
+                this.showMessage(`${vendorName}의 미발송 주문이 없습니다.`, 'error');
+                return;
+            }
+            
+            // 엑셀 데이터 생성
+            const exportData = this.mapVendorData(unshippedOrders, template);
+            
+            // 엑셀 파일 생성
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '발송처리');
+            
+            // 파일명 생성
+            const today = new Date();
+            const dateStr = today.getFullYear() + 
+                           String(today.getMonth() + 1).padStart(2, '0') + 
+                           String(today.getDate()).padStart(2, '0');
+            const fileName = template.fileName.replace('{날짜}', dateStr);
+            
+            // 다운로드
+            XLSX.writeFile(wb, fileName);
+            
+            this.showMessage(`${vendorName} 발송파일이 다운로드되었습니다. (${unshippedOrders.length}건)`, 'success');
+            
+        } catch (error) {
+            console.error('벤더사 엑셀 다운로드 오류:', error);
+            this.showMessage('파일 다운로드 중 오류가 발생했습니다.', 'error');
+        } finally {
+            this.hideLoading();
+        }
+    },
+    
+    mapVendorData(orders, template) {
+        return orders.map(order => {
+            const row = {};
+            
+            // 고정값 설정
+            Object.entries(template.fixedValues).forEach(([field, value]) => {
+                row[field.replace('(지정)', '')] = value;
+            });
+            
+            // 필드 매핑
+            Object.entries(template.fieldMapping).forEach(([targetField, sourceField]) => {
+                if (sourceField && order[sourceField]) {
+                    row[targetField] = order[sourceField];
+                } else {
+                    row[targetField] = '';
+                }
+            });
+            
+            return row;
+        });
+    },
+
     openExportModal() {
         document.getElementById('exportModal').classList.add('show');
         
@@ -2072,25 +2240,26 @@ window.OrderShippingHandler = {
             message.classList.remove('show');
         }, 3000);
     },
-    // fullReset 추가
-fullReset() {
-    // 모든 데이터 초기화
-    this.manualOrders = [];
-    this.tempAddressData = {};
-    this.productData = {};
     
-    // 캐시 삭제
-    this.clearCache();
-    
-    // DOM 완전 재렌더링
-    const container = document.getElementById('om-panel-input');
-    if (container) {
-        container.innerHTML = '';
-        this.render();
-        this.setupEventListeners();
-        this.loadProductData();
+    // OrderShippingHandler용 fullReset
+    fullReset() {
+        // 모든 데이터 초기화
+        this.currentOrders = [];
+        this.bulkUploadData = [];
+        this.marketFormats = {};
+        this.marketColors = {};
+        this.currentFilter = 'all';
+        this.currentSearch = '';
+        
+        // DOM 완전 재렌더링
+        const container = document.getElementById('om-panel-shipping');
+        if (container) {
+            container.innerHTML = '';
+            this.render();
+            this.loadTodayOrders();
+            this.loadMarketFormats();
+        }
+        
+        console.log('OrderShippingHandler 완전 초기화 완료');
     }
-    
-    console.log('OrderInputHandler 완전 초기화 완료');
-}
 };
