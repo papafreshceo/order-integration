@@ -2217,6 +2217,7 @@ const result = await response.json();
 
 if (result.success) {
     // 실제 처리된 건수 계산
+    // 실제 처리된 건수 계산
     const duplicateNotSaved = duplicateKeys.length - updateRows.length;
     const totalOrderCount = finalData.length;
     
@@ -2237,14 +2238,14 @@ if (result.success) {
 
     const message = 
         `📊 처리 결과\n━━━━━━━━━━━━━━━━━━━━\n` +
-        `✅ 신규 추가: ${result.newRows || newRows.length}건\n` +
+        `✅ 신규 추가: ${newRows.length}건\n` +
         `🔍 중복 발견: ${duplicateKeys.length}건\n` +
         `  ㄴ 🔄 덮어쓰기: ${updateRows.length}건\n` +
         duplicateDetails +
         `\n📈 최종 현황\n━━━━━━━━━━━━━━━━━━━━\n` +
         `• 처리 전 주문: ${existingData.length}건\n` +
         `• 처리 후 주문: ${result.totalRows || finalData.length - 1}건\n` +
-        `• 증가: +${(result.newRows || newRows.length)}건`;
+        `• 증가: +${newRows.length}건`;
     
     this.showCenterMessage(message, 'success');
     console.log(message.replace(/\n/g, ' '));
@@ -2349,6 +2350,12 @@ showCenterMessage(message, type, autoClose = false) {
             currentItem = null;
         } else if (line.includes('최종 현황')) {
             if (inResultSection) processedMessage += '</div>';
+            // 마지막 항목 처리 (CS발송 등)
+            if (currentItem && inDuplicateSection) {
+                duplicateItems.push(currentItem);
+                currentItem = null;
+            }
+            if (inDuplicateSection && duplicateItems.length > 0) {
             if (inDuplicateSection && duplicateItems.length > 0) {
                 processedMessage += `
                     <div style="border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
