@@ -1084,14 +1084,57 @@ orderCount.innerHTML = `<strong style="color: #2563eb; font-weight: 600;">${file
     },
     
     async processOrders() {
-        const todayFiles = this.uploadedFiles.filter(f => f.isToday);
+                const todayFiles = this.uploadedFiles.filter(f => f.isToday);
         
         if (todayFiles.length === 0) {
             this.showError('오늘 날짜의 파일이 없습니다.');
             return;
         }
         
-        this.showLoading();
+        // 로딩 오버레이 생성
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'processingOverlay';
+        loadingOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        `;
+        
+        loadingOverlay.innerHTML = `
+            <div style="text-align: center;">
+                <div style="
+                    width: 80px;
+                    height: 80px;
+                    border: 8px solid rgba(255, 255, 255, 0.3);
+                    border-top: 8px solid #2563eb;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                    margin: 0 auto 20px;
+                "></div>
+                <div style="color: white; font-size: 20px; font-weight: 500; margin-bottom: 10px;">
+                    주문 통합 중...
+                </div>
+                <div style="color: rgba(255, 255, 255, 0.8); font-size: 14px;">
+                    ${todayFiles.length}개 파일 처리 중
+                </div>
+            </div>
+            <style>
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            </style>
+        `;
+        
+        document.body.appendChild(loadingOverlay);
         
         try {
             // ProductMatching 초기화
@@ -1166,13 +1209,27 @@ this.processedData = {
 window.processedData = this.processedData;
 console.log('window.processedData 설정 완료:', window.processedData);
 
+// 로딩 제거
+const overlay = document.getElementById('processingOverlay');
+if (overlay) overlay.remove();
+
 this.displayResults();
 this.showSuccess(`${enrichedData.length}개 주문 통합 완료`);
 
+// 결과 테이블로 스크롤
+setTimeout(() => {
+    const resultSection = document.getElementById('resultSection');
+    if (resultSection) {
+        resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}, 300);
+
 } catch (error) {
+    // 로딩 제거
+    const overlay = document.getElementById('processingOverlay');
+    if (overlay) overlay.remove();
+    
     this.showError('처리 중 오류 발생: ' + error.message);
-} finally {
-    this.hideLoading();
 }
     },
     
