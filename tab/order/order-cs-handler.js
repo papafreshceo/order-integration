@@ -8,6 +8,31 @@ window.OrderCsHandler = {
         this.render();
         await this.loadCsRecords();
     },
+
+
+
+
+    setDefaultDateRange() {
+        const today = new Date();
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(today.getDate() - 7);
+        
+        // 날짜 포맷 (YYYY-MM-DD)
+        const formatDate = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        
+        document.getElementById('searchStartDate').value = formatDate(sevenDaysAgo);
+        document.getElementById('searchEndDate').value = formatDate(today);
+    },
+
+
+
+
+
     
     render() {
         const container = document.getElementById('om-panel-cs');
@@ -339,13 +364,14 @@ window.OrderCsHandler = {
                         </div>
                         
                         <div class="search-group">
-                            <label class="search-label">CS구분</label>
+                            <label class="search-label">해결방법</label>
                             <select class="search-input" id="searchCsType">
                                 <option value="">전체</option>
-                                <option value="교환">교환</option>
-                                <option value="반품">반품</option>
+                                <option value="사이트환불">사이트환불</option>
+                                <option value="부분환불">부분환불</option>
                                 <option value="재발송">재발송</option>
-                                <option value="기타">기타</option>
+                                <option value="부분재발송">부분재발송</option>
+                                <option value="반품">반품</option>
                             </select>
                         </div>
                         
@@ -355,8 +381,8 @@ window.OrderCsHandler = {
                         </div>
                         
                         <div class="search-group">
-                            <label class="search-label">수령인</label>
-                            <input type="text" class="search-input" id="searchReceiver" placeholder="수령인명 입력">
+                            <label class="search-label">이름검색</label>
+                            <input type="text" class="search-input" id="searchName" placeholder="주문자/수령인명 입력">
                         </div>
                         
                         <div class="search-group">
@@ -364,7 +390,6 @@ window.OrderCsHandler = {
                             <select class="search-input" id="searchStatus">
                                 <option value="">전체</option>
                                 <option value="접수">접수</option>
-                                <option value="처리중">처리중</option>
                                 <option value="완료">완료</option>
                             </select>
                         </div>
@@ -407,16 +432,16 @@ window.OrderCsHandler = {
                         <table class="cs-table">
                             <thead>
                                 <tr>
-                                    <th>처리일시</th>
-                                    <th>CS구분</th>
+                                    <th>접수일</th>
+                                    <th>해결방법</th>
                                     <th>주문번호</th>
                                     <th>마켓명</th>
+                                    <th>주문자</th>
                                     <th>수령인</th>
                                     <th>옵션명</th>
-                                    <th>CS사유</th>
-                                    <th>처리내용</th>
+                                    <th>CS 내용</th>
                                     <th>처리상태</th>
-                                    <th>담당자</th>
+                                    <th>작업</th>
                                 </tr>
                             </thead>
                             <tbody id="csTableBody">
@@ -494,22 +519,32 @@ window.OrderCsHandler = {
         const endDate = document.getElementById('searchEndDate').value;
         const csType = document.getElementById('searchCsType').value;
         const orderNo = document.getElementById('searchOrderNo').value.toLowerCase();
-        const receiver = document.getElementById('searchReceiver').value.toLowerCase();
+        const searchName = document.getElementById('searchName').value.toLowerCase();
         const status = document.getElementById('searchStatus').value;
         
         this.filteredRecords = this.csRecords.filter(record => {
             // 날짜 필터
-            if (startDate && record.처리일시 < startDate) return false;
-            if (endDate && record.처리일시 > endDate + ' 23:59:59') return false;
+            if (startDate && record.접수일) {
+                const recordDate = new Date(record.접수일).toISOString().split('T')[0];
+                if (recordDate < startDate) return false;
+            }
+            if (endDate && record.접수일) {
+                const recordDate = new Date(record.접수일).toISOString().split('T')[0];
+                if (recordDate > endDate) return false;
+            }
             
-            // CS구분 필터
-            if (csType && record.CS구분 !== csType) return false;
+            // 해결방법 필터
+            if (csType && record.해결방법 !== csType) return false;
             
             // 주문번호 필터
-            if (orderNo && !record.주문번호.toLowerCase().includes(orderNo)) return false;
+            if (orderNo && !String(record.주문번호 || '').toLowerCase().includes(orderNo)) return false;
             
-            // 수령인 필터
-            if (receiver && !record.수령인.toLowerCase().includes(receiver)) return false;
+            // 이름 필터 (주문자 또는 수령인)
+            if (searchName) {
+                const hasOrderer = String(record.주문자 || '').toLowerCase().includes(searchName);
+                const hasReceiver = String(record.수령인 || '').toLowerCase().includes(searchName);
+                if (!hasOrderer && !hasReceiver) return false;
+            }
             
             // 상태 필터
             if (status && record.처리상태 !== status) return false;
@@ -520,7 +555,7 @@ window.OrderCsHandler = {
         this.currentPage = 1;
         this.displayRecords();
         this.updateResultCount();
-    },
+    },테
     
     resetSearch() {
         document.getElementById('searchStartDate').value = '';
@@ -553,20 +588,33 @@ window.OrderCsHandler = {
         const end = start + this.recordsPerPage;
         const pageRecords = this.filteredRecords.slice(start, end);
         
-        tbody.innerHTML = pageRecords.map(record => `
-            <tr onclick="OrderCsHandler.showDetail(${this.csRecords.indexOf(record)})" style="cursor: pointer;">
-                <td>${record.처리일시 || '-'}</td>
-                <td><span class="cs-type-badge type-${record.CS구분}">${record.CS구분}</span></td>
-                <td>${record.주문번호 || '-'}</td>
-                <td>${record.마켓명 || '-'}</td>
-                <td>${record.수령인 || '-'}</td>
-                <td>${record.옵션명 || '-'}</td>
-                <td>${record.CS사유 || '-'}</td>
-                <td>${record.처리내용 || '-'}</td>
-                <td>${record.처리상태 || '접수'}</td>
-                <td>${record.담당자 || '-'}</td>
+        tbody.innerHTML = pageRecords.map((record, index) => {
+            const globalIndex = this.csRecords.indexOf(record);
+            const isCompleted = record.처리상태 === '완료';
+            
+            return `
+            <tr style="cursor: pointer;">
+                <td onclick="OrderCsHandler.showDetail(${globalIndex})">${record.접수일 || '-'}</td>
+                <td onclick="OrderCsHandler.showDetail(${globalIndex})">${record.해결방법 || '-'}</td>
+                <td onclick="OrderCsHandler.showDetail(${globalIndex})">${record.주문번호 || '-'}</td>
+                <td onclick="OrderCsHandler.showDetail(${globalIndex})">${record.마켓명 || '-'}</td>
+                <td onclick="OrderCsHandler.showDetail(${globalIndex})">${record.주문자 || '-'}</td>
+                <td onclick="OrderCsHandler.showDetail(${globalIndex})">${record.수령인 || '-'}</td>
+                <td onclick="OrderCsHandler.showDetail(${globalIndex})">${record.옵션명 || '-'}</td>
+                <td onclick="OrderCsHandler.showDetail(${globalIndex})">${record['CS 내용'] || '-'}</td>
+                <td onclick="OrderCsHandler.showDetail(${globalIndex})">${record.처리상태 || '접수'}</td>
+                <td>
+                    <button 
+                        onclick="OrderCsHandler.completeCs(${globalIndex}, event)" 
+                        style="padding: 4px 12px; background: ${isCompleted ? '#6c757d' : '#10b981'}; 
+                               color: white; border: none; border-radius: 4px; font-size: 12px; 
+                               cursor: ${isCompleted ? 'not-allowed' : 'pointer'}; opacity: ${isCompleted ? '0.5' : '1'};"
+                        ${isCompleted ? 'disabled' : ''}>
+                        ${isCompleted ? '완료됨' : '완료'}
+                    </button>
+                </td>
             </tr>
-        `).join('');
+        `}).join('');
         
         this.renderPagination();
         this.updateResultCount();
@@ -689,6 +737,45 @@ window.OrderCsHandler = {
         
         document.getElementById('csDetailModal').classList.add('show');
     },
+
+
+    async completeCs(index, event) {
+        // 이벤트 버블링 방지
+        event.stopPropagation();
+        
+        const record = this.csRecords[index];
+        if (!record || record.처리상태 === '완료') return;
+        
+        if (!confirm('이 CS 건을 완료 처리하시겠습니까?')) return;
+        
+        try {
+            // CS기록 시트 업데이트
+            const response = await fetch('/api/sheets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'updateCsStatus',
+                    orderNumber: record.주문번호,
+                    status: '완료'
+                })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                // 로컬 데이터 업데이트
+                record.처리상태 = '완료';
+                this.displayRecords();
+                alert('완료 처리되었습니다.');
+            } else {
+                alert('처리 중 오류가 발생했습니다.');
+            }
+        } catch (error) {
+            console.error('CS 완료 처리 실패:', error);
+            alert('처리 중 오류가 발생했습니다.');
+        }
+    },
+
+    
     
     closeDetail() {
         document.getElementById('csDetailModal').classList.remove('show');

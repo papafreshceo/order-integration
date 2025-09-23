@@ -1020,6 +1020,69 @@ case 'getCsRecords':
         }
 
 
+
+
+        case 'updateCsStatus':
+        try {
+          const { orderNumber, status } = req.body;
+          const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
+          
+          // CS기록 시트 데이터 가져오기
+          const csData = await getSheetData('CS기록!A:T', ordersSpreadsheetId);
+          
+          if (!csData || csData.length < 2) {
+            return res.status(404).json({ 
+              success: false, 
+              error: '데이터를 찾을 수 없습니다.' 
+            });
+          }
+          
+          // 주문번호 컬럼 찾기
+          const headers = csData[0];
+          const orderNoIndex = headers.indexOf('주문번호');
+          const statusIndex = headers.indexOf('처리상태');
+          
+          if (orderNoIndex === -1) {
+            return res.status(400).json({ 
+              success: false, 
+              error: '주문번호 컬럼을 찾을 수 없습니다.' 
+            });
+          }
+          
+          // 해당 주문번호 행 찾기
+          let rowIndex = -1;
+          for (let i = 1; i < csData.length; i++) {
+            if (csData[i][orderNoIndex] === orderNumber) {
+              rowIndex = i + 1; // 시트는 1부터 시작
+              break;
+            }
+          }
+          
+          if (rowIndex === -1) {
+            return res.status(404).json({ 
+              success: false, 
+              error: '해당 주문번호를 찾을 수 없습니다.' 
+            });
+          }
+          
+          // 처리상태 업데이트
+          const range = `CS기록!T${rowIndex}`; // T열이 처리상태 (실제 컬럼 위치에 맞게 조정 필요)
+          await updateSheetData(range, [[status]], ordersSpreadsheetId);
+          
+          return res.status(200).json({ 
+            success: true, 
+            message: '상태가 업데이트되었습니다.' 
+          });
+          
+        } catch (error) {
+          console.error('updateCsStatus 오류:', error);
+          return res.status(500).json({ 
+            success: false, 
+            error: error.message || 'CS 상태 업데이트 실패' 
+          });
+        }
+        
+
         case 'getTempOrders':
     try {
         const { userEmail } = req.body;
