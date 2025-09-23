@@ -1118,11 +1118,9 @@ case 'deleteTempOrders':
             process.env.SPREADSHEET_ID_ORDERS : 
             process.env.SPREADSHEET_ID;
         
-        const result = await appendSheetData(
-            sheetName, 
-            values, 
-            targetSpreadsheetId
-        );
+        const range = sheetName.includes('!') ? sheetName : `${sheetName}!A:Z`;
+        
+        const result = await appendSheetData(range, values, targetSpreadsheetId);
         
         return res.status(200).json({ 
             success: true, 
