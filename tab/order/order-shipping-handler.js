@@ -1208,13 +1208,14 @@ window.OrderShippingHandler = {
                         marketBadge = `
                             <span style="
                                 display: inline-block;
-                                padding: 4px 10px;
+                                padding: 2px 8px;
                                 background: ${colorValue};
                                 color: ${textColor};
-                                border-radius: 6px;
-                                font-size: 11px;
-                                font-weight: 600;
+                                border-radius: 4px;
+                                font-size: 10px;
+                                font-weight: 500;
                                 white-space: nowrap;
+                                line-height: 1.2;
                             ">${marketName}</span>
                         `;
                     }
