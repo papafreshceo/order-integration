@@ -1353,66 +1353,84 @@ displayResults() {
         const thead = document.getElementById('excelResultHead');
  const tbody = document.getElementById('excelResultBody');
         
+        // 열너비 매핑 객체
+        const columnWidths = {
+            '연번': 50,
+            '마켓명': 100,
+            '마켓': 60,
+            '결제일': 150,
+            '주문번호': 140,
+            '상품주문번호': 140,
+            '주문자': 70,
+            '수취인': 70,
+            '수령인': 70,
+            '주문자전화번호': 150,
+            '수취인전화번호': 150,
+            '수령인전화번호': 150,
+            '주소': 300,
+            '수취인주소': 300,
+            '수령인주소': 300,
+            '배송메세지': 100,
+            '배송메시지': 100,
+            '옵션명': 160,
+            '수량': 60,
+            '특이/요청사항': 300,
+            '발송요청일': 150,
+            '확인': 160,
+            '셀러': 80,
+            '셀러공급가': 80,
+            '출고처': 80,
+            '송장주체': 60,
+            '벤더사': 100,
+            '발송지명': 100,
+            '발송지주소': 300,
+            '발송지연락처': 120,
+            '출고비용': 90,
+            '정산예정금액': 90,
+            '정산대상금액': 90,
+            '상품금액': 80,
+            '최종결제금액': 90,
+            '할인금액': 90,
+            '마켓부담할인금액': 120,
+            '판매자할인쿠폰할인': 120,
+            '구매쿠폰적용금액': 120,
+            '쿠폰할인금액': 100,
+            '기타지원금할인금': 120,
+            '수수료1': 70,
+            '수수료2': 70,
+            '판매아이디': 120,
+            '분리배송 Y/N': 100,
+            '택배비': 80,
+            '발송일(송장입력일)': 150,
+            '택배사': 80,
+            '송장번호': 140
+        };
+        
+        // 테이블 전체 너비 계산
+        let totalWidth = 0;
+        this.processedData.headers.forEach(header => {
+            const width = columnWidths[header] || 100;
+            totalWidth += width;
+        });
+        
         // 테이블에 고정 레이아웃 적용
         const table = document.getElementById('excelResultTable');
         if (table) {
             table.style.tableLayout = 'fixed';
-            table.style.width = '4000px'; // 전체 고정 너비
+            table.style.width = `${totalWidth}px`;
         }
 
-        // 헤더 생성 - 하드코딩된 너비
+        // 헤더 생성 - 동적으로 매핑시트의 standardFields 사용
         const headerRow = document.createElement('tr');
-        headerRow.innerHTML = `
-            <th style="width: 50px;">연번</th>
-            <th style="width: 100px;">마켓명</th>
-            <th style="width: 60px;">마켓</th>
-            <th style="width: 150px;">결제일</th>
-            <th style="width: 140px;">주문번호</th>
-            <th style="width: 140px;">상품주문번호</th>
-            <th style="width: 70px;">주문자</th>
-            <th style="width: 70px;">수취인</th>
-            <th style="width: 70px;">수령인</th>
-            <th style="width: 150px;">주문자전화번호</th>
-            <th style="width: 150px;">수취인전화번호</th>
-            <th style="width: 150px;">수령인전화번호</th>
-            <th style="width: 300px;">주소</th>
-            <th style="width: 300px;">수취인주소</th>
-            <th style="width: 300px;">수령인주소</th>
-            <th style="width: 100px;">배송메세지</th>
-            <th style="width: 100px;">배송메시지</th>
-            <th style="width: 160px;">옵션명</th>
-            <th style="width: 60px;">수량</th>
-            <th style="width: 300px;">특이/요청사항</th>
-            <th style="width: 150px;">발송요청일</th>
-            <th style="width: 160px;">확인</th>
-            <th style="width: 80px;">셀러</th>
-            <th style="width: 80px;">셀러공급가</th>
-            <th style="width: 80px;">출고처</th>
-            <th style="width: 60px;">송장주체</th>
-            <th style="width: 100px;">벤더사</th>
-            <th style="width: 100px;">발송지명</th>
-            <th style="width: 300px;">발송지주소</th>
-            <th style="width: 120px;">발송지연락처</th>
-            <th style="width: 90px;">출고비용</th>
-            <th style="width: 90px;">정산예정금액</th>
-            <th style="width: 90px;">정산대상금액</th>
-            <th style="width: 80px;">상품금액</th>
-            <th style="width: 90px;">최종결제금액</th>
-            <th style="width: 90px;">할인금액</th>
-            <th style="width: 120px;">마켓부담할인금액</th>
-            <th style="width: 120px;">판매자할인쿠폰할인</th>
-            <th style="width: 120px;">구매쿠폰적용금액</th>
-            <th style="width: 100px;">쿠폰할인금액</th>
-            <th style="width: 120px;">기타지원금할인금</th>
-            <th style="width: 70px;">수수료1</th>
-            <th style="width: 70px;">수수료2</th>
-            <th style="width: 120px;">판매아이디</th>
-            <th style="width: 100px;">분리배송 Y/N</th>
-            <th style="width: 80px;">택배비</th>
-            <th style="width: 150px;">발송일(송장입력일)</th>
-            <th style="width: 80px;">택배사</th>
-            <th style="width: 140px;">송장번호</th>
-        `;
+        this.processedData.headers.forEach((header, index) => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            
+            const width = columnWidths[header] || 100;
+            th.style.width = `${width}px`;
+            
+            headerRow.appendChild(th);
+        });
         thead.innerHTML = '';
         thead.appendChild(headerRow);
         
