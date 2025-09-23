@@ -1726,7 +1726,7 @@ async loadVendorTemplates() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    action: 'getVendorTemplates',
+                    action: 'fetchVendorTemplates',
                     spreadsheetId: '1kLjYKemytOfaH6kSXD7dqdiolx3j09Ir-V9deEnNImA',
                     sheetName: '벤더사템플릿'
                 })
