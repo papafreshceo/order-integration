@@ -1504,6 +1504,11 @@ if (header === '마켓명') {
 if (header === '옵션명') {
     td.textContent = String(value);
     
+    // 빈 값도 매칭 실패로 표시
+    if (!value || value.trim() === '') {
+        row['_matchStatus'] = 'unmatched';
+    }
+    
     // 매칭 실패 또는 수정된 상태 확인
     if (row['_matchStatus'] === 'unmatched' || row['_matchStatus'] === 'modified') {
         td.classList.add(row['_matchStatus'] === 'unmatched' ? 'unmatched-cell' : 'modified-cell');
@@ -1596,7 +1601,8 @@ async verifyOptions() {
     this.processedData.data.forEach((row, index) => {
         const optionName = row['옵션명'];
         
-        if (!optionName) {
+        // 빈 값이나 공백만 있는 경우도 매칭 실패로 처리
+        if (!optionName || optionName.trim() === '') {
             unmatchedCount++;
             row['_matchStatus'] = 'unmatched';
             return;
