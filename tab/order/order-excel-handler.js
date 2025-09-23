@@ -1750,62 +1750,59 @@ async verifyOptions() {
         return;
     }
     
-    // ProductMatching 데이터 로드
+    // ProductMatching 확인 및 로드
     if (!this.ProductMatching) {
-        this.ProductMatching = window.ProductMatching || parent.window?.ProductMatching;
+        this.setupParentReferences();
     }
     
-    console.log('ProductMatching 존재:', !!this.ProductMatching);
-    
-    if (this.ProductMatching) {
+    if (this.ProductMatching && !this.ProductMatching.isLoaded) {
         await this.ProductMatching.loadProductData();
     }
     
-    console.log('window.productData 존재:', !!window.productData);
-    console.log('window.productData 샘플:', Object.keys(window.productData || {}).slice(0, 5));
+    const productData = this.ProductMatching?.productData || window.productData || {};
     
-    // 모든 변수를 여기서 선언
-    let matchedCount = 0;
-    let unmatchedCount = 0;
-    let modifiedCount = 0;
-    let modifiedMatchedCount = 0;
-    let modifiedUnmatchedCount = 0;
-    let notModifiedCount = 0;
+    console.log('사용할 productData 키 개수:', Object.keys(productData).length);
+    
+    // 통계 변수 초기화
+    let matchedCount = 0;           // 처음부터 매칭 성공
+    let unmatchedCount = 0;         // 매칭 실패 (수정 안함)
+    let modifiedMatchedCount = 0;   // 수정 후 매칭 성공
+    let modifiedUnmatchedCount = 0; // 수정 후에도 매칭 실패
     
     // 모든 행 검증
-    this.processedData.data.forEach((row, index) => {
+    this.processedData.data.forEach((row) => {
         const optionName = row['옵션명'];
+        const previousStatus = row['_matchStatus'];
         
-        // 빈 값이나 공백만 있는 경우도 매칭 실패로 처리
+        // 빈 값 처리
         if (!optionName || optionName.trim() === '') {
-            unmatchedCount++;
-            row['_matchStatus'] = 'unmatched';
+            if (previousStatus === 'modified') {
+                modifiedUnmatchedCount++;
+            } else {
+                unmatchedCount++;
+            }
+            row['_matchStatus'] = previousStatus || 'unmatched';
             return;
         }
         
-        // ProductMatching 있으면 매칭 시도
-        let matchedProduct = null;
-        const productData = this.ProductMatching?.getProductData() || window.productData || {};
+        // 제품 매칭 확인
+        const trimmedOption = optionName.trim();
+        let matchedProduct = productData[trimmedOption];
         
-        if (this.ProductMatching && Object.keys(productData).length > 0) {
-            const trimmedOption = optionName.trim();
-            matchedProduct = productData[trimmedOption];
-            
-            if (!matchedProduct) {
-                // 대소문자 무시 매칭
-                const lowerOption = trimmedOption.toLowerCase();
-                for (const [key, value] of Object.entries(productData)) {
-                    if (key.toLowerCase() === lowerOption) {
-                        matchedProduct = value;
-                        break;
-                    }
+        // 대소문자 무시 매칭
+        if (!matchedProduct) {
+            const lowerOption = trimmedOption.toLowerCase();
+            for (const [key, value] of Object.entries(productData)) {
+                if (key.toLowerCase() === lowerOption) {
+                    matchedProduct = value;
+                    break;
                 }
             }
         }
         
         if (matchedProduct) {
-            // 기존 상태 확인
-            if (row['_matchStatus'] === 'modified' || row['_matchStatus'] === 'modified-matched') {
+            // 매칭 성공
+            if (previousStatus === 'modified' || previousStatus === 'modified-matched') {
                 modifiedMatchedCount++;
                 row['_matchStatus'] = 'modified-matched';
             } else {
@@ -1815,38 +1812,33 @@ async verifyOptions() {
             
             // 제품 정보 업데이트
             row['셀러공급가'] = matchedProduct['셀러공급가'] || row['셀러공급가'] || '';
-            row['출고처'] = matchedProduct.출고처 || row['출고처'] || '';
-            row['송장주체'] = matchedProduct.송장주체 || row['송장주체'] || '';
-            row['벤더사'] = matchedProduct.벤더사 || row['벤더사'] || '';
-            row['발송지명'] = matchedProduct.발송지명 || row['발송지명'] || '';
-            row['발송지주소'] = matchedProduct.발송지주소 || row['발송지주소'] || '';
-            row['발송지연락처'] = matchedProduct.발송지연락처 || row['발송지연락처'] || '';
-            row['출고비용'] = matchedProduct.출고비용 || 0;
+            row['출고처'] = matchedProduct['출고처'] || row['출고처'] || '';
+            row['송장주체'] = matchedProduct['송장주체'] || row['송장주체'] || '';
+            row['벤더사'] = matchedProduct['벤더사'] || row['벤더사'] || '';
+            row['발송지명'] = matchedProduct['발송지명'] || row['발송지명'] || '';
+            row['발송지주소'] = matchedProduct['발송지주소'] || row['발송지주소'] || '';
+            row['발송지연락처'] = matchedProduct['발송지연락처'] || row['발송지연락처'] || '';
+            row['출고비용'] = matchedProduct['출고비용'] || 0;
         } else {
-            unmatchedCount++;
-            row['_matchStatus'] = 'unmatched';
+            // 매칭 실패
+            if (previousStatus === 'modified' || previousStatus === 'modified-matched') {
+                modifiedUnmatchedCount++;
+                row['_matchStatus'] = 'modified';
+            } else {
+                unmatchedCount++;
+                row['_matchStatus'] = 'unmatched';
+            }
         }
     });
     
-    // 결과 표시
+    // 전체 매칭 실패 건수 (수정 여부 관계없이)
+    const totalUnmatched = unmatchedCount + modifiedUnmatchedCount;
+    const totalMatched = matchedCount + modifiedMatchedCount;
+    
+    // 결과 표시 업데이트
     this.displayResults();
     
-    // 상세 통계 재계산
-    modifiedCount = 0;
-    modifiedUnmatchedCount = 0;
-    
-    this.processedData.data.forEach(row => {
-        if (row['_matchStatus'] === 'modified-matched') {
-            modifiedCount++;
-        } else if (row['_matchStatus'] === 'modified') {
-            modifiedCount++;
-            modifiedUnmatchedCount++;
-        }
-    });
-    
-    notModifiedCount = unmatchedCount - modifiedUnmatchedCount;
-    
-    // 모달 창 생성
+    // 결과 모달
     const modal = document.createElement('div');
     modal.style.cssText = `
         position: fixed;
@@ -1875,23 +1867,36 @@ async verifyOptions() {
             옵션명 검증 결과
         </h3>
         <div style="line-height: 2; font-size: 14px;">
-            <div style="padding: 8px; background: #f8f9fa; border-radius: 8px; margin-bottom: 10px;">
-                <div style="color: #10b981;">✓ 매칭 성공: <strong>${matchedCount}개</strong></div>
-                <div style="color: #f59e0b;">✏ 수정한 옵션명: <strong>${modifiedCount}개</strong></div>
-                <div style="color: #10b981;">✓ 수정 후 매칭 성공: <strong>${modifiedMatchedCount}개</strong></div>
-                <div style="color: #dc3545;">✗ 수정 후 매칭 실패: <strong>${modifiedUnmatchedCount}개</strong></div>
-                <div style="color: #dc3545;">✗ 수정 안된 매칭 실패: <strong>${notModifiedCount}개</strong></div>
+            <div style="padding: 16px; background: #f8f9fa; border-radius: 8px; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>전체 주문:</span>
+                    <strong>${this.processedData.data.length}건</strong>
+                </div>
+                <hr style="border: none; border-top: 1px solid #dee2e6; margin: 8px 0;">
+                <div style="display: flex; justify-content: space-between; color: #10b981;">
+                    <span>✓ 전체 매칭 성공:</span>
+                    <strong>${totalMatched}건</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; color: #dc3545;">
+                    <span>✗ 전체 매칭 실패:</span>
+                    <strong>${totalUnmatched}건</strong>
+                </div>
             </div>
-            <div style="margin-top: 10px; font-size: 13px; color: #6c757d;">
-                ${modifiedMatchedCount > 0 ? '• 수정 후 매칭 성공: <span style="color: #10b981;">초록색</span> 표시<br>' : ''}
-                ${unmatchedCount > 0 ? '• 매칭 실패: <span style="color: #dc3545;">빨간색</span> 표시<br>' : ''}
-                ${modifiedUnmatchedCount > 0 ? '• 수정 후 실패: <span style="color: #f59e0b;">노란색</span> 표시' : ''}
+            
+            <div style="padding: 12px; background: #fff8e1; border-radius: 8px;">
+                <div style="font-size: 13px; color: #6c757d; margin-bottom: 8px;">상세 내역:</div>
+                <div style="font-size: 13px; line-height: 1.8;">
+                    <div style="color: #10b981;">• 처음부터 매칭 성공: ${matchedCount}건</div>
+                    <div style="color: #dc3545;">• 매칭 실패 (수정 안함): ${unmatchedCount}건</div>
+                    ${modifiedMatchedCount > 0 ? `<div style="color: #10b981;">• 수정 후 매칭 성공: ${modifiedMatchedCount}건</div>` : ''}
+                    ${modifiedUnmatchedCount > 0 ? `<div style="color: #f59e0b;">• 수정 후에도 실패: ${modifiedUnmatchedCount}건</div>` : ''}
+                </div>
             </div>
         </div>
     `;
     
     const closeButton = document.createElement('button');
-    closeButton.textContent = '닫기';
+    closeButton.textContent = '확인';
     closeButton.style.cssText = `
         margin-top: 20px;
         padding: 10px 24px;
@@ -1902,15 +1907,7 @@ async verifyOptions() {
         cursor: pointer;
         font-size: 14px;
         width: 100%;
-        transition: all 0.2s;
     `;
-    
-    closeButton.onmouseover = () => {
-        closeButton.style.background = '#1d4ed8';
-    };
-    closeButton.onmouseout = () => {
-        closeButton.style.background = '#2563eb';
-    };
     
     closeButton.onclick = () => {
         document.body.removeChild(modal);
@@ -1919,16 +1916,9 @@ async verifyOptions() {
     modalContent.appendChild(closeButton);
     modal.appendChild(modalContent);
     document.body.appendChild(modal);
-    
-    // ESC 키로 닫기
-    const escHandler = (e) => {
-        if (e.key === 'Escape') {
-            document.body.removeChild(modal);
-            document.removeEventListener('keydown', escHandler);
-        }
-    };
-    document.addEventListener('keydown', escHandler);
 },
+
+
 async verifyDuplicate() {
     if (!this.processedData) {
         this.showError('검증할 데이터가 없습니다.');
