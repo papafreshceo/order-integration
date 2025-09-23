@@ -2137,20 +2137,28 @@ if (duplicateKeys.length > 0) {
     // Promise와 함께 컨펌 모달 표시
     const shouldOverwrite = await new Promise((resolve) => {
         this.showConfirmModal(confirmMessage, 
-            () => resolve(true),   // 덮어쓰기 선택
-            () => resolve(false)   // 취소 선택
+            (overwrite) => resolve({ save: true, overwrite }),  // true=모두저장, false=신규만
+            () => resolve({ save: false })  // 취소
         );
     });
     
-    if (shouldOverwrite) {
-        // 덮어쓰기 처리
+    if (!shouldOverwrite.save) {
+        // 저장 취소
+        console.log('사용자가 저장 취소');
+        this.hideLoading();
+        window.isSaving = false;
+        return;
+    }
+    
+    if (shouldOverwrite.overwrite) {
+        // 모두 저장 - 덮어쓰기 처리
         duplicateKeys.forEach(({ key, row, index }) => {
             updateRows.push({ index, data: row });
         });
-        console.log(`사용자가 덮어쓰기 선택: ${duplicateKeys.length}건`);
+        console.log(`사용자가 모두 저장 선택: 중복 ${duplicateKeys.length}건 덮어쓰기, 신규 ${newRows.length}건 추가`);
     } else {
-        // 덮어쓰기 거부 - 신규만 추가
-        console.log('사용자가 덮어쓰기 거부');
+        // 중복제외 저장 - 신규만 추가
+        console.log(`사용자가 중복제외 저장 선택: 신규 ${newRows.length}건만 추가`);
         // updateRows는 비워둠 (덮어쓰기 안함)
     }
 }
@@ -2674,7 +2682,23 @@ showConfirmModal(message, onConfirm, onCancel) {
     let inDuplicateSection = false;
     
     lines.forEach(line => {
-        if (line.includes('중복 주문 상세')) {
+        if (line.includes('📊 중복 확인')) {
+            // 통계 정보 추가
+            const stats = message.match(/중복 발견: (\d+)건/);
+            const newCount = message.match(/신규 추가: (\d+)건/);
+            
+            processedMessage += `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                    <div style="padding: 16px; background: #d1fae5; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: 600; color: #10b981;">${newCount ? newCount[1] : '0'}건</div>
+                        <div style="font-size: 14px; color: #059669;">신규 주문</div>
+                    </div>
+                    <div style="padding: 16px; background: #fef3c7; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: 600; color: #f59e0b;">${stats ? stats[1] : '0'}건</div>
+                        <div style="font-size: 14px; color: #d97706;">중복 주문</div>
+                    </div>
+                </div>`;
+        } else if (line.includes('중복 주문 상세')) {
             processedMessage += `<h3 style="margin: 20px 0 12px; font-size: 16px; font-weight: 600; color: #212529;">${line}</h3>`;
             inDuplicateSection = true;
             duplicateItems = [];
@@ -2772,7 +2796,7 @@ showConfirmModal(message, onConfirm, onCancel) {
 
     // HTML 구성
     modalContent.innerHTML = `
-        <div style="
+<div style="
             padding: 20px 24px;
             background: linear-gradient(135deg, #f59e0b, #d97706);
             color: white;
@@ -2794,41 +2818,66 @@ showConfirmModal(message, onConfirm, onCancel) {
             padding: 20px 24px;
             background: #f8f9fa;
             border-top: 1px solid #dee2e6;
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
         ">
-            <button id="confirmCancel" style="
-                padding: 10px 28px;
-                background: #ffffff;
-                color: #495057;
-                border: 1px solid #dee2e6;
-                border-radius: 8px;
-                font-size: 14px;
-                font-weight: 500;
-                cursor: pointer;
-                transition: all 0.2s;
-            ">취소</button>
-            <button id="confirmOK" style="
-                padding: 10px 28px;
-                background: #f59e0b;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-size: 14px;
-                font-weight: 500;
-                cursor: pointer;
-                transition: all 0.2s;
-            ">덮어쓰기</button>
+            <div style="margin-bottom: 15px; padding: 12px; background: #fff8e1; border-radius: 8px;">
+                <div style="font-size: 14px; color: #495057; line-height: 1.6;">
+                    <div style="font-weight: 500; margin-bottom: 8px;">저장 옵션을 선택하세요:</div>
+                    <div style="margin-left: 10px;">
+                        • <strong>취소</strong>: 저장하지 않고 돌아가기<br>
+                        • <strong>중복제외 저장</strong>: 신규 주문만 추가 (중복 건은 무시)<br>
+                        • <strong>모두 저장</strong>: 중복은 덮어쓰고 신규는 추가
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button id="confirmCancel" style="
+                    padding: 10px 28px;
+                    background: #ffffff;
+                    color: #495057;
+                    border: 1px solid #dee2e6;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                ">취소</button>
+                <button id="confirmExcludeDuplicate" style="
+                    padding: 10px 28px;
+                    background: #2563eb;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                ">중복제외 저장</button>
+                <button id="confirmSaveAll" style="
+                    padding: 10px 28px;
+                    background: #10b981;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                ">모두 저장</button>
+            </div>
         </div>`;
 
     modalBackdrop.appendChild(modalContent);
     document.body.appendChild(modalBackdrop);
     
     // 버튼 이벤트
-    document.getElementById('confirmOK').onclick = () => {
+    document.getElementById('confirmSaveAll').onclick = () => {
         modalBackdrop.remove();
-        if (onConfirm) onConfirm();
+        if (onConfirm) onConfirm(true);  // true = 덮어쓰기 포함
+    };
+    
+    document.getElementById('confirmExcludeDuplicate').onclick = () => {
+        modalBackdrop.remove();
+        if (onConfirm) onConfirm(false);  // false = 신규만
     };
     
     document.getElementById('confirmCancel').onclick = () => {
