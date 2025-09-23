@@ -2171,7 +2171,7 @@ if (newRows.length > 0) {
 
 
 
-// ===== 1번 코드 시작 ===== //
+
 console.log('=========================');
 // ===== 디버깅 코드 끝 =====
 
@@ -2273,7 +2273,7 @@ const response = await fetch(`${this.API_BASE}/api/sheets`, {
 
 const result = await response.json();
 
-// ===== 2번 코드 시작 ===== //
+
 if (result.success) {
     // 실제 처리된 건수 계산
     const duplicateNotSaved = duplicateKeys.length - updateRows.length;
