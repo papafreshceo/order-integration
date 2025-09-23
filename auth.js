@@ -50,12 +50,18 @@ console.log('API 응답 user:', result.user);  // 추가
 if (result.user) {
     currentUser = result.user;
     window.currentUser = currentUser;
-    console.log('설정된 currentUser:', currentUser);  // 추가
-    console.log('역할:', currentUser.role);  // 추가
+    
+    // localStorage에 사용자 이메일 저장
+    localStorage.setItem('userEmail', currentUser.email);
+    sessionStorage.setItem('userEmail', currentUser.email);
+    
+    console.log('설정된 currentUser:', currentUser);
+    console.log('역할:', currentUser.role);
+    console.log('localStorage에 저장된 이메일:', localStorage.getItem('userEmail'));
                 
-                // 역할별 UI 조정
-                adjustUIByRole();
-            }
+    // 역할별 UI 조정
+    adjustUIByRole();
+}
         } catch (error) {
             console.error('사용자 권한 확인 오류:', error);
             // 오류 시 기본값 staff
