@@ -1575,7 +1575,7 @@ onSolutionChange() {
         document.getElementById('csRefundAmount').textContent = this.formatNumber(refundAmount) + '원';
     },
 
-    async submitCs() {
+async submitCs() {
         const customerRequest = document.getElementById('csCustomerRequest').value;
         const solution = document.getElementById('csSolution').value;
         
@@ -1607,7 +1607,6 @@ onSolutionChange() {
                 부분환불금액: '',
                 '특이/요청사항': '',
                 발송요청일: ''
-            };부분환불금액: ''
             };
 
             // 해결방법별 추가 데이터
