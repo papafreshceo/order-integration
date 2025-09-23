@@ -1925,7 +1925,28 @@ async verifyDuplicate() {
         return;
     }
     
-    this.showLoading();
+    // 로딩 표시
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.id = 'duplicateCheckLoading';
+    loadingOverlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    `;
+    loadingOverlay.innerHTML = `
+        <div style="text-align: center; color: white;">
+            <div style="font-size: 20px; margin-bottom: 10px;">중복 검증 중...</div>
+            <div style="font-size: 14px;">과거 7일 데이터 조회 중</div>
+        </div>
+    `;
+    document.body.appendChild(loadingOverlay);
     
     try {
         // 과거 7일 시트명 생성
@@ -1939,41 +1960,50 @@ async verifyDuplicate() {
             sheetNames.push(`${year}${month}${day}`);
         }
         
+        console.log('검증할 시트:', sheetNames);
+        
         // 과거 주문 데이터 수집
         const pastOrders = [];
+        
         for (const sheetName of sheetNames) {
             try {
                 const response = await fetch(`${this.API_BASE}/api/sheets`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        action: 'getSheetData',  // 올바른 액션명 사용
+                        action: 'getOrdersByDate',
                         sheetName: sheetName,
-                        spreadsheetId: 'SPREADSHEET_ID_ORDERS'  // 주문 스프레드시트 ID
+                        spreadsheetId: 'orders'
                     })
                 });
                 
                 const result = await response.json();
-                if (result.success && result.data) {
+                
+                if (result.success && result.data && result.data.length > 0) {
                     result.data.forEach(order => {
-                        order._sheetName = sheetName;  // 출처 시트 기록
+                        order._sourceDate = sheetName;
                     });
                     pastOrders.push(...result.data);
+                    console.log(`${sheetName}: ${result.data.length}건 로드`);
                 }
             } catch (error) {
-                console.log(`${sheetName} 시트 조회 실패:`, error);
+                console.log(`${sheetName} 시트 조회 실패:`, error.message);
             }
         }
+        
+        console.log(`총 과거 주문: ${pastOrders.length}건`);
         
         // 중복 검증
         let shippedDuplicates = 0;
         let unshippedDuplicates = 0;
         const duplicateDetails = [];
         
-        this.processedData.data.forEach((currentOrder, index) => {
+        this.processedData.data.forEach((currentOrder) => {
+            // 현재 주문 정보
             const currentOrderNo = String(currentOrder['주문번호'] || '').trim();
             const currentRecipient = String(currentOrder['수령인'] || currentOrder['수취인'] || '').trim();
             const currentOption = String(currentOrder['옵션명'] || '').trim();
+            const currentQuantity = String(currentOrder['수량'] || '1').trim();
             
             if (!currentOrderNo || !currentRecipient) return;
             
@@ -1982,14 +2012,19 @@ async verifyDuplicate() {
                 const pastOrderNo = String(pastOrder['주문번호'] || '').trim();
                 const pastRecipient = String(pastOrder['수령인'] || pastOrder['수취인'] || '').trim();
                 const pastOption = String(pastOrder['옵션명'] || '').trim();
+                const pastQuantity = String(pastOrder['수량'] || '1').trim();
                 
                 return currentOrderNo === pastOrderNo && 
                        currentRecipient === pastRecipient &&
-                       currentOption === pastOption;
+                       currentOption === pastOption &&
+                       currentQuantity === pastQuantity;
             });
             
             if (duplicates.length > 0) {
-                const hasShipped = duplicates.some(d => d['송장번호'] && String(d['송장번호']).trim() !== '');
+                const hasShipped = duplicates.some(d => {
+                    const invoice = String(d['송장번호'] || '').trim();
+                    return invoice && invoice !== '';
+                });
                 
                 if (hasShipped) {
                     shippedDuplicates++;
@@ -2001,8 +2036,10 @@ async verifyDuplicate() {
                         orderNo: currentOrderNo,
                         recipient: currentRecipient,
                         option: currentOption,
+                        quantity: currentQuantity,
                         invoice: shippedOrder['송장번호'],
-                        sheetName: shippedOrder['_sheetName']
+                        sourceDate: shippedOrder['_sourceDate'],
+                        carrier: shippedOrder['택배사'] || ''
                     });
                 } else {
                     unshippedDuplicates++;
@@ -2013,39 +2050,161 @@ async verifyDuplicate() {
                         orderNo: currentOrderNo,
                         recipient: currentRecipient,
                         option: currentOption,
-                        sheetName: duplicates[0]['_sheetName']
+                        quantity: currentQuantity,
+                        sourceDate: duplicates[0]['_sourceDate']
                     });
                 }
+            } else {
+                currentOrder['_duplicateStatus'] = null;
             }
         });
         
-        // 결과 표시
+        // 로딩 제거
+        document.getElementById('duplicateCheckLoading').remove();
+        
+        // 결과 테이블 업데이트
         this.displayResults();
         
-        // 상세 메시지 구성
-        let message = `중복발송 검증 완료\n`;
-        if (shippedDuplicates > 0) {
-            message += `⛔ 발송 완료 중복: ${shippedDuplicates}건 (제거 필요)\n`;
-        }
-        if (unshippedDuplicates > 0) {
-            message += `⚠️ 미발송 중복: ${unshippedDuplicates}건 (확인 필요)\n`;
-        }
-        if (shippedDuplicates === 0 && unshippedDuplicates === 0) {
-            message += `✅ 중복 주문이 없습니다.`;
-        }
+        // 결과 모달 표시
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        `;
         
-        // 중복 상세 내역 콘솔 출력
+        const modalContent = document.createElement('div');
+        modalContent.style.cssText = `
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        `;
+        
+        let detailsHtml = '';
         if (duplicateDetails.length > 0) {
-            console.log('중복 상세 내역:', duplicateDetails);
+            const shippedItems = duplicateDetails.filter(d => d.type === 'shipped');
+            const unshippedItems = duplicateDetails.filter(d => d.type === 'unshipped');
+            
+            if (shippedItems.length > 0) {
+                detailsHtml += `
+                    <div style="margin-top: 20px;">
+                        <h4 style="color: #dc3545; font-size: 14px; margin-bottom: 10px;">
+                            ⛔ 이미 발송된 중복 주문 (${shippedItems.length}건)
+                        </h4>
+                        <div style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 8px; padding: 10px;">
+                `;
+                
+                shippedItems.forEach(item => {
+                    detailsHtml += `
+                        <div style="margin-bottom: 10px; padding: 8px; background: #fee2e2; border-radius: 4px; font-size: 12px;">
+                            <div>주문번호: ${item.orderNo}</div>
+                            <div>수령인: ${item.recipient}</div>
+                            <div>상품: ${item.option} (${item.quantity}개)</div>
+                            <div style="color: #dc3545; font-weight: 500;">
+                                송장: ${item.carrier} ${item.invoice} (${item.sourceDate})
+                            </div>
+                        </div>
+                    `;
+                });
+                detailsHtml += '</div></div>';
+            }
+            
+            if (unshippedItems.length > 0) {
+                detailsHtml += `
+                    <div style="margin-top: 20px;">
+                        <h4 style="color: #f59e0b; font-size: 14px; margin-bottom: 10px;">
+                            ⚠️ 미발송 중복 주문 (${unshippedItems.length}건)
+                        </h4>
+                        <div style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 8px; padding: 10px;">
+                `;
+                
+                unshippedItems.forEach(item => {
+                    detailsHtml += `
+                        <div style="margin-bottom: 10px; padding: 8px; background: #fff8e1; border-radius: 4px; font-size: 12px;">
+                            <div>주문번호: ${item.orderNo}</div>
+                            <div>수령인: ${item.recipient}</div>
+                            <div>상품: ${item.option} (${item.quantity}개)</div>
+                            <div style="color: #f59e0b;">날짜: ${item.sourceDate}</div>
+                        </div>
+                    `;
+                });
+                detailsHtml += '</div></div>';
+            }
         }
         
-        this.showSuccess(message);
+        modalContent.innerHTML = `
+            <h3 style="margin-bottom: 20px; font-size: 20px; font-weight: 500; color: #2563eb;">
+                중복발송 검증 결과
+            </h3>
+            <div style="padding: 16px; background: #f8f9fa; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>검증 주문 수:</span>
+                    <strong>${this.processedData.data.length}건</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>과거 7일 주문:</span>
+                    <strong>${pastOrders.length}건</strong>
+                </div>
+                <hr style="border: none; border-top: 1px solid #dee2e6; margin: 8px 0;">
+                ${shippedDuplicates > 0 ? `
+                    <div style="display: flex; justify-content: space-between; color: #dc3545;">
+                        <span>⛔ 발송 완료 중복:</span>
+                        <strong>${shippedDuplicates}건 (제거 필요)</strong>
+                    </div>
+                ` : ''}
+                ${unshippedDuplicates > 0 ? `
+                    <div style="display: flex; justify-content: space-between; color: #f59e0b;">
+                        <span>⚠️ 미발송 중복:</span>
+                        <strong>${unshippedDuplicates}건 (확인 필요)</strong>
+                    </div>
+                ` : ''}
+                ${shippedDuplicates === 0 && unshippedDuplicates === 0 ? `
+                    <div style="color: #10b981; text-align: center; padding: 10px;">
+                        ✅ 중복 주문이 없습니다.
+                    </div>
+                ` : ''}
+            </div>
+            ${detailsHtml}
+        `;
+        
+        const closeButton = document.createElement('button');
+        closeButton.textContent = '확인';
+        closeButton.style.cssText = `
+            margin-top: 20px;
+            padding: 10px 24px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+        `;
+        
+        closeButton.onclick = () => {
+            document.body.removeChild(modal);
+        };
+        
+        modalContent.appendChild(closeButton);
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
         
     } catch (error) {
         console.error('중복 검증 오류:', error);
-        this.showError('중복 검증 중 오류가 발생했습니다.');
-    } finally {
-        this.hideLoading();
+        const loading = document.getElementById('duplicateCheckLoading');
+        if (loading) loading.remove();
+        this.showError('중복 검증 중 오류가 발생했습니다: ' + error.message);
     }
 },
     
