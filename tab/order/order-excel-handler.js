@@ -1219,6 +1219,19 @@ if (this.ProductMatching) {
     
     enrichedData = await this.ProductMatching.applyProductInfo(mergedData);
     
+    // 출고비용 필드 명시적 처리
+    enrichedData.forEach(row => {
+        const optionName = row['옵션명'];
+        if (optionName && this.ProductMatching.productData[optionName]) {
+            const productInfo = this.ProductMatching.productData[optionName];
+            // 출고비용을 숫자로 변환하여 저장
+            const outboundCost = productInfo['출고비용'] || productInfo.출고비용 || 0;
+            row['출고비용'] = typeof outboundCost === 'string' ? 
+                parseFloat(outboundCost.replace(/[^0-9.-]/g, '')) || 0 : 
+                outboundCost;
+        }
+    });
+    
     // 통합상품마스터 필드 매칭 검증
     const requiredFields = ['셀러공급가', '출고처', '송장주체', '벤더사', 
                            '발송지명', '발송지주소', '발송지연락처', '출고비용'];
