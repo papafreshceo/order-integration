@@ -20,13 +20,13 @@ auth.onAuthStateChanged(async (user) => {
     document.getElementById('initialLoading').style.display = 'none';
     
     if (user) {
-        // 10시간 자동 로그아웃 설정
+        // 1시간 자동 로그아웃 설정
         setTimeout(() => {
             auth.signOut().then(() => {
-                alert('10시간이 경과하여 자동 로그아웃되었습니다. 다시 로그인해주세요.');
+                alert('1시간이 경과하여 자동 로그아웃되었습니다. 다시 로그인해주세요.');
                 location.reload();
             });
-        }, 10 * 60 * 60 * 1000); // 10시간 = 10 * 60분 * 60초 * 1000ms
+        }, 1 * 60 * 60 * 1000); // 1시간 = 1 * 60분 * 60초 * 1000ms
         // 사용자 권한 확인
         try {
             const response = await fetch('/api/users', {
