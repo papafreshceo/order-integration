@@ -2667,10 +2667,16 @@ showCenterMessage(message, type, autoClose = false) {
                 currentItem = null;
             }
             if (inDuplicateSection && duplicateItems.length > 0) {
-
-                processedMessage += `
-                    <div style="border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
-                        <div style="max-height: 300px; overflow-y: auto;">
+    // 10개만 표시, 나머지는 스크롤
+    const displayItems = duplicateItems.slice(0, Math.min(10, duplicateItems.length));
+    const hasMore = duplicateItems.length > 10;
+    
+    processedMessage += `
+        <div style="border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+            ${hasMore ? `<div style="padding: 8px; background: #fff8e1; font-size: 12px; text-align: center;">
+                총 ${duplicateItems.length}건 중 상위 10건만 표시 (스크롤하여 확인)
+            </div>` : ''}
+            <div style="max-height: 280px; overflow-y: auto;">
                             <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
                                 <thead style="position: sticky; top: 0; background: #f8f9fa;">
                                     <tr>
@@ -2964,14 +2970,15 @@ showConfirmModal(message, onConfirm, onCancel) {
     `;
     
     // 모달 컨테이너
-    const modalContent = document.createElement('div');
-    modalContent.style.cssText = `
-        background: #ffffff;
-        border-radius: 16px;
-        min-width: 700px;
-        max-width: 900px;
-        width: 80%;
-        max-height: 70vh;
+const modalContent = document.createElement('div');
+modalContent.style.cssText = `
+    background: #ffffff;
+    border-radius: 16px;
+    min-width: 700px;
+    max-width: 900px;
+    width: 80%;
+    max-height: 85vh;
+    min-height: 500px;
         overflow: hidden;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         animation: slideUp 0.3s ease;
@@ -3030,8 +3037,12 @@ showConfirmModal(message, onConfirm, onCancel) {
                                 </thead>
                                 <tbody>`;
                 
-                duplicateItems.forEach((item, idx) => {
-                    const rowBg = idx % 2 === 0 ? '#ffffff' : '#fafafa';
+// 최대 10개만 표시
+const itemsToShow = duplicateItems.slice(0, 10);
+const remainingCount = duplicateItems.length - 10;
+
+itemsToShow.forEach((item, idx) => {
+    const rowBg = idx % 2 === 0 ? '#ffffff' : '#fafafa';
                     processedMessage += `
                         <tr style="background: ${rowBg};">
                             <td style="padding: 6px 8px; border-bottom: 1px solid #f1f3f5;">${item.num}</td>
@@ -3047,6 +3058,21 @@ showConfirmModal(message, onConfirm, onCancel) {
                 
                 processedMessage += '</tbody></table></div></div>';
             }
+
+            processedMessage += '</tbody></table>';
+
+// 10개 이상일 경우 추가 메시지
+if (remainingCount > 0) {
+    processedMessage += `
+        <div style="padding: 10px; background: #f8f9fa; text-align: center; border-top: 1px solid #dee2e6;">
+            <span style="color: #6c757d; font-size: 12px;">
+                ... 외 ${remainingCount}건 더 있음
+            </span>
+        </div>`;
+}
+
+processedMessage += '</div></div>';
+
             processedMessage += `<div style="margin-top: 20px; padding: 16px; background: #fef3c7; border-radius: 8px; text-align: center;">
                 <span style="color: #d97706; font-size: 14px; font-weight: 500;">⚠️ ${line}</span>
             </div>`;
