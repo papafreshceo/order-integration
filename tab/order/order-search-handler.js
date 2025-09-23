@@ -1649,8 +1649,12 @@ const hours = String(now.getHours()).padStart(2, '0');
 const minutes = String(now.getMinutes()).padStart(2, '0');
 const paymentDateTime = `${year}/${month}/${day} ${hours}:${minutes}`;
 
+// 로그인 사용자 이메일 가져오기
+const userEmail = localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail') || '';
+console.log('CS 주문 사용자 이메일:', userEmail);
+
 const orderData = {
-    userEmail: window.currentUser?.email || '',  // 현재 로그인한 사용자 이메일
+    userEmail: userEmail,  // 로그인한 사용자 이메일
     마켓명: 'CS발송',
     결제일: paymentDateTime,  // YYYY/MM/DD HH:MM 형식
     주문자: this.currentCsOrder['주문자'],

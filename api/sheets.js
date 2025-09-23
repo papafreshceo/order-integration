@@ -144,7 +144,7 @@ case 'addCsOrder':
               await createOrderSheet('임시저장', ordersSpreadsheetId);
               tempHeaders = ['사용자이메일', '접수번호', '저장시간', '마켓명', '옵션명', '수량', '단가', '택배비', 
                             '상품금액', '주문자', '주문자 전화번호', '수령인', '수령인 전화번호', 
-                            '주소', '배송메세지', '발송요청일'];
+                            '주소', '배송메세지', '특이/요청사항', '발송요청일'];
               await saveOrderData('임시저장!A1', [tempHeaders], ordersSpreadsheetId);
           }
           
@@ -194,10 +194,11 @@ case 'addCsOrder':
               data['수령인 전화번호'] || '',
               data['주소'] || '',
               data['배송메세지'] || '',
+              data['특이/요청사항'] || '',
               data['발송요청일'] || ''
           ]];
           
-          await appendSheetData('임시저장!A:P', tempRowData, ordersSpreadsheetId);
+          await appendSheetData('임시저장!A:Q', tempRowData, ordersSpreadsheetId);
           
           console.log('CS 재발송 임시저장 완료:', csOrderNumber);
           
