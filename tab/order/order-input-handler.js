@@ -1115,9 +1115,8 @@ async loadUnshippedOrders() {
         const allUnshippedOrders = [];
         const foundSheets = [];
         let daysBack = 0;
-        const maxDaysToCheck = 10; // 최대 10일까지 확인 (연휴 대비)
+        const maxDaysToCheck = 10;
         
-        // 실제로 존재하는 최근 3개 시트 찾기
         while (foundSheets.length < 3 && daysBack < maxDaysToCheck) {
             const targetDate = new Date();
             targetDate.setDate(targetDate.getDate() - daysBack);
@@ -1125,7 +1124,7 @@ async loadUnshippedOrders() {
                              String(targetDate.getMonth() + 1).padStart(2, '0') + 
                              String(targetDate.getDate()).padStart(2, '0');
             
-            console.log(`시트 확인 중: ${sheetName}`);
+            console.log(`[${daysBack}일 전] 시트 확인: ${sheetName}`);
             
             const response = await fetch('/api/sheets', {
                 method: 'POST',
@@ -1133,25 +1132,37 @@ async loadUnshippedOrders() {
                 body: JSON.stringify({
                     action: 'getMarketData',
                     useMainSpreadsheet: true,
-                    sheetName: sheetName
+                    sheetName: sheetName,
+                    range: 'A:AZ'  // AZ열까지 명시적으로 지정
                 })
             });
             
             const result = await response.json();
             
-            // 시트가 존재하고 데이터가 있는 경우만 처리
             if (result.success && result.data && result.data.length > 0) {
                 foundSheets.push(sheetName);
-                console.log(`유효한 시트 발견: ${sheetName}`);
+                console.log(`✓ 유효한 시트: ${sheetName} (${result.data.length}개 행)`);
                 
-                // CS발송, 전화주문 중 미발송 주문만 필터링
+                // 첫 번째 행으로 택배사/송장번호 필드 확인
+                if (result.data.length > 0) {
+                    const sampleRow = result.data[0];
+                    console.log('사용 가능한 필드:', Object.keys(sampleRow));
+                    console.log('택배사 값:', sampleRow['택배사']);
+                    console.log('송장번호 값:', sampleRow['송장번호']);
+                }
+                
+                // CS발송, 전화주문 중 택배사/송장번호가 없는 주문 필터링
                 const unshipped = result.data.filter(order => {
                     const isTargetMarket = order['마켓명'] === 'CS발송' || order['마켓명'] === '전화주문';
-                    const hasNoTracking = !order['송장번호'] || order['송장번호'].trim() === '';
-                    return isTargetMarket && hasNoTracking;
+                    
+                    // 택배사와 송장번호 둘 다 비어있으면 미발송
+                    const hasNoShipping = (!order['택배사'] || order['택배사'].trim() === '') && 
+                                         (!order['송장번호'] || order['송장번호'].trim() === '');
+                    
+                    return isTargetMarket && hasNoShipping;
                 });
                 
-                console.log(`${sheetName}: 미발송 ${unshipped.length}건`);
+                console.log(`  → CS발송/전화주문 미발송: ${unshipped.length}건`);
                 
                 unshipped.forEach(order => {
                     order._sheetDate = sheetName;
@@ -1165,7 +1176,7 @@ async loadUnshippedOrders() {
         console.log(`조회 완료: ${foundSheets.length}개 시트에서 총 ${allUnshippedOrders.length}건`);
         
         if (allUnshippedOrders.length === 0) {
-            this.showMessage(`최근 ${foundSheets.length}개 시트에 미발송 주문이 없습니다.`, 'info');
+            this.showMessage(`최근 ${foundSheets.length}개 시트에 CS발송/전화주문 미발송이 없습니다.`, 'info');
             return;
         }
         
@@ -1174,12 +1185,10 @@ async loadUnshippedOrders() {
             const orderNoA = a['주문번호'] || '';
             const orderNoB = b['주문번호'] || '';
             
-            // 주문번호가 둘 다 있으면 주문번호로 정렬
             if (orderNoA && orderNoB) {
                 return orderNoA.localeCompare(orderNoB);
             }
             
-            // 주문번호가 없으면 주문자로 정렬
             if (!orderNoA || !orderNoB) {
                 const ordererA = a['주문자'] || '';
                 const ordererB = b['주문자'] || '';
@@ -1187,13 +1196,12 @@ async loadUnshippedOrders() {
                 if (ordererCompare !== 0) return ordererCompare;
             }
             
-            // 마지막으로 결제일로 정렬
             const dateA = a['결제일'] || '';
             const dateB = b['결제일'] || '';
             return dateA.localeCompare(dateB);
         });
         
-        // 선택 모달 표시
+        // 모달 표시
         this.showUnshippedOrdersModal(allUnshippedOrders);
         
     } catch (error) {
