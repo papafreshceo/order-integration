@@ -1112,67 +1112,60 @@ async loadUnshippedOrders() {
     }
     
     try {
-        // 어제 날짜 계산
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const sheetName = yesterday.getFullYear() + 
-                         String(yesterday.getMonth() + 1).padStart(2, '0') + 
-                         String(yesterday.getDate()).padStart(2, '0');
+        const allUnshippedOrders = [];
+        const sheetDates = [];
         
-        // 전일 주문 데이터 가져오기
-        const response = await fetch('/api/sheets', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'getMarketData',
-                useMainSpreadsheet: true,
-                sheetName: sheetName
-            })
-        });
-        
-        const result = await response.json();
-        
-        if (!result.success || !result.data) {
-            this.showMessage('전일 주문 데이터를 찾을 수 없습니다.', 'error');
-            return;
-        }
-        
-        // CS발송, 전화주문 중 미발송 주문만 필터링
-        const unshippedOrders = result.data.filter(order => {
-            const isTargetMarket = order['마켓명'] === 'CS발송' || order['마켓명'] === '전화주문';
-            const hasNoTracking = !order['송장번호'] || order['송장번호'].trim() === '';
-            return isTargetMarket && hasNoTracking;
-        });
-        
-        if (unshippedOrders.length === 0) {
-            this.showMessage('미발송 주문이 없습니다.', 'success');
-            return;
-        }
-        
-        // 미발송 주문을 현재 목록에 추가
-        unshippedOrders.forEach(order => {
-            const orderData = {
-                마켓명: order['마켓명'],
-                옵션명: order['옵션명'] || '',
-                단가: parseFloat(order['상품금액'] || 0) / parseInt(order['수량'] || 1),
-                수량: parseInt(order['수량'] || 1),
-                택배비: parseFloat(order['택배비'] || 0),
-                주문자: order['주문자'] || '',
-                '주문자 전화번호': order['주문자 전화번호'] || order['주문자전화번호'] || '',
-                수령인: order['수령인'] || order['수취인'] || '',
-                '수령인 전화번호': order['수령인 전화번호'] || order['수령인전화번호'] || order['수취인 전화번호'] || order['수취인전화번호'] || '',
-                주소: order['수령인주소'] || order['수취인주소'] || order['주소'] || '',
-                배송메세지: order['배송메세지'] || order['배송메시지'] || '',
-                발송요청일: order['발송요청일'] || '',
-                상품금액: parseFloat(order['상품금액'] || 0)
-            };
+        // 최근 3일간의 시트 조회
+        for (let i = 1; i <= 3; i++) {
+            const targetDate = new Date();
+            targetDate.setDate(targetDate.getDate() - i);
+            const sheetName = targetDate.getFullYear() + 
+                             String(targetDate.getMonth() + 1).padStart(2, '0') + 
+                             String(targetDate.getDate()).padStart(2, '0');
             
-            this.manualOrders.push(orderData);
+            sheetDates.push(sheetName);
+            
+            const response = await fetch('/api/sheets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'getMarketData',
+                    useMainSpreadsheet: true,
+                    sheetName: sheetName
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success && result.data) {
+                // CS발송, 전화주문 중 미발송 주문만 필터링
+                const unshipped = result.data.filter(order => {
+                    const isTargetMarket = order['마켓명'] === 'CS발송' || order['마켓명'] === '전화주문';
+                    const hasNoTracking = !order['송장번호'] || order['송장번호'].trim() === '';
+                    return isTargetMarket && hasNoTracking;
+                });
+                
+                unshipped.forEach(order => {
+                    order._sheetDate = sheetName; // 시트 날짜 추가
+                    allUnshippedOrders.push(order);
+                });
+            }
+        }
+        
+        if (allUnshippedOrders.length === 0) {
+            this.showMessage('최근 3일간 미발송 주문이 없습니다.', 'info');
+            return;
+        }
+        
+        // 주문번호 순으로 정렬
+        allUnshippedOrders.sort((a, b) => {
+            const orderNoA = a['주문번호'] || '';
+            const orderNoB = b['주문번호'] || '';
+            return orderNoA.localeCompare(orderNoB);
         });
         
-        this.updateOrderList();
-        this.saveToCache();
-        this.showMessage(`${unshippedOrders.length}건의 미발송 주문을 불러왔습니다.`, 'success');
+        // 선택 모달 표시
+        this.showUnshippedOrdersModal(allUnshippedOrders);
         
     } catch (error) {
         console.error('미발송 주문 불러오기 오류:', error);
@@ -1184,6 +1177,138 @@ async loadUnshippedOrders() {
             loadButton.disabled = false;
         }
     }
+},
+
+showUnshippedOrdersModal(orders) {
+    // 기존 모달 제거
+    const existingModal = document.getElementById('unshippedOrdersModal');
+    if (existingModal) existingModal.remove();
+    
+    // 모달 HTML 생성
+    const modal = document.createElement('div');
+    modal.id = 'unshippedOrdersModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    `;
+    
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 16px; width: 90%; max-width: 900px; max-height: 80vh; display: flex; flex-direction: column;">
+            <div style="padding: 20px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 18px; font-weight: 500;">미발송 주문 선택 (최근 3일)</h3>
+                <button onclick="document.getElementById('unshippedOrdersModal').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6c757d;">×</button>
+            </div>
+            
+            <div style="padding: 16px; background: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <button onclick="OrderInputHandler.selectAllUnshipped(true)" style="padding: 6px 12px; background: #2563eb; color: white; border: none; border-radius: 6px; font-size: 13px; cursor: pointer;">전체 선택</button>
+                    <button onclick="OrderInputHandler.selectAllUnshipped(false)" style="padding: 6px 12px; background: #ffffff; color: #495057; border: 1px solid #dee2e6; border-radius: 6px; font-size: 13px; cursor: pointer;">전체 해제</button>
+                    <span style="font-size: 13px; color: #6c757d;">총 ${orders.length}건</span>
+                </div>
+            </div>
+            
+            <div style="flex: 1; overflow-y: auto; padding: 16px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <thead style="position: sticky; top: 0; background: white;">
+                        <tr style="border-bottom: 2px solid #dee2e6;">
+                            <th style="padding: 8px; text-align: center; width: 40px;">
+                                <input type="checkbox" id="selectAllCheckbox" onchange="OrderInputHandler.selectAllUnshipped(this.checked)">
+                            </th>
+                            <th style="padding: 8px; text-align: left;">날짜</th>
+                            <th style="padding: 8px; text-align: left;">주문번호</th>
+                            <th style="padding: 8px; text-align: left;">마켓</th>
+                            <th style="padding: 8px; text-align: left;">수령인</th>
+                            <th style="padding: 8px; text-align: left;">옵션명</th>
+                            <th style="padding: 8px; text-align: center;">수량</th>
+                            <th style="padding: 8px; text-align: right;">금액</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${orders.map((order, index) => `
+                            <tr style="border-bottom: 1px solid #f1f3f5;">
+                                <td style="padding: 8px; text-align: center;">
+                                    <input type="checkbox" class="order-checkbox" data-index="${index}">
+                                </td>
+                                <td style="padding: 8px;">${order._sheetDate.substring(4, 6)}/${order._sheetDate.substring(6, 8)}</td>
+                                <td style="padding: 8px; font-family: monospace; font-size: 12px;">${order['주문번호'] || '-'}</td>
+                                <td style="padding: 8px;">
+                                    <span style="padding: 2px 6px; background: ${order['마켓명'] === 'CS발송' ? '#fee2e2' : '#e0e7ff'}; color: ${order['마켓명'] === 'CS발송' ? '#dc3545' : '#4f46e5'}; border-radius: 4px; font-size: 11px; font-weight: 500;">
+                                        ${order['마켓명']}
+                                    </span>
+                                </td>
+                                <td style="padding: 8px;">${order['수령인'] || order['수취인'] || '-'}</td>
+                                <td style="padding: 8px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${order['옵션명'] || ''}">${order['옵션명'] || '-'}</td>
+                                <td style="padding: 8px; text-align: center; ${parseInt(order['수량']) >= 2 ? 'color: #dc3545; font-weight: 600;' : ''}">${order['수량'] || '1'}</td>
+                                <td style="padding: 8px; text-align: right; font-weight: 500;">${(parseFloat(order['상품금액']) || 0).toLocaleString()}원</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="padding: 20px; border-top: 1px solid #dee2e6; display: flex; justify-content: flex-end; gap: 12px;">
+                <button onclick="document.getElementById('unshippedOrdersModal').remove()" style="padding: 10px 24px; background: #ffffff; color: #495057; border: 1px solid #dee2e6; border-radius: 6px; font-size: 14px; cursor: pointer;">취소</button>
+                <button onclick="OrderInputHandler.addSelectedOrders(${JSON.stringify(orders).replace(/"/g, '&quot;')})" style="padding: 10px 24px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer;">선택한 주문 추가</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+},
+
+selectAllUnshipped(checked) {
+    const checkboxes = document.querySelectorAll('.order-checkbox');
+    checkboxes.forEach(cb => cb.checked = checked);
+    
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    if (selectAllCheckbox) selectAllCheckbox.checked = checked;
+},
+
+addSelectedOrders(orders) {
+    const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+    const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+    
+    if (selectedIndices.length === 0) {
+        this.showMessage('선택한 주문이 없습니다.', 'error');
+        return;
+    }
+    
+    selectedIndices.forEach(index => {
+        const order = orders[index];
+        const orderData = {
+            마켓명: order['마켓명'],
+            옵션명: order['옵션명'] || '',
+            단가: parseFloat(order['상품금액'] || 0) / parseInt(order['수량'] || 1),
+            수량: parseInt(order['수량'] || 1),
+            택배비: parseFloat(order['택배비'] || 0),
+            주문자: order['주문자'] || '',
+            '주문자 전화번호': order['주문자 전화번호'] || order['주문자전화번호'] || '',
+            수령인: order['수령인'] || order['수취인'] || '',
+            '수령인 전화번호': order['수령인 전화번호'] || order['수령인전화번호'] || '',
+            주소: order['수령인주소'] || order['수취인주소'] || order['주소'] || '',
+            배송메세지: order['배송메세지'] || order['배송메시지'] || '',
+            발송요청일: order['발송요청일'] || '',
+            상품금액: parseFloat(order['상품금액'] || 0),
+            _원본주문번호: order['주문번호'] // 참조용
+        };
+        
+        this.manualOrders.push(orderData);
+    });
+    
+    this.updateOrderList();
+    this.saveToCache();
+    this.showMessage(`${selectedIndices.length}건의 주문을 추가했습니다.`, 'success');
+    
+    // 모달 닫기
+    document.getElementById('unshippedOrdersModal').remove();
 },
 
 fullReset() {
