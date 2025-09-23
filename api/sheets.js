@@ -33,54 +33,71 @@ case 'saveCsRecord':
           const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
           
           console.log('CS 기록 저장 시작:', data);
-          console.log('CS 내용 필드 확인:', data['CS 내용']);
           
-          // 고정된 헤더 순서 사용
-          const headers = ['연번', '마켓명', '접수일', '해결방법', '재발송상품', '재발송수량', 
-                          'CS 내용', '부분환불금액', '결제일', '주문번호', '주문자', 
-                          '주문자 전화번호', '수령인', '수령인 전화번호', '주소', 
-                          '배송메세지', '옵션명', '수량', '특이/요청사항', '발송요청일'];
+          // 접수번호 생성 (YYYYMMDD+CS+연번)
+          const today = new Date();
+          const dateStr = today.getFullYear() + 
+            String(today.getMonth() + 1).padStart(2, '0') + 
+            String(today.getDate()).padStart(2, '0');
           
-          // 데이터 행 생성 - 디버깅 추가
-          console.log('받은 CS 데이터:', {
-            'CS 내용': data['CS 내용'],
-            '주문자 전화번호': data['주문자 전화번호'],
-            '전체 데이터': data
-          });
+          // 기존 CS기록에서 오늘 날짜의 마지막 연번 찾기
+          let csNumber = 1;
+          try {
+            const csData = await getSheetData('CS기록!B:B', ordersSpreadsheetId); // 접수번호 열
+            if (csData && csData.length > 1) {
+              for (let i = 1; i < csData.length; i++) {
+                const receiptNo = csData[i][0] || '';
+                if (receiptNo.startsWith(dateStr + 'CS')) {
+                  const num = parseInt(receiptNo.substring(dateStr.length + 2));
+                  if (!isNaN(num) && num >= csNumber) {
+                    csNumber = num + 1;
+                  }
+                }
+              }
+            }
+          } catch (err) {
+            console.log('CS 연번 확인 중 오류, 기본값 사용');
+          }
           
+          const receiptNumber = `${dateStr}CS${String(csNumber).padStart(2, '0')}`;
+          
+          // 데이터 행 생성 - 정확한 헤더 순서에 맞춤
           const rowData = [[
-            data['마켓명'] || '',
-            '', // 연번은 시트에서 자동 계산
+            '', // 연번 (시트에서 자동 계산)
+            receiptNumber, // 접수번호
+            data['마켓명'] || '', // 마켓명
             new Date().toLocaleDateString('ko-KR'), // 접수일
-            data['해결방법'] || '',
-            data['재발송상품'] || '',
-            data['재발송수량'] || '',
+            data['해결방법'] || '', // 해결방법
+            data['재발송상품'] || '', // 재발송상품
+            data['재발송수량'] || '', // 재발송수량
             data['CS 내용'] || '', // CS 내용
-            data['부분환불금액'] || '',
-            data['결제일'] || '',
-            data['주문번호'] || '',
-            data['주문자'] || '',
-            data['주문자 전화번호'] || data['주문자전화번호'] || '', // 두 가지 형태 체크
-            data['수령인'] || '',
-            data['수령인 전화번호'] || data['수령인전화번호'] || '', // 두 가지 형태 체크
-            data['주소'] || '',
-            data['배송메세지'] || '',
-            data['옵션명'] || '',
-            data['수량'] || '',
-            data['특이/요청사항'] || '',
-            data['발송요청일'] || ''
+            data['부분환불금액'] || '', // 부분환불금액
+            data['결제일'] || '', // 결제일
+            data['주문번호'] || '', // 주문번호
+            data['주문자'] || '', // 주문자
+            data['주문자 전화번호'] || '', // 주문자 전화번호
+            data['수령인'] || '', // 수령인
+            data['수령인 전화번호'] || '', // 수령인 전화번호
+            data['주소'] || '', // 주소
+            data['배송메세지'] || '', // 배송메세지
+            data['옵션명'] || '', // 옵션명
+            data['수량'] || '', // 수량
+            data['특이/요청사항'] || '', // 특이/요청사항
+            data['발송요청일'] || '', // 발송요청일
+            '접수' // 상태 (초기값: 접수)
           ]];
           
           console.log('저장할 CS 데이터:', rowData);
           
           // 데이터 저장
-          const result = await appendSheetData('CS기록!A:T', rowData, ordersSpreadsheetId);
+          const result = await appendSheetData('CS기록!A:V', rowData, ordersSpreadsheetId);
           
           console.log('CS 기록 저장 완료:', result);
           
           return res.status(200).json({
             success: true,
-            message: 'CS 기록이 저장되었습니다'
+            message: 'CS 기록이 저장되었습니다',
+            receiptNumber: receiptNumber
           });
           
         } catch (error) {
@@ -89,53 +106,6 @@ case 'saveCsRecord':
             success: false,
             error: error.message || 'CS 기록 저장 실패',
             details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-          });
-        }
-
-      case 'getNextCsNumber':
-        try {
-          const { sheetName } = req.body;
-          const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
-          
-          // 해당 날짜 시트가 있는지 확인
-          try {
-            const sheetData = await getOrderData(`${sheetName}!B:B`, ordersSpreadsheetId);
-            
-            if (sheetData && sheetData.length > 1) {
-              // B열(마켓) 데이터에서 CS로 시작하는 번호 찾기
-              let maxCsNumber = 0;
-              
-              for (let i = 1; i < sheetData.length; i++) {
-                const market = sheetData[i][0] || '';
-                if (market.startsWith('CS')) {
-                  const numberPart = parseInt(market.replace('CS', ''));
-                  if (!isNaN(numberPart) && numberPart > maxCsNumber) {
-                    maxCsNumber = numberPart;
-                  }
-                }
-              }
-              
-              const nextNumber = maxCsNumber + 1;
-              return res.status(200).json({
-                success: true,
-                csNumber: `CS${String(nextNumber).padStart(3, '0')}`
-              });
-            }
-          } catch (err) {
-            // 시트가 없는 경우
-          }
-          
-          // 기본값 반환
-          return res.status(200).json({
-            success: true,
-            csNumber: 'CS001'
-          });
-          
-        } catch (error) {
-          console.error('getNextCsNumber 오류:', error);
-          return res.status(200).json({
-            success: true,
-            csNumber: 'CS001'
           });
         }
 
@@ -895,7 +865,7 @@ case 'checkCsDuplicate':
           
           // CS기록 시트 체크
           try {
-            const csData = await getOrderData('CS기록!J:J', ordersSpreadsheetId); // 주문번호 열
+            const csData = await getSheetData('CS기록!K:K', ordersSpreadsheetId); // 주문번호 열 (K열)
             if (csData) {
               for (let i = 1; i < csData.length; i++) {
                 if (csData[i][0] === orderNumber) {
