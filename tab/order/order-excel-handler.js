@@ -1413,21 +1413,36 @@ displayResults() {
             totalWidth += width;
         });
         
-        // 테이블에 고정 레이아웃 적용
+        // 테이블 스타일 설정
         const table = document.getElementById('excelResultTable');
         if (table) {
-            table.style.tableLayout = 'fixed';
-            table.style.width = `${totalWidth}px`;
+            // 테이블 초기화
+            table.style.cssText = `
+                table-layout: fixed !important;
+                width: ${totalWidth}px !important;
+                border-collapse: collapse;
+                font-size: 13px;
+            `;
         }
 
-        // 헤더 생성 - 동적으로 매핑시트의 standardFields 사용
+        // 헤더 생성 - 인라인 스타일로 너비 강제 지정
         const headerRow = document.createElement('tr');
         this.processedData.headers.forEach((header, index) => {
             const th = document.createElement('th');
             th.textContent = header;
             
             const width = columnWidths[header] || 100;
-            th.style.width = `${width}px`;
+            th.style.cssText = `
+                width: ${width}px !important;
+                min-width: ${width}px !important;
+                max-width: ${width}px !important;
+                padding: 8px;
+                border: 1px solid #dee2e6;
+                text-align: center;
+                font-weight: 500;
+                white-space: nowrap;
+                overflow: hidden;
+            `;
             
             headerRow.appendChild(th);
         });
@@ -1475,6 +1490,20 @@ function getAlignment(fieldName) {
     this.processedData.headers.forEach((header, colIndex) => {
     const td = document.createElement('td');
     let value = row[header] || '';
+    
+    const width = columnWidths[header] || 100;
+    td.style.cssText = `
+        width: ${width}px !important;
+        min-width: ${width}px !important;
+        max-width: ${width}px !important;
+        padding: 6px 8px;
+        border: 1px solid #dee2e6;
+        white-space: nowrap;
+        background: white;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: ${getAlignment(header)};
+    `;
     
     // 열 너비는 thead에서 이미 설정됨
     td.style.textAlign = getAlignment(header);
