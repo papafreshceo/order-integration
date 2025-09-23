@@ -3056,10 +3056,7 @@ itemsToShow.forEach((item, idx) => {
                         </tr>`;
                 });
                 
-                processedMessage += '</tbody></table></div></div>';
-            }
-
-            processedMessage += '</tbody></table>';
+                processedMessage += '</tbody></table>';
 
 // 10개 이상일 경우 추가 메시지
 if (remainingCount > 0) {
@@ -3072,7 +3069,7 @@ if (remainingCount > 0) {
 }
 
 processedMessage += '</div></div>';
-
+            }
             processedMessage += `<div style="margin-top: 20px; padding: 16px; background: #fef3c7; border-radius: 8px; text-align: center;">
                 <span style="color: #d97706; font-size: 14px; font-weight: 500;">⚠️ ${line}</span>
             </div>`;
