@@ -283,23 +283,53 @@ const nextSerial = existingRows ? existingRows.length : 1;
           
           // 6. 데이터 행 생성
 const rowData = headers.map(header => {
-    if (header === '연번') {
+    // header가 문자열이 아닌 경우 처리
+    const headerStr = String(header || '');
+    
+    if (headerStr === '연번') {
         return nextSerial;
     }
-    if (header === '마켓') {
+    if (headerStr === '마켓') {
         return csMarketNumber;  // CS001, CS002...
     }
-    if (header === '주문번호') {
+    if (headerStr === '주문번호') {
         return csOrderNumber;  // CS 주문번호 사용
     }
-    if (header === '발송요청일') {
-    return data['발송요청일'] || '';  // 비어있으면 빈 값으로
+    if (headerStr === '발송요청일') {
+        return data['발송요청일'] || '';  // 비어있으면 빈 값으로
     }
     
     // 제품 정보에서 가져올 필드들
-    if (productInfo[header]) {
-        return productInfo[header];
+    if (productInfo[headerStr]) {
+        return productInfo[headerStr];
     }
+    
+    // 헤더명 정규화하여 데이터 매칭
+    const normalizedHeader = headerStr.replace(/\s/g, '').replace(/[_-]/g, '');
+    
+    // 먼저 정확한 매칭 시도
+    if (data[headerStr] !== undefined) {
+        return data[headerStr] || '';
+    }
+    
+    // 정규화된 키로 매칭
+    for (const key of Object.keys(data)) {
+        const normalizedKey = key.replace(/\s/g, '').replace(/[_-]/g, '');
+        if (normalizedKey === normalizedHeader) {
+            return data[key] || '';
+        }
+    }
+    
+    // 특수 케이스 처리
+    if (headerStr === '주문자전화번호' && data['주문자 전화번호']) {
+        return data['주문자 전화번호'];
+    }
+    if (headerStr === '수령인전화번호' && data['수령인 전화번호']) {
+        return data['수령인 전화번호'];
+    }
+    
+    return '';
+});
     
     // 헤더명 정규화하여 데이터 매칭 - 공백 포함/제거 둘 다 체크
 const normalizedHeader = header.replace(/\s/g, '').replace(/[_-]/g, '');
