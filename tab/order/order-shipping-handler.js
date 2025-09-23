@@ -607,8 +607,8 @@ window.OrderShippingHandler = {
                                     </svg>
                                     적용
                                 </button>
-                                <button class="btn-action" onclick="OrderShippingHandler.openBulkUploadModal()" style="margin-left: 8px;">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <button class="btn-action" onclick="OrderShippingHandler.openBulkUploadModal()" style="margin-left: 8px; border: 1px solid #2563eb; color: #2563eb;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
                                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                         <polyline points="17 8 12 3 7 8"></polyline>
                                         <line x1="12" y1="3" x2="12" y2="15"></line>
