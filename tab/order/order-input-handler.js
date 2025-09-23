@@ -1113,17 +1113,19 @@ async loadUnshippedOrders() {
     
     try {
         const allUnshippedOrders = [];
-        const sheetDates = [];
+        const foundSheets = [];
+        let daysBack = 0;
+        const maxDaysToCheck = 10; // 최대 10일까지 확인 (연휴 대비)
         
-        // 최근 3일간의 시트 조회
-        for (let i = 1; i <= 3; i++) {
+        // 실제로 존재하는 최근 3개 시트 찾기
+        while (foundSheets.length < 3 && daysBack < maxDaysToCheck) {
             const targetDate = new Date();
-            targetDate.setDate(targetDate.getDate() - i);
+            targetDate.setDate(targetDate.getDate() - daysBack);
             const sheetName = targetDate.getFullYear() + 
                              String(targetDate.getMonth() + 1).padStart(2, '0') + 
                              String(targetDate.getDate()).padStart(2, '0');
             
-            sheetDates.push(sheetName);
+            console.log(`시트 확인 중: ${sheetName}`);
             
             const response = await fetch('/api/sheets', {
                 method: 'POST',
@@ -1137,7 +1139,11 @@ async loadUnshippedOrders() {
             
             const result = await response.json();
             
-            if (result.success && result.data) {
+            // 시트가 존재하고 데이터가 있는 경우만 처리
+            if (result.success && result.data && result.data.length > 0) {
+                foundSheets.push(sheetName);
+                console.log(`유효한 시트 발견: ${sheetName}`);
+                
                 // CS발송, 전화주문 중 미발송 주문만 필터링
                 const unshipped = result.data.filter(order => {
                     const isTargetMarket = order['마켓명'] === 'CS발송' || order['마켓명'] === '전화주문';
@@ -1145,15 +1151,21 @@ async loadUnshippedOrders() {
                     return isTargetMarket && hasNoTracking;
                 });
                 
+                console.log(`${sheetName}: 미발송 ${unshipped.length}건`);
+                
                 unshipped.forEach(order => {
-                    order._sheetDate = sheetName; // 시트 날짜 추가
+                    order._sheetDate = sheetName;
                     allUnshippedOrders.push(order);
                 });
             }
+            
+            daysBack++;
         }
         
+        console.log(`조회 완료: ${foundSheets.length}개 시트에서 총 ${allUnshippedOrders.length}건`);
+        
         if (allUnshippedOrders.length === 0) {
-            this.showMessage('최근 3일간 미발송 주문이 없습니다.', 'info');
+            this.showMessage(`최근 ${foundSheets.length}개 시트에 미발송 주문이 없습니다.`, 'info');
             return;
         }
         
