@@ -2072,26 +2072,25 @@ window.OrderShippingHandler = {
             message.classList.remove('show');
         }, 3000);
     },
+    // fullReset 추가
+fullReset() {
+    // 모든 데이터 초기화
+    this.manualOrders = [];
+    this.tempAddressData = {};
+    this.productData = {};
     
-    // OrderShippingHandler용 fullReset
-    fullReset() {
-        // 모든 데이터 초기화
-        this.currentOrders = [];
-        this.bulkUploadData = [];
-        this.marketFormats = {};
-        this.marketColors = {};
-        this.currentFilter = 'all';
-        this.currentSearch = '';
-        
-        // DOM 완전 재렌더링
-        const container = document.getElementById('om-panel-shipping');
-        if (container) {
-            container.innerHTML = '';
-            this.render();
-            this.loadTodayOrders();
-            this.loadMarketFormats();
-        }
-        
-        console.log('OrderShippingHandler 완전 초기화 완료');
+    // 캐시 삭제
+    this.clearCache();
+    
+    // DOM 완전 재렌더링
+    const container = document.getElementById('om-panel-input');
+    if (container) {
+        container.innerHTML = '';
+        this.render();
+        this.setupEventListeners();
+        this.loadProductData();
     }
+    
+    console.log('OrderInputHandler 완전 초기화 완료');
+}
 };
