@@ -331,33 +331,8 @@ const rowData = headers.map(header => {
     return '';
 });
     
-    // 헤더명 정규화하여 데이터 매칭 - 공백 포함/제거 둘 다 체크
-const normalizedHeader = header.replace(/\s/g, '').replace(/[_-]/g, '');
 
-// 먼저 정확한 매칭 시도
-if (data[header] !== undefined) {
-    return data[header] || '';
-}
 
-// 정규화된 키로 매칭
-for (const key of Object.keys(data)) {
-    const normalizedKey = key.replace(/\s/g, '').replace(/[_-]/g, '');
-    if (normalizedKey === normalizedHeader) {
-        return data[key] || '';
-    }
-}
-
-// 특수 케이스 처리
-if (header === '주문자전화번호' && data['주문자 전화번호']) {
-    return data['주문자 전화번호'];
-}
-if (header === '수령인전화번호' && data['수령인 전화번호']) {
-    return data['수령인 전화번호'];
-}
-    
-    return data[header] || '';
-});
-          
           console.log('저장할 CS 주문 데이터:', rowData);
           
           // 6. 데이터 저장
