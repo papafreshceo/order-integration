@@ -2126,6 +2126,8 @@ existingMap.forEach((value, key) => {
     console.log(`  [${value}] ${key}`);
 });
 
+
+
 console.log('신규 데이터 처리 과정:');
 this.processedData.data.forEach((row, idx) => {
     const key = createKey(row);
@@ -2167,143 +2169,156 @@ if (newRows.length > 0) {
     });
 }
 
+// ===== 위 유지코드 5줄 ===== //
+    newRows.slice(0, 5).forEach((row, idx) => {
+        const key = createKey(row);
+        console.log(`신규 ${idx + 1}: 키=${key}`);
+        console.log(`  주문번호=${row['주문번호']}, 수령인=${row['수령인'] || row['수취인']}, 마켓=${row['마켓']}`);
+    });
+}
+
+// ===== 1번 코드 시작 ===== //
 console.log('=========================');
 // ===== 디버깅 코드 끝 =====
 
 
 // 중복이 있는 경우 사용자에게 확인
 if (duplicateKeys.length > 0) {
-const duplicateMessage = `⚠️ 중복 주문 발견\n\n` +
-    `기존 시트에서 ${duplicateKeys.length}건의 중복을 발견했습니다.\n` +
-    `━━━━━━━━━━━━━━━━━━━━\n\n` +
-`📋 중복 주문 상세 (총 ${duplicateKeys.length}건)\n` +
-duplicateKeys.map((d, idx) => {
-    const row = d.row;
-    return `${idx + 1}. 주문번호: ${row['주문번호']}\n   수령인: ${row['수령인'] || row['수취인']}\n   마켓: ${row['마켓']}`;
-}).join('\n\n') +
-    `\n\n━━━━━━━━━━━━━━━━━━━━\n` +
-    `선택 옵션:\n` +
-    `• 확인: 중복 주문을 덮어씁니다\n` +
-    `• 취소: 중복을 제외하고 신규만 추가합니다\n\n` +
-    `중복된 주문을 덮어쓰시겠습니까?`;
+    const confirmMessage = 
+        `📊 중복 확인\n\n` +
+        `🔍 중복 발견: ${duplicateKeys.length}건\n` +
+        `✅ 신규 추가: ${newRows.length}건\n\n` +
+        `📋 중복 주문 상세 (총 ${duplicateKeys.length}건)\n` +
+        duplicateKeys.map((d, idx) => {
+            const row = d.row;
+            return `${idx + 1}. 주문번호: ${row['주문번호'] || '(없음)'}
+   마켓명: ${row['마켓명'] || '-'}
+   주문자: ${row['주문자'] || '-'}
+   수령인: ${row['수령인'] || row['수취인'] || '-'}
+   옵션명: ${row['옵션명'] || '-'}`;
+        }).join('\n\n') +
+        `\n\n중복된 주문을 덮어쓰시겠습니까?`;
     
-    const overwrite = confirm(duplicateMessage);
+    // Promise와 함께 컨펌 모달 표시
+    const shouldOverwrite = await new Promise((resolve) => {
+        this.showConfirmModal(confirmMessage, 
+            () => resolve(true),   // 덮어쓰기 선택
+            () => resolve(false)   // 취소 선택
+        );
+    });
     
-    if (overwrite) {
-        // 덮어쓰기 선택
-        duplicateKeys.forEach(d => {
-            updateRows.push({
-                index: d.index,
-                data: d.row
-            });
+    if (shouldOverwrite) {
+        // 덮어쓰기 처리
+        duplicateKeys.forEach(({ key, row, index }) => {
+            updateRows.push({ index, data: row });
         });
-        console.log(`사용자가 덮어쓰기 선택: ${updateRows.length}건`);
+        console.log(`사용자가 덮어쓰기 선택: ${duplicateKeys.length}건`);
     } else {
-        // 덮어쓰기 거부 - 중복은 제외
-        console.log(`사용자가 덮어쓰기 거부: 중복 ${duplicateKeys.length}건 제외`);
+        // 덮어쓰기 거부 - 신규만 추가
+        console.log('사용자가 덮어쓰기 거부');
+        // updateRows는 비워둠 (덮어쓰기 안함)
     }
 }
 
 console.log(`최종 처리: 덮어쓰기 ${updateRows.length}건, 신규 추가 ${newRows.length}건`);
         
-        // 헤더 행 준비
-        const headers = this.processedData.headers || this.mappingData.standardFields;
-        
-        // 전체 데이터 구성 (기존 + 업데이트 + 신규)
-        const finalData = [...existingData];
-        
-        // 덮어쓰기 처리
-        updateRows.forEach(({index, data}) => {
-            finalData[index] = data;
-        });
-        
-        // 신규 데이터 추가
-        finalData.push(...newRows);
-        
-        // 시트 데이터 준비 (헤더 + 데이터)
-        const values = [headers];
-        finalData.forEach(row => {
-            const rowValues = headers.map(header => {
-                const value = row[header];
-                return value !== undefined && value !== null ? String(value) : '';
-            });
-            values.push(rowValues);
-        });
-        
-        // 마켓 색상 매핑 준비
-        const marketColors = {};
-        if (this.mappingData && this.mappingData.markets) {
-            Object.entries(this.mappingData.markets).forEach(([marketName, market]) => {
-                if (market.color) {
-                    const rgb = market.color.split(',').map(Number);
-                    const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
-                    marketColors[marketName] = {
-                        color: market.color,
-                        textColor: brightness > 128 ? '#000' : '#fff'
-                    };
-                }
-            });
+// 헤더 행 준비
+const headers = this.processedData.headers || this.mappingData.standardFields;
+
+// 전체 데이터 구성 (기존 + 업데이트 + 신규)
+const finalData = [...existingData];
+
+// 덮어쓰기 처리
+updateRows.forEach(({index, data}) => {
+    finalData[index] = data;
+});
+
+// 신규 데이터 추가
+finalData.push(...newRows);
+
+// 시트 데이터 준비 (헤더 + 데이터)
+const values = [headers];
+finalData.forEach(row => {
+    const rowValues = headers.map(header => {
+        const value = row[header];
+        return value !== undefined && value !== null ? String(value) : '';
+    });
+    values.push(rowValues);
+});
+
+// 마켓 색상 매핑 준비
+const marketColors = {};
+if (this.mappingData && this.mappingData.markets) {
+    Object.entries(this.mappingData.markets).forEach(([marketName, market]) => {
+        if (market.color) {
+            const rgb = market.color.split(',').map(Number);
+            const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+            marketColors[marketName] = {
+                color: market.color,
+                textColor: brightness > 128 ? '#000' : '#fff'
+            };
         }
-        
-        // API 호출 - 전체 시트 덮어쓰기
-        const response = await fetch(`${this.API_BASE}/api/sheets`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-    action: 'saveToSheet',
-    sheetName: sheetName,
-    values: values,
-    marketColors: marketColors,
-    spreadsheetId: '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg',
-    forceTextColumns: ['수령인', '수취인', '주문자전화번호', '수취인전화번호', '수령인전화번호']  // 텍스트로 저장할 컬럼 지정
-})
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
+    });
+}
+
+// API 호출 - 전체 시트 덮어쓰기
+const response = await fetch(`${this.API_BASE}/api/sheets`, {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        action: 'saveToSheet',
+        sheetName: sheetName,
+        values: values,
+        marketColors: marketColors,
+        spreadsheetId: '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg',
+        forceTextColumns: ['수령인', '수취인', '주문자전화번호', '수취인전화번호', '수령인전화번호']
+    })
+});
+
+const result = await response.json();
+
+// ===== 2번 코드 시작 ===== //
+if (result.success) {
     // 실제 처리된 건수 계산
     const duplicateNotSaved = duplicateKeys.length - updateRows.length;
     const totalOrderCount = finalData.length;
     
-    // 중복 주문 상세 정보 생성 (최대 5개)
+    // 중복 주문 상세 정보 생성
     let duplicateDetails = '';
     if (duplicateKeys.length > 0) {
-        duplicateDetails = `\n📋 중복 주문 상세\n` +
-                          `━━━━━━━━━━━━━━━━━━━━\n`;
-        
+        duplicateDetails = `\n📋 중복 주문 상세\n━━━━━━━━━━━━━━━━━━━━\n`;
         duplicateKeys.forEach((d, idx) => {
-    const row = d.row;
-    duplicateDetails += `${idx + 1}. 주문번호: ${row['주문번호']}\n` +
-                       `   수령인: ${row['수령인'] || row['수취인']}\n` +
-                       `   옵션명: ${row['옵션명']}\n` +
-                       `   상태: ${updateRows.some(u => u.index === d.index) ? '✅ 덮어쓰기됨' : '❌ 제외됨'}\n\n`;
-});
+            const row = d.row;
+            duplicateDetails += `${idx + 1}. 주문번호: ${row['주문번호'] || '(없음)'}
+   마켓명: ${row['마켓명'] || '-'}
+   주문자: ${row['주문자'] || '-'}
+   수령인: ${row['수령인'] || row['수취인'] || '-'}
+   옵션명: ${row['옵션명'] || '-'}
+   상태: ${updateRows.some(u => u.index === d.index) ? '✅ 덮어쓰기됨' : '❌ 제외됨'}\n\n`;
+        });
     }
-    
-    const message = `구글 시트 "${sheetName}" 저장 완료\n\n` +
-                   `📊 처리 결과\n` +
-                   `━━━━━━━━━━━━━━━━━━━━\n` +
-                   `✅ 신규 추가: ${newRows.length}건\n` +
-                   `🔍 중복 발견: ${duplicateKeys.length}건\n` +
-                   (updateRows.length > 0 ? `  ㄴ 🔄 덮어쓰기: ${updateRows.length}건\n` : '') +
-                   (duplicateNotSaved > 0 ? `  ㄴ ⚠️ 미저장: ${duplicateNotSaved}건\n` : '') +
-                   duplicateDetails +
-                   `\n📈 최종 현황\n` +
-                   `━━━━━━━━━━━━━━━━━━━━\n` +
-                   `• 처리 전 주문: ${existingData.length}건\n` +
-                   `• 처리 후 주문: ${totalOrderCount}건\n` +
-                   `• 증가: +${totalOrderCount - existingData.length}건`;
+
+    const message = 
+        `📊 처리 결과\n━━━━━━━━━━━━━━━━━━━━\n` +
+        `✅ 신규 추가: ${result.newRows || newRows.length}건\n` +
+        `🔍 중복 발견: ${duplicateKeys.length}건\n` +
+        `  ㄴ 🔄 덮어쓰기: ${updateRows.length}건\n` +
+        duplicateDetails +
+        `\n📈 최종 현황\n━━━━━━━━━━━━━━━━━━━━\n` +
+        `• 처리 전 주문: ${existingData.length}건\n` +
+        `• 처리 후 주문: ${result.totalRows || finalData.length - 1}건\n` +
+        `• 증가: +${(result.newRows || newRows.length)}건`;
     
     this.showCenterMessage(message, 'success');
     console.log(message.replace(/\n/g, ' '));
 } else {
-            console.error('시트 저장 실패:', result.error);
-            this.showCenterMessage('시트 저장 실패: ' + (result.error || '알 수 없는 오류'), 'error');
-        }
-        
+    console.error('시트 저장 실패:', result.error);
+    this.showCenterMessage('시트 저장 실패: ' + (result.error || '알 수 없는 오류'), 'error');
+}
+
+// ===== 아래 유지코드 5줄 ===== //
     } catch (error) {
         console.error('저장 중 오류:', error);
         this.showCenterMessage('저장 중 오류 발생: ' + error.message, 'error');
@@ -2338,6 +2353,241 @@ showCenterMessage(message, type, autoClose = false) {
         animation: fadeIn 0.3s ease;
     `;
     
+    showConfirmModal(message, onConfirm, onCancel) {
+    // 기존 모달 제거
+    const existingModal = document.getElementById('confirmModal');
+    if (existingModal) existingModal.remove();
+    
+    // 모달 배경
+    const modalBackdrop = document.createElement('div');
+    modalBackdrop.id = 'confirmModal';
+    modalBackdrop.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        animation: fadeIn 0.3s ease;
+    `;
+    
+    // 모달 컨테이너
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: #ffffff;
+        border-radius: 16px;
+        min-width: 700px;
+        max-width: 900px;
+        width: 80%;
+        max-height: 70vh;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: slideUp 0.3s ease;
+    `;
+    
+    // 메시지 파싱
+    const lines = message.split('\n');
+    let processedMessage = '<div style="padding: 24px;">';
+    let duplicateItems = [];
+    let currentItem = null;
+    let inDuplicateSection = false;
+    
+    lines.forEach(line => {
+        if (line.includes('중복 주문 상세')) {
+            processedMessage += `<h3 style="margin: 20px 0 12px; font-size: 16px; font-weight: 600; color: #212529;">${line}</h3>`;
+            inDuplicateSection = true;
+            duplicateItems = [];
+            currentItem = null;
+        } else if (line.includes('중복된 주문을 덮어쓰시겠습니까')) {
+            if (inDuplicateSection && duplicateItems.length > 0) {
+                // 중복 테이블 생성
+                processedMessage += `
+                    <div style="border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+                        <div style="max-height: 250px; overflow-y: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                                <thead style="position: sticky; top: 0; background: #f8f9fa;">
+                                    <tr>
+                                        <th style="padding: 8px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6; width: 35px;">#</th>
+                                        <th style="padding: 8px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">주문번호</th>
+                                        <th style="padding: 8px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">마켓명</th>
+                                        <th style="padding: 8px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">주문자</th>
+                                        <th style="padding: 8px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">수령인</th>
+                                        <th style="padding: 8px; text-align: left; font-weight: 500; border-bottom: 1px solid #dee2e6;">옵션명</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+                
+                duplicateItems.forEach((item, idx) => {
+                    const rowBg = idx % 2 === 0 ? '#ffffff' : '#fafafa';
+                    processedMessage += `
+                        <tr style="background: ${rowBg};">
+                            <td style="padding: 6px 8px; border-bottom: 1px solid #f1f3f5;">${item.num}</td>
+                            <td style="padding: 6px 8px; border-bottom: 1px solid #f1f3f5; font-family: monospace; font-size: 11px;">
+                                ${item.orderNo || '(없음)'}
+                            </td>
+                            <td style="padding: 6px 8px; border-bottom: 1px solid #f1f3f5;">${item.marketName || '-'}</td>
+                            <td style="padding: 6px 8px; border-bottom: 1px solid #f1f3f5;">${item.orderer || '-'}</td>
+                            <td style="padding: 6px 8px; border-bottom: 1px solid #f1f3f5;">${item.recipient || '-'}</td>
+                            <td style="padding: 6px 8px; border-bottom: 1px solid #f1f3f5; font-size: 11px;">${item.option || '-'}</td>
+                        </tr>`;
+                });
+                
+                processedMessage += '</tbody></table></div></div>';
+            }
+            processedMessage += `<div style="margin-top: 20px; padding: 16px; background: #fef3c7; border-radius: 8px; text-align: center;">
+                <span style="color: #d97706; font-size: 14px; font-weight: 500;">⚠️ ${line}</span>
+            </div>`;
+            inDuplicateSection = false;
+        } else if (line.trim()) {
+            if (inDuplicateSection) {
+                const trimmedLine = line.trim();
+                
+                if (/^\d+\./.test(trimmedLine)) {
+                    if (currentItem) {
+                        duplicateItems.push(currentItem);
+                    }
+                    currentItem = { 
+                        num: trimmedLine.match(/^\d+/)[0],
+                        orderNo: '',
+                        marketName: '',
+                        orderer: '',
+                        recipient: '',
+                        option: ''
+                    };
+                    
+                    if (trimmedLine.includes('주문번호:')) {
+                        const parts = trimmedLine.split('주문번호:');
+                        if (parts[1]) {
+                            currentItem.orderNo = parts[1].trim().split(/\s{2,}/)[0] || '';
+                        }
+                    }
+                } else if (currentItem) {
+                    if (trimmedLine.includes('주문번호:') && !currentItem.orderNo) {
+                        currentItem.orderNo = trimmedLine.split('주문번호:')[1]?.trim() || '';
+                    } else if (trimmedLine.includes('마켓명:')) {
+                        currentItem.marketName = trimmedLine.split('마켓명:')[1]?.trim() || '';
+                    } else if (trimmedLine.includes('주문자:')) {
+                        currentItem.orderer = trimmedLine.split('주문자:')[1]?.trim() || '';
+                    } else if (trimmedLine.includes('수령인:')) {
+                        currentItem.recipient = trimmedLine.split('수령인:')[1]?.trim() || '';
+                    } else if (trimmedLine.includes('옵션명:')) {
+                        currentItem.option = trimmedLine.split('옵션명:')[1]?.trim() || '';
+                    }
+                }
+            } else {
+                // 일반 텍스트 - 통계 정보
+                if (line.includes(':')) {
+                    const [label, value] = line.split(':').map(s => s.trim());
+                    
+                    if (label.includes('중복 발견')) {
+                        processedMessage += `
+                            <div style="display: inline-block; margin: 8px; padding: 12px 20px; background: #fef3c7; border-radius: 8px;">
+                                <span style="font-size: 12px; color: #92400e;">중복 발견</span>
+                                <div style="font-size: 24px; font-weight: 600; color: #d97706; margin-top: 4px;">${value}</div>
+                            </div>`;
+                    } else if (label.includes('신규 추가')) {
+                        processedMessage += `
+                            <div style="display: inline-block; margin: 8px; padding: 12px 20px; background: #d1fae5; border-radius: 8px;">
+                                <span style="font-size: 12px; color: #14532d;">신규 추가</span>
+                                <div style="font-size: 24px; font-weight: 600; color: #059669; margin-top: 4px;">${value}</div>
+                            </div>`;
+                    }
+                } else if (!line.includes('📊') && !line.includes('📋')) {
+                    processedMessage += `<div style="margin-bottom: 8px; font-size: 14px; color: #495057;">${line}</div>`;
+                }
+            }
+        }
+    });
+    
+    if (currentItem && inDuplicateSection) {
+        duplicateItems.push(currentItem);
+    }
+    
+    processedMessage += '</div>';
+    
+    // HTML 구성
+    modalContent.innerHTML = `
+        <div style="
+            padding: 20px 24px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 32px;">⚠️</span>
+                <h2 style="margin: 0; font-size: 18px; font-weight: 600;">중복 확인</h2>
+            </div>
+        </div>
+        
+        <div style="max-height: calc(70vh - 180px); overflow-y: auto;">
+            ${processedMessage}
+        </div>
+        
+        <div style="
+            padding: 20px 24px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        ">
+            <button id="confirmCancel" style="
+                padding: 10px 28px;
+                background: #ffffff;
+                color: #495057;
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+            ">취소</button>
+            <button id="confirmOK" style="
+                padding: 10px 28px;
+                background: #f59e0b;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+            ">덮어쓰기</button>
+        </div>`;
+    
+    modalBackdrop.appendChild(modalContent);
+    document.body.appendChild(modalBackdrop);
+    
+    // 버튼 이벤트
+    document.getElementById('confirmOK').onclick = () => {
+        modalBackdrop.remove();
+        if (onConfirm) onConfirm();
+    };
+    
+    document.getElementById('confirmCancel').onclick = () => {
+        modalBackdrop.remove();
+        if (onCancel) onCancel();
+    };
+    
+    // 애니메이션 스타일
+    if (!document.getElementById('modalAnimations')) {
+        const style = document.createElement('style');
+        style.id = 'modalAnimations';
+        style.textContent = `
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        `;
+        document.head.appendChild(style);
+    }
+},
+
+
     // 모달 컨테이너
     const modalContent = document.createElement('div');
     modalContent.style.cssText = `
