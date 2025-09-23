@@ -1823,8 +1823,97 @@ async loadVendorTemplates() {
             // 엑셀 데이터 생성
             const exportData = this.mapVendorData(unshippedOrders, template);
             
-            // 엑셀 파일 생성
+            // 엑셀 파일 생성 (헤더 포함)
+            const headers = Object.keys(exportData[0] || {});
             const ws = XLSX.utils.json_to_sheet(exportData);
+            
+            // 열 너비 자동 조정
+            const colWidths = [];
+            headers.forEach((header, idx) => {
+                let maxWidth = header.length;
+                exportData.forEach(row => {
+                    const cellValue = String(row[header] || '');
+                    if (cellValue.length > maxWidth) {
+                        maxWidth = cellValue.length;
+                    }
+                });
+                // 최소 8, 최대 50 너비로 제한
+                colWidths.push({ wch: Math.min(Math.max(maxWidth + 2, 8), 50) });
+            });
+            ws['!cols'] = colWidths;
+            
+            // 범위 설정
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            
+            // 스타일 적용
+            for (let R = range.s.r; R <= range.e.r; R++) {
+                for (let C = range.s.c; C <= range.e.c; C++) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                    
+                    if (!ws[cellAddress]) {
+                        ws[cellAddress] = { t: 's', v: '' };
+                    }
+                    
+                    if (!ws[cellAddress].s) {
+                        ws[cellAddress].s = {};
+                    }
+                    
+                    // 헤더 행 (첫 번째 행)
+                    if (R === 0) {
+                        ws[cellAddress].s = {
+                            fill: {
+                                patternType: 'solid',
+                                fgColor: { rgb: '87CEEB' } // 하늘색
+                            },
+                            alignment: {
+                                horizontal: 'center',
+                                vertical: 'center'
+                            },
+                            font: {
+                                bold: true,
+                                color: { rgb: '000000' }
+                            },
+                            border: {
+                                top: { style: 'thin', color: { rgb: '000000' } },
+                                left: { style: 'thin', color: { rgb: '000000' } },
+                                bottom: { style: 'thin', color: { rgb: '000000' } },
+                                right: { style: 'thin', color: { rgb: '000000' } }
+                            }
+                        };
+                    } else {
+                        // 데이터 행
+                        const header = headers[C];
+                        const cellValue = exportData[R - 1][header];
+                        
+                        // 기본 스타일
+                        ws[cellAddress].s = {
+                            alignment: {
+                                vertical: 'center'
+                            },
+                            border: {
+                                top: { style: 'thin', color: { rgb: 'D3D3D3' } },
+                                left: { style: 'thin', color: { rgb: 'D3D3D3' } },
+                                bottom: { style: 'thin', color: { rgb: 'D3D3D3' } },
+                                right: { style: 'thin', color: { rgb: 'D3D3D3' } }
+                            }
+                        };
+                        
+                        // 수량 필드 처리
+                        if (header === '수량' || header.includes('수량') || header === '내품수량1' || header === '상품수량') {
+                            ws[cellAddress].s.alignment.horizontal = 'center';
+                            
+                            const quantity = parseInt(cellValue);
+                            if (quantity >= 2) {
+                                ws[cellAddress].s.fill = {
+                                    patternType: 'solid',
+                                    fgColor: { rgb: 'FFB6C1' } // 분홍색
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, '발송처리');
             
@@ -1835,8 +1924,13 @@ async loadVendorTemplates() {
                            String(today.getDate()).padStart(2, '0');
             const fileName = template.fileName.replace('{날짜}', dateStr);
             
-            // 다운로드
-            XLSX.writeFile(wb, fileName);
+            // 다운로드 (스타일 포함)
+            XLSX.writeFile(wb, fileName, { 
+                bookType: 'xlsx',
+                bookSST: false,
+                type: 'binary',
+                cellStyles: true
+            });
             
             this.showMessage(`${vendorName} 발송파일이 다운로드되었습니다. (${unshippedOrders.length}건)`, 'success');
             
