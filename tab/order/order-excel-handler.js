@@ -1399,13 +1399,14 @@ setTimeout(() => {
     
     
 displayResults() {
+// ===== 위 유지코드: displayResults() { =====
     const resultSection = document.getElementById('resultSection');
     resultSection.style.display = 'block';
         
         const thead = document.getElementById('excelResultHead');
- const tbody = document.getElementById('excelResultBody');
+        const tbody = document.getElementById('excelResultBody');
         
-// 고정 열너비 설정
+        // 고정 열너비 설정 (숫자로)
         const fixedWidths = {
             '연번': 50,
             '마켓명': 100,
@@ -1498,6 +1499,7 @@ displayResults() {
         
         thead.innerHTML = '';
         thead.appendChild(headerRow);
+
         
         // 마켓 순서대로 정렬
 if (this.mappingData && this.mappingData.marketOrder && this.mappingData.marketOrder.length > 0) {
