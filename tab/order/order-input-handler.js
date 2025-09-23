@@ -7,7 +7,7 @@ window.OrderInputHandler = {
     this.render();
     await this.loadProductData();
     this.setupEventListeners();
-    this.loadFromCache(); // 캐시에서 주문 로드
+    await this.loadTempOrders(); // 임시저장 불러오기로 변경
     console.log('OrderInputHandler 초기화 완료');
 },
     
@@ -569,6 +569,89 @@ input[type="number"] {
         }
     },
     
+
+// loadProductData 함수 끝나는 부분 뒤에 추가
+async loadTempOrders() {
+    try {
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'getTempOrders',
+                userEmail: window.currentUser?.email || 'unknown'
+            })
+        });
+        
+        const result = await response.json();
+        if (result.success && result.orders) {
+            this.manualOrders = result.orders;
+            this.updateOrderList();
+            console.log(`임시저장된 ${this.manualOrders.length}건의 주문 로드됨`);
+        }
+    } catch (error) {
+        console.error('임시저장 로드 실패:', error);
+    }
+},
+
+async saveTempOrder(orderData) {
+    try {
+        const tempData = [
+            window.currentUser?.email || 'unknown',
+            new Date().toISOString(),
+            orderData.마켓명,
+            orderData.옵션명,
+            orderData.수량,
+            orderData.단가,
+            orderData.택배비,
+            orderData.상품금액,
+            orderData.주문자,
+            orderData['주문자 전화번호'],
+            orderData.수령인,
+            orderData['수령인 전화번호'],
+            orderData.주소,
+            orderData.배송메세지,
+            orderData.발송요청일 || ''
+        ];
+        
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'appendToSheet',
+                spreadsheetId: 'orders',
+                sheetName: '임시저장',
+                values: [tempData]
+            })
+        });
+        
+        const result = await response.json();
+        return result.success;
+    } catch (error) {
+        console.error('임시저장 실패:', error);
+        return false;
+    }
+},
+
+async deleteTempOrders() {
+    try {
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'deleteTempOrders',
+                userEmail: window.currentUser?.email || 'unknown'
+            })
+        });
+        
+        const result = await response.json();
+        return result.success;
+    } catch (error) {
+        console.error('임시저장 삭제 실패:', error);
+        return false;
+    }
+},
+
+
 setupEventListeners() {
     // 상품 검색 이벤트 리스너 추가
     const searchInput = document.getElementById('inputProductSearch');
@@ -883,11 +966,17 @@ searchProduct() {
         
         orderData['상품금액'] = (orderData.단가 * orderData.수량) + orderData.택배비;
         
-        this.manualOrders.push(orderData);
-this.updateOrderList();
-this.resetForm();
-this.saveToCache(); // 캐시에 저장
-this.showMessage(`주문이 추가되었습니다. (총 ${this.manualOrders.length}건)`, 'success');
+        // 임시저장에 추가
+const saved = await this.saveTempOrder(orderData);
+
+if (saved) {
+    this.manualOrders.push(orderData);
+    this.updateOrderList();
+    this.resetForm();
+    this.showMessage(`주문이 추가되었습니다. (총 ${this.manualOrders.length}건)`, 'success');
+} else {
+    this.showMessage('주문 추가 중 오류가 발생했습니다.', 'error');
+}
     },
     
     updateOrderList() {
@@ -1057,14 +1146,14 @@ async saveOrders() {
         const result = await response.json();
         
         if (result.success) {
-            this.showMessage(`${this.manualOrders.length}건의 주문이 저장되었습니다.`, 'success');
-            
-            // 저장 성공 시 캐시와 목록 모두 초기화
-            this.manualOrders = [];
-            this.updateOrderList();
-            this.resetForm();
-            this.clearCache(); // 캐시 완전 삭제
-        } else {
+    // 임시저장 삭제
+    await this.deleteTempOrders();
+    
+    this.showMessage(`${this.manualOrders.length}건의 주문이 저장되었습니다.`, 'success');
+    this.manualOrders = [];
+    this.updateOrderList();
+    this.resetForm();
+} else {
             throw new Error(result.error || '저장 실패');
         }
         
@@ -1081,28 +1170,7 @@ async saveOrders() {
     }
 }, // 여기에 콤마 추가
 
-saveToCache() {
-    localStorage.setItem('orderInputHandler_orders', JSON.stringify(this.manualOrders));
-},
 
-// 로컬 스토리지에서 주문 로드
-loadFromCache() {
-    const cached = localStorage.getItem('orderInputHandler_orders');
-    if (cached) {
-        try {
-            this.manualOrders = JSON.parse(cached);
-            this.updateOrderList();
-            console.log(`캐시에서 ${this.manualOrders.length}건의 주문 로드됨`);
-        } catch (error) {
-            console.error('캐시 로드 실패:', error);
-        }
-    }
-},
-
-// 캐시 삭제
-clearCache() {
-    localStorage.removeItem('orderInputHandler_orders');
-},
 
 async loadUnshippedOrders() {
     const loadButton = document.querySelector('.btn-load-unshipped');

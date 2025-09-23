@@ -1013,6 +1013,83 @@ const rowData = headers.map(header => {
           });
         }
 
+
+
+
+        case 'getTempOrders':
+    try {
+        const { userEmail } = req.body;
+        const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
+        const tempData = await getOrderData('임시저장!A:O', ordersSpreadsheetId);
+        
+        if (!tempData || tempData.length < 2) {
+            return res.status(200).json({ success: true, orders: [] });
+        }
+        
+        const userOrders = [];
+        for (let i = 1; i < tempData.length; i++) {
+            if (tempData[i][0] === userEmail) {
+                userOrders.push({
+                    마켓명: tempData[i][2],
+                    옵션명: tempData[i][3],
+                    수량: parseInt(tempData[i][4]) || 1,
+                    단가: parseFloat(tempData[i][5]) || 0,
+                    택배비: parseFloat(tempData[i][6]) || 0,
+                    상품금액: parseFloat(tempData[i][7]) || 0,
+                    주문자: tempData[i][8],
+                    '주문자 전화번호': tempData[i][9],
+                    수령인: tempData[i][10],
+                    '수령인 전화번호': tempData[i][11],
+                    주소: tempData[i][12],
+                    배송메세지: tempData[i][13],
+                    발송요청일: tempData[i][14] || ''
+                });
+            }
+        }
+        
+        return res.status(200).json({ success: true, orders: userOrders });
+    } catch (error) {
+        console.error('getTempOrders 오류:', error);
+        return res.status(500).json({ success: false, error: error.message });
+    }
+
+case 'deleteTempOrders':
+    try {
+        const { userEmail } = req.body;
+        const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
+        const tempData = await getOrderData('임시저장!A:O', ordersSpreadsheetId);
+        
+        if (!tempData || tempData.length < 2) {
+            return res.status(200).json({ success: true });
+        }
+        
+        const newData = [tempData[0]];
+        
+        for (let i = 1; i < tempData.length; i++) {
+            if (tempData[i][0] !== userEmail) {
+                newData.push(tempData[i]);
+            }
+        }
+        
+        await clearOrderSheet('임시저장!A:O');
+        if (newData.length > 0) {
+            await saveOrderData('임시저장!A1', newData);
+        }
+        
+        return res.status(200).json({ success: true });
+    } catch (error) {
+        console.error('deleteTempOrders 오류:', error);
+        return res.status(500).json({ success: false, error: error.message });
+    }
+
+
+
+
+
+
+
+
+
       case 'saveToSheet':
         const sheetResult = await createOrderSheet(sheetName);
         
