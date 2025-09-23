@@ -90,12 +90,22 @@ window.OrderCsHandler = {
                     color: #6c757d;
                 }
                 
-                .search-input {
+                ..search-input {
                     padding: 8px 12px;
                     border: 1px solid #dee2e6;
                     border-radius: 6px;
                     font-size: 14px;
                     transition: all 0.2s;
+                    color: #212529;  /* 검정색 */
+                }
+                
+                /* date input 특별 처리 */
+                input[type="date"].search-input {
+                    color: #212529 !important;
+                }
+                
+                input[type="date"].search-input::-webkit-calendar-picker-indicator {
+                    filter: invert(0);
                 }
                 
                 .search-input:focus {
