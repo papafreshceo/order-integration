@@ -1187,26 +1187,7 @@ async loadUnshippedOrders() {
             return;
         }
         
-        // 정렬 로직...
-        allUnshippedOrders.sort((a, b) => {
-            const orderNoA = a['주문번호'] || '';
-            const orderNoB = b['주문번호'] || '';
-            
-            if (orderNoA && orderNoB) {
-                return orderNoA.localeCompare(orderNoB);
-            }
-            
-            if (!orderNoA || !orderNoB) {
-                const ordererA = a['주문자'] || '';
-                const ordererB = b['주문자'] || '';
-                const ordererCompare = ordererA.localeCompare(ordererB);
-                if (ordererCompare !== 0) return ordererCompare;
-            }
-            
-            const dateA = a['결제일'] || '';
-            const dateB = b['결제일'] || '';
-            return dateA.localeCompare(dateB);
-        });
+
         
         // 모달 표시
         this.showUnshippedOrdersModal(allUnshippedOrders);
@@ -1227,6 +1208,20 @@ showUnshippedOrdersModal(orders) {
     const existingModal = document.getElementById('unshippedOrdersModal');
     if (existingModal) existingModal.remove();
     
+    // 정렬: 1순위 주문자, 2순위 등록일(시트날짜)
+    orders.sort((a, b) => {
+        // 1순위: 주문자
+        const ordererA = a['주문자'] || '';
+        const ordererB = b['주문자'] || '';
+        const ordererCompare = ordererA.localeCompare(ordererB);
+        if (ordererCompare !== 0) return ordererCompare;
+        
+        // 2순위: 등록일 (_sheetDate)
+        const dateA = a._sheetDate || '';
+        const dateB = b._sheetDate || '';
+        return dateA.localeCompare(dateB);
+    });
+    
     // 모달 HTML 생성
     const modal = document.createElement('div');
     modal.id = 'unshippedOrdersModal';
@@ -1244,9 +1239,9 @@ showUnshippedOrdersModal(orders) {
     `;
     
     modal.innerHTML = `
-        <div style="background: white; border-radius: 16px; width: 90%; max-width: 900px; max-height: 80vh; display: flex; flex-direction: column;">
+        <div style="background: white; border-radius: 16px; width: 90%; max-width: 1200px; max-height: 80vh; display: flex; flex-direction: column;">
             <div style="padding: 20px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="margin: 0; font-size: 18px; font-weight: 500;">미발송 주문 선택 (최근 3일)</h3>
+                <h3 style="margin: 0; font-size: 18px; font-weight: 500;">미발송 주문 선택</h3>
                 <button onclick="document.getElementById('unshippedOrdersModal').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6c757d;">×</button>
             </div>
             
@@ -1260,20 +1255,20 @@ showUnshippedOrdersModal(orders) {
             
             <div style="flex: 1; overflow-y: auto; padding: 16px;">
                 <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                    <thead style="position: sticky; top: 0; background: white;">
+                    <thead style="position: sticky; top: 0; background: white; z-index: 10;">
                         <tr style="border-bottom: 2px solid #dee2e6;">
                             <th style="padding: 8px; text-align: center; width: 40px;">
                                 <input type="checkbox" id="selectAllCheckbox" onchange="OrderInputHandler.selectAllUnshipped(this.checked)">
                             </th>
-                            <th style="padding: 8px; text-align: left;">날짜</th>
-                            <th style="padding: 8px; text-align: left;">결제일</th>
-                            <th style="padding: 8px; text-align: left;">주문번호</th>
-                            <th style="padding: 8px; text-align: left;">마켓</th>
                             <th style="padding: 8px; text-align: left;">주문자</th>
                             <th style="padding: 8px; text-align: left;">수령인</th>
                             <th style="padding: 8px; text-align: left;">옵션명</th>
                             <th style="padding: 8px; text-align: center;">수량</th>
                             <th style="padding: 8px; text-align: right;">금액</th>
+                            <th style="padding: 8px; text-align: center;">마켓</th>
+                            <th style="padding: 8px; text-align: left;">결제일</th>
+                            <th style="padding: 8px; text-align: left;">주문번호</th>
+                            <th style="padding: 8px; text-align: center;">등록일</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1282,19 +1277,21 @@ showUnshippedOrdersModal(orders) {
                                 <td style="padding: 8px; text-align: center;">
                                     <input type="checkbox" class="order-checkbox" data-index="${index}">
                                 </td>
-                                <td style="padding: 8px;">${order._sheetDate.substring(4, 6)}/${order._sheetDate.substring(6, 8)}</td>
-                                <td style="padding: 8px; font-size: 11px;">${order['결제일'] || '-'}</td>
-                                <td style="padding: 8px; font-family: monospace; font-size: 12px;">${order['주문번호'] || '-'}</td>
-                                <td style="padding: 8px;">
+                                <td style="padding: 8px; font-weight: 500;">${order['주문자'] || '-'}</td>
+                                <td style="padding: 8px;">${order['수령인'] || order['수취인'] || '-'}</td>
+                                <td style="padding: 8px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${order['옵션명'] || ''}">${order['옵션명'] || '-'}</td>
+                                <td style="padding: 8px; text-align: center; ${parseInt(order['수량']) >= 2 ? 'color: #dc3545; font-weight: 600;' : ''}">${order['수량'] || '1'}</td>
+                                <td style="padding: 8px; text-align: right; font-weight: 500;">${(parseFloat(order['상품금액']) || 0).toLocaleString()}원</td>
+                                <td style="padding: 8px; text-align: center;">
                                     <span style="padding: 2px 6px; background: ${order['마켓명'] === 'CS발송' ? '#fee2e2' : '#e0e7ff'}; color: ${order['마켓명'] === 'CS발송' ? '#dc3545' : '#4f46e5'}; border-radius: 4px; font-size: 11px; font-weight: 500;">
                                         ${order['마켓명']}
                                     </span>
                                 </td>
-                                <td style="padding: 8px;">${order['주문자'] || '-'}</td>
-                                <td style="padding: 8px;">${order['수령인'] || order['수취인'] || '-'}</td>
-                                <td style="padding: 8px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${order['옵션명'] || ''}">${order['옵션명'] || '-'}</td>
-                                <td style="padding: 8px; text-align: center; ${parseInt(order['수량']) >= 2 ? 'color: #dc3545; font-weight: 600;' : ''}">${order['수량'] || '1'}</td>
-                                <td style="padding: 8px; text-align: right; font-weight: 500;">${(parseFloat(order['상품금액']) || 0).toLocaleString()}원</td>
+                                <td style="padding: 8px; font-size: 11px;">${order['결제일'] || '-'}</td>
+                                <td style="padding: 8px; font-family: monospace; font-size: 11px;">${order['주문번호'] || '-'}</td>
+                                <td style="padding: 8px; text-align: center; font-weight: 500;">
+                                    ${order._sheetDate ? order._sheetDate.substring(4, 6) + '/' + order._sheetDate.substring(6, 8) : '-'}
+                                </td>
                             </tr>
                         `).join('')}
                     </tbody>
