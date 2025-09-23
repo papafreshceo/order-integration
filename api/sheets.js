@@ -944,9 +944,13 @@ case 'getCsRecords':
           const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
           
           // CS기록 시트의 모든 데이터 가져오기
-          const csData = await getSheetData('CS기록!A:T', ordersSpreadsheetId);  // getOrderData 대신 getSheetData 사용
-          
-          if (!csData || csData.length < 2) {
+          // 시트명이 'CS기록'이 맞는지 확인 필요
+          let csData;
+          try {
+            // 먼저 전체 범위로 시도
+            csData = await getSheetData('CS기록!A:Z', ordersSpreadsheetId);
+          } catch (sheetError) {
+            console.log('CS기록 시트를 찾을 수 없음, 빈 배열 반환');
             return res.status(200).json({ 
               success: true, 
               data: [] 
