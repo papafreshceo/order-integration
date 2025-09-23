@@ -655,7 +655,7 @@ window.OrderExcelHandler = {
         }
     },
     
-
+    handleFileSelect(e) {
         const files = Array.from(e.target.files);
         this.processFiles(files);
     },
