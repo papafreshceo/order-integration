@@ -2505,11 +2505,13 @@ showCenterMessage(message, type, autoClose = false) {
                         status: ''
                     };
                     
-                    // 같은 줄에 주문번호가 있을 수 있음
+                    // 같은 줄에 주문번호가 있을 수 있음 - (없음) 처리 포함
                     if (trimmedLine.includes('주문번호:')) {
                         const parts = trimmedLine.split('주문번호:');
                         if (parts[1]) {
-                            currentItem.orderNo = parts[1].trim().split(/\s{2,}/)[0] || '';
+                            const orderValue = parts[1].trim().split(/\s{2,}/)[0];
+                            // (없음) 또는 빈 값 처리
+                            currentItem.orderNo = (orderValue === '(없음)' || !orderValue) ? '(없음)' : orderValue;
                         }
                     }
                 } else if (currentItem) {
