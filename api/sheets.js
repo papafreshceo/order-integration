@@ -885,6 +885,61 @@ case 'addCsOrder':
         }
 
 
+case 'checkCsDuplicate':
+        try {
+          const { orderNumber } = req.body;
+          const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
+          
+          let csRecordExists = false;
+          let tempSaveExists = false;
+          
+          // CS기록 시트 체크
+          try {
+            const csData = await getOrderData('CS기록!J:J', ordersSpreadsheetId); // 주문번호 열
+            if (csData) {
+              for (let i = 1; i < csData.length; i++) {
+                if (csData[i][0] === orderNumber) {
+                  csRecordExists = true;
+                  break;
+                }
+              }
+            }
+          } catch (err) {
+            console.log('CS기록 시트 체크 실패');
+          }
+          
+          // 임시저장 시트 체크 (접수번호에 주문번호가 포함되어 있을 수 있음)
+          try {
+            const tempData = await getOrderData('임시저장!B:B', ordersSpreadsheetId); // 접수번호 열
+            if (tempData) {
+              for (let i = 1; i < tempData.length; i++) {
+                if (tempData[i][0] && tempData[i][0].includes(orderNumber)) {
+                  tempSaveExists = true;
+                  break;
+                }
+              }
+            }
+          } catch (err) {
+            console.log('임시저장 시트 체크 실패');
+          }
+          
+          return res.status(200).json({
+            success: true,
+            duplicate: {
+              csRecord: csRecordExists,
+              tempSave: tempSaveExists
+            }
+          });
+          
+        } catch (error) {
+          console.error('checkCsDuplicate 오류:', error);
+          return res.status(200).json({
+            success: true,
+            duplicate: { csRecord: false, tempSave: false }
+          });
+        }
+
+
 
 
         case 'getTempOrders':

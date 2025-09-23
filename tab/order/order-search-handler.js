@@ -1579,11 +1579,19 @@ async submitCs() {
         const customerRequest = document.getElementById('csCustomerRequest').value;
         const solution = document.getElementById('csSolution').value;
         
-        console.log('모달에서 입력한 CS 내용:', customerRequest);
-        
         if (!customerRequest || !solution) {
             this.showMessage('필수 항목을 모두 입력하세요.', 'error');
             return;
+        }
+
+        // 중복 체크
+        const duplicateCheck = await this.checkDuplicateCs();
+        
+        // 확인 모달 표시
+        const confirmResult = await this.showCsConfirmModal(customerRequest, solution, duplicateCheck);
+        
+        if (!confirmResult) {
+            return; // 사용자가 취소
         }
 
         this.showLoading();
@@ -1774,4 +1782,165 @@ fullReset() {
     
     console.log('OrderInputHandler 완전 초기화 완료');
 }
+
+async checkDuplicateCs() {
+        try {
+            const response = await fetch('/api/sheets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'checkCsDuplicate',
+                    orderNumber: this.currentCsOrder['주문번호']
+                })
+            });
+            
+            const result = await response.json();
+            return result.duplicate || { csRecord: false, tempSave: false };
+        } catch (error) {
+            console.error('중복 체크 실패:', error);
+            return { csRecord: false, tempSave: false };
+        }
+    },
+
+    async showCsConfirmModal(customerRequest, solution, duplicateCheck) {
+        return new Promise((resolve) => {
+            // 기존 확인 모달 제거
+            const existingModal = document.getElementById('csConfirmModal');
+            if (existingModal) existingModal.remove();
+            
+            // 해결방법 텍스트
+            const solutionText = this.getSolutionText(solution);
+            
+            // 재발송 정보
+            let resendInfo = '';
+            if (solution === 'resend' || solution === 'partial-resend') {
+                const resendOption = document.getElementById('csResendOption').value;
+                const resendQty = document.getElementById('csResendQty').value;
+                const resendReceiver = document.getElementById('csResendReceiver').value;
+                const resendPhone = document.getElementById('csResendPhone').value;
+                const resendAddress = document.getElementById('csResendAddress').value;
+                const requestDate = document.getElementById('csRequestDate').value;
+                
+                resendInfo = `
+                    <div style="background: #f0f8ff; padding: 12px; border-radius: 6px; margin-top: 12px;">
+                        <h4 style="font-size: 14px; font-weight: 500; color: #2563eb; margin-bottom: 8px;">재발송 정보</h4>
+                        <div style="font-size: 12px; color: #495057; line-height: 1.6;">
+                            <div>상품: <strong>${resendOption}</strong></div>
+                            <div>수량: <strong>${resendQty}</strong></div>
+                            <div>수령인: <strong>${resendReceiver}</strong> (${resendPhone})</div>
+                            <div>주소: ${resendAddress}</div>
+                            ${requestDate ? `<div>발송요청일: ${requestDate}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // 부분환불 정보
+            let refundInfo = '';
+            if (solution === 'partial-refund') {
+                const refundAmount = document.getElementById('csRefundAmount').textContent;
+                refundInfo = `
+                    <div style="background: #fff4e6; padding: 12px; border-radius: 6px; margin-top: 12px;">
+                        <h4 style="font-size: 14px; font-weight: 500; color: #f59e0b; margin-bottom: 8px;">환불 정보</h4>
+                        <div style="font-size: 12px; color: #495057;">
+                            환불금액: <strong>${refundAmount}</strong>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // 중복 경고
+            let duplicateWarning = '';
+            if (duplicateCheck.csRecord && duplicateCheck.tempSave) {
+                duplicateWarning = `
+                    <div style="background: #fee2e2; padding: 12px; border-radius: 6px; margin-bottom: 12px; border: 1px solid #fecaca;">
+                        <div style="color: #dc3545; font-weight: 500; font-size: 13px; margin-bottom: 4px;">⚠️ 중복 경고</div>
+                        <div style="color: #7f1d1d; font-size: 12px;">
+                            이 주문번호는 이미 CS기록과 임시저장에 등록되어 있습니다.<br>
+                            중복 접수는 권장하지 않습니다. CS 접수를 취소하시겠습니까?
+                        </div>
+                    </div>
+                `;
+            } else if (duplicateCheck.csRecord) {
+                duplicateWarning = `
+                    <div style="background: #fef3c7; padding: 12px; border-radius: 6px; margin-bottom: 12px; border: 1px solid #fde68a;">
+                        <div style="color: #f59e0b; font-weight: 500; font-size: 13px; margin-bottom: 4px;">⚠️ 주의</div>
+                        <div style="color: #78350f; font-size: 12px;">
+                            이 주문번호는 이미 CS기록에 등록되어 있습니다.<br>
+                            추가 재발송이 필요한 경우 계속 진행하세요.
+                        </div>
+                    </div>
+                `;
+            }
+            
+            const modalHtml = `
+                <div id="csConfirmModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+                     background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; border-radius: 16px; max-width: 600px; width: 90%; 
+                         max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                        <div style="padding: 20px; border-bottom: 1px solid #dee2e6;">
+                            <h3 style="font-size: 18px; font-weight: 500; color: #042848; margin: 0;">CS 접수 확인</h3>
+                        </div>
+                        
+                        <div style="padding: 20px;">
+                            ${duplicateWarning}
+                            
+                            <!-- 기본 정보 -->
+                            <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 12px;">
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 12px; color: #495057;">
+                                    <div><strong>마켓:</strong> ${this.currentCsOrder['마켓명']}</div>
+                                    <div><strong>주문번호:</strong> ${this.currentCsOrder['주문번호']}</div>
+                                    <div><strong>주문자:</strong> ${this.currentCsOrder['주문자']} (${this.currentCsOrder['주문자전화번호'] || ''})</div>
+                                    <div><strong>수령인:</strong> ${this.currentCsOrder['수령인'] || this.currentCsOrder['수취인']} (${this.currentCsOrder['수령인전화번호'] || ''})</div>
+                                    <div style="grid-column: 1 / -1;"><strong>주소:</strong> ${this.currentCsOrder['주소'] || ''}</div>
+                                    <div><strong>상품:</strong> ${this.currentCsOrder['옵션명']}</div>
+                                    <div><strong>수량:</strong> ${this.currentCsOrder['수량']}</div>
+                                </div>
+                            </div>
+                            
+                            <!-- CS 정보 -->
+                            <div style="margin-bottom: 12px;">
+                                <h4 style="font-size: 14px; font-weight: 500; color: #042848; margin-bottom: 8px;">CS 내용</h4>
+                                <div style="background: white; border: 1px solid #dee2e6; padding: 10px; border-radius: 6px; 
+                                     font-size: 13px; color: #495057; min-height: 60px;">
+                                    ${customerRequest}
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <h4 style="font-size: 14px; font-weight: 500; color: #042848; margin-bottom: 8px;">해결방법</h4>
+                                <div style="background: #e7f3ff; padding: 8px 12px; border-radius: 6px; 
+                                     font-size: 13px; color: #2563eb; font-weight: 500;">
+                                    ${solutionText}
+                                </div>
+                            </div>
+                            
+                            ${resendInfo}
+                            ${refundInfo}
+                        </div>
+                        
+                        <div style="padding: 16px 20px; border-top: 1px solid #dee2e6; display: flex; justify-content: flex-end; gap: 10px;">
+                            <button onclick="document.getElementById('csConfirmModal').remove(); OrderSearchHandler.confirmModalResolve(false);"
+                                    style="padding: 8px 20px; border: 1px solid #dee2e6; background: white; 
+                                           color: #042848; border-radius: 6px; font-size: 13px; cursor: pointer;">
+                                취소
+                            </button>
+                            <button onclick="document.getElementById('csConfirmModal').remove(); OrderSearchHandler.confirmModalResolve(true);"
+                                    style="padding: 8px 20px; border: none; background: ${duplicateCheck.csRecord && duplicateCheck.tempSave ? '#dc3545' : '#2563eb'}; 
+                                           color: white; border-radius: 6px; font-size: 13px; cursor: pointer;">
+                                ${duplicateCheck.csRecord && duplicateCheck.tempSave ? '그래도 접수' : 'CS 접수'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // resolve 함수를 전역에 저장
+            window.OrderSearchHandler.confirmModalResolve = resolve;
+        });
+    },
+
+
 };
