@@ -500,6 +500,9 @@ input[type="number"] {
                     <div class="list-header">
     <h3 class="list-title">추가된 주문 목록</h3>
     <div style="display: flex; gap: 12px; align-items: center;">
+        <button class="btn-load-unshipped" onclick="OrderInputHandler.loadUnshippedOrders()" style="padding: 6px 16px; background: #f59e0b; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 300; cursor: pointer;">
+            미발송주문 불러오기
+        </button>
         <button class="btn-save" onclick="OrderInputHandler.saveOrders()" style="padding: 6px 16px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 300; cursor: pointer;">
             저장
         </button>
@@ -1100,6 +1103,89 @@ loadFromCache() {
 clearCache() {
     localStorage.removeItem('orderInputHandler_orders');
 },
+
+async loadUnshippedOrders() {
+    const loadButton = document.querySelector('.btn-load-unshipped');
+    if (loadButton) {
+        loadButton.textContent = '불러오는 중...';
+        loadButton.disabled = true;
+    }
+    
+    try {
+        // 어제 날짜 계산
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const sheetName = yesterday.getFullYear() + 
+                         String(yesterday.getMonth() + 1).padStart(2, '0') + 
+                         String(yesterday.getDate()).padStart(2, '0');
+        
+        // 전일 주문 데이터 가져오기
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'getSheetData',
+                sheetName: sheetName,
+                spreadsheetId: 'SPREADSHEET_ID_ORDERS'
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success || !result.data) {
+            this.showMessage('전일 주문 데이터를 찾을 수 없습니다.', 'error');
+            return;
+        }
+        
+        // CS발송, 전화주문 중 미발송 주문만 필터링
+        const unshippedOrders = result.data.filter(order => {
+            const isTargetMarket = order['마켓명'] === 'CS발송' || order['마켓명'] === '전화주문';
+            const hasNoTracking = !order['송장번호'] || order['송장번호'].trim() === '';
+            return isTargetMarket && hasNoTracking;
+        });
+        
+        if (unshippedOrders.length === 0) {
+            this.showMessage('미발송 주문이 없습니다.', 'success');
+            return;
+        }
+        
+        // 미발송 주문을 현재 목록에 추가
+        unshippedOrders.forEach(order => {
+            const orderData = {
+                마켓명: order['마켓명'],
+                옵션명: order['옵션명'] || '',
+                단가: parseFloat(order['상품금액'] || 0) / parseInt(order['수량'] || 1),
+                수량: parseInt(order['수량'] || 1),
+                택배비: parseFloat(order['택배비'] || 0),
+                주문자: order['주문자'] || '',
+                '주문자 전화번호': order['주문자 전화번호'] || order['주문자전화번호'] || '',
+                수령인: order['수령인'] || order['수취인'] || '',
+                '수령인 전화번호': order['수령인 전화번호'] || order['수령인전화번호'] || order['수취인 전화번호'] || order['수취인전화번호'] || '',
+                주소: order['수령인주소'] || order['수취인주소'] || order['주소'] || '',
+                배송메세지: order['배송메세지'] || order['배송메시지'] || '',
+                발송요청일: order['발송요청일'] || '',
+                상품금액: parseFloat(order['상품금액'] || 0)
+            };
+            
+            this.manualOrders.push(orderData);
+        });
+        
+        this.updateOrderList();
+        this.saveToCache();
+        this.showMessage(`${unshippedOrders.length}건의 미발송 주문을 불러왔습니다.`, 'success');
+        
+    } catch (error) {
+        console.error('미발송 주문 불러오기 오류:', error);
+        this.showMessage('미발송 주문을 불러오는 중 오류가 발생했습니다.', 'error');
+    } finally {
+        const loadButton = document.querySelector('.btn-load-unshipped');
+        if (loadButton) {
+            loadButton.textContent = '미발송주문 불러오기';
+            loadButton.disabled = false;
+        }
+    }
+},
+
 fullReset() {
     // 모든 데이터 초기화
     this.manualOrders = [];
