@@ -436,6 +436,57 @@ window.OrderExcelHandler = {
                     border-color: #f59e0b;
                 }
                 
+                /* 토스트 메시지 스타일 - 콘텐츠 상단에 고정 */
+                .toast-container {
+                    position: fixed;
+                    top: 80px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    z-index: 9999;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    pointer-events: none;
+                }
+                
+                .toast-message {
+                    min-width: 300px;
+                    max-width: 500px;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    font-size: 14px;
+                    font-weight: 400;
+                    pointer-events: auto;
+                    animation: slideDown 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+                
+                .toast-message.error {
+                    background: #fee2e2;
+                    color: #dc3545;
+                    border: 1px solid #fecaca;
+                }
+                
+                .toast-message.success {
+                    background: #d1fae5;
+                    color: #10b981;
+                    border: 1px solid #a7f3d0;
+                }
+                
+                @keyframes slideDown {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                
                 .original-option {
                     flex: 1;
                     padding: 8px 12px;
@@ -490,6 +541,9 @@ window.OrderExcelHandler = {
             <div class="excel-container">
                
                 
+                <!-- 토스트 메시지 컨테이너 -->
+                <div class="toast-container" id="toastContainer"></div>
+                
                 <!-- 파일 업로드 -->
                 <div class="upload-section" id="uploadSection">
                     <input type="file" id="fileInput" class="file-input" multiple accept=".xlsx,.xls,.csv">
@@ -533,9 +587,7 @@ window.OrderExcelHandler = {
                     <button class="upload-btn" id="processBtn" style="display: none;">주문 통합 실행</button>
                 </div>
                 
-                <!-- 메시지 -->
-                <div id="excelErrorMessage" class="message-box error"></div>
-                <div id="excelSuccessMessage" class="message-box success"></div>
+
                 
                 <!-- 결과 섹션 -->
                 <!-- 테이블 섹션 -->
@@ -2992,21 +3044,33 @@ resetResults() {
 },
 
 showError(message) {
-    const el = document.getElementById('excelErrorMessage');
-    if (el) {
-        el.textContent = message;
-        el.classList.add('show');
-        setTimeout(() => el.classList.remove('show'), 3000);
-    }
+    this.showToast(message, 'error');
 },
 
 showSuccess(message) {
-    const el = document.getElementById('excelSuccessMessage');
-    if (el) {
-        el.textContent = message;
-        el.classList.add('show');
-        setTimeout(() => el.classList.remove('show'), 3000);
-    }
+    this.showToast(message, 'success');
+},
+
+showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = `toast-message ${type}`;
+    
+    // 아이콘 추가
+    const icon = type === 'error' ? '❌' : '✅';
+    toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+    
+    container.appendChild(toast);
+    
+    // 3초 후 자동 제거
+    setTimeout(() => {
+        toast.style.animation = 'slideDown 0.3s ease reverse';
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, 3000);
 },
 
 showMessage(message, type) {
