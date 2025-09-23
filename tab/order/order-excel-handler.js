@@ -2169,13 +2169,7 @@ if (newRows.length > 0) {
     });
 }
 
-// ===== 위 유지코드 5줄 ===== //
-    newRows.slice(0, 5).forEach((row, idx) => {
-        const key = createKey(row);
-        console.log(`신규 ${idx + 1}: 키=${key}`);
-        console.log(`  주문번호=${row['주문번호']}, 수령인=${row['수령인'] || row['수취인']}, 마켓=${row['마켓']}`);
-    });
-}
+
 
 // ===== 1번 코드 시작 ===== //
 console.log('=========================');
