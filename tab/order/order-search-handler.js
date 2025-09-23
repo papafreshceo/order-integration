@@ -467,13 +467,31 @@ window.OrderSearchHandler = {
                 }
 
                 .cs-input {
-                    width: 100%;
-                    padding: 8px 10px;
-                    border: 1px solid #dee2e6;
-                    border-radius: 6px;
-                    font-size: 13px;
-                    font-weight: 300;
-                }
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 300;
+}
+
+/* date input 년월일 텍스트 숨기기 */
+input[type="date"]::-webkit-input-placeholder {
+    visibility: hidden !important;
+}
+input[type="date"]::-webkit-datetime-edit-year-field,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field {
+    color: transparent;
+}
+input[type="date"]::-webkit-datetime-edit-text {
+    display: none;
+}
+input[type="date"]:focus::-webkit-datetime-edit-year-field,
+input[type="date"]:focus::-webkit-datetime-edit-month-field,
+input[type="date"]:focus::-webkit-datetime-edit-day-field {
+    color: #042848;
+}
 
                 .cs-input-small {
                     width: 80px;
