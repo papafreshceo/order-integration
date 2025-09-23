@@ -941,7 +941,7 @@ searchProduct() {
         this.tempAddressData = {};
     },
     
-    addOrder() {
+    async addOrder() {
         const required = ['inputOrderType', 'inputOptionName', 'inputUnitPrice', 'inputReceiver', 'inputReceiverPhone', 'inputAddress'];
         for (const id of required) {
             if (!document.getElementById(id).value) {
@@ -1011,10 +1011,19 @@ if (saved) {
     `).join('');
 },
     
-    removeOrder(index) {
+    async removeOrder(index) {  // async 추가
+    // 삭제할 주문 정보
+    const deletedOrder = this.manualOrders[index];
+    
     this.manualOrders.splice(index, 1);
     this.updateOrderList();
-    this.saveToCache(); // 캐시 업데이트
+    
+    // 임시저장 업데이트
+    await this.deleteTempOrders();  // 전체 삭제 후
+    for (const order of this.manualOrders) {
+        await this.saveTempOrder(order);  // 남은 것만 다시 저장
+    }
+    
     this.showMessage(`주문이 삭제되었습니다. (남은 주문: ${this.manualOrders.length}건)`, 'success');
 },
     

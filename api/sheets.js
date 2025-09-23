@@ -1112,23 +1112,29 @@ case 'deleteTempOrders':
         });
 
       case 'appendToSheet':
-        const appendResult = await appendSheetData(range, values);
+    try {
+        const { spreadsheetId, sheetName, values } = req.body;
+        const targetSpreadsheetId = spreadsheetId === 'orders' ? 
+            process.env.SPREADSHEET_ID_ORDERS : 
+            process.env.SPREADSHEET_ID;
+        
+        const result = await appendSheetData(
+            sheetName, 
+            values, 
+            targetSpreadsheetId
+        );
+        
         return res.status(200).json({ 
-          success: true, 
-          result: appendResult 
+            success: true, 
+            result: result 
         });
-
-      default:
-        return res.status(400).json({ 
-          error: '알 수 없는 액션입니다.' 
+    } catch (error) {
+        console.error('appendToSheet 오류:', error);
+        return res.status(500).json({ 
+            success: false, 
+            error: error.message 
         });
     }
-  } catch (error) {
-    console.error('Sheets API 오류:', error);
-    res.status(500).json({ 
-      error: error.message || '서버 오류가 발생했습니다.' 
-    });
-  }
 }
 
 // 컬럼 번호를 알파벳으로 변환하는 헬퍼 함수
