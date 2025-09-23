@@ -1130,10 +1130,9 @@ async loadUnshippedOrders() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action: 'getMarketData',
-                    useMainSpreadsheet: true,
+                    action: 'getOrdersByDate',  // getMarketData 대신 이것 사용
                     sheetName: sheetName,
-                    range: 'A:AZ'  // AZ열까지 명시적으로 지정
+                    spreadsheetId: 'orders'
                 })
             });
             
@@ -1143,36 +1142,34 @@ async loadUnshippedOrders() {
                 foundSheets.push(sheetName);
                 console.log(`✓ 유효한 시트: ${sheetName} (${result.data.length}개 행)`);
                 
-                // 첫 번째 행으로 택배사/송장번호 필드 확인
-                if (result.data.length > 0) {
-                    const sampleRow = result.data[0];
-                    console.log('사용 가능한 필드:', Object.keys(sampleRow));
-                    console.log('택배사 값:', sampleRow['택배사']);
-                    console.log('송장번호 값:', sampleRow['송장번호']);
-                }
+                // 마켓별 건수 확인
+                const marketCount = {};
+                result.data.forEach(order => {
+                    const market = order['마켓명'] || '빈값';
+                    marketCount[market] = (marketCount[market] || 0) + 1;
+                });
+                console.log('마켓별 건수:', marketCount);
                 
-                // 전체 데이터의 마켓명 확인
-console.log(`${sheetName}: 전체 ${result.data.length}개 행`);
-const marketCount = {};
-result.data.forEach(order => {
-    const market = order['마켓명'] || '빈값';
-    marketCount[market] = (marketCount[market] || 0) + 1;
-});
-console.log('마켓별 건수:', marketCount);
-
-// CS발송/전화주문만 필터링
-const targetMarketOrders = result.data.filter(order => 
-    order['마켓명'] === 'CS발송' || order['마켓명'] === '전화주문'
-);
-console.log(`CS발송/전화주문: ${targetMarketOrders.length}건`);
-
-// 미발송 필터링
-const unshipped = targetMarketOrders.filter(order => {
-    const hasNoShipping = (!order['택배사'] || order['택배사'].trim() === '') && 
-                         (!order['송장번호'] || order['송장번호'].trim() === '');
-    return hasNoShipping;
-});
-console.log(`미발송: ${unshipped.length}건`);
+                // CS발송/전화주문만 필터링
+                const targetMarketOrders = result.data.filter(order => 
+                    order['마켓명'] === 'CS발송' || order['마켓명'] === '전화주문'
+                );
+                console.log(`CS발송/전화주문: ${targetMarketOrders.length}건`);
+                
+                // 각 주문의 택배사/송장번호 확인
+                targetMarketOrders.forEach((order, idx) => {
+                    if (idx < 5) { // 처음 5개만 로그
+                        console.log(`[${idx}] 주문번호: ${order['주문번호']}, 택배사: "${order['택배사']}", 송장번호: "${order['송장번호']}"`);
+                    }
+                });
+                
+                // 미발송 필터링
+                const unshipped = targetMarketOrders.filter(order => {
+                    const hasNoShipping = (!order['택배사'] || order['택배사'].trim() === '') && 
+                                         (!order['송장번호'] || order['송장번호'].trim() === '');
+                    return hasNoShipping;
+                });
+                console.log(`미발송: ${unshipped.length}건`);
                 
                 unshipped.forEach(order => {
                     order._sheetDate = sheetName;
@@ -1190,7 +1187,7 @@ console.log(`미발송: ${unshipped.length}건`);
             return;
         }
         
-        // 정렬: 1.주문번호 2.주문자 3.결제일
+        // 정렬 로직...
         allUnshippedOrders.sort((a, b) => {
             const orderNoA = a['주문번호'] || '';
             const orderNoB = b['주문번호'] || '';
@@ -1225,7 +1222,6 @@ console.log(`미발송: ${unshipped.length}건`);
         }
     }
 },
-
 showUnshippedOrdersModal(orders) {
     // 기존 모달 제거
     const existingModal = document.getElementById('unshippedOrdersModal');
