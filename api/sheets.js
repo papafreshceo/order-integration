@@ -34,8 +34,24 @@ case 'saveCsRecord':
           
           console.log('CS 기록 저장 시작:', { 
             spreadsheetId: ordersSpreadsheetId,
+            dataKeys: Object.keys(data || {}),
             data: data 
           });
+          
+          // CS기록 시트 존재 확인
+          try {
+            const testRead = await getOrderData('CS기록!A1', ordersSpreadsheetId);
+            console.log('CS기록 시트 확인됨');
+          } catch (sheetError) {
+            console.error('CS기록 시트가 없습니다. 생성이 필요합니다.');
+            // CS기록 시트 생성
+            await createOrderSheet('CS기록', ordersSpreadsheetId);
+            const defaultHeaders = ['마켓명', '연번', '접수일', '해결방법', '재발송상품', '재발송수량', 
+                      'CS 내용', '부분환불금액', '결제일', '주문번호', '주문자', 
+                      '주문자 전화번호', '수령인', '수령인 전화번호', '주소', 
+                      '배송메세지', '옵션명', '수량', '특이/요청사항', '발송요청일'];
+            await saveOrderData('CS기록!A1', [defaultHeaders], ordersSpreadsheetId);
+          }
           
           // CS기록 시트의 헤더 가져오기
           let headers = [];
@@ -243,12 +259,10 @@ case 'addCsOrder':
 
       case 'getProductData':
         try {
-          // 기존 코드 유지
           const productSpreadsheetId = process.env.SPREADSHEET_ID_PRODUCTS || '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg';
           
-          const { getProductSheetData } = require('../lib/google-sheets');
-          
-          const productSheetData = await getProductSheetData(productSpreadsheetId, '통합상품마스터!A:DZ');
+          // getSheetData 사용 (이미 import됨)
+          const productSheetData = await getSheetData('통합상품마스터!A:DZ', productSpreadsheetId);
           const productInfo = {};
           
           if (productSheetData && productSheetData.length > 1) {
@@ -627,38 +641,7 @@ case 'addCsOrder':
           });
         }
 
-      case 'fetchVendorTemplates':
-        try {
-          const { spreadsheetId, range } = req.body;
-          
-          if (!spreadsheetId || !range) {
-            return res.status(400).json({ 
-              success: false, 
-              error: 'spreadsheetId와 range가 필요합니다.' 
-            });
-          }
-          
-          const templateData = await getSheetData(range, spreadsheetId);
-          
-          if (!templateData || templateData.length === 0) {
-            return res.status(200).json({ 
-              success: true, 
-              data: [] 
-            });
-          }
-          
-          return res.status(200).json({ 
-            success: true, 
-            data: templateData
-          });
-          
-        } catch (error) {
-          console.error('updateTracking 오류:', error);
-          return res.status(500).json({ 
-            success: false, 
-            error: error.message || '송장번호 업데이트 실패'
-          });
-        }
+
 
       case 'fetchVendorTemplates':
         try {
