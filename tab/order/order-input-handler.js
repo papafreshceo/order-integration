@@ -1053,7 +1053,6 @@ async saveOrders() {
         return;
     }
     
-    // 로딩 표시
     const saveButton = document.querySelector('.btn-save');
     if (saveButton) {
         saveButton.textContent = '저장 중...';
@@ -1061,46 +1060,54 @@ async saveOrders() {
     }
     
     try {
-        // 오늘 날짜로 시트명 생성
         const today = new Date();
         const sheetName = today.getFullYear() + 
                          String(today.getMonth() + 1).padStart(2, '0') + 
                          String(today.getDate()).padStart(2, '0');
         
-        // 표준 필드 가져오기 (전체 43개 필드 사용)
         const headers = window.mappingData?.standardFields;
         if (!headers) {
             this.showMessage('매핑 데이터를 찾을 수 없습니다.', 'error');
             return;
         }
         
-        // 데이터 행 생성
-        const values = [headers]; // 헤더 행
+        // 제품 정보로 주문 데이터 보강
+        const enrichedOrders = this.manualOrders.map(order => {
+            const productInfo = this.productData[order.옵션명];
+            if (productInfo) {
+                return {
+                    ...order,
+                    출고처: productInfo['출고처'] || '',
+                    송장주체: productInfo['송장주체'] || '',
+                    벤더사: productInfo['벤더사'] || '',
+                    발송지명: productInfo['발송지명'] || '',
+                    발송지주소: productInfo['발송지주소'] || '',
+                    발송지연락처: productInfo['발송지연락처'] || '',
+                    출고비용: productInfo['출고비용'] || 0
+                };
+            }
+            return order;
+        });
         
-        // 마켓별 카운터
+        const values = [headers];
         const marketCounters = {};
         
-        this.manualOrders.forEach((order, index) => {
+        enrichedOrders.forEach((order, index) => {
             const marketName = order.마켓명;
             
-            // 마켓 카운터 초기화 및 증가
             if (!marketCounters[marketName]) {
                 marketCounters[marketName] = 0;
             }
             marketCounters[marketName]++;
             
             const row = headers.map(header => {
-                // 특별 처리가 필요한 필드
                 if (header === '연번') return index + 1;
                 
                 if (header === '마켓') {
-                    // 매핑 시트에서 로드된 마켓 이니셜 사용
-                    let initial = marketName.charAt(0); // 기본값: 마켓명 첫글자
-                    
+                    let initial = marketName.charAt(0);
                     if (window.mappingData?.markets?.[marketName]?.initial) {
                         initial = window.mappingData.markets[marketName].initial;
                     }
-                    
                     return initial + String(marketCounters[marketName]).padStart(3, '0');
                 }
                 
@@ -1108,14 +1115,12 @@ async saveOrders() {
                 if (header === '주문번호') return 'M' + Date.now() + index;
                 if (header === '상품주문번호') return 'M' + Date.now() + index;
                 
-                // 일반 필드 매핑
                 const value = order[header];
                 return value !== undefined && value !== null ? String(value) : '';
             });
             values.push(row);
         });
         
-        // 마켓 색상 정보 가져오기
         const marketColors = {};
         if (window.mappingData?.markets) {
             Object.entries(window.mappingData.markets).forEach(([marketName, market]) => {
@@ -1130,7 +1135,6 @@ async saveOrders() {
             });
         }
         
-        // API 호출
         const response = await fetch('/api/sheets', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1139,21 +1143,19 @@ async saveOrders() {
                 sheetName: sheetName,
                 values: values,
                 marketColors: marketColors,
-                spreadsheetId: 'orders'  // 주문기록 시트 지정
+                spreadsheetId: 'orders'
             })
         });
         
         const result = await response.json();
         
         if (result.success) {
-    // 임시저장 삭제
-    await this.deleteTempOrders();
-    
-    this.showMessage(`${this.manualOrders.length}건의 주문이 저장되었습니다.`, 'success');
-    this.manualOrders = [];
-    this.updateOrderList();
-    this.resetForm();
-} else {
+            await this.deleteTempOrders();
+            this.showMessage(`${this.manualOrders.length}건의 주문이 저장되었습니다.`, 'success');
+            this.manualOrders = [];
+            this.updateOrderList();
+            this.resetForm();
+        } else {
             throw new Error(result.error || '저장 실패');
         }
         
@@ -1161,14 +1163,13 @@ async saveOrders() {
         console.error('저장 오류:', error);
         this.showMessage('저장 중 오류가 발생했습니다: ' + error.message, 'error');
     } finally {
-        // 버튼 상태 복구
         const saveButton = document.querySelector('.btn-save');
         if (saveButton) {
             saveButton.textContent = '저장';
             saveButton.disabled = false;
         }
     }
-}, // 여기에 콤마 추가
+}, // 콤마 유지
 
 
 
