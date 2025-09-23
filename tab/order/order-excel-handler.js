@@ -2673,6 +2673,11 @@ showConfirmModal(message, onConfirm, onCancel) {
             duplicateItems = [];
             currentItem = null;
         } else if (line.includes('중복된 주문을 덮어쓰시겠습니까')) {
+            if (currentItem && inDuplicateSection) {
+                duplicateItems.push(currentItem);
+                currentItem = null;
+            }
+            
             if (inDuplicateSection && duplicateItems.length > 0) {
                 // 중복 테이블 생성
                 processedMessage += `
