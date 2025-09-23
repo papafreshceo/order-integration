@@ -17,18 +17,97 @@ window.OrderExcelHandler = {
     },
     
     setupParentReferences() {
-        // iframe 환경 체크 및 부모 참조 설정
-        if (parent.window !== window) {
-            this.mappingData = parent.window.mappingData;
-            this.ProductMatching = parent.window.ProductMatching;
-            this.API_BASE = parent.window.API_BASE || '';
-            window.showCenterMessage = parent.window.showCenterMessage || this.showMessage.bind(this);
-        } else {
-            this.mappingData = window.mappingData;
-            this.ProductMatching = window.ProductMatching;
-            this.API_BASE = window.API_BASE || '';
-        }
-    },
+    // iframe 환경 체크 및 부모 참조 설정
+    if (parent.window !== window) {
+        this.mappingData = parent.window.mappingData;
+        this.ProductMatching = parent.window.ProductMatching;
+        this.API_BASE = parent.window.API_BASE || '';
+        window.showCenterMessage = parent.window.showCenterMessage || this.showMessage.bind(this);
+    } else {
+        this.mappingData = window.mappingData;
+        this.ProductMatching = window.ProductMatching;
+        this.API_BASE = window.API_BASE || '';
+    }
+    
+    // ProductMatching이 없으면 생성
+    if (!this.ProductMatching || !window.ProductMatching) {
+        console.log('ProductMatching 내장 버전 생성');
+        
+        const ProductMatchingModule = {
+            productData: {},
+            isLoaded: false,
+            
+            async loadProductData() {
+                try {
+                    console.log('제품 데이터 로드 시작...');
+                    const response = await fetch('/api/sheets', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'getProductData' })
+                    });
+                    
+                    const result = await response.json();
+                    if (result.productData) {
+                        this.productData = result.productData;
+                        window.productData = result.productData;
+                        this.isLoaded = true;
+                        console.log('제품 데이터 로드 완료:', Object.keys(this.productData).length + '개');
+                        return true;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('제품 데이터 로드 실패:', error);
+                    return false;
+                }
+            },
+            
+            getProductData() {
+                return this.productData;
+            },
+            
+            async applyProductInfo(orders) {
+                if (!this.isLoaded) {
+                    await this.loadProductData();
+                }
+                
+                return orders.map(order => {
+                    const optionName = order['옵션명'];
+                    if (!optionName) return order;
+                    
+                    const trimmedOption = optionName.trim();
+                    const productInfo = this.productData[trimmedOption];
+                    
+                    if (productInfo) {
+                        // 디버그 로그
+                        console.log(`매칭 성공: ${trimmedOption}`);
+                        
+                        return {
+                            ...order,
+                            셀러공급가: productInfo['셀러공급가'] || order['셀러공급가'] || '',
+                            출고처: productInfo['출고처'] || order['출고처'] || '',
+                            송장주체: productInfo['송장주체'] || order['송장주체'] || '',
+                            벤더사: productInfo['벤더사'] || order['벤더사'] || '',
+                            발송지명: productInfo['발송지명'] || order['발송지명'] || '',
+                            발송지주소: productInfo['발송지주소'] || order['발송지주소'] || '',
+                            발송지연락처: productInfo['발송지연락처'] || order['발송지연락처'] || '',
+                            출고비용: parseFloat(productInfo['출고비용']) || 0,
+                            _matchStatus: 'matched'
+                        };
+                    } else {
+                        console.log(`매칭 실패: ${trimmedOption}`);
+                        order._matchStatus = 'unmatched';
+                    }
+                    
+                    return order;
+                });
+            }
+        };
+        
+        this.ProductMatching = ProductMatchingModule;
+        window.ProductMatching = ProductMatchingModule;
+        window.productData = {};
+    }
+},
     
     async loadMappingData() {
         if (!this.mappingData) {
