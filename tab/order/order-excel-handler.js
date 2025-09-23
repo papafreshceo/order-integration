@@ -2111,8 +2111,9 @@ const createKey = (row) => {
     const recipient = row['수령인'] || row['수취인'] || '';
     const optionName = row['옵션명'] || '';
     
-    // 키 생성 - 주문번호_주문자_수령인_옵션명
-    return `${orderNo}_${orderer}_${recipient}_${optionName}`;
+    // 키 생성 - 주문번호_수령인_옵션명 (주문자 제외)
+    // 동일 주문번호라도 옵션명이 다르면 다른 주문으로 처리
+    return `${orderNo}_${recipient}_${optionName}`;
 };
         
         // 기존 데이터 맵 생성 (키 -> 행 인덱스)
