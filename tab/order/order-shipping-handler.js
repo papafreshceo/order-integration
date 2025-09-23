@@ -1728,8 +1728,8 @@ async loadVendorTemplates() {
                 },
                 body: JSON.stringify({
                     action: 'fetchVendorTemplates',
-                    spreadsheetId: '1kLjYKemytOfaH6kSXD7dqdiolx3j09Ir-V9deEnNImA',
-                    sheetName: '벤더사템플릿'
+                    range: '벤더사템플릿!A:Z'
+                    // spreadsheetId는 서버에서 환경변수로 처리
                 })
             });
             

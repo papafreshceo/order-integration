@@ -759,14 +759,17 @@ const rowData = headers.map(header => {
 
       case 'fetchVendorTemplates':
         try {
-          const { spreadsheetId, range } = req.body;
+          const { range } = req.body;
           
-          if (!spreadsheetId || !range) {
+          if (!range) {
             return res.status(400).json({ 
               success: false, 
-              error: 'spreadsheetId와 range가 필요합니다.' 
+              error: 'range가 필요합니다.' 
             });
           }
+          
+          // 환경변수에서 SPREADSHEET_ID 가져오기
+          const spreadsheetId = process.env.SPREADSHEET_ID || '1kLjYKemytOfaH6kSXD7dqdiolx3j09Ir-V9deEnNImA';
           
           // getSheetData 함수 사용 (이미 import 되어 있음)
           const templateData = await getSheetData(range, spreadsheetId);
