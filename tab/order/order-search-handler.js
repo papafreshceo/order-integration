@@ -1587,11 +1587,13 @@ async submitCs() {
         // 중복 체크
         const duplicateCheck = await this.checkDuplicateCs();
         
-        // 확인 모달 표시
-        const confirmResult = await this.showCsConfirmModal(customerRequest, solution, duplicateCheck);
-        
-        if (!confirmResult) {
-            return; // 사용자가 취소
+        // 중복이 있을 때만 확인 모달 표시
+        if (duplicateCheck.csRecord || duplicateCheck.tempSave) {
+            const confirmResult = await this.showCsConfirmModal(customerRequest, solution, duplicateCheck);
+            
+            if (!confirmResult) {
+                return; // 사용자가 취소
+            }
         }
 
         this.showLoading();
@@ -1814,7 +1816,12 @@ async checkDuplicateCs() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'checkCsDuplicate',
-                    orderNumber: this.currentCsOrder['주문번호']
+                    orderData: {
+                        주문번호: this.currentCsOrder['주문번호'] || '',
+                        주문자: this.currentCsOrder['주문자'] || '',
+                        수령인: this.currentCsOrder['수령인'] || this.currentCsOrder['수취인'] || '',
+                        옵션명: this.currentCsOrder['옵션명'] || ''
+                    }
                 })
             });
             

@@ -857,40 +857,71 @@ case 'addCsOrder':
 
 case 'checkCsDuplicate':
         try {
-          const { orderNumber } = req.body;
+          const { orderData } = req.body;
           const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
           
           let csRecordExists = false;
           let tempSaveExists = false;
           
-          // CS기록 시트 체크
+          // CS기록 시트 체크 - 4개 필드 모두 일치 확인
           try {
-            const csData = await getSheetData('CS기록!K:K', ordersSpreadsheetId); // 주문번호 열 (K열)
-            if (csData) {
+            const csData = await getSheetData('CS기록!A:Z', ordersSpreadsheetId);
+            if (csData && csData.length > 1) {
+              const headers = csData[0];
+              
+              // 헤더 인덱스 찾기
+              const orderNoIdx = headers.indexOf('주문번호');
+              const ordererIdx = headers.indexOf('주문자');
+              const receiverIdx = headers.indexOf('수령인');
+              const optionIdx = headers.indexOf('옵션명');
+              
+              // 데이터 행 검사
               for (let i = 1; i < csData.length; i++) {
-                if (csData[i][0] === orderNumber) {
+                const row = csData[i];
+                
+                // 4개 필드 모두 일치하는지 확인 (빈값도 일치로 처리)
+                const orderNoMatch = (row[orderNoIdx] || '') === (orderData.주문번호 || '');
+                const ordererMatch = (row[ordererIdx] || '') === (orderData.주문자 || '');
+                const receiverMatch = (row[receiverIdx] || '') === (orderData.수령인 || '');
+                const optionMatch = (row[optionIdx] || '') === (orderData.옵션명 || '');
+                
+                if (orderNoMatch && ordererMatch && receiverMatch && optionMatch) {
                   csRecordExists = true;
+                  console.log('CS기록 중복 발견:', {
+                    주문번호: row[orderNoIdx],
+                    주문자: row[ordererIdx],
+                    수령인: row[receiverIdx],
+                    옵션명: row[optionIdx]
+                  });
                   break;
                 }
               }
             }
           } catch (err) {
-            console.log('CS기록 시트 체크 실패');
+            console.log('CS기록 시트 체크 실패:', err);
           }
           
-          // 임시저장 시트 체크 (접수번호에 주문번호가 포함되어 있을 수 있음)
+          // 임시저장 시트 체크 - 동일한 로직
           try {
-            const tempData = await getOrderData('임시저장!B:B', ordersSpreadsheetId); // 접수번호 열
-            if (tempData) {
+            const tempData = await getSheetData('임시저장!A:Q', ordersSpreadsheetId);
+            if (tempData && tempData.length > 1) {
+              // 임시저장은 주문번호가 없을 수 있으므로 다른 필드로 체크
               for (let i = 1; i < tempData.length; i++) {
-                if (tempData[i][0] && tempData[i][0].includes(orderNumber)) {
+                const row = tempData[i];
+                // 임시저장 구조: [사용자이메일, 접수번호, 저장시간, 마켓명, 옵션명, 수량, ..., 주문자, ..., 수령인, ...]
+                const optionMatch = (row[4] || '') === (orderData.옵션명 || '');
+                const ordererMatch = (row[9] || '') === (orderData.주문자 || '');
+                const receiverMatch = (row[11] || '') === (orderData.수령인 || '');
+                
+                if (optionMatch && ordererMatch && receiverMatch) {
                   tempSaveExists = true;
+                  console.log('임시저장 중복 발견');
                   break;
                 }
               }
             }
           } catch (err) {
-            console.log('임시저장 시트 체크 실패');
+            console.log('임시저장 시트 체크 실패:', err);
           }
           
           return res.status(200).json({
