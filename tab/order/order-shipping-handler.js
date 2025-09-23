@@ -462,16 +462,36 @@ window.OrderShippingHandler = {
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
+                    position: relative;
+                    overflow: hidden;
                 }
                 
                 .vendor-excel-btn:hover {
-                    background: #10b981;
                     transform: translateY(-1px);
                     box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
                 }
                 
-                .vendor-excel-btn:hover svg {
-                    stroke: #ffffff;
+                .vendor-excel-btn::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -100%;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(90deg, 
+                        transparent, 
+                        rgba(255, 255, 255, 0.4), 
+                        transparent);
+                    transition: left 0.5s;
+                }
+                
+                .vendor-excel-btn:hover::before {
+                    left: 100%;
+                }
+                
+                @keyframes shimmer {
+                    0% { left: -100%; }
+                    100% { left: 100%; }
                 }
 
             </style>
@@ -1010,10 +1030,10 @@ window.OrderShippingHandler = {
                 <td style="text-align: center;">
                     ${stats.preparing > 0 ? `
                         <button class="vendor-excel-btn" onclick="OrderShippingHandler.downloadVendorExcel('${vendor}')" title="엑셀 다운로드">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#10b981"></path>
-                                <polyline points="14 2 14 8 20 8" stroke="#10b981"></polyline>
-                                <path d="M9 15l2 2 4-4" stroke="#10b981"></path>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <path d="M9 15l2 2 4-4"></path>
                             </svg>
                         </button>
                     ` : '<span style="color: #adb5bd;">-</span>'}
