@@ -1151,7 +1151,7 @@ async loadUnshippedOrders() {
                     console.log('송장번호 값:', sampleRow['송장번호']);
                 }
                 
-                / 전체 데이터의 마켓명 확인
+                // 전체 데이터의 마켓명 확인
 console.log(`${sheetName}: 전체 ${result.data.length}개 행`);
 const marketCount = {};
 result.data.forEach(order => {
