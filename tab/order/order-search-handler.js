@@ -1589,25 +1589,41 @@ async submitCs() {
         try {
             // CS 데이터 준비
             const csData = {
-                마켓명: this.currentCsOrder['마켓명'],
+                마켓명: this.currentCsOrder['마켓명'] || '',
                 해결방법: this.getSolutionText(solution),
-                'CS 내용': customerRequest,  // CS 내용 추가
-                결제일: this.currentCsOrder['결제일'],
-                주문번호: this.currentCsOrder['주문번호'],
-                주문자: this.currentCsOrder['주문자'],
-                '주문자 전화번호': this.currentCsOrder['주문자전화번호'] || this.currentCsOrder['주문자연락처'] || '',
-                수령인: this.currentCsOrder['수령인'] || this.currentCsOrder['수취인'],
-                '수령인 전화번호': this.currentCsOrder['수령인전화번호'] || this.currentCsOrder['수취인전화번호'] || '',
-                주소: this.currentCsOrder['주소'] || this.currentCsOrder['수령인주소'] || this.currentCsOrder['수취인주소'],
-                배송메세지: this.currentCsOrder['배송메세지'] || this.currentCsOrder['배송메시지'] || '',
-                옵션명: this.currentCsOrder['옵션명'],
-                수량: this.currentCsOrder['수량'],
+                'CS 내용': customerRequest,
+                결제일: this.currentCsOrder['결제일'] || '',
+                주문번호: this.currentCsOrder['주문번호'] || '',
+                주문자: this.currentCsOrder['주문자'] || '',
+                '주문자 전화번호': this.currentCsOrder['주문자전화번호'] || 
+                                  this.currentCsOrder['주문자 전화번호'] || 
+                                  this.currentCsOrder['주문자연락처'] || '',
+                수령인: this.currentCsOrder['수령인'] || this.currentCsOrder['수취인'] || '',
+                '수령인 전화번호': this.currentCsOrder['수령인전화번호'] || 
+                                  this.currentCsOrder['수령인 전화번호'] ||
+                                  this.currentCsOrder['수취인전화번호'] || 
+                                  this.currentCsOrder['수취인 전화번호'] || '',
+                주소: this.currentCsOrder['주소'] || 
+                     this.currentCsOrder['수령인주소'] || 
+                     this.currentCsOrder['수취인주소'] || '',
+                배송메세지: this.currentCsOrder['배송메세지'] || 
+                          this.currentCsOrder['배송메시지'] || '',
+                옵션명: this.currentCsOrder['옵션명'] || '',
+                수량: this.currentCsOrder['수량'] || '',
                 재발송상품: '',
                 재발송수량: '',
                 부분환불금액: '',
                 '특이/요청사항': '',
                 발송요청일: ''
             };
+            
+            console.log('CS 데이터 전화번호 확인:', {
+                '주문자 전화번호': csData['주문자 전화번호'],
+                '원본 데이터': {
+                    '주문자전화번호': this.currentCsOrder['주문자전화번호'],
+                    '주문자 전화번호': this.currentCsOrder['주문자 전화번호']
+                }
+            });
 
             // 해결방법별 추가 데이터
             if (solution === 'partial-refund') {
