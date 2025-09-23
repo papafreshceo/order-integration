@@ -944,7 +944,7 @@ case 'getCsRecords':
           const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
           
           // CS기록 시트의 모든 데이터 가져오기
-          const csData = await getOrderData('CS기록!A:T', ordersSpreadsheetId);
+          const csData = await getSheetData('CS기록!A:T', ordersSpreadsheetId);  // getOrderData 대신 getSheetData 사용
           
           if (!csData || csData.length < 2) {
             return res.status(200).json({ 
