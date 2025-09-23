@@ -1124,9 +1124,9 @@ async loadUnshippedOrders() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                action: 'getSheetData',
-                sheetName: sheetName,
-                spreadsheetId: 'SPREADSHEET_ID_ORDERS'
+                action: 'getMarketData',
+                useMainSpreadsheet: true,
+                sheetName: sheetName
             })
         });
         
