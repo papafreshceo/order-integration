@@ -1643,11 +1643,32 @@ async submitCs() {
                 );
                 csData.부분환불금액 = refundAmount;
             } else if (solution === 'resend' || solution === 'partial-resend') {
-                csData.재발송상품 = document.getElementById('csResendOption').value;
-                csData.재발송수량 = document.getElementById('csResendQty').value;
-                csData.수령인 = document.getElementById('csResendReceiver').value;
-                csData['수령인 전화번호'] = document.getElementById('csResendPhone').value;
-                csData.주소 = document.getElementById('csResendAddress').value;
+                // 확인 모달에서 수정된 값이 있으면 그 값을 사용
+                csData.재발송상품 = document.getElementById('confirmResendOption')?.value || 
+                                   document.getElementById('csResendOption').value;
+                csData.재발송수량 = document.getElementById('confirmResendQty')?.value || 
+                                   document.getElementById('csResendQty').value;
+                csData.수령인 = document.getElementById('confirmResendReceiver')?.value || 
+                               document.getElementById('csResendReceiver').value;
+                csData['수령인 전화번호'] = document.getElementById('confirmResendPhone')?.value || 
+                                         document.getElementById('csResendPhone').value;
+                csData.주소 = document.getElementById('confirmResendAddress')?.value || 
+                             document.getElementById('csResendAddress').value;
+                csData['특이/요청사항'] = document.getElementById('csResendNote').value || '';
+                csData.발송요청일 = document.getElementById('confirmRequestDate')?.value || 
+                                  document.getElementById('csRequestDate').value || '';
+                
+                // 수정된 값을 원래 입력 필드에도 반영
+                if (document.getElementById('confirmResendOption')) {
+                    document.getElementById('csResendOption').value = csData.재발송상품;
+                    document.getElementById('csResendQty').value = csData.재발송수량;
+                    document.getElementById('csResendReceiver').value = csData.수령인;
+                    document.getElementById('csResendPhone').value = csData['수령인 전화번호'];
+                    document.getElementById('csResendAddress').value = csData.주소;
+                    if (csData.발송요청일) {
+                        document.getElementById('csRequestDate').value = csData.발송요청일;
+                    }
+                }
             }
 
             // 1. CS기록 시트에 저장
@@ -1824,12 +1845,36 @@ async checkDuplicateCs() {
                 resendInfo = `
                     <div style="background: #f0f8ff; padding: 12px; border-radius: 6px; margin-top: 12px;">
                         <h4 style="font-size: 14px; font-weight: 500; color: #2563eb; margin-bottom: 8px;">재발송 정보</h4>
-                        <div style="font-size: 12px; color: #495057; line-height: 1.6;">
-                            <div>상품: <strong>${resendOption}</strong></div>
-                            <div>수량: <strong>${resendQty}</strong></div>
-                            <div>수령인: <strong>${resendReceiver}</strong> (${resendPhone})</div>
-                            <div>주소: ${resendAddress}</div>
-                            ${requestDate ? `<div>발송요청일: ${requestDate}</div>` : ''}
+                        <div style="font-size: 12px; color: #495057; line-height: 1.8;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <label style="min-width: 60px;">상품:</label>
+                                <input type="text" id="confirmResendOption" value="${resendOption}" 
+                                       style="flex: 1; padding: 4px 8px; border: 1px solid #dee2e6; border-radius: 4px; font-size: 12px;">
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <label style="min-width: 60px;">수량:</label>
+                                <input type="number" id="confirmResendQty" value="${resendQty}" min="1"
+                                       style="width: 80px; padding: 4px 8px; border: 1px solid #dee2e6; border-radius: 4px; font-size: 12px;">
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <label style="min-width: 60px;">수령인:</label>
+                                <input type="text" id="confirmResendReceiver" value="${resendReceiver}" 
+                                       style="flex: 1; padding: 4px 8px; border: 1px solid #dee2e6; border-radius: 4px; font-size: 12px; margin-right: 8px;">
+                                <input type="text" id="confirmResendPhone" value="${resendPhone}" placeholder="전화번호"
+                                       style="width: 120px; padding: 4px 8px; border: 1px solid #dee2e6; border-radius: 4px; font-size: 12px;">
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <label style="min-width: 60px;">주소:</label>
+                                <input type="text" id="confirmResendAddress" value="${resendAddress}" 
+                                       style="flex: 1; padding: 4px 8px; border: 1px solid #dee2e6; border-radius: 4px; font-size: 12px;">
+                            </div>
+                            ${requestDate ? `
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label style="min-width: 60px;">발송요청일:</label>
+                                <input type="date" id="confirmRequestDate" value="${requestDate}" 
+                                       style="padding: 4px 8px; border: 1px solid #dee2e6; border-radius: 4px; font-size: 12px;">
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
                 `;
