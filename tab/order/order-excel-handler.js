@@ -99,25 +99,7 @@ window.OrderExcelHandler = {
                     display: none;
                 }
                 
-                /* 지원 마켓 */
-                .supported-markets {
-                    background: #f8f9fa;
-                    border: 1px solid #dee2e6;
-                    border-radius: 8px;
-                    padding: 20px;
-                    margin-bottom: 24px;
-                }
-                
-                .market-badge {
-                    display: inline-block;
-                    padding: 4px 12px;
-                    margin: 4px;
-                    border-radius: 4px;
-                    font-size: 12px;
-                    font-weight: 400;
-                    color: white;
-                }
-                
+
                 /* 파일 리스트 */
                 .file-list {
                     margin-bottom: 24px;
@@ -506,8 +488,7 @@ window.OrderExcelHandler = {
             </style>
             
             <div class="excel-container">
-                <!-- 지원 마켓 -->
-                <div class="supported-markets" id="supportedMarkets"></div>
+               
                 
                 <!-- 파일 업로드 -->
                 <div class="upload-section" id="uploadSection">
@@ -645,7 +626,7 @@ window.OrderExcelHandler = {
             </div>
         `;
         
-        this.displaySupportedMarkets();
+       
     },
     
     setupEventListeners() {
@@ -674,47 +655,7 @@ window.OrderExcelHandler = {
         }
     },
     
-    displaySupportedMarkets() {
-    const container = document.getElementById('supportedMarkets');
-    if (!container || !this.mappingData) return;
-    
-    container.innerHTML = '';
-    container.style.display = 'flex';
-    container.style.alignItems = 'center';
-    container.style.flexWrap = 'wrap';
-    container.style.gap = '8px';
-    
-    // 지원 마켓 레이블
-    const label = document.createElement('span');
-    label.textContent = '지원 마켓:';
-    label.style.fontSize = '14px';
-    label.style.fontWeight = '500';
-    label.style.color = '#495057';
-    label.style.marginRight = '4px';
-    container.appendChild(label);
-    
-    const markets = this.mappingData.markets || {};
-    const marketOrder = this.mappingData.marketOrder || Object.keys(markets);
-    
-    marketOrder.forEach(marketName => {
-        const market = markets[marketName];
-        if (!market) return;
-        
-        const badge = document.createElement('span');
-        badge.className = 'market-badge';
-        badge.textContent = marketName;
-        badge.style.background = `rgb(${market.color})`;
-        badge.style.display = 'inline-block';
-        
-        const rgb = market.color.split(',').map(Number);
-        const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
-        badge.style.color = brightness > 128 ? '#000' : '#fff';
-        
-        container.appendChild(badge);
-    });
-},
-    
-    handleFileSelect(e) {
+
         const files = Array.from(e.target.files);
         this.processFiles(files);
     },
