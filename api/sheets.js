@@ -716,11 +716,44 @@ const rowData = headers.map(header => {
             message: `${updateCount}건의 송장번호가 업데이트되었습니다`
           });
           
-        } catch (error) {
+         } catch (error) {
           console.error('updateTracking 오류:', error);
           return res.status(500).json({ 
             success: false, 
             error: error.message || '송장번호 업데이트 실패'
+          });
+        }
+
+      case 'fetchVendorTemplates':
+        try {
+          const { spreadsheetId, range } = req.body;
+          
+          if (!spreadsheetId || !range) {
+            return res.status(400).json({ 
+              success: false, 
+              error: 'spreadsheetId와 range가 필요합니다.' 
+            });
+          }
+          
+          const templateData = await getSheetData(range, spreadsheetId);
+          
+          if (!templateData || templateData.length === 0) {
+            return res.status(200).json({ 
+              success: true, 
+              data: [] 
+            });
+          }
+          
+          return res.status(200).json({ 
+            success: true, 
+            data: templateData
+          });
+          
+        } catch (error) {
+          console.error('벤더 템플릿 조회 오류:', error);
+          return res.status(500).json({ 
+            success: false, 
+            error: error.message || '벤더 템플릿 조회 실패'
           });
         }
 
