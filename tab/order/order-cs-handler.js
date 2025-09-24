@@ -6,6 +6,7 @@ window.OrderCsHandler = {
     
     async init() {
         this.render();
+        this.onDateRangeChange(); // 초기 날짜 설정
         await this.loadCsRecords();
     },
 
@@ -38,6 +39,53 @@ window.OrderCsHandler = {
         }, 100);
     },
 
+
+
+onDateRangeChange() {
+        const range = document.getElementById('searchDateRange').value;
+        const today = new Date();
+        let startDate = new Date();
+        let endDate = new Date();
+        
+        switch(range) {
+            case 'today':
+                startDate = today;
+                endDate = today;
+                break;
+            case 'yesterday':
+                startDate.setDate(today.getDate() - 1);
+                endDate = new Date(startDate);
+                break;
+            case 'last7':
+                startDate.setDate(today.getDate() - 7);
+                endDate = today;
+                break;
+            case 'last30':
+                startDate.setDate(today.getDate() - 30);
+                endDate = today;
+                break;
+            case 'thisMonth':
+                startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                endDate = today;
+                break;
+            case 'lastMonth':
+                startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                endDate = new Date(today.getFullYear(), today.getMonth(), 0);
+                break;
+            case 'all':
+                startDate = new Date('2020-01-01');
+                endDate = today;
+                break;
+        }
+        
+        this.dateRange = {
+            start: startDate.toISOString().split('T')[0],
+            end: endDate.toISOString().split('T')[0]
+        };
+        
+        // 검색 실행
+        this.search();
+    },
 
 
 
@@ -376,9 +424,15 @@ window.OrderCsHandler = {
                         <div class="search-group">
                             <label class="search-label">처리일자</label>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="date" class="search-input" id="searchStartDate" style="flex: 1;">
-                                <span>~</span>
-                                <input type="date" class="search-input" id="searchEndDate" style="flex: 1;">
+                                <select class="search-input" id="searchDateRange" onchange="OrderCsHandler.onDateRangeChange()">
+                                    <option value="today">오늘</option>
+                                    <option value="yesterday">어제</option>
+                                    <option value="last7" selected>최근 7일</option>
+                                    <option value="last30">최근 30일</option>
+                                    <option value="thisMonth">이번 달</option>
+                                    <option value="lastMonth">지난 달</option>
+                                    <option value="all">전체</option>
+                                </select>
                             </div>
                         </div>
                         
@@ -534,10 +588,16 @@ window.OrderCsHandler = {
     },
     
     search() {
-        console.log('검색 시작');  // 디버깅용
+        console.log('검색 시작');
         
-        const startDate = document.getElementById('searchStartDate').value;
-        const endDate = document.getElementById('searchEndDate').value;
+        // dateRange가 없으면 초기화
+        if (!this.dateRange) {
+            this.onDateRangeChange();
+            return;
+        }
+        
+        const startDate = this.dateRange.start;
+        const endDate = this.dateRange.end;
         const csType = document.getElementById('searchCsType').value;
         const orderNo = document.getElementById('searchOrderNo').value.toLowerCase();
         const searchName = document.getElementById('searchName').value.toLowerCase();
@@ -583,28 +643,13 @@ window.OrderCsHandler = {
     },
     
     resetSearch() {
-        const today = new Date();
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(today.getDate() - 7);
-        
-        const formatDate = (date) => {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        };
-        
-        document.getElementById('searchStartDate').value = formatDate(sevenDaysAgo);
-        document.getElementById('searchEndDate').value = formatDate(today);
+        document.getElementById('searchDateRange').value = 'last7';
         document.getElementById('searchCsType').value = '';
         document.getElementById('searchOrderNo').value = '';
         document.getElementById('searchName').value = '';
         document.getElementById('searchStatus').value = '';
         
-        this.filteredRecords = [...this.csRecords];
-        this.currentPage = 1;
-        this.displayRecords();
-        this.updateResultCount();
+        this.onDateRangeChange(); // 날짜 범위 재설정
     },
     
     displayRecords() {

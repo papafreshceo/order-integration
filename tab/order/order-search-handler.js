@@ -1575,7 +1575,7 @@ onSolutionChange() {
         document.getElementById('csRefundAmount').textContent = this.formatNumber(refundAmount) + '원';
     },
 
-async submitCs() {
+ async submitCs() {
         const customerRequest = document.getElementById('csCustomerRequest').value;
         const solution = document.getElementById('csSolution').value;
         
@@ -1588,13 +1588,14 @@ async submitCs() {
         const duplicateCheck = await this.checkDuplicateCs();
         
         // 중복이 있을 때만 확인 모달 표시
-        if (duplicateCheck.csRecord || duplicateCheck.tempSave) {
+        if (duplicateCheck && (duplicateCheck.csRecord || duplicateCheck.tempSave)) {
             const confirmResult = await this.showCsConfirmModal(customerRequest, solution, duplicateCheck);
             
             if (!confirmResult) {
                 return; // 사용자가 취소
             }
         }
+        // 중복이 없으면 바로 진행
 
         this.showLoading();
 
