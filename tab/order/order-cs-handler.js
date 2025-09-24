@@ -138,13 +138,20 @@ onDateRangeChange() {
                     color: #6c757d;
                 }
                 
-                ..search-input {
-                    padding: 8px 12px;
+                .search-input {
                     border: 1px solid #dee2e6;
                     border-radius: 6px;
                     font-size: 14px;
                     transition: all 0.2s;
-                    color: #212529;  /* 검정색 */
+                    color: #212529;
+                    background: #ffffff;
+                    font-weight: 300;
+                }
+                
+                .search-input:focus {
+                    outline: none;
+                    border-color: #2563eb;
+                    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
                 }
                 
                 /* date input 특별 처리 */
@@ -437,27 +444,32 @@ onDateRangeChange() {
             
             <div class="cs-container">
                 <!-- 검색 섹션 -->
-                <div class="cs-search-section">
-                    <h3 class="search-header">CS 기록 검색</h3>
-                    <div class="search-grid">
-                        <div class="search-group">
-                            <label class="search-label">처리일자</label>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <select class="search-input" id="searchDateRange" onchange="OrderCsHandler.onDateRangeChange()">
-                                    <option value="today">오늘</option>
-                                    <option value="yesterday">어제</option>
-                                    <option value="last7" selected>최근 7일</option>
-                                    <option value="last30">최근 30일</option>
-                                    <option value="thisMonth">이번 달</option>
-                                    <option value="lastMonth">지난 달</option>
-                                    <option value="all">전체</option>
-                                </select>
-                            </div>
+                <!-- 검색 섹션 -->
+                <div class="cs-search-section" style="padding: 16px 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <!-- 처리일자 -->
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <label style="font-size: 13px; color: #6c757d; white-space: nowrap; font-weight: 400;">처리일자</label>
+                            <select id="searchDateRange" onchange="OrderCsHandler.onDateRangeChange()" 
+                                    style="width: 110px; height: 36px; padding: 0 8px; border: 1px solid #dee2e6; border-radius: 6px; font-size: 13px;">
+                                <option value="today">오늘</option>
+                                <option value="yesterday">어제</option>
+                                <option value="last7" selected>최근 7일</option>
+                                <option value="last30">최근 30일</option>
+                                <option value="thisMonth">이번 달</option>
+                                <option value="lastMonth">지난 달</option>
+                                <option value="all">전체</option>
+                            </select>
                         </div>
                         
-                        <div class="search-group">
-                            <label class="search-label">해결방법</label>
-                            <select class="search-input" id="searchCsType">
+                        <!-- 구분선 -->
+                        <div style="width: 1px; height: 20px; background: #dee2e6;"></div>
+                        
+                        <!-- 해결방법 -->
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <label style="font-size: 13px; color: #6c757d; white-space: nowrap; font-weight: 400;">해결방법</label>
+                            <select id="searchCsType" 
+                                    style="width: 110px; height: 36px; padding: 0 8px; border: 1px solid #dee2e6; border-radius: 6px; font-size: 13px;">
                                 <option value="">전체</option>
                                 <option value="사이트환불">사이트환불</option>
                                 <option value="부분환불">부분환불</option>
@@ -467,36 +479,50 @@ onDateRangeChange() {
                             </select>
                         </div>
                         
-                        <div class="search-group">
-                            <label class="search-label">주문번호</label>
-                            <input type="text" class="search-input" id="searchOrderNo" placeholder="주문번호 입력">
+                        <!-- 주문번호 -->
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <label style="font-size: 13px; color: #6c757d; white-space: nowrap; font-weight: 400;">주문번호</label>
+                            <input type="text" id="searchOrderNo" placeholder="주문번호" 
+                                   style="width: 140px; height: 36px; padding: 0 10px; border: 1px solid #dee2e6; border-radius: 6px; font-size: 13px;">
                         </div>
                         
-                        <div class="search-group">
-                            <label class="search-label">이름검색</label>
-                            <input type="text" class="search-input" id="searchName" placeholder="주문자/수령인명 입력">
+                        <!-- 이름검색 -->
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <label style="font-size: 13px; color: #6c757d; white-space: nowrap; font-weight: 400;">이름검색</label>
+                            <input type="text" id="searchName" placeholder="주문자/수령인" 
+                                   style="width: 120px; height: 36px; padding: 0 10px; border: 1px solid #dee2e6; border-radius: 6px; font-size: 13px;">
                         </div>
                         
-                        <div class="search-group">
-                            <label class="search-label">처리상태</label>
-                            <select class="search-input" id="searchStatus">
+                        <!-- 처리상태 -->
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <label style="font-size: 13px; color: #6c757d; white-space: nowrap; font-weight: 400;">처리상태</label>
+                            <select id="searchStatus" 
+                                    style="width: 80px; height: 36px; padding: 0 8px; border: 1px solid #dee2e6; border-radius: 6px; font-size: 13px;">
                                 <option value="">전체</option>
                                 <option value="접수">접수</option>
                                 <option value="완료">완료</option>
                             </select>
                         </div>
-                    </div>
-                    
-                    <div class="search-actions">
-                        <button class="btn-reset" onclick="OrderCsHandler.resetSearch()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        
+                        <!-- 빈 공간 채우기 -->
+                        <div style="flex: 1;"></div>
+                        
+                        <!-- 버튼들 -->
+                        <button class="btn-reset" onclick="OrderCsHandler.resetSearch()" 
+                                style="height: 36px; padding: 0 18px; background: #ffffff; color: #495057; 
+                                       border: 1px solid #dee2e6; border-radius: 6px; font-size: 13px; 
+                                       font-weight: 400; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="23 4 23 10 17 10"></polyline>
                                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
                             </svg>
                             초기화
                         </button>
-                        <button class="btn-search" onclick="OrderCsHandler.search()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <button class="btn-search" onclick="OrderCsHandler.search()" 
+                                style="height: 36px; padding: 0 20px; background: #2563eb; color: white; 
+                                       border: none; border-radius: 6px; font-size: 13px; font-weight: 400; 
+                                       cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="11" cy="11" r="8"></circle>
                                 <path d="m21 21-4.35-4.35"></path>
                             </svg>
@@ -648,7 +674,7 @@ search() {
         
         this.filteredRecords = this.csRecords.filter(record => {
             // 날짜 필터 - 접수일 필드 확인
-            if (record.접수일) {
+            if (record.접수일 && this.dateRange) {
                 // 날짜 문자열을 Date 객체로 변환
                 let recordDate;
                 if (record.접수일.includes('/')) {
@@ -666,7 +692,12 @@ search() {
                     recordDate = new Date(year, month - 1, day);
                 }
                 
-                if (recordDate < this.dateRange.start || recordDate > this.dateRange.end) {
+                // dateRange를 Date 객체로 변환하여 비교
+                const startDate = new Date(this.dateRange.start);
+                const endDate = new Date(this.dateRange.end);
+                endDate.setHours(23, 59, 59, 999); // 종료일의 끝 시간으로 설정
+                
+                if (recordDate < startDate || recordDate > endDate) {
                     return false;
                 }
             }
