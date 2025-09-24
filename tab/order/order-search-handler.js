@@ -1418,7 +1418,7 @@ input[type="date"]:focus::-webkit-datetime-edit-day-field {
         }, 3000);
     },
 
-    // CS 모달 관련 함수들
+// CS 모달 열기
 async openCsModal() {
     const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
     if (checkedBoxes.length === 0) {
@@ -1466,7 +1466,9 @@ async openCsModal() {
                 return;
             }
             // 기존 데이터로 폼 채우기
-            this.fillCsFormWithExisting(result.csRecord);
+            if (this.isEditingCs) {
+                this.fillCsFormWithExisting(result.csRecord);
+            }
         }
     } catch (error) {
         console.error('기존 CS 확인 실패:', error);
@@ -1478,6 +1480,160 @@ async openCsModal() {
     const modal = document.getElementById('csModalOverlay');
     if (modal) modal.classList.add('show');
 },
+
+
+
+
+// 기존 CS 접수 내역 모달
+async showExistingCsModal(csRecord) {
+    return new Promise((resolve) => {
+        const existingModal = document.getElementById('existingCsModal');
+        if (existingModal) existingModal.remove();
+        
+        const modalHtml = `
+            <div id="existingCsModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+                 background: rgba(0,0,0,0.5); z-index: 2001; display: flex; align-items: center; justify-content: center;">
+                <div style="background: white; border-radius: 16px; max-width: 700px; width: 90%; 
+                     max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                    <div style="padding: 20px; border-bottom: 1px solid #dee2e6; background: #fff4e6;">
+                        <h3 style="font-size: 18px; font-weight: 500; color: #f59e0b; margin: 0;">
+                            ⚠️ 기존 CS 접수 내역이 있습니다
+                        </h3>
+                    </div>
+                    
+                    <div style="padding: 20px;">
+                        <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                            <h4 style="font-size: 14px; font-weight: 500; color: #042848; margin-bottom: 12px;">기존 접수 정보</h4>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; font-size: 13px;">
+                                <div><strong>접수번호:</strong> ${csRecord.접수번호 || ''}</div>
+                                <div><strong>접수일:</strong> ${csRecord.접수일 || ''}</div>
+                                <div><strong>해결방법:</strong> ${csRecord.해결방법 || ''}</div>
+                                <div><strong>상태:</strong> ${csRecord.상태 || '접수'}</div>
+                                <div style="grid-column: 1 / -1;">
+                                    <strong>CS 내용:</strong> ${csRecord['CS 내용'] || ''}
+                                </div>
+                                ${csRecord.재발송상품 ? `
+                                    <div><strong>재발송상품:</strong> ${csRecord.재발송상품}</div>
+                                    <div><strong>재발송수량:</strong> ${csRecord.재발송수량 || ''}</div>
+                                ` : ''}
+                                ${csRecord.부분환불금액 ? `
+                                    <div style="grid-column: 1 / -1;">
+                                        <strong>부분환불금액:</strong> ${Number(csRecord.부분환불금액).toLocaleString()}원
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        
+                        <div style="background: #e7f3ff; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+                            <p style="font-size: 13px; color: #2563eb; margin: 0; line-height: 1.6;">
+                                이미 접수된 CS 건입니다.<br>
+                                기존 내용을 수정하시려면 '수정하기'를,<br>
+                                새로운 CS를 추가 접수하시려면 '새로 접수'를 선택하세요.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div style="padding: 16px 20px; border-top: 1px solid #dee2e6; display: flex; justify-content: flex-end; gap: 10px; background: #f8f9fa;">
+                        <button onclick="document.getElementById('existingCsModal').remove(); window.OrderSearchHandler.instance.existingCsResolve('cancel');"
+                                style="padding: 8px 20px; border: 1px solid #dee2e6; background: white; 
+                                       color: #042848; border-radius: 6px; font-size: 13px; cursor: pointer;">
+                            취소
+                        </button>
+                        <button onclick="document.getElementById('existingCsModal').remove(); window.OrderSearchHandler.instance.existingCsResolve('new');"
+                                style="padding: 8px 20px; border: none; background: #10b981; 
+                                       color: white; border-radius: 6px; font-size: 13px; cursor: pointer;">
+                            새로 접수
+                        </button>
+                        <button onclick="document.getElementById('existingCsModal').remove(); window.OrderSearchHandler.instance.existingCsResolve('edit');"
+                                style="padding: 8px 20px; border: none; background: #2563eb; 
+                                       color: white; border-radius: 6px; font-size: 13px; cursor: pointer;">
+                            수정하기
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        this.existingCsResolve = (action) => {
+            if (action === 'cancel') {
+                resolve(false);
+            } else if (action === 'new') {
+                this.isNewCsRecord = true;
+                this.isEditingCs = false;
+                resolve(true);
+            } else if (action === 'edit') {
+                this.isEditingCs = true;
+                this.editingCsRecord = csRecord;
+                this.isNewCsRecord = false;
+                resolve(true);
+            }
+        };
+    });
+},
+
+// 기존 CS 데이터로 폼 채우기
+fillCsFormWithExisting(csRecord) {
+    setTimeout(() => {
+        document.getElementById('csCustomerRequest').value = csRecord['CS 내용'] || '';
+        
+        // 해결방법 매핑
+        const solutionMap = {
+            '사이트환불': 'site-refund',
+            '부분환불': 'partial-refund',
+            '재발송': 'resend',
+            '부분재발송': 'partial-resend',
+            '반품': 'return'
+        };
+        const solutionValue = solutionMap[csRecord.해결방법] || '';
+        document.getElementById('csSolution').value = solutionValue;
+        
+        // 해결방법에 따른 추가 필드 표시
+        this.onSolutionChange();
+        
+        // 재발송 정보
+        if (solutionValue === 'resend' || solutionValue === 'partial-resend') {
+            document.getElementById('csResendOption').value = csRecord.재발송상품 || '';
+            document.getElementById('csResendQty').value = csRecord.재발송수량 || '1';
+            document.getElementById('csResendNote').value = csRecord['특이/요청사항'] || '';
+            document.getElementById('csRequestDate').value = csRecord.발송요청일 || '';
+            document.getElementById('csResendReceiver').value = csRecord.수령인 || '';
+            document.getElementById('csResendPhone').value = csRecord['수령인 전화번호'] || '';
+            document.getElementById('csResendAddress').value = csRecord.주소 || '';
+        }
+        
+        // 부분환불 정보
+        if (solutionValue === 'partial-refund' && csRecord.부분환불금액) {
+            document.getElementById('csRefundAmount').textContent = 
+                Number(csRecord.부분환불금액).toLocaleString() + '원';
+        }
+    }, 100);
+},
+
+// displayCsOrderInfo 함수 추가 (없다면)
+displayCsOrderInfo(order) {
+    // CS 모달에 주문 정보 표시
+    const orderInfo = document.getElementById('csOrderInfo');
+    if (orderInfo) {
+        orderInfo.innerHTML = `
+            <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+                <h4 style="font-size: 13px; font-weight: 500; color: #495057; margin-bottom: 8px;">주문 정보</h4>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 12px;">
+                    <div><strong>주문번호:</strong> ${order['주문번호'] || '-'}</div>
+                    <div><strong>마켓:</strong> ${order['마켓명'] || '-'}</div>
+                    <div><strong>주문자:</strong> ${order['주문자'] || '-'}</div>
+                    <div><strong>수령인:</strong> ${order['수령인'] || order['수취인'] || '-'}</div>
+                    <div><strong>옵션명:</strong> ${order['옵션명'] || '-'}</div>
+                    <div><strong>수량:</strong> ${order['수량'] || '-'}</div>
+                </div>
+            </div>
+        `;
+    }
+},
+
+
+
 
 async showExistingCsModal(csRecord) {
     return new Promise((resolve) => {
@@ -1658,23 +1814,35 @@ displayCsOrderInfo(order) {
     },
 
     closeCsModal() {
-        const modal = document.getElementById('csModalOverlay');
-        if (modal) modal.classList.remove('show');
-        
-        // 폼 초기화
-        document.getElementById('csCustomerRequest').value = '';
-        document.getElementById('csSolution').value = '';
-        document.getElementById('csRefundPercent').value = '';
-        document.getElementById('csResendOption').value = '';
-        document.getElementById('csResendQty').value = '';
-        document.getElementById('csResendNote').value = '';
-        
-        // 추가 옵션 숨기기
-        document.getElementById('csRefundSection').classList.remove('show');
-        document.getElementById('csResendOptions').classList.remove('show');
-        document.getElementById('csPaymentAmount').value = '';
-        document.getElementById('csRefundAmount').textContent = '0원';
-    },
+    const modal = document.getElementById('csModalOverlay');
+    if (modal) modal.classList.remove('show');
+    
+    // 폼 초기화
+    document.getElementById('csCustomerRequest').value = '';
+    document.getElementById('csSolution').value = '';
+    document.getElementById('csRefundPercent').value = '';
+    document.getElementById('csResendOption').value = '';
+    document.getElementById('csResendQty').value = '1';
+    document.getElementById('csResendNote').value = '';
+    document.getElementById('csPaymentAmount').value = '';
+    document.getElementById('csRefundAmount').textContent = '0원';
+    document.getElementById('csRequestDate').value = '';
+    document.getElementById('csResendReceiver').value = '';
+    document.getElementById('csResendPhone').value = '';
+    document.getElementById('csResendAddress').value = '';
+    
+    // 추가 옵션 숨기기
+    const refundSection = document.getElementById('csRefundSection');
+    const resendOptions = document.getElementById('csResendOptions');
+    if (refundSection) refundSection.classList.remove('show');
+    if (resendOptions) resendOptions.classList.remove('show');
+    
+    // 수정 모드 초기화
+    this.isEditingCs = false;
+    this.editingCsRecord = null;
+    this.isNewCsRecord = false;
+    this.currentCsOrder = null;
+},
 
 onSolutionChange() {
         const solution = document.getElementById('csSolution').value;
@@ -1733,53 +1901,38 @@ onSolutionChange() {
         document.getElementById('csRefundAmount').textContent = this.formatNumber(refundAmount) + '원';
     },
 
- async submitCs() {
-        const customerRequest = document.getElementById('csCustomerRequest').value;
-        const solution = document.getElementById('csSolution').value;
-        
-        if (!customerRequest || !solution) {
-            this.showMessage('필수 항목을 모두 입력하세요.', 'error');
-            return;
-        }
+// CS 제출
+async submitCs() {
+    const customerRequest = document.getElementById('csCustomerRequest').value;
+    const solution = document.getElementById('csSolution').value;
+    
+    if (!customerRequest || !solution) {
+        this.showMessage('필수 항목을 모두 입력하세요.', 'error');
+        return;
+    }
 
-        // 중복 체크
-        const duplicateCheck = await this.checkDuplicateCs();
-        
-        // 중복이 있을 때만 확인 모달 표시
-        if (duplicateCheck && (duplicateCheck.csRecord || duplicateCheck.tempSave)) {
-            const confirmResult = await this.showCsConfirmModal(customerRequest, solution, duplicateCheck);
-            
-            if (!confirmResult) {
-                return; // 사용자가 취소
-            }
-        }
-        // 중복이 없으면 바로 진행
-
+    // 수정 모드인지 확인
+    if (this.isEditingCs && this.editingCsRecord) {
+        // CS 수정 처리
         this.showLoading();
-
         try {
-            // CS 데이터 준비
             const csData = {
-                userEmail: localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail') || 'CS',
+                연번: this.editingCsRecord.연번,
+                접수번호: this.editingCsRecord.접수번호,
                 마켓명: this.currentCsOrder['마켓명'] || '',
+                접수일: this.editingCsRecord.접수일,
                 해결방법: this.getSolutionText(solution),
                 'CS 내용': customerRequest,
                 결제일: this.currentCsOrder['결제일'] || '',
                 주문번호: this.currentCsOrder['주문번호'] || '',
                 주문자: this.currentCsOrder['주문자'] || '',
                 '주문자 전화번호': this.currentCsOrder['주문자전화번호'] || 
-                                  this.currentCsOrder['주문자 전화번호'] || 
-                                  this.currentCsOrder['주문자연락처'] || '',
+                                  this.currentCsOrder['주문자 전화번호'] || '',
                 수령인: this.currentCsOrder['수령인'] || this.currentCsOrder['수취인'] || '',
                 '수령인 전화번호': this.currentCsOrder['수령인전화번호'] || 
-                                  this.currentCsOrder['수령인 전화번호'] ||
-                                  this.currentCsOrder['수취인전화번호'] || 
-                                  this.currentCsOrder['수취인 전화번호'] || '',
-                주소: this.currentCsOrder['주소'] || 
-                     this.currentCsOrder['수령인주소'] || 
-                     this.currentCsOrder['수취인주소'] || '',
-                배송메세지: this.currentCsOrder['배송메세지'] || 
-                          this.currentCsOrder['배송메시지'] || '',
+                                  this.currentCsOrder['수령인 전화번호'] || '',
+                주소: this.currentCsOrder['주소'] || '',
+                배송메세지: this.currentCsOrder['배송메세지'] || '',
                 옵션명: this.currentCsOrder['옵션명'] || '',
                 수량: this.currentCsOrder['수량'] || '',
                 재발송상품: '',
@@ -1789,14 +1942,6 @@ onSolutionChange() {
                 발송요청일: ''
             };
             
-            console.log('CS 데이터 전화번호 확인:', {
-                '주문자 전화번호': csData['주문자 전화번호'],
-                '원본 데이터': {
-                    '주문자전화번호': this.currentCsOrder['주문자전화번호'],
-                    '주문자 전화번호': this.currentCsOrder['주문자 전화번호']
-                }
-            });
-
             // 해결방법별 추가 데이터
             if (solution === 'partial-refund') {
                 const refundAmount = Math.round(
@@ -1805,97 +1950,126 @@ onSolutionChange() {
                 );
                 csData.부분환불금액 = refundAmount;
             } else if (solution === 'resend' || solution === 'partial-resend') {
-                // 확인 모달에서 수정된 값이 있으면 그 값을 사용
-                csData.재발송상품 = document.getElementById('confirmResendOption')?.value || 
-                                   document.getElementById('csResendOption').value;
-                csData.재발송수량 = document.getElementById('confirmResendQty')?.value || 
-                                   document.getElementById('csResendQty').value;
-                csData.수령인 = document.getElementById('confirmResendReceiver')?.value || 
-                               document.getElementById('csResendReceiver').value;
-                csData['수령인 전화번호'] = document.getElementById('confirmResendPhone')?.value || 
-                                         document.getElementById('csResendPhone').value;
-                csData.주소 = document.getElementById('confirmResendAddress')?.value || 
-                             document.getElementById('csResendAddress').value;
+                csData.재발송상품 = document.getElementById('csResendOption').value;
+                csData.재발송수량 = document.getElementById('csResendQty').value;
+                csData.수령인 = document.getElementById('csResendReceiver').value;
+                csData['수령인 전화번호'] = document.getElementById('csResendPhone').value;
+                csData.주소 = document.getElementById('csResendAddress').value;
                 csData['특이/요청사항'] = document.getElementById('csResendNote').value || '';
-                csData.발송요청일 = document.getElementById('confirmRequestDate')?.value || 
-                                  document.getElementById('csRequestDate').value || '';
-                
-                // 수정된 값을 원래 입력 필드에도 반영
-                if (document.getElementById('confirmResendOption')) {
-                    document.getElementById('csResendOption').value = csData.재발송상품;
-                    document.getElementById('csResendQty').value = csData.재발송수량;
-                    document.getElementById('csResendReceiver').value = csData.수령인;
-                    document.getElementById('csResendPhone').value = csData['수령인 전화번호'];
-                    document.getElementById('csResendAddress').value = csData.주소;
-                    if (csData.발송요청일) {
-                        document.getElementById('csRequestDate').value = csData.발송요청일;
-                    }
-                }
+                csData.발송요청일 = document.getElementById('csRequestDate').value || '';
             }
-
-            // 1. CS기록 시트에 저장
-            const csResponse = await fetch('/api/sheets', {
+            
+            const response = await fetch('/api/sheets', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action: 'saveCsRecord',
-                    data: csData
+                    action: 'updateCsRecord',
+                    data: csData,
+                    rowIndex: this.editingCsRecord.rowIndex
                 })
             });
-
-            const csResult = await csResponse.json();
-            if (!csResult.success) {
-                throw new Error('CS 기록 저장 실패');
-            }
-
-
-            // 2. 재발송/부분재발송인 경우 주문 접수
-            if (solution === 'resend' || solution === 'partial-resend') {
-// 주문 데이터 준비
-const now = new Date();
-const year = now.getFullYear();
-const month = String(now.getMonth() + 1).padStart(2, '0');
-const day = String(now.getDate()).padStart(2, '0');
-const hours = String(now.getHours()).padStart(2, '0');
-const minutes = String(now.getMinutes()).padStart(2, '0');
-const paymentDateTime = `${year}/${month}/${day} ${hours}:${minutes}`;
-
-// 로그인 사용자 이메일 가져오기
-const userEmail = localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail') || '';
-console.log('CS 주문 사용자 이메일:', userEmail);
-
-const orderData = {
-    userEmail: userEmail,  // 로그인한 사용자 이메일
-    마켓명: 'CS발송',
-    결제일: paymentDateTime,  // YYYY/MM/DD HH:MM 형식
-    주문자: this.currentCsOrder['주문자'],
-    '주문자 전화번호': this.currentCsOrder['주문자 전화번호'] || this.currentCsOrder['주문자전화번호'] || '',
-    수령인: document.getElementById('csResendReceiver').value,
-    '수령인 전화번호': document.getElementById('csResendPhone').value,
-    주소: document.getElementById('csResendAddress').value,
-    배송메세지: this.currentCsOrder['배송메세지'] || this.currentCsOrder['배송메시지'] || '',
-    옵션명: document.getElementById('csResendOption').value,
-    수량: document.getElementById('csResendQty').value,
-    '특이/요청사항': document.getElementById('csResendNote').value,
-    '발송요청일': document.getElementById('csRequestDate').value
-};
-
-                
-
-                this.showMessage('CS 접수 및 재발송 주문이 완료되었습니다.', 'success');
-            } else {
-                this.showMessage('CS 접수가 완료되었습니다.', 'success');
-            }
-
-            this.closeCsModal();
             
+            const result = await response.json();
+            if (result.success) {
+                this.showMessage('CS 기록이 수정되었습니다.', 'success');
+                this.closeCsModal();
+            } else {
+                throw new Error('CS 수정 실패');
+            }
         } catch (error) {
-            console.error('CS 접수 오류:', error);
-            this.showMessage('CS 접수 중 오류가 발생했습니다.', 'error');
+            console.error('CS 수정 오류:', error);
+            this.showMessage('CS 수정 중 오류가 발생했습니다.', 'error');
         } finally {
             this.hideLoading();
         }
-    },
+        return;
+    }
+
+    // 신규 접수인 경우
+    if (!this.isNewCsRecord) {
+        const duplicateCheck = await this.checkDuplicateCs();
+        
+        if (duplicateCheck && (duplicateCheck.csRecord || duplicateCheck.tempSave)) {
+            const confirmResult = await this.showCsConfirmModal(customerRequest, solution, duplicateCheck);
+            
+            if (!confirmResult) {
+                return;
+            }
+        }
+    }
+
+    // 신규 CS 접수 처리
+    this.showLoading();
+    try {
+        const userEmail = localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail') || 'CS';
+        
+        const csData = {
+            userEmail: userEmail,
+            마켓명: this.currentCsOrder['마켓명'] || '',
+            해결방법: this.getSolutionText(solution),
+            'CS 내용': customerRequest,
+            결제일: this.currentCsOrder['결제일'] || '',
+            주문번호: this.currentCsOrder['주문번호'] || '',
+            주문자: this.currentCsOrder['주문자'] || '',
+            '주문자 전화번호': this.currentCsOrder['주문자전화번호'] || 
+                              this.currentCsOrder['주문자 전화번호'] || '',
+            수령인: this.currentCsOrder['수령인'] || this.currentCsOrder['수취인'] || '',
+            '수령인 전화번호': this.currentCsOrder['수령인전화번호'] || 
+                              this.currentCsOrder['수령인 전화번호'] || '',
+            주소: this.currentCsOrder['주소'] || '',
+            배송메세지: this.currentCsOrder['배송메세지'] || '',
+            옵션명: this.currentCsOrder['옵션명'] || '',
+            수량: this.currentCsOrder['수량'] || '',
+            재발송상품: '',
+            재발송수량: '',
+            부분환불금액: '',
+            '특이/요청사항': '',
+            발송요청일: ''
+        };
+        
+        // 해결방법별 추가 데이터
+        if (solution === 'partial-refund') {
+            const refundAmount = Math.round(
+                (parseFloat(document.getElementById('csPaymentAmount').value) || 0) * 
+                (parseFloat(document.getElementById('csRefundPercent').value) || 0) / 100
+            );
+            csData.부분환불금액 = refundAmount;
+        } else if (solution === 'resend' || solution === 'partial-resend') {
+            csData.재발송상품 = document.getElementById('csResendOption').value;
+            csData.재발송수량 = document.getElementById('csResendQty').value;
+            csData.수령인 = document.getElementById('csResendReceiver').value;
+            csData['수령인 전화번호'] = document.getElementById('csResendPhone').value;
+            csData.주소 = document.getElementById('csResendAddress').value;
+            csData['특이/요청사항'] = document.getElementById('csResendNote').value || '';
+            csData.발송요청일 = document.getElementById('csRequestDate').value || '';
+        }
+
+        // CS기록 저장
+        const csResponse = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'saveCsRecord',
+                data: csData
+            })
+        });
+
+        const csResult = await csResponse.json();
+        if (!csResult.success) {
+            throw new Error('CS 기록 저장 실패');
+        }
+
+        this.showMessage('CS 접수가 완료되었습니다.', 'success');
+        this.closeCsModal();
+        
+    } catch (error) {
+        console.error('CS 접수 오류:', error);
+        this.showMessage('CS 접수 중 오류가 발생했습니다.', 'error');
+    } finally {
+        this.hideLoading();
+        this.isNewCsRecord = false;
+    }
+},
 
     getSolutionText(value) {
         const solutionMap = {
