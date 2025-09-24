@@ -27,6 +27,7 @@ export default async function handler(req, res) {
     const { action, sheetName, range, values } = req.body || req.query;
 
     switch (action) {
+      
 case 'saveCsRecord':
   try {
     const { data } = req.body;
@@ -43,8 +44,8 @@ case 'saveCsRecord':
       currentData = [['연번', '접수번호']]; // 헤더만 있는 것으로 간주
     }
     
-    // 연번 계산 (헤더 제외)
-    const newRowNumber = currentData.length; // 현재 행 수가 새 연번
+    // 연번 계산 (헤더 제외한 실제 데이터 개수 + 1)
+    const newRowNumber = currentData && currentData.length > 1 ? currentData.length : 1;
     
     // 접수번호 생성 (CS + YYYYMMDD + 3자리 일련번호)
     const today = new Date();
@@ -58,8 +59,9 @@ case 'saveCsRecord':
       for (let i = 1; i < currentData.length; i++) {
         if (!currentData[i] || !currentData[i][1]) continue;
         const receiptNo = String(currentData[i][1]);
+        // CS20240924001 형식 체크
         if (receiptNo.startsWith(`CS${dateStr}`)) {
-          const numPart = receiptNo.substring(10);
+          const numPart = receiptNo.substring(10); // CS20240924 이후 부분
           const num = parseInt(numPart);
           if (!isNaN(num) && num > lastNumber) {
             lastNumber = num;
@@ -71,7 +73,7 @@ case 'saveCsRecord':
     const sequenceNumber = String(lastNumber + 1).padStart(3, '0');
     const receiptNumber = `CS${dateStr}${sequenceNumber}`;
     
-    console.log('생성된 접수번호:', receiptNumber);
+    console.log('생성된 접수번호:', receiptNumber, '연번:', newRowNumber);
     
     // CS기록 시트에 저장할 데이터
     const csRowData = [[
