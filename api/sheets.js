@@ -40,11 +40,11 @@ case 'saveCsRecord':
       currentData = await getSheetData('CS기록!A:B', ordersSpreadsheetId);
     } catch (error) {
       console.log('CS기록 시트가 없거나 비어있음');
-      currentData = [];
+      currentData = [['연번', '접수번호']]; // 헤더만 있는 것으로 간주
     }
     
-    // 연번 계산
-    const newRowNumber = currentData.length;  // 헤더 제외한 실제 데이터 수
+    // 연번 계산 (헤더 제외)
+    const newRowNumber = currentData.length; // 현재 행 수가 새 연번
     
     // 접수번호 생성 (CS + YYYYMMDD + 3자리 일련번호)
     const today = new Date();
@@ -56,9 +56,10 @@ case 'saveCsRecord':
     let lastNumber = 0;
     if (currentData && currentData.length > 1) {
       for (let i = 1; i < currentData.length; i++) {
-        const receiptNo = currentData[i][1] || '';  // B열이 접수번호
+        if (!currentData[i] || !currentData[i][1]) continue;
+        const receiptNo = String(currentData[i][1]);
         if (receiptNo.startsWith(`CS${dateStr}`)) {
-          const numPart = receiptNo.substring(10);  // CS20250924XXX에서 XXX 추출
+          const numPart = receiptNo.substring(10);
           const num = parseInt(numPart);
           if (!isNaN(num) && num > lastNumber) {
             lastNumber = num;
@@ -98,7 +99,8 @@ case 'saveCsRecord':
       '접수'
     ]];
     
-    // CS기록 시트에 저장
+    // appendSheetData 함수 사용
+    const { appendSheetData } = require('../lib/google-sheets');
     await appendSheetData('CS기록!A:V', csRowData, ordersSpreadsheetId);
     console.log('CS기록 시트 저장 완료');
     
@@ -106,54 +108,28 @@ case 'saveCsRecord':
     if (data['해결방법'] === '재발송' || data['해결방법'] === '부분재발송') {
       console.log('재발송/부분재발송 - 임시저장 시트에도 저장');
       
-      // 기존 임시저장 데이터 확인 및 업데이트
-      const tempData = await getSheetData('임시저장!A:Q', ordersSpreadsheetId);
-      let updated = false;
+      const tempRowData = [[
+        data['userEmail'] || '',
+        receiptNumber,
+        new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
+        data['마켓명'] || '',
+        data['옵션명'] || '',
+        data['수량'] || '1',
+        '',  // 단가
+        '',  // 택배비
+        '',  // 상품금액
+        data['주문자'] || '',
+        data['주문자 전화번호'] || '',
+        data['수령인'] || '',
+        data['수령인 전화번호'] || '',
+        data['주소'] || '',
+        data['배송메세지'] || '',
+        data['특이/요청사항'] || '',
+        data['발송요청일'] || ''
+      ]];
       
-      if (tempData && tempData.length > 1) {
-        for (let i = 1; i < tempData.length; i++) {
-          // userEmail이 'CS'로 시작하는 기존 항목 찾기
-          if (tempData[i][0] && tempData[i][0].startsWith('CS')) {
-            // 동일한 주문 정보인지 확인
-            if (tempData[i][9] === data['주문자'] && 
-                tempData[i][11] === data['수령인'] && 
-                tempData[i][4] === data['옵션명']) {
-              // 기존 항목의 접수번호만 업데이트
-              const updateRange = `임시저장!B${i + 1}`;
-              await updateSheetData(updateRange, [[receiptNumber]], ordersSpreadsheetId);
-              updated = true;
-              console.log('기존 임시저장 항목 접수번호 업데이트 완료');
-              break;
-            }
-          }
-        }
-      }
-      
-      // 기존 항목이 없으면 새로 추가
-      if (!updated) {
-        const tempRowData = [[
-          data['userEmail'] || '',
-          receiptNumber,
-          new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
-          data['마켓명'] || '',
-          data['옵션명'] || '',
-          data['수량'] || '1',
-          '',
-          '',
-          '',
-          data['주문자'] || '',
-          data['주문자 전화번호'] || '',
-          data['수령인'] || '',
-          data['수령인 전화번호'] || '',
-          data['주소'] || '',
-          data['배송메세지'] || '',
-          data['특이/요청사항'] || '',
-          data['발송요청일'] || ''
-        ]];
-        
-        await appendSheetData('임시저장!A:Q', tempRowData, ordersSpreadsheetId);
-        console.log('임시저장 시트 새 항목 추가 완료');
-      }
+      await appendSheetData('임시저장!A:Q', tempRowData, ordersSpreadsheetId);
+      console.log('임시저장 시트 저장 완료');
     }
     
     return res.status(200).json({
@@ -169,7 +145,6 @@ case 'saveCsRecord':
       error: error.message || 'CS 기록 저장 실패'
     });
   }
-
 case 'addCsOrder':
         try {
           const { data } = req.body;
