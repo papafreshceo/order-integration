@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     const { action, sheetName, range, values } = req.body || req.query;
 
     switch (action) {
-      
+
 case 'saveCsRecord':
   try {
     const { data } = req.body;
@@ -35,50 +35,60 @@ case 'saveCsRecord':
     
     console.log('CS 기록 저장 시작:', data);
     
-    // CS기록 시트의 현재 데이터 개수 확인 (연번 계산용)
-    let currentData;
+    // CS기록 시트의 전체 데이터 가져오기
+    let allCsData;
+    let maxRowNumber = 0;
+    let todayMaxNumber = 0;
+    
     try {
-      currentData = await getSheetData('CS기록!A:B', ordersSpreadsheetId);
+      allCsData = await getSheetData('CS기록!A:B', ordersSpreadsheetId);
+      
+      if (allCsData && allCsData.length > 1) {
+        // 마지막 연번 찾기
+        for (let i = 1; i < allCsData.length; i++) {
+          const rowNum = parseInt(allCsData[i][0]);
+          if (!isNaN(rowNum) && rowNum > maxRowNumber) {
+            maxRowNumber = rowNum;
+          }
+        }
+        
+        // 오늘 날짜의 마지막 접수번호 찾기
+        const today = new Date();
+        const dateStr = today.getFullYear() + 
+          String(today.getMonth() + 1).padStart(2, '0') + 
+          String(today.getDate()).padStart(2, '0');
+        
+        for (let i = 1; i < allCsData.length; i++) {
+          const receiptNo = String(allCsData[i][1] || '');
+          if (receiptNo.startsWith(`CS${dateStr}`)) {
+            const numStr = receiptNo.replace(`CS${dateStr}`, '');
+            const num = parseInt(numStr);
+            if (!isNaN(num) && num > todayMaxNumber) {
+              todayMaxNumber = num;
+            }
+          }
+        }
+      }
     } catch (error) {
-      console.log('CS기록 시트가 없거나 비어있음');
-      currentData = [['연번', '접수번호']]; // 헤더만 있는 것으로 간주
+      console.log('CS기록 시트 읽기 오류:', error);
     }
     
-    // 연번 계산 (헤더 제외한 실제 데이터 개수 + 1)
-    const newRowNumber = currentData && currentData.length > 1 ? currentData.length : 1;
+    // 새 연번과 접수번호 생성
+    const newRowNumber = maxRowNumber + 1;
     
-    // 접수번호 생성 (CS + YYYYMMDD + 3자리 일련번호)
     const today = new Date();
     const dateStr = today.getFullYear() + 
       String(today.getMonth() + 1).padStart(2, '0') + 
       String(today.getDate()).padStart(2, '0');
-    
-    // 오늘 날짜의 마지막 CS 번호 찾기
-    let lastNumber = 0;
-    if (currentData && currentData.length > 1) {
-      for (let i = 1; i < currentData.length; i++) {
-        if (!currentData[i] || !currentData[i][1]) continue;
-        const receiptNo = String(currentData[i][1]);
-        // CS20240924001 형식 체크
-        if (receiptNo.startsWith(`CS${dateStr}`)) {
-          const numPart = receiptNo.substring(10); // CS20240924 이후 부분
-          const num = parseInt(numPart);
-          if (!isNaN(num) && num > lastNumber) {
-            lastNumber = num;
-          }
-        }
-      }
-    }
-    
-    const sequenceNumber = String(lastNumber + 1).padStart(3, '0');
+    const sequenceNumber = String(todayMaxNumber + 1).padStart(3, '0');
     const receiptNumber = `CS${dateStr}${sequenceNumber}`;
     
-    console.log('생성된 접수번호:', receiptNumber, '연번:', newRowNumber);
+    console.log('생성된 연번:', newRowNumber, '접수번호:', receiptNumber);
     
     // CS기록 시트에 저장할 데이터
     const csRowData = [[
-      newRowNumber,                      // 연번
-      receiptNumber,                     // 접수번호
+      newRowNumber,
+      receiptNumber,
       data['마켓명'] || '',
       new Date().toLocaleDateString('ko-KR'),
       data['해결방법'] || '',
@@ -101,44 +111,43 @@ case 'saveCsRecord':
       '접수'
     ]];
     
-    // appendSheetData 함수 사용
-    const { appendSheetData } = require('../lib/google-sheets');
     await appendSheetData('CS기록!A:V', csRowData, ordersSpreadsheetId);
     console.log('CS기록 시트 저장 완료');
     
-if (data['해결방법'] === '재발송' || data['해결방법'] === '부분재발송') {
-        const koreaTime = new Date().toLocaleString('ko-KR', {
-            timeZone: 'Asia/Seoul',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
-        
-        const tempRowData = [[
-            data['userEmail'] || 'CS',
-            receiptNumber,
-            koreaTime,
-            'CS발송',  // 마켓명을 CS발송으로 고정
-            data['재발송상품'] || data['옵션명'] || '',
-            data['재발송수량'] || data['수량'] || '1',
-            '',
-            '',
-            '',
-            data['주문자'] || '',
-            data['주문자 전화번호'] || '',
-            data['수령인'] || '',
-            data['수령인 전화번호'] || '',
-            data['주소'] || '',
-            data['배송메세지'] || '',
-            data['특이/요청사항'] || '',
-            data['발송요청일'] || ''
-        ]];
-        
-        await appendSheetData('임시저장!A:Q', tempRowData, ordersSpreadsheetId);
-        console.log('임시저장 완료');
+    // 재발송/부분재발송인 경우 임시저장
+    if (data['해결방법'] === '재발송' || data['해결방법'] === '부분재발송') {
+      const koreaTime = new Date().toLocaleString('ko-KR', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      
+      const tempRowData = [[
+        data['userEmail'] || 'CS',
+        receiptNumber,
+        koreaTime,
+        'CS발송',
+        data['재발송상품'] || data['옵션명'] || '',
+        data['재발송수량'] || data['수량'] || '1',
+        '',
+        '',
+        '',
+        data['주문자'] || '',
+        data['주문자 전화번호'] || '',
+        data['수령인'] || '',
+        data['수령인 전화번호'] || '',
+        data['주소'] || '',
+        data['배송메세지'] || '',
+        data['특이/요청사항'] || '',
+        data['발송요청일'] || ''
+      ]];
+      
+      await appendSheetData('임시저장!A:Q', tempRowData, ordersSpreadsheetId);
+      console.log('임시저장 완료');
     }
     
     return res.status(200).json({
