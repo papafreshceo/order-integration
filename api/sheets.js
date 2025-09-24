@@ -37,14 +37,14 @@ case 'saveCsRecord':
     // CS기록 시트의 현재 데이터 개수 확인 (연번 계산용)
     let currentData;
     try {
-      currentData = await getSheetData('CS기록!A2:B', ordersSpreadsheetId);
+      currentData = await getSheetData('CS기록!A:B', ordersSpreadsheetId);
     } catch (error) {
       console.log('CS기록 시트가 없거나 비어있음');
       currentData = [];
     }
     
     // 연번 계산
-    const newRowNumber = currentData.length + 1;
+    const newRowNumber = currentData.length;  // 헤더 제외한 실제 데이터 수
     
     // 접수번호 생성 (CS + YYYYMMDD + 3자리 일련번호)
     const today = new Date();
@@ -54,8 +54,8 @@ case 'saveCsRecord':
     
     // 오늘 날짜의 마지막 CS 번호 찾기
     let lastNumber = 0;
-    if (currentData && currentData.length > 0) {
-      for (let i = 0; i < currentData.length; i++) {
+    if (currentData && currentData.length > 1) {
+      for (let i = 1; i < currentData.length; i++) {
         const receiptNo = currentData[i][1] || '';  // B열이 접수번호
         if (receiptNo.startsWith(`CS${dateStr}`)) {
           const numPart = receiptNo.substring(10);  // CS20250924XXX에서 XXX 추출
@@ -72,30 +72,30 @@ case 'saveCsRecord':
     
     console.log('생성된 접수번호:', receiptNumber);
     
-    // CS기록 시트에 저장할 데이터 (22개 필드)
+    // CS기록 시트에 저장할 데이터
     const csRowData = [[
       newRowNumber,                      // 연번
       receiptNumber,                     // 접수번호
-      data['마켓명'] || '',             // 마켓명
-      new Date().toLocaleDateString('ko-KR'), // 접수일
-      data['해결방법'] || '',           // 해결방법
-      data['재발송상품'] || '',         // 재발송상품
-      data['재발송수량'] || '',         // 재발송수량
-      data['CS 내용'] || '',            // CS 내용
-      data['부분환불금액'] || '',       // 부분환불금액
-      data['결제일'] || '',             // 결제일
-      data['주문번호'] || '',           // 주문번호
-      data['주문자'] || '',             // 주문자
-      data['주문자 전화번호'] || '',    // 주문자 전화번호
-      data['수령인'] || '',             // 수령인
-      data['수령인 전화번호'] || '',    // 수령인 전화번호
-      data['주소'] || '',               // 주소
-      data['배송메세지'] || '',         // 배송메세지
-      data['옵션명'] || '',             // 옵션명
-      data['수량'] || '',               // 수량
-      data['특이/요청사항'] || '',      // 특이/요청사항
-      data['발송요청일'] || '',         // 발송요청일
-      '접수'                            // 상태
+      data['마켓명'] || '',
+      new Date().toLocaleDateString('ko-KR'),
+      data['해결방법'] || '',
+      data['재발송상품'] || '',
+      data['재발송수량'] || '',
+      data['CS 내용'] || '',
+      data['부분환불금액'] || '',
+      data['결제일'] || '',
+      data['주문번호'] || '',
+      data['주문자'] || '',
+      data['주문자 전화번호'] || '',
+      data['수령인'] || '',
+      data['수령인 전화번호'] || '',
+      data['주소'] || '',
+      data['배송메세지'] || '',
+      data['옵션명'] || '',
+      data['수량'] || '',
+      data['특이/요청사항'] || '',
+      data['발송요청일'] || '',
+      '접수'
     ]];
     
     // CS기록 시트에 저장
@@ -106,29 +106,54 @@ case 'saveCsRecord':
     if (data['해결방법'] === '재발송' || data['해결방법'] === '부분재발송') {
       console.log('재발송/부분재발송 - 임시저장 시트에도 저장');
       
-      // 임시저장 시트 구조에 맞춰 저장
-      const tempRowData = [[
-        data['userEmail'] || '',          // 사용자 이메일
-        receiptNumber,                     // 동일한 접수번호 사용
-        new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }), // 저장시간
-        data['마켓명'] || '',             // 마켓명
-        data['옵션명'] || '',             // 옵션명
-        data['수량'] || '1',              // 수량
-        '',                                // 단가 (비워둠)
-        '',                                // 택배비 (비워둠)
-        '',                                // 상품금액 (비워둠)
-        data['주문자'] || '',             // 주문자
-        data['주문자 전화번호'] || '',    // 주문자 전화번호
-        data['수령인'] || '',             // 수령인
-        data['수령인 전화번호'] || '',    // 수령인 전화번호
-        data['주소'] || '',               // 주소
-        data['배송메세지'] || '',         // 배송메세지
-        data['특이/요청사항'] || '',      // 특이/요청사항
-        data['발송요청일'] || ''          // 발송요청일
-      ]];
+      // 기존 임시저장 데이터 확인 및 업데이트
+      const tempData = await getSheetData('임시저장!A:Q', ordersSpreadsheetId);
+      let updated = false;
       
-      await appendSheetData('임시저장!A:Q', tempRowData, ordersSpreadsheetId);
-      console.log('임시저장 시트 저장 완료');
+      if (tempData && tempData.length > 1) {
+        for (let i = 1; i < tempData.length; i++) {
+          // userEmail이 'CS'로 시작하는 기존 항목 찾기
+          if (tempData[i][0] && tempData[i][0].startsWith('CS')) {
+            // 동일한 주문 정보인지 확인
+            if (tempData[i][9] === data['주문자'] && 
+                tempData[i][11] === data['수령인'] && 
+                tempData[i][4] === data['옵션명']) {
+              // 기존 항목의 접수번호만 업데이트
+              const updateRange = `임시저장!B${i + 1}`;
+              await updateSheetData(updateRange, [[receiptNumber]], ordersSpreadsheetId);
+              updated = true;
+              console.log('기존 임시저장 항목 접수번호 업데이트 완료');
+              break;
+            }
+          }
+        }
+      }
+      
+      // 기존 항목이 없으면 새로 추가
+      if (!updated) {
+        const tempRowData = [[
+          data['userEmail'] || '',
+          receiptNumber,
+          new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
+          data['마켓명'] || '',
+          data['옵션명'] || '',
+          data['수량'] || '1',
+          '',
+          '',
+          '',
+          data['주문자'] || '',
+          data['주문자 전화번호'] || '',
+          data['수령인'] || '',
+          data['수령인 전화번호'] || '',
+          data['주소'] || '',
+          data['배송메세지'] || '',
+          data['특이/요청사항'] || '',
+          data['발송요청일'] || ''
+        ]];
+        
+        await appendSheetData('임시저장!A:Q', tempRowData, ordersSpreadsheetId);
+        console.log('임시저장 시트 새 항목 추가 완료');
+      }
     }
     
     return res.status(200).json({
@@ -141,8 +166,7 @@ case 'saveCsRecord':
     console.error('saveCsRecord 오류:', error.message, error.stack);
     return res.status(500).json({
       success: false,
-      error: error.message || 'CS 기록 저장 실패',
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: error.message || 'CS 기록 저장 실패'
     });
   }
 
