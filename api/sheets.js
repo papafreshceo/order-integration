@@ -33,37 +33,59 @@ case 'saveCsRecord':
     const { data } = req.body;
     const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
     
-    console.log('CS 기록 저장 시작, ordersSpreadsheetId:', ordersSpreadsheetId);
+    console.log('CS 기록 저장 시작');
     
     // CS기록 시트 데이터 가져오기
-    let existingData = [];
-    try {
-      existingData = await getSheetData('CS기록!A:B', ordersSpreadsheetId);
-      console.log('가져온 데이터 행 수:', existingData?.length || 0);
-    } catch (error) {
-      console.log('CS기록 시트가 없거나 비어있음, 새로 시작');
-      existingData = [];
-    }
-    
-    // 연번 계산
+    let allData = [];
     let newRowNumber = 1;
-    if (existingData && existingData.length > 1) {
-      const lastRowIndex = existingData.length - 1;
-      const lastRow = existingData[lastRowIndex];
-      console.log(`마지막 행 [${lastRowIndex}]:`, lastRow);
+    let todayMax = 0;
+    
+    try {
+      allData = await getSheetData('CS기록!A:V', ordersSpreadsheetId);
+      console.log('가져온 전체 행 수:', allData?.length);
       
-      if (lastRow && lastRow[0]) {
-        const lastNumber = parseInt(lastRow[0]);
-        console.log('마지막 연번 파싱:', lastRow[0], '->', lastNumber);
-        
-        if (!isNaN(lastNumber)) {
-          newRowNumber = lastNumber + 1;
-        } else {
-          newRowNumber = existingData.length;
+      if (allData && allData.length > 1) {
+        // 1행은 헤더, 2행부터가 실제 데이터
+        // 마지막 데이터의 연번 찾기
+        for (let i = allData.length - 1; i >= 1; i--) {
+          if (allData[i] && allData[i][0]) {
+            const num = parseInt(allData[i][0]);
+            if (!isNaN(num)) {
+              newRowNumber = num + 1;
+              console.log(`마지막 연번 발견: ${num}, 새 연번: ${newRowNumber}`);
+              break;
+            }
+          }
         }
-      } else {
-        newRowNumber = existingData.length;
+        
+        // 연번을 못 찾았으면 데이터 행 수로 계산
+        if (newRowNumber === 1 && allData.length > 1) {
+          newRowNumber = allData.length;  // 헤더 포함한 길이가 다음 연번
+        }
+        
+        // 오늘 날짜 접수번호 최대값 찾기
+        const today = new Date();
+        const dateStr = today.getFullYear() + 
+          String(today.getMonth() + 1).padStart(2, '0') + 
+          String(today.getDate()).padStart(2, '0');
+        
+        // 2행부터 검사 (1행은 헤더)
+        for (let i = 1; i < allData.length; i++) {
+          if (allData[i] && allData[i][1]) {
+            const receiptNo = String(allData[i][1]);
+            if (receiptNo.startsWith(`CS${dateStr}`)) {
+              const numStr = receiptNo.substring(10);
+              const num = parseInt(numStr);
+              if (!isNaN(num)) {
+                todayMax = Math.max(todayMax, num);
+                console.log(`접수번호 발견: ${receiptNo}, 현재 최대값: ${todayMax}`);
+              }
+            }
+          }
+        }
       }
+    } catch (error) {
+      console.log('CS기록 읽기 실패:', error.message);
     }
     
     // 접수번호 생성
@@ -71,27 +93,9 @@ case 'saveCsRecord':
     const dateStr = today.getFullYear() + 
       String(today.getMonth() + 1).padStart(2, '0') + 
       String(today.getDate()).padStart(2, '0');
-    
-    // 오늘 날짜 접수번호 최대값 찾기
-    let todayMax = 0;
-    if (existingData && existingData.length > 1) {
-      for (let i = 1; i < existingData.length; i++) {
-        if (existingData[i] && existingData[i][1]) {
-          const receipt = String(existingData[i][1]);
-          if (receipt.startsWith(`CS${dateStr}`)) {
-            const numPart = receipt.substring(10);
-            const num = parseInt(numPart);
-            if (!isNaN(num)) {
-              todayMax = Math.max(todayMax, num);
-            }
-          }
-        }
-      }
-    }
-    
     const receiptNumber = `CS${dateStr}${String(todayMax + 1).padStart(3, '0')}`;
     
-    console.log(`최종 생성: 연번=${newRowNumber}, 접수번호=${receiptNumber}`);
+    console.log(`최종 생성 - 연번: ${newRowNumber}, 접수번호: ${receiptNumber}`);
     
     // CS기록 시트에 저장할 데이터
     const csRowData = [[
@@ -163,7 +167,7 @@ case 'saveCsRecord':
     });
     
   } catch (error) {
-    console.error('saveCsRecord 오류:', error);
+    console.error('saveCsRecord 전체 오류:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'CS 기록 저장 실패'
