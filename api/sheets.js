@@ -1005,6 +1005,118 @@ case 'checkCsDuplicate':
     });
   }
 
+
+
+  case 'getExistingCsRecord':
+  try {
+    const { orderData } = req.body;
+    const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
+    
+    const { getOrderData } = require('../lib/google-sheets');
+    const csData = await getOrderData('CS기록!A:V', ordersSpreadsheetId);
+    
+    if (csData && csData.length > 1) {
+      // 주문번호로 찾기 (K열 = 10번 인덱스)
+      for (let i = 1; i < csData.length; i++) {
+        const row = csData[i];
+        if (row && row[10] === orderData.주문번호) {
+          // CS 레코드 찾음
+          const csRecord = {
+            연번: row[0],
+            접수번호: row[1],
+            마켓명: row[2],
+            접수일: row[3],
+            해결방법: row[4],
+            재발송상품: row[5],
+            재발송수량: row[6],
+            'CS 내용': row[7],
+            부분환불금액: row[8],
+            결제일: row[9],
+            주문번호: row[10],
+            주문자: row[11],
+            '주문자 전화번호': row[12],
+            수령인: row[13],
+            '수령인 전화번호': row[14],
+            주소: row[15],
+            배송메세지: row[16],
+            옵션명: row[17],
+            수량: row[18],
+            '특이/요청사항': row[19],
+            발송요청일: row[20],
+            상태: row[21] || '접수',
+            rowIndex: i + 1  // 시트 행 번호 (수정용)
+          };
+          
+          return res.status(200).json({
+            success: true,
+            csRecord: csRecord
+          });
+        }
+      }
+    }
+    
+    return res.status(200).json({
+      success: true,
+      csRecord: null
+    });
+    
+  } catch (error) {
+    console.error('getExistingCsRecord 오류:', error);
+    return res.status(200).json({
+      success: true,
+      csRecord: null
+    });
+  }
+
+case 'updateCsRecord':
+  try {
+    const { data, rowIndex } = req.body;
+    const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
+    
+    // 업데이트할 데이터 준비 (접수번호는 유지)
+    const updateData = [[
+      data.연번,
+      data.접수번호,  // 기존 접수번호 유지
+      data['마켓명'] || '',
+      data.접수일,
+      data['해결방법'] || '',
+      data['재발송상품'] || '',
+      data['재발송수량'] || '',
+      data['CS 내용'] || '',
+      data['부분환불금액'] || '',
+      data['결제일'] || '',
+      data['주문번호'] || '',
+      data['주문자'] || '',
+      data['주문자 전화번호'] || '',
+      data['수령인'] || '',
+      data['수령인 전화번호'] || '',
+      data['주소'] || '',
+      data['배송메세지'] || '',
+      data['옵션명'] || '',
+      data['수량'] || '',
+      data['특이/요청사항'] || '',
+      data['발송요청일'] || '',
+      '수정'
+    ]];
+    
+    await updateSheetData(`CS기록!A${rowIndex}:V${rowIndex}`, updateData, ordersSpreadsheetId);
+    
+    return res.status(200).json({
+      success: true,
+      message: 'CS 기록이 수정되었습니다'
+    });
+    
+  } catch (error) {
+    console.error('updateCsRecord 오류:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'CS 기록 수정 실패'
+    });
+  }
+
+
+
+  
 case 'getCsRecords':
   try {
     const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';

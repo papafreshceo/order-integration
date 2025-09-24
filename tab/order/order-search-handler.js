@@ -1419,32 +1419,190 @@ input[type="date"]:focus::-webkit-datetime-edit-day-field {
     },
 
     // CS 모달 관련 함수들
-    openCsModal() {
-        const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
-        if (checkedBoxes.length === 0) {
-            this.showMessage('CS 접수할 주문을 선택하세요.', 'error');
-            return;
-        }
-        if (checkedBoxes.length > 1) {
-            this.showMessage('CS 접수는 한 번에 하나의 주문만 처리할 수 있습니다.', 'error');
-            return;
-        }
+async openCsModal() {
+    const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
+    if (checkedBoxes.length === 0) {
+        this.showMessage('CS 접수할 주문을 선택하세요.', 'error');
+        return;
+    }
+    if (checkedBoxes.length > 1) {
+        this.showMessage('CS 접수는 한 번에 하나의 주문만 처리할 수 있습니다.', 'error');
+        return;
+    }
 
-        const index = checkedBoxes[0].dataset.index;
-        const order = this.getFilteredOrders()[index];
+    const index = checkedBoxes[0].dataset.index;
+    const order = this.getFilteredOrders()[index];
+    
+    if (!order) {
+        this.showMessage('주문 정보를 찾을 수 없습니다.', 'error');
+        return;
+    }
+
+    this.currentCsOrder = order;
+    
+    // 기존 CS 접수 내역 확인
+    this.showLoading();
+    try {
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'getExistingCsRecord',
+                orderData: {
+                    주문번호: order['주문번호'] || '',
+                    주문자: order['주문자'] || '',
+                    수령인: order['수령인'] || order['수취인'] || '',
+                    옵션명: order['옵션명'] || ''
+                }
+            })
+        });
         
-        if (!order) {
-            this.showMessage('주문 정보를 찾을 수 없습니다.', 'error');
-            return;
+        const result = await response.json();
+        if (result.success && result.csRecord) {
+            // 기존 CS 접수 내역이 있으면 확인 모달 표시
+            const proceedWithEdit = await this.showExistingCsModal(result.csRecord);
+            if (!proceedWithEdit) {
+                this.hideLoading();
+                return;
+            }
+            // 기존 데이터로 폼 채우기
+            this.fillCsFormWithExisting(result.csRecord);
         }
+    } catch (error) {
+        console.error('기존 CS 확인 실패:', error);
+    } finally {
+        this.hideLoading();
+    }
+    
+    this.displayCsOrderInfo(order);
+    const modal = document.getElementById('csModalOverlay');
+    if (modal) modal.classList.add('show');
+},
 
-        this.currentCsOrder = order;
-        this.displayCsOrderInfo(order);
+async showExistingCsModal(csRecord) {
+    return new Promise((resolve) => {
+        const existingModal = document.getElementById('existingCsModal');
+        if (existingModal) existingModal.remove();
         
-        const modal = document.getElementById('csModalOverlay');
-        if (modal) modal.classList.add('show');
-    },
+        const modalHtml = `
+            <div id="existingCsModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+                 background: rgba(0,0,0,0.5); z-index: 2001; display: flex; align-items: center; justify-content: center;">
+                <div style="background: white; border-radius: 16px; max-width: 700px; width: 90%; 
+                     max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                    <div style="padding: 20px; border-bottom: 1px solid #dee2e6; background: #fff4e6;">
+                        <h3 style="font-size: 18px; font-weight: 500; color: #f59e0b; margin: 0;">
+                            ⚠️ 기존 CS 접수 내역이 있습니다
+                        </h3>
+                    </div>
+                    
+                    <div style="padding: 20px;">
+                        <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                            <h4 style="font-size: 14px; font-weight: 500; color: #042848; margin-bottom: 12px;">기존 접수 정보</h4>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; font-size: 13px;">
+                                <div><strong>접수번호:</strong> ${csRecord.접수번호 || ''}</div>
+                                <div><strong>접수일:</strong> ${csRecord.접수일 || ''}</div>
+                                <div><strong>해결방법:</strong> ${csRecord.해결방법 || ''}</div>
+                                <div><strong>상태:</strong> ${csRecord.상태 || '접수'}</div>
+                                <div style="grid-column: 1 / -1;">
+                                    <strong>CS 내용:</strong> ${csRecord['CS 내용'] || ''}
+                                </div>
+                                ${csRecord.재발송상품 ? `
+                                    <div><strong>재발송상품:</strong> ${csRecord.재발송상품}</div>
+                                    <div><strong>재발송수량:</strong> ${csRecord.재발송수량 || ''}</div>
+                                ` : ''}
+                                ${csRecord.부분환불금액 ? `
+                                    <div style="grid-column: 1 / -1;">
+                                        <strong>부분환불금액:</strong> ${Number(csRecord.부분환불금액).toLocaleString()}원
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        
+                        <div style="background: #e7f3ff; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+                            <p style="font-size: 13px; color: #2563eb; margin: 0; line-height: 1.6;">
+                                이미 접수된 CS 건입니다.<br>
+                                기존 내용을 수정하시려면 '수정하기'를,<br>
+                                새로운 CS를 추가 접수하시려면 '새로 접수'를 선택하세요.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div style="padding: 16px 20px; border-top: 1px solid #dee2e6; display: flex; justify-content: flex-end; gap: 10px; background: #f8f9fa;">
+                        <button onclick="document.getElementById('existingCsModal').remove(); OrderSearchHandler.existingCsResolve('cancel');"
+                                style="padding: 8px 20px; border: 1px solid #dee2e6; background: white; 
+                                       color: #042848; border-radius: 6px; font-size: 13px; cursor: pointer;">
+                            취소
+                        </button>
+                        <button onclick="document.getElementById('existingCsModal').remove(); OrderSearchHandler.existingCsResolve('new');"
+                                style="padding: 8px 20px; border: none; background: #10b981; 
+                                       color: white; border-radius: 6px; font-size: 13px; cursor: pointer;">
+                            새로 접수
+                        </button>
+                        <button onclick="document.getElementById('existingCsModal').remove(); OrderSearchHandler.existingCsResolve('edit');"
+                                style="padding: 8px 20px; border: none; background: #2563eb; 
+                                       color: white; border-radius: 6px; font-size: 13px; cursor: pointer;">
+                            수정하기
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        window.OrderSearchHandler.existingCsResolve = (action) => {
+            if (action === 'cancel') {
+                resolve(false);
+            } else if (action === 'new') {
+                this.isNewCsRecord = true;
+                resolve(true);
+            } else if (action === 'edit') {
+                this.isEditingCs = true;
+                this.editingCsRecord = csRecord;
+                resolve(true);
+            }
+        };
+    });
+},
 
+fillCsFormWithExisting(csRecord) {
+    // 기존 CS 데이터로 폼 채우기
+    setTimeout(() => {
+        document.getElementById('csCustomerRequest').value = csRecord['CS 내용'] || '';
+        
+        // 해결방법 매핑
+        const solutionMap = {
+            '사이트환불': 'site-refund',
+            '부분환불': 'partial-refund',
+            '재발송': 'resend',
+            '부분재발송': 'partial-resend',
+            '반품': 'return'
+        };
+        const solutionValue = solutionMap[csRecord.해결방법] || '';
+        document.getElementById('csSolution').value = solutionValue;
+        
+        // 해결방법에 따른 추가 필드 표시
+        this.onSolutionChange();
+        
+        // 재발송 정보
+        if (solutionValue === 'resend' || solutionValue === 'partial-resend') {
+            document.getElementById('csResendOption').value = csRecord.재발송상품 || '';
+            document.getElementById('csResendQty').value = csRecord.재발송수량 || '1';
+            document.getElementById('csResendNote').value = csRecord['특이/요청사항'] || '';
+            document.getElementById('csRequestDate').value = csRecord.발송요청일 || '';
+            document.getElementById('csResendReceiver').value = csRecord.수령인 || '';
+            document.getElementById('csResendPhone').value = csRecord['수령인 전화번호'] || '';
+            document.getElementById('csResendAddress').value = csRecord.주소 || '';
+        }
+        
+        // 부분환불 정보
+        if (solutionValue === 'partial-refund' && csRecord.부분환불금액) {
+            // 부분환불 금액 역계산은 복잡하므로 직접 입력하도록 안내
+            document.getElementById('csRefundAmount').textContent = 
+                Number(csRecord.부분환불금액).toLocaleString() + '원';
+        }
+    }, 100);
+},
 displayCsOrderInfo(order) {
         const infoDiv = document.getElementById('csOrderInfo');
         if (!infoDiv) return;
