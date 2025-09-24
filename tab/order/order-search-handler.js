@@ -1728,14 +1728,7 @@ const orderData = {
     data: orderData
 });
 
-const orderResponse = await fetch('/api/sheets', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-        action: 'addCsOrder',
-        data: orderData
-    })
-});
+
 
 let orderResult;
 try {
