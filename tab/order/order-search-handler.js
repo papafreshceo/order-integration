@@ -1602,6 +1602,7 @@ onSolutionChange() {
         try {
             // CS 데이터 준비
             const csData = {
+                userEmail: localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail') || 'CS',
                 마켓명: this.currentCsOrder['마켓명'] || '',
                 해결방법: this.getSolutionText(solution),
                 'CS 내용': customerRequest,

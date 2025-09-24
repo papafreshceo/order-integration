@@ -104,32 +104,39 @@ case 'saveCsRecord':
     await appendSheetData('CS기록!A:V', csRowData, ordersSpreadsheetId);
     console.log('CS기록 시트 저장 완료');
     
-    // 재발송 또는 부분재발송인 경우에만 임시저장 시트에도 저장
-    if (data['해결방법'] === '재발송' || data['해결방법'] === '부분재발송') {
-      console.log('재발송/부분재발송 - 임시저장 시트에도 저장');
-      
-      const tempRowData = [[
-        data['userEmail'] || '',
-        receiptNumber,
-        new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
-        data['마켓명'] || '',
-        data['옵션명'] || '',
-        data['수량'] || '1',
-        '',  // 단가
-        '',  // 택배비
-        '',  // 상품금액
-        data['주문자'] || '',
-        data['주문자 전화번호'] || '',
-        data['수령인'] || '',
-        data['수령인 전화번호'] || '',
-        data['주소'] || '',
-        data['배송메세지'] || '',
-        data['특이/요청사항'] || '',
-        data['발송요청일'] || ''
-      ]];
-      
-      await appendSheetData('임시저장!A:Q', tempRowData, ordersSpreadsheetId);
-      console.log('임시저장 시트 저장 완료');
+if (data['해결방법'] === '재발송' || data['해결방법'] === '부분재발송') {
+        const koreaTime = new Date().toLocaleString('ko-KR', {
+            timeZone: 'Asia/Seoul',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        
+        const tempRowData = [[
+            data['userEmail'] || 'CS',
+            receiptNumber,
+            koreaTime,
+            data['마켓명'] || '',
+            data['재발송상품'] || data['옵션명'] || '',
+            data['재발송수량'] || data['수량'] || '1',
+            '',
+            '',
+            '',
+            data['주문자'] || '',
+            data['주문자 전화번호'] || '',
+            data['수령인'] || '',
+            data['수령인 전화번호'] || '',
+            data['주소'] || '',
+            data['배송메세지'] || '',
+            data['특이/요청사항'] || '',
+            data['발송요청일'] || ''
+        ]];
+        
+        await appendSheetData('임시저장!A:Q', tempRowData, ordersSpreadsheetId);
+        console.log('임시저장 완료');
     }
     
     return res.status(200).json({
@@ -212,7 +219,7 @@ case 'addCsOrder':
           
           const tempRowData = [[
               data['userEmail'] || '',  // 로그인한 사용자 이메일
-              csOrderNumber,  // 접수번호
+              data['receiptNumber'] || csOrderNumber,
               koreaTime,  // 한국 시간으로 저장
               data['마켓명'] || 'CS재발송',
               data['옵션명'] || '',
