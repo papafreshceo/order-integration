@@ -171,17 +171,27 @@ onDateRangeChange() {
                 .btn-search {
                     padding: 10px 24px;
                     background: #2563eb;
-                    color: white;
+                    color: #ffffff;
                     border: none;
                     border-radius: 6px;
                     font-size: 14px;
                     font-weight: 300;
                     cursor: pointer;
                     transition: all 0.2s;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
                 }
                 
                 .btn-search:hover {
                     background: #1d4ed8;
+                    transform: translateY(-1px);
+                    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+                }
+                
+                .btn-search:active {
+                    transform: translateY(0);
                 }
                 
                 .btn-reset {
@@ -194,12 +204,21 @@ onDateRangeChange() {
                     font-weight: 300;
                     cursor: pointer;
                     transition: all 0.2s;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
                 }
                 
                 .btn-reset:hover {
                     background: #f8f9fa;
+                    border-color: #adb5bd;
+                    transform: translateY(-1px);
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                 }
                 
+                .btn-reset:active {
+                    transform: translateY(0);
+                }
                 /* 통계 카드 */
                 .cs-stats {
                     display: grid;
@@ -469,28 +488,44 @@ onDateRangeChange() {
                     </div>
                     
                     <div class="search-actions">
-                        <button class="btn-reset" onclick="OrderCsHandler.resetSearch()">초기화</button>
-                        <button class="btn-search" onclick="OrderCsHandler.search()">검색</button>
+                        <button class="btn-reset" onclick="OrderCsHandler.resetSearch()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            </svg>
+                            초기화
+                        </button>
+                        <button class="btn-search" onclick="OrderCsHandler.search()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+                            검색
+                        </button>
                     </div>
                 </div>
                 
                 <!-- 통계 카드 -->
-                <div class="cs-stats">
-                    <div class="stat-card">
-                        <div class="stat-value" id="statTotal">0</div>
-                        <div class="stat-label">전체 CS</div>
-                    </div>
+                <div class="cs-stats" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;">
                     <div class="stat-card" style="border-color: #dbeafe;">
-                        <div class="stat-value" id="statExchange" style="color: #1d4ed8;">0</div>
-                        <div class="stat-label">교환</div>
+                        <div class="stat-value" id="statSiteRefund" style="color: #2563eb;">0</div>
+                        <div class="stat-label">사이트환불</div>
+                    </div>
+                    <div class="stat-card" style="border-color: #e0e7ff;">
+                        <div class="stat-value" id="statPartialRefund" style="color: #6366f1;">0</div>
+                        <div class="stat-label">부분환불</div>
+                    </div>
+                    <div class="stat-card" style="border-color: #fef3c7;">
+                        <div class="stat-value" id="statResend" style="color: #f59e0b;">0</div>
+                        <div class="stat-label">재발송</div>
+                    </div>
+                    <div class="stat-card" style="border-color: #fed7aa;">
+                        <div class="stat-value" id="statPartialResend" style="color: #ea580c;">0</div>
+                        <div class="stat-label">부분재발송</div>
                     </div>
                     <div class="stat-card" style="border-color: #fee2e2;">
                         <div class="stat-value" id="statReturn" style="color: #dc2626;">0</div>
                         <div class="stat-label">반품</div>
-                    </div>
-                    <div class="stat-card" style="border-color: #fef3c7;">
-                        <div class="stat-value" id="statResend" style="color: #d97706;">0</div>
-                        <div class="stat-label">재발송</div>
                     </div>
                 </div>
                 
@@ -551,7 +586,6 @@ onDateRangeChange() {
     
     async loadCsRecords() {
         try {
-            // 로딩 표시
             const tbody = document.getElementById('csTableBody');
             if (tbody) {
                 tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px;">데이터를 불러오는 중...</td></tr>';
@@ -570,13 +604,15 @@ onDateRangeChange() {
             
             if (result.success && result.data) {
                 this.csRecords = result.data;
-                this.filteredRecords = [...this.csRecords];
-                this.updateStats();
-                this.displayRecords();
+                console.log('로드된 CS 레코드 샘플:', this.csRecords[0]);
+                
+                // 초기 날짜 범위 설정 후 검색
+                this.onDateRangeChange();
             } else {
                 this.csRecords = [];
                 this.filteredRecords = [];
                 this.displayRecords();
+                this.updateStats();
             }
         } catch (error) {
             console.error('CS 기록 로드 실패:', error);
@@ -589,6 +625,7 @@ onDateRangeChange() {
     
 search() {
         console.log('검색 시작');
+        console.log('전체 레코드:', this.csRecords);
         
         // dateRange가 없으면 초기화
         if (!this.dateRange) {
@@ -601,50 +638,91 @@ search() {
         const searchName = document.getElementById('searchName').value.toLowerCase();
         const status = document.getElementById('searchStatus').value;
         
-        console.log('검색 조건:', { 
-            dateRange: this.dateRange, 
-            csType, 
-            orderNo, 
-            searchName, 
-            status,
-            totalRecords: this.csRecords.length 
-        });
-        
         this.filteredRecords = this.csRecords.filter(record => {
-            // 날짜 필터 - 날짜 객체로 비교
+            // 날짜 필터 - 접수일 필드 확인
             if (record.접수일) {
-                const recordDate = new Date(record.접수일);
+                // 날짜 문자열을 Date 객체로 변환
+                let recordDate;
+                if (record.접수일.includes('/')) {
+                    // "2025/1/23" 형식
+                    const parts = record.접수일.split('/');
+                    recordDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                } else if (record.접수일.includes('-')) {
+                    // "2025-01-23" 형식
+                    recordDate = new Date(record.접수일);
+                } else {
+                    // "20250123" 형식
+                    const year = record.접수일.substring(0, 4);
+                    const month = record.접수일.substring(4, 6);
+                    const day = record.접수일.substring(6, 8);
+                    recordDate = new Date(year, month - 1, day);
+                }
+                
                 if (recordDate < this.dateRange.start || recordDate > this.dateRange.end) {
                     return false;
                 }
             }
             
             // 해결방법 필터
-            if (csType && record.해결방법 !== csType) return false;
+            if (csType && record.해결방법 !== csType) {
+                return false;
+            }
             
             // 주문번호 필터
-            if (orderNo && !String(record.주문번호 || '').toLowerCase().includes(orderNo)) return false;
+            if (orderNo) {
+                const recordOrderNo = String(record.주문번호 || '').toLowerCase();
+                if (!recordOrderNo.includes(orderNo)) {
+                    return false;
+                }
+            }
             
             // 이름 필터 (주문자 또는 수령인)
             if (searchName) {
-                const hasOrderer = String(record.주문자 || '').toLowerCase().includes(searchName);
-                const hasReceiver = String(record.수령인 || '').toLowerCase().includes(searchName);
-                if (!hasOrderer && !hasReceiver) return false;
+                const orderer = String(record.주문자 || '').toLowerCase();
+                const receiver = String(record.수령인 || '').toLowerCase();
+                if (!orderer.includes(searchName) && !receiver.includes(searchName)) {
+                    return false;
+                }
             }
             
-            // 상태 필터
-            if (status && record.상태 !== status) return false;
+            // 상태 필터 - '상태' 필드 사용
+            if (status && record.상태 !== status) {
+                return false;
+            }
             
             return true;
         });
         
         console.log('필터링 결과:', this.filteredRecords.length + '건');
+        console.log('필터된 레코드:', this.filteredRecords);
         
         this.currentPage = 1;
         this.displayRecords();
         this.updateResultCount();
+        this.updateFilteredStats(); // 필터링된 통계 업데이트
     },
     
+
+    updateFilteredStats() {
+        // 필터링된 레코드 기준으로 통계 업데이트
+        const stats = {
+            siteRefund: this.filteredRecords.filter(r => r.해결방법 === '사이트환불').length,
+            partialRefund: this.filteredRecords.filter(r => r.해결방법 === '부분환불').length,
+            resend: this.filteredRecords.filter(r => r.해결방법 === '재발송').length,
+            partialResend: this.filteredRecords.filter(r => r.해결방법 === '부분재발송').length,
+            return: this.filteredRecords.filter(r => r.해결방법 === '반품').length
+        };
+        
+        document.getElementById('statSiteRefund').textContent = stats.siteRefund;
+        document.getElementById('statPartialRefund').textContent = stats.partialRefund;
+        document.getElementById('statResend').textContent = stats.resend;
+        document.getElementById('statPartialResend').textContent = stats.partialResend;
+        document.getElementById('statReturn').textContent = stats.return;
+    },
+
+
+
+
     resetSearch() {
         document.getElementById('searchDateRange').value = 'last7';
         document.getElementById('searchCsType').value = '';
@@ -686,7 +764,7 @@ search() {
                 <td onclick="OrderCsHandler.showDetail(${globalIndex})">${record.수령인 || '-'}</td>
                 <td onclick="OrderCsHandler.showDetail(${globalIndex})">${record.옵션명 || '-'}</td>
                 <td onclick="OrderCsHandler.showDetail(${globalIndex})">${record['CS 내용'] || '-'}</td>
-                <td onclick="OrderCsHandler.showDetail(${globalIndex})">${record.처리상태 || '접수'}</td>
+                <td onclick="OrderCsHandler.showDetail(${globalIndex})">${record.상태 || '접수'}</td>
                 <td>
                     <button 
                         onclick="OrderCsHandler.completeCs(${globalIndex}, event)" 
@@ -739,16 +817,18 @@ search() {
     
     updateStats() {
         const stats = {
-            total: this.csRecords.length,
-            exchange: this.csRecords.filter(r => r.CS구분 === '교환').length,
-            return: this.csRecords.filter(r => r.CS구분 === '반품').length,
-            resend: this.csRecords.filter(r => r.CS구분 === '재발송').length
+            siteRefund: this.csRecords.filter(r => r.해결방법 === '사이트환불').length,
+            partialRefund: this.csRecords.filter(r => r.해결방법 === '부분환불').length,
+            resend: this.csRecords.filter(r => r.해결방법 === '재발송').length,
+            partialResend: this.csRecords.filter(r => r.해결방법 === '부분재발송').length,
+            return: this.csRecords.filter(r => r.해결방법 === '반품').length
         };
         
-        document.getElementById('statTotal').textContent = stats.total;
-        document.getElementById('statExchange').textContent = stats.exchange;
-        document.getElementById('statReturn').textContent = stats.return;
+        document.getElementById('statSiteRefund').textContent = stats.siteRefund;
+        document.getElementById('statPartialRefund').textContent = stats.partialRefund;
         document.getElementById('statResend').textContent = stats.resend;
+        document.getElementById('statPartialResend').textContent = stats.partialResend;
+        document.getElementById('statReturn').textContent = stats.return;
     },
     
     updateResultCount() {
