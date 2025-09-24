@@ -1722,28 +1722,7 @@ const orderData = {
     '발송요청일': document.getElementById('csRequestDate').value
 };
 
-                // CS 주문 추가 (시트명은 서버에서 자동으로 오늘 날짜로 설정)
-                console.log('CS 주문 요청 데이터:', {
-    action: 'addCsOrder',
-    data: orderData
-});
-
-
-
-let orderResult;
-try {
-    const responseText = await orderResponse.text();
-    console.log('서버 응답 원본:', responseText);
-    orderResult = JSON.parse(responseText);
-} catch (parseError) {
-    console.error('응답 파싱 실패:', parseError);
-    throw new Error('서버 응답 처리 실패');
-}
-
-if (!orderResult.success) {
-    console.error('CS 주문 접수 실패 상세:', orderResult);
-    throw new Error(orderResult.error || '주문 접수 실패');
-}
+                
 
                 this.showMessage('CS 접수 및 재발송 주문이 완료되었습니다.', 'success');
             } else {
