@@ -585,43 +585,51 @@ onDateRangeChange() {
     },
     
     async loadCsRecords() {
-        try {
-            const tbody = document.getElementById('csTableBody');
-            if (tbody) {
-                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px;">데이터를 불러오는 중...</td></tr>';
-            }
-            
-            const response = await fetch('/api/sheets', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'getCsRecords'
-                })
-            });
-            
-            const result = await response.json();
-            console.log('CS 기록 로드 결과:', result);
-            
-            if (result.success && result.data) {
-                this.csRecords = result.data;
-                console.log('로드된 CS 레코드 샘플:', this.csRecords[0]);
-                
-                // 초기 날짜 범위 설정 후 검색
-                this.onDateRangeChange();
-            } else {
-                this.csRecords = [];
-                this.filteredRecords = [];
-                this.displayRecords();
-                this.updateStats();
-            }
-        } catch (error) {
-            console.error('CS 기록 로드 실패:', error);
-            const tbody = document.getElementById('csTableBody');
-            if (tbody) {
-                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px; color: red;">데이터 로드 실패</td></tr>';
-            }
+    try {
+        const tbody = document.getElementById('csTableBody');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px;">데이터를 불러오는 중...</td></tr>';
         }
-    },
+        
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'getCsRecords'
+            })
+        });
+        
+        const result = await response.json();
+        console.log('=== CS 기록 디버깅 ===');
+        console.log('API 응답:', result);
+        console.log('데이터 개수:', result.data?.length);
+        if (result.data && result.data.length > 0) {
+            console.log('첫 번째 레코드:', result.data[0]);
+            console.log('필드명들:', Object.keys(result.data[0]));
+        }
+        
+        if (result.success && result.data) {
+            this.csRecords = result.data;
+            this.filteredRecords = [...this.csRecords];
+            
+            // 초기 통계 표시
+            this.updateStats();
+            this.displayRecords();
+            this.updateResultCount();
+            
+            // 날짜 필터 적용
+            setTimeout(() => {
+                this.onDateRangeChange();
+            }, 100);
+        } else {
+            this.csRecords = [];
+            this.filteredRecords = [];
+            this.displayRecords();
+        }
+    } catch (error) {
+        console.error('CS 기록 로드 실패:', error);
+    }
+}
     
 search() {
         console.log('검색 시작');
