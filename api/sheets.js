@@ -28,86 +28,123 @@ export default async function handler(req, res) {
 
     switch (action) {
 case 'saveCsRecord':
-        try {
-          const { data } = req.body;
-          const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
-          
-          console.log('CS 기록 저장 시작:', data);
-          
-          // 접수번호 생성 (YYYYMMDD+CS+연번)
-          const today = new Date();
-          const dateStr = today.getFullYear() + 
-            String(today.getMonth() + 1).padStart(2, '0') + 
-            String(today.getDate()).padStart(2, '0');
-          
-          // 기존 CS기록에서 오늘 날짜의 마지막 연번 찾기
-          let csNumber = 1;
-          try {
-            const csData = await getSheetData('CS기록!B:B', ordersSpreadsheetId); // 접수번호 열
-            if (csData && csData.length > 1) {
-              for (let i = 1; i < csData.length; i++) {
-                const receiptNo = csData[i][0] || '';
-                if (receiptNo.startsWith(dateStr + 'CS')) {
-                  const num = parseInt(receiptNo.substring(dateStr.length + 2));
-                  if (!isNaN(num) && num >= csNumber) {
-                    csNumber = num + 1;
-                  }
-                }
-              }
-            }
-          } catch (err) {
-            console.log('CS 연번 확인 중 오류, 기본값 사용');
+  try {
+    const { data } = req.body;
+    const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
+    
+    console.log('CS 기록 저장 시작:', data);
+    
+    // CS기록 시트의 현재 데이터 개수 확인 (연번 계산용)
+    let currentData;
+    try {
+      currentData = await getSheetData('CS기록!A2:B', ordersSpreadsheetId);
+    } catch (error) {
+      console.log('CS기록 시트가 없거나 비어있음');
+      currentData = [];
+    }
+    
+    // 연번 계산
+    const newRowNumber = currentData.length + 1;
+    
+    // 접수번호 생성 (CS + YYYYMMDD + 3자리 일련번호)
+    const today = new Date();
+    const dateStr = today.getFullYear() + 
+      String(today.getMonth() + 1).padStart(2, '0') + 
+      String(today.getDate()).padStart(2, '0');
+    
+    // 오늘 날짜의 마지막 CS 번호 찾기
+    let lastNumber = 0;
+    if (currentData && currentData.length > 0) {
+      for (let i = 0; i < currentData.length; i++) {
+        const receiptNo = currentData[i][1] || '';  // B열이 접수번호
+        if (receiptNo.startsWith(`CS${dateStr}`)) {
+          const numPart = receiptNo.substring(10);  // CS20250924XXX에서 XXX 추출
+          const num = parseInt(numPart);
+          if (!isNaN(num) && num > lastNumber) {
+            lastNumber = num;
           }
-          
-          const receiptNumber = `${dateStr}CS${String(csNumber).padStart(2, '0')}`;
-          
-          // 데이터 행 생성 - 정확한 헤더 순서에 맞춤
-          const rowData = [[
-            '', // 연번 (시트에서 자동 계산)
-            receiptNumber, // 접수번호
-            data['마켓명'] || '', // 마켓명
-            new Date().toLocaleDateString('ko-KR'), // 접수일
-            data['해결방법'] || '', // 해결방법
-            data['재발송상품'] || '', // 재발송상품
-            data['재발송수량'] || '', // 재발송수량
-            data['CS 내용'] || '', // CS 내용
-            data['부분환불금액'] || '', // 부분환불금액
-            data['결제일'] || '', // 결제일
-            data['주문번호'] || '', // 주문번호
-            data['주문자'] || '', // 주문자
-            data['주문자 전화번호'] || '', // 주문자 전화번호
-            data['수령인'] || '', // 수령인
-            data['수령인 전화번호'] || '', // 수령인 전화번호
-            data['주소'] || '', // 주소
-            data['배송메세지'] || '', // 배송메세지
-            data['옵션명'] || '', // 옵션명
-            data['수량'] || '', // 수량
-            data['특이/요청사항'] || '', // 특이/요청사항
-            data['발송요청일'] || '', // 발송요청일
-            '접수' // 상태 (초기값: 접수)
-          ]];
-          
-          console.log('저장할 CS 데이터:', rowData);
-          
-          // 데이터 저장
-          const result = await appendSheetData('CS기록!A:V', rowData, ordersSpreadsheetId);
-          
-          console.log('CS 기록 저장 완료:', result);
-          
-          return res.status(200).json({
-            success: true,
-            message: 'CS 기록이 저장되었습니다',
-            receiptNumber: receiptNumber
-          });
-          
-        } catch (error) {
-          console.error('saveCsRecord 오류:', error.message, error.stack);
-          return res.status(500).json({
-            success: false,
-            error: error.message || 'CS 기록 저장 실패',
-            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-          });
         }
+      }
+    }
+    
+    const sequenceNumber = String(lastNumber + 1).padStart(3, '0');
+    const receiptNumber = `CS${dateStr}${sequenceNumber}`;
+    
+    console.log('생성된 접수번호:', receiptNumber);
+    
+    // CS기록 시트에 저장할 데이터 (22개 필드)
+    const csRowData = [[
+      newRowNumber,                      // 연번
+      receiptNumber,                     // 접수번호
+      data['마켓명'] || '',             // 마켓명
+      new Date().toLocaleDateString('ko-KR'), // 접수일
+      data['해결방법'] || '',           // 해결방법
+      data['재발송상품'] || '',         // 재발송상품
+      data['재발송수량'] || '',         // 재발송수량
+      data['CS 내용'] || '',            // CS 내용
+      data['부분환불금액'] || '',       // 부분환불금액
+      data['결제일'] || '',             // 결제일
+      data['주문번호'] || '',           // 주문번호
+      data['주문자'] || '',             // 주문자
+      data['주문자 전화번호'] || '',    // 주문자 전화번호
+      data['수령인'] || '',             // 수령인
+      data['수령인 전화번호'] || '',    // 수령인 전화번호
+      data['주소'] || '',               // 주소
+      data['배송메세지'] || '',         // 배송메세지
+      data['옵션명'] || '',             // 옵션명
+      data['수량'] || '',               // 수량
+      data['특이/요청사항'] || '',      // 특이/요청사항
+      data['발송요청일'] || '',         // 발송요청일
+      '접수'                            // 상태
+    ]];
+    
+    // CS기록 시트에 저장
+    await appendSheetData('CS기록!A:V', csRowData, ordersSpreadsheetId);
+    console.log('CS기록 시트 저장 완료');
+    
+    // 재발송 또는 부분재발송인 경우에만 임시저장 시트에도 저장
+    if (data['해결방법'] === '재발송' || data['해결방법'] === '부분재발송') {
+      console.log('재발송/부분재발송 - 임시저장 시트에도 저장');
+      
+      // 임시저장 시트 구조에 맞춰 저장
+      const tempRowData = [[
+        data['userEmail'] || '',          // 사용자 이메일
+        receiptNumber,                     // 동일한 접수번호 사용
+        new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }), // 저장시간
+        data['마켓명'] || '',             // 마켓명
+        data['옵션명'] || '',             // 옵션명
+        data['수량'] || '1',              // 수량
+        '',                                // 단가 (비워둠)
+        '',                                // 택배비 (비워둠)
+        '',                                // 상품금액 (비워둠)
+        data['주문자'] || '',             // 주문자
+        data['주문자 전화번호'] || '',    // 주문자 전화번호
+        data['수령인'] || '',             // 수령인
+        data['수령인 전화번호'] || '',    // 수령인 전화번호
+        data['주소'] || '',               // 주소
+        data['배송메세지'] || '',         // 배송메세지
+        data['특이/요청사항'] || '',      // 특이/요청사항
+        data['발송요청일'] || ''          // 발송요청일
+      ]];
+      
+      await appendSheetData('임시저장!A:Q', tempRowData, ordersSpreadsheetId);
+      console.log('임시저장 시트 저장 완료');
+    }
+    
+    return res.status(200).json({
+      success: true,
+      message: 'CS 기록이 저장되었습니다',
+      receiptNumber: receiptNumber
+    });
+    
+  } catch (error) {
+    console.error('saveCsRecord 오류:', error.message, error.stack);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'CS 기록 저장 실패',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
 
 case 'addCsOrder':
         try {
