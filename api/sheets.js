@@ -940,72 +940,47 @@ case 'checkCsDuplicate':
           });
         }
 
-case 'getCsRecords':
+ case 'getCsRecords':
         try {
           const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
           
           // CS기록 시트의 모든 데이터 가져오기
-          // 시트명이 'CS기록'이 맞는지 확인 필요
-          let csData;
-          try {
-            // 먼저 전체 범위로 시도
-            csData = await getSheetData('CS기록!A:Z', ordersSpreadsheetId);
-          } catch (sheetError) {
-            console.log('CS기록 시트를 찾을 수 없음, 빈 배열 반환');
+          const csData = await getSheetData('CS기록!A2:V', ordersSpreadsheetId);
+          
+          if (!csData || csData.length === 0) {
             return res.status(200).json({ 
               success: true, 
               data: [] 
             });
           }
           
-          // 첫 번째 행은 헤더
-          const headers = csData[0];
-          const rows = csData.slice(1);
+          // 헤더 정의 (시트의 실제 순서대로)
+          const headers = [
+            '연번', '접수번호', '마켓명', '접수일', '해결방법', 
+            '재발송상품', '재발송수량', 'CS 내용', '부분환불금액', 
+            '결제일', '주문번호', '주문자', '주문자 전화번호', 
+            '수령인', '수령인 전화번호', '주소', '배송메세지', 
+            '옵션명', '수량', '특이/요청사항', '발송요청일', '상태'
+          ];
           
           // 데이터를 객체 배열로 변환
-          const formattedData = rows.map(row => {
+          const formattedData = csData.map(row => {
             const obj = {};
-            
-            // 헤더와 데이터 매핑
             headers.forEach((header, index) => {
               obj[header] = row[index] || '';
             });
             
-            // 날짜 포맷 조정 (접수일)
-            if (obj['접수일']) {
-              obj['처리일시'] = obj['접수일'];
-            }
-            
-            // CS구분 설정 (해결방법 기반)
-            if (obj['해결방법']) {
-              if (obj['해결방법'].includes('재발송')) {
-                obj['CS구분'] = '재발송';
-              } else if (obj['해결방법'].includes('환불')) {
-                obj['CS구분'] = '반품';
-              } else if (obj['해결방법'].includes('교환')) {
-                obj['CS구분'] = '교환';
-              } else {
-                obj['CS구분'] = '기타';
-              }
-            }
-            
-            // 처리상태 설정
-            obj['처리상태'] = obj['처리상태'] || '접수';
-            
-            // CS사유 설정
-            obj['CS사유'] = obj['CS 내용'] || '';
-            
-            // 처리내용 설정
-            obj['처리내용'] = obj['해결방법'] || '';
-            
-            // 담당자 (향후 추가 가능)
+            // 추가 필드 설정
+            obj['처리일시'] = obj['접수일'];
+            obj['CS사유'] = obj['CS 내용'];
+            obj['처리내용'] = obj['해결방법'];
+            obj['처리상태'] = obj['상태'] || '접수';
             obj['담당자'] = '-';
             
             return obj;
           }).filter(row => row['주문번호']); // 빈 행 제거
           
-          // 최신순 정렬
-          formattedData.reverse();
+          console.log('CS기록 로드:', formattedData.length + '건');
           
           return res.status(200).json({ 
             success: true, 
