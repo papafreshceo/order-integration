@@ -35,32 +35,30 @@ case 'saveCsRecord':
     
     console.log('CS 기록 저장 시작');
     
-    // CS기록 시트 데이터 가져오기
+    // getOrderData 함수 사용 (주문 시트용 함수)
     let allData = [];
     let newRowNumber = 1;
     let todayMax = 0;
     
     try {
-      allData = await getSheetData('CS기록!A:V', ordersSpreadsheetId);
-      console.log('가져온 전체 행 수:', allData?.length);
+      // getOrderData는 주문 시트를 읽는 전용 함수
+      const { getOrderData } = require('../lib/google-sheets');
+      allData = await getOrderData('CS기록!A:V', ordersSpreadsheetId);
+      console.log('CS기록 데이터 행 수:', allData?.length);
       
       if (allData && allData.length > 1) {
-        // 1행은 헤더, 2행부터가 실제 데이터
-        // 마지막 데이터의 연번 찾기
-        for (let i = allData.length - 1; i >= 1; i--) {
-          if (allData[i] && allData[i][0]) {
-            const num = parseInt(allData[i][0]);
-            if (!isNaN(num)) {
-              newRowNumber = num + 1;
-              console.log(`마지막 연번 발견: ${num}, 새 연번: ${newRowNumber}`);
-              break;
-            }
+        // 마지막 행의 연번 가져오기
+        const lastRow = allData[allData.length - 1];
+        if (lastRow && lastRow[0]) {
+          const lastNumber = parseInt(lastRow[0]);
+          if (!isNaN(lastNumber)) {
+            newRowNumber = lastNumber + 1;
+            console.log(`마지막 연번: ${lastNumber}, 새 연번: ${newRowNumber}`);
+          } else {
+            newRowNumber = allData.length;
           }
-        }
-        
-        // 연번을 못 찾았으면 데이터 행 수로 계산
-        if (newRowNumber === 1 && allData.length > 1) {
-          newRowNumber = allData.length;  // 헤더 포함한 길이가 다음 연번
+        } else {
+          newRowNumber = allData.length;
         }
         
         // 오늘 날짜 접수번호 최대값 찾기
@@ -69,7 +67,6 @@ case 'saveCsRecord':
           String(today.getMonth() + 1).padStart(2, '0') + 
           String(today.getDate()).padStart(2, '0');
         
-        // 2행부터 검사 (1행은 헤더)
         for (let i = 1; i < allData.length; i++) {
           if (allData[i] && allData[i][1]) {
             const receiptNo = String(allData[i][1]);
@@ -78,14 +75,13 @@ case 'saveCsRecord':
               const num = parseInt(numStr);
               if (!isNaN(num)) {
                 todayMax = Math.max(todayMax, num);
-                console.log(`접수번호 발견: ${receiptNo}, 현재 최대값: ${todayMax}`);
               }
             }
           }
         }
       }
     } catch (error) {
-      console.log('CS기록 읽기 실패:', error.message);
+      console.log('CS기록 읽기 실패, 첫 데이터로 처리:', error.message);
     }
     
     // 접수번호 생성
@@ -95,9 +91,9 @@ case 'saveCsRecord':
       String(today.getDate()).padStart(2, '0');
     const receiptNumber = `CS${dateStr}${String(todayMax + 1).padStart(3, '0')}`;
     
-    console.log(`최종 생성 - 연번: ${newRowNumber}, 접수번호: ${receiptNumber}`);
+    console.log(`최종 - 연번: ${newRowNumber}, 접수번호: ${receiptNumber}`);
     
-    // CS기록 시트에 저장할 데이터
+    // CS기록 저장
     const csRowData = [[
       newRowNumber,
       receiptNumber,
@@ -167,13 +163,12 @@ case 'saveCsRecord':
     });
     
   } catch (error) {
-    console.error('saveCsRecord 전체 오류:', error);
+    console.error('saveCsRecord 오류:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'CS 기록 저장 실패'
     });
   }
-
 case 'addCsOrder':
         try {
           const { data } = req.body;
