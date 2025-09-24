@@ -33,22 +33,21 @@ case 'saveCsRecord':
     const { data } = req.body;
     const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
     
-    console.log('CS 기록 저장 시작');
+    console.log('CS 기록 저장 시작, ordersSpreadsheetId:', ordersSpreadsheetId);
     
-    // A,B열 데이터 가져오기
+    // CS기록 시트 데이터 가져오기
     let existingData = [];
     try {
       existingData = await getSheetData('CS기록!A:B', ordersSpreadsheetId);
       console.log('가져온 데이터 행 수:', existingData?.length || 0);
     } catch (error) {
-      console.log('데이터 가져오기 실패:', error.message);
+      console.log('CS기록 시트가 없거나 비어있음, 새로 시작');
       existingData = [];
     }
     
     // 연번 계산
     let newRowNumber = 1;
     if (existingData && existingData.length > 1) {
-      // 마지막 행 확인
       const lastRowIndex = existingData.length - 1;
       const lastRow = existingData[lastRowIndex];
       console.log(`마지막 행 [${lastRowIndex}]:`, lastRow);
@@ -60,11 +59,9 @@ case 'saveCsRecord':
         if (!isNaN(lastNumber)) {
           newRowNumber = lastNumber + 1;
         } else {
-          // 숫자가 아니면 행 수로 계산
           newRowNumber = existingData.length;
         }
       } else {
-        // 연번이 비어있으면 행 수로 계산
         newRowNumber = existingData.length;
       }
     }
@@ -96,7 +93,7 @@ case 'saveCsRecord':
     
     console.log(`최종 생성: 연번=${newRowNumber}, 접수번호=${receiptNumber}`);
     
-    // 저장할 데이터
+    // CS기록 시트에 저장할 데이터
     const csRowData = [[
       newRowNumber,
       receiptNumber,
