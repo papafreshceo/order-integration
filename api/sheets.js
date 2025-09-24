@@ -35,23 +35,56 @@ case 'saveCsRecord':
     
     console.log('CS 기록 저장 시작:', data);
     
-    // 오늘 날짜 문자열
+    // CS기록 시트의 A,B열만 가져오기
+    let existingData = [];
+    let newRowNumber = 1;
+    let todayMaxNumber = 0;
+    
+    try {
+      existingData = await getSheetData('CS기록!A:B', ordersSpreadsheetId);
+      
+      if (existingData && existingData.length > 1) {
+        // 마지막 행의 연번 가져와서 +1
+        const lastRow = existingData[existingData.length - 1];
+        const lastRowNumber = parseInt(lastRow[0]);
+        newRowNumber = isNaN(lastRowNumber) ? existingData.length : lastRowNumber + 1;
+        
+        // 오늘 날짜의 접수번호 최대값 찾기
+        const today = new Date();
+        const dateStr = today.getFullYear() + 
+          String(today.getMonth() + 1).padStart(2, '0') + 
+          String(today.getDate()).padStart(2, '0');
+        
+        for (let i = 1; i < existingData.length; i++) {
+          if (existingData[i] && existingData[i][1]) {
+            const receiptNo = String(existingData[i][1]);
+            if (receiptNo.startsWith(`CS${dateStr}`)) {
+              const numStr = receiptNo.substring(10);
+              const num = parseInt(numStr);
+              if (!isNaN(num) && num > todayMaxNumber) {
+                todayMaxNumber = num;
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.log('CS기록 시트 읽기 오류:', error);
+    }
+    
+    // 접수번호 생성
     const today = new Date();
     const dateStr = today.getFullYear() + 
       String(today.getMonth() + 1).padStart(2, '0') + 
       String(today.getDate()).padStart(2, '0');
+    const sequenceNumber = String(todayMaxNumber + 1).padStart(3, '0');
+    const receiptNumber = `CS${dateStr}${sequenceNumber}`;
     
-    // 접수번호만 간단하게 - 현재 시간을 포함시켜서 중복 방지
-    const timeStr = String(today.getHours()).padStart(2, '0') + 
-                   String(today.getMinutes()).padStart(2, '0') + 
-                   String(today.getSeconds()).padStart(2, '0');
-    const receiptNumber = `CS${dateStr}${timeStr}`;
+    console.log('생성된 연번:', newRowNumber, '접수번호:', receiptNumber);
     
-    console.log('생성된 접수번호:', receiptNumber);
-    
-    // CS기록 시트에 저장할 데이터 (연번은 빈 문자열로)
+    // CS기록 시트에 저장할 데이터
     const csRowData = [[
-      '',  // 연번은 시트에서 수식으로 자동 계산하도록 빈칸
+      newRowNumber,
       receiptNumber,
       data['마켓명'] || '',
       new Date().toLocaleDateString('ko-KR'),
