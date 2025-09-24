@@ -35,55 +35,50 @@ case 'saveCsRecord':
     
     console.log('CS 기록 저장 시작:', data);
     
-    // CS기록 시트의 전체 데이터 가져오기
-    let allCsData;
-    let maxRowNumber = 0;
+    // 오늘 날짜 문자열 먼저 생성
+    const today = new Date();
+    const dateStr = today.getFullYear() + 
+      String(today.getMonth() + 1).padStart(2, '0') + 
+      String(today.getDate()).padStart(2, '0');
+    
+    // CS기록 시트의 전체 데이터를 V열까지 가져오기 (상태 열까지)
+    let newRowNumber = 1;
     let todayMaxNumber = 0;
     
     try {
-      allCsData = await getSheetData('CS기록!A:B', ordersSpreadsheetId);
+      // 전체 데이터를 한번에 가져오기
+      const allData = await getSheetData('CS기록!A:V', ordersSpreadsheetId);
       
-      if (allCsData && allCsData.length > 1) {
-        // 마지막 연번 찾기
-        for (let i = 1; i < allCsData.length; i++) {
-          const rowNum = parseInt(allCsData[i][0]);
-          if (!isNaN(rowNum) && rowNum > maxRowNumber) {
-            maxRowNumber = rowNum;
-          }
-        }
+      if (allData && allData.length > 0) {
+        // 헤더를 제외한 실제 데이터 행 수로 연번 계산
+        newRowNumber = allData.length; // 다음 행이 새 연번
         
-        // 오늘 날짜의 마지막 접수번호 찾기
-        const today = new Date();
-        const dateStr = today.getFullYear() + 
-          String(today.getMonth() + 1).padStart(2, '0') + 
-          String(today.getDate()).padStart(2, '0');
-        
-        for (let i = 1; i < allCsData.length; i++) {
-          const receiptNo = String(allCsData[i][1] || '');
-          if (receiptNo.startsWith(`CS${dateStr}`)) {
-            const numStr = receiptNo.replace(`CS${dateStr}`, '');
-            const num = parseInt(numStr);
-            if (!isNaN(num) && num > todayMaxNumber) {
-              todayMaxNumber = num;
+        // 접수번호(B열) 검사 - 헤더 제외하고 시작
+        for (let i = 1; i < allData.length; i++) {
+          if (allData[i] && allData[i][1]) { // B열(접수번호)이 있는 경우
+            const receiptNo = String(allData[i][1]);
+            // 오늘 날짜로 시작하는 접수번호 찾기
+            if (receiptNo.indexOf(`CS${dateStr}`) === 0) {
+              // CS20240924 다음의 숫자 추출
+              const numPart = receiptNo.slice(10); // 'CS' + 8자리 날짜 = 10자
+              const num = parseInt(numPart, 10);
+              if (!isNaN(num)) {
+                todayMaxNumber = Math.max(todayMaxNumber, num);
+              }
             }
           }
         }
       }
     } catch (error) {
-      console.log('CS기록 시트 읽기 오류:', error);
+      console.error('CS기록 읽기 오류:', error);
+      // 오류 시에도 계속 진행 (첫 번째 데이터로 처리)
     }
     
-    // 새 연번과 접수번호 생성
-    const newRowNumber = maxRowNumber + 1;
-    
-    const today = new Date();
-    const dateStr = today.getFullYear() + 
-      String(today.getMonth() + 1).padStart(2, '0') + 
-      String(today.getDate()).padStart(2, '0');
+    // 새 접수번호 생성
     const sequenceNumber = String(todayMaxNumber + 1).padStart(3, '0');
     const receiptNumber = `CS${dateStr}${sequenceNumber}`;
     
-    console.log('생성된 연번:', newRowNumber, '접수번호:', receiptNumber);
+    console.log(`생성된 데이터 - 연번: ${newRowNumber}, 접수번호: ${receiptNumber}`);
     
     // CS기록 시트에 저장할 데이터
     const csRowData = [[
@@ -163,6 +158,8 @@ case 'saveCsRecord':
       error: error.message || 'CS 기록 저장 실패'
     });
   }
+
+
 case 'addCsOrder':
         try {
           const { data } = req.body;
