@@ -916,89 +916,94 @@ case 'addCsOrder':
 
 
 case 'checkCsDuplicate':
-        try {
-          const { orderData } = req.body;
-          const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
+  try {
+    const { orderData } = req.body;
+    const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
+    
+    let csRecordExists = false;
+    let tempSaveExists = false;
+    
+    // CS기록 시트 체크 - getOrderData 사용
+    try {
+      const { getOrderData } = require('../lib/google-sheets');
+      const csData = await getOrderData('CS기록!A:V', ordersSpreadsheetId);
+      
+      if (csData && csData.length > 1) {
+        // 헤더 인덱스 찾기 (첫 번째 행이 헤더)
+        const headers = csData[0];
+        const orderNoIdx = 10;  // K열: 주문번호
+        const ordererIdx = 11;  // L열: 주문자
+        const receiverIdx = 13; // N열: 수령인
+        const optionIdx = 17;   // R열: 옵션명
+        
+        // 2행부터 데이터 검사
+        for (let i = 1; i < csData.length; i++) {
+          const row = csData[i];
+          if (!row) continue;
           
-          let csRecordExists = false;
-          let tempSaveExists = false;
+          const orderNoMatch = (row[orderNoIdx] || '') === (orderData.주문번호 || '');
+          const ordererMatch = (row[ordererIdx] || '') === (orderData.주문자 || '');
+          const receiverMatch = (row[receiverIdx] || '') === (orderData.수령인 || '');
+          const optionMatch = (row[optionIdx] || '') === (orderData.옵션명 || '');
           
-          // CS기록 시트 체크 - 4개 필드 모두 일치 확인
-          try {
-            const csData = await getSheetData('CS기록!A:Z', ordersSpreadsheetId);
-            if (csData && csData.length > 1) {
-              const headers = csData[0];
-              
-              // 헤더 인덱스 찾기
-              const orderNoIdx = headers.indexOf('주문번호');
-              const ordererIdx = headers.indexOf('주문자');
-              const receiverIdx = headers.indexOf('수령인');
-              const optionIdx = headers.indexOf('옵션명');
-              
-              // 데이터 행 검사
-              for (let i = 1; i < csData.length; i++) {
-                const row = csData[i];
-                
-                // 4개 필드 모두 일치하는지 확인 (빈값도 일치로 처리)
-                const orderNoMatch = (row[orderNoIdx] || '') === (orderData.주문번호 || '');
-                const ordererMatch = (row[ordererIdx] || '') === (orderData.주문자 || '');
-                const receiverMatch = (row[receiverIdx] || '') === (orderData.수령인 || '');
-                const optionMatch = (row[optionIdx] || '') === (orderData.옵션명 || '');
-                
-                if (orderNoMatch && ordererMatch && receiverMatch && optionMatch) {
-                  csRecordExists = true;
-                  console.log('CS기록 중복 발견:', {
-                    주문번호: row[orderNoIdx],
-                    주문자: row[ordererIdx],
-                    수령인: row[receiverIdx],
-                    옵션명: row[optionIdx]
-                  });
-                  break;
-                }
-              }
-            }
-          } catch (err) {
-            console.log('CS기록 시트 체크 실패:', err);
+          if (orderNoMatch && ordererMatch && receiverMatch && optionMatch) {
+            csRecordExists = true;
+            console.log('CS기록 중복 발견:', {
+              주문번호: row[orderNoIdx],
+              주문자: row[ordererIdx],
+              수령인: row[receiverIdx],
+              옵션명: row[optionIdx]
+            });
+            break;
           }
-          
-          // 임시저장 시트 체크 - 동일한 로직
-          try {
-            const tempData = await getSheetData('임시저장!A:Q', ordersSpreadsheetId);
-            if (tempData && tempData.length > 1) {
-              // 임시저장은 주문번호가 없을 수 있으므로 다른 필드로 체크
-              for (let i = 1; i < tempData.length; i++) {
-                const row = tempData[i];
-                // 임시저장 구조: [사용자이메일, 접수번호, 저장시간, 마켓명, 옵션명, 수량, ..., 주문자, ..., 수령인, ...]
-                const optionMatch = (row[4] || '') === (orderData.옵션명 || '');
-                const ordererMatch = (row[9] || '') === (orderData.주문자 || '');
-                const receiverMatch = (row[11] || '') === (orderData.수령인 || '');
-                
-                if (optionMatch && ordererMatch && receiverMatch) {
-                  tempSaveExists = true;
-                  console.log('임시저장 중복 발견');
-                  break;
-                }
-              }
-            }
-          } catch (err) {
-            console.log('임시저장 시트 체크 실패:', err);
-          }
-          
-          return res.status(200).json({
-            success: true,
-            duplicate: {
-              csRecord: csRecordExists,
-              tempSave: tempSaveExists
-            }
-          });
-          
-        } catch (error) {
-          console.error('checkCsDuplicate 오류:', error);
-          return res.status(200).json({
-            success: true,
-            duplicate: { csRecord: false, tempSave: false }
-          });
         }
+      }
+    } catch (err) {
+      console.log('CS기록 체크 실패:', err.message);
+    }
+    
+    // 임시저장 시트 체크
+    try {
+      const { getOrderData } = require('../lib/google-sheets');
+      const tempData = await getOrderData('임시저장!A:Q', ordersSpreadsheetId);
+      
+      if (tempData && tempData.length > 1) {
+        for (let i = 1; i < tempData.length; i++) {
+          const row = tempData[i];
+          if (!row) continue;
+          
+          const optionMatch = (row[4] || '') === (orderData.옵션명 || '');
+          const ordererMatch = (row[9] || '') === (orderData.주문자 || '');
+          const receiverMatch = (row[11] || '') === (orderData.수령인 || '');
+          
+          if (optionMatch && ordererMatch && receiverMatch) {
+            tempSaveExists = true;
+            console.log('임시저장 중복 발견');
+            break;
+          }
+        }
+      }
+    } catch (err) {
+      console.log('임시저장 체크 실패:', err.message);
+    }
+    
+    console.log('중복 체크 결과:', { csRecord: csRecordExists, tempSave: tempSaveExists });
+    
+    return res.status(200).json({
+      success: true,
+      duplicate: {
+        csRecord: csRecordExists,
+        tempSave: tempSaveExists
+      }
+    });
+    
+  } catch (error) {
+    console.error('checkCsDuplicate 오류:', error);
+    return res.status(200).json({
+      success: true,
+      duplicate: { csRecord: false, tempSave: false }
+    });
+  }
 
 case 'getCsRecords':
   try {
