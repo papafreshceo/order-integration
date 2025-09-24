@@ -6,8 +6,8 @@ window.OrderCsHandler = {
     
     async init() {
         this.render();
-        this.onDateRangeChange(); // 초기 날짜 설정
-        await this.loadCsRecords();
+        await this.loadCsRecords(); // 먼저 데이터 로드
+        this.onDateRangeChange(); // 그 다음 날짜 설정 및 검색
     },
 
 
@@ -587,7 +587,7 @@ onDateRangeChange() {
         }
     },
     
-    search() {
+search() {
         console.log('검색 시작');
         
         // dateRange가 없으면 초기화
@@ -596,24 +596,27 @@ onDateRangeChange() {
             return;
         }
         
-        const startDate = this.dateRange.start;
-        const endDate = this.dateRange.end;
         const csType = document.getElementById('searchCsType').value;
         const orderNo = document.getElementById('searchOrderNo').value.toLowerCase();
         const searchName = document.getElementById('searchName').value.toLowerCase();
         const status = document.getElementById('searchStatus').value;
         
-        console.log('검색 조건:', { startDate, endDate, csType, orderNo, searchName, status });  // 디버깅용
+        console.log('검색 조건:', { 
+            dateRange: this.dateRange, 
+            csType, 
+            orderNo, 
+            searchName, 
+            status,
+            totalRecords: this.csRecords.length 
+        });
         
         this.filteredRecords = this.csRecords.filter(record => {
-            // 날짜 필터
-            if (startDate && record.접수일) {
-                const recordDate = new Date(record.접수일).toISOString().split('T')[0];
-                if (recordDate < startDate) return false;
-            }
-            if (endDate && record.접수일) {
-                const recordDate = new Date(record.접수일).toISOString().split('T')[0];
-                if (recordDate > endDate) return false;
+            // 날짜 필터 - 날짜 객체로 비교
+            if (record.접수일) {
+                const recordDate = new Date(record.접수일);
+                if (recordDate < this.dateRange.start || recordDate > this.dateRange.end) {
+                    return false;
+                }
             }
             
             // 해결방법 필터
@@ -630,12 +633,12 @@ onDateRangeChange() {
             }
             
             // 상태 필터
-            if (status && record.처리상태 !== status) return false;
+            if (status && record.상태 !== status) return false;
             
             return true;
         });
         
-        console.log('필터링 결과:', this.filteredRecords.length + '건');  // 디버깅용
+        console.log('필터링 결과:', this.filteredRecords.length + '건');
         
         this.currentPage = 1;
         this.displayRecords();
