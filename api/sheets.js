@@ -977,60 +977,72 @@ case 'checkCsDuplicate':
           });
         }
 
- case 'getCsRecords':
-        try {
-          const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
-          
-          // CS기록 시트의 모든 데이터 가져오기
-          const csData = await getSheetData('CS기록!A2:V', ordersSpreadsheetId);
-          
-          if (!csData || csData.length === 0) {
-            return res.status(200).json({ 
-              success: true, 
-              data: [] 
-            });
-          }
-          
-          // 헤더 정의 (시트의 실제 순서대로)
-          const headers = [
-            '연번', '접수번호', '마켓명', '접수일', '해결방법', 
-            '재발송상품', '재발송수량', 'CS 내용', '부분환불금액', 
-            '결제일', '주문번호', '주문자', '주문자 전화번호', 
-            '수령인', '수령인 전화번호', '주소', '배송메세지', 
-            '옵션명', '수량', '특이/요청사항', '발송요청일', '상태'
-          ];
-          
-          // 데이터를 객체 배열로 변환
-          const formattedData = csData.map(row => {
-            const obj = {};
-            headers.forEach((header, index) => {
-              obj[header] = row[index] || '';
-            });
-            
-            // 추가 필드 설정
-            obj['처리일시'] = obj['접수일'];
-            obj['CS사유'] = obj['CS 내용'];
-            obj['처리내용'] = obj['해결방법'];
-            obj['처리상태'] = obj['상태'] || '접수';
-            obj['담당자'] = '-';
-            
-            return obj;
-          }).filter(row => row['주문번호']); // 빈 행 제거
-          
-          console.log('CS기록 로드:', formattedData.length + '건');
-          
-          return res.status(200).json({ 
-            success: true, 
-            data: formattedData 
-          });
-          
-        } catch (error) {
-          console.error('getCsRecords 오류:', error);
-          return res.status(500).json({ 
-            success: false, 
-            error: error.message || 'CS 기록 조회 실패' 
-          });
-        }
+case 'getCsRecords':
+  try {
+    const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
+    
+    // CS기록 시트의 모든 데이터 가져오기 (A2:V 대신 전체 범위로 가져온 후 처리)
+    let csData;
+    try {
+      csData = await getSheetData('CS기록!A:V', ordersSpreadsheetId);
+    } catch (error) {
+      console.log('CS기록 시트 읽기 실패:', error);
+      return res.status(200).json({ 
+        success: true, 
+        data: [] 
+      });
+    }
+    
+    if (!csData || csData.length < 2) {
+      return res.status(200).json({ 
+        success: true, 
+        data: [] 
+      });
+    }
+    
+    // 첫 번째 행은 헤더, 두 번째 행부터가 데이터
+    const headers = [
+      '연번', '접수번호', '마켓명', '접수일', '해결방법', 
+      '재발송상품', '재발송수량', 'CS 내용', '부분환불금액', 
+      '결제일', '주문번호', '주문자', '주문자 전화번호', 
+      '수령인', '수령인 전화번호', '주소', '배송메세지', 
+      '옵션명', '수량', '특이/요청사항', '발송요청일', '상태'
+    ];
+    
+    // 데이터 행만 추출 (헤더 제외)
+    const dataRows = csData.slice(1);
+    
+    // 데이터를 객체 배열로 변환
+    const formattedData = dataRows.map(row => {
+      const obj = {};
+      headers.forEach((header, index) => {
+        obj[header] = row[index] || '';
+      });
+      
+      // 추가 필드 설정
+      obj['처리일시'] = obj['접수일'];
+      obj['CS사유'] = obj['CS 내용'];
+      obj['처리내용'] = obj['해결방법'];
+      obj['처리상태'] = obj['상태'] || '접수';
+      obj['담당자'] = '-';
+      
+      return obj;
+    }).filter(row => row['주문번호'] || row['접수번호']); // 빈 행 제거
+    
+    console.log('CS기록 로드:', formattedData.length + '건');
+    
+    return res.status(200).json({ 
+      success: true, 
+      data: formattedData 
+    });
+    
+  } catch (error) {
+    console.error('getCsRecords 오류:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message || 'CS 기록 조회 실패' 
+    });
+  }
 
 
 
