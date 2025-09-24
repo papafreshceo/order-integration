@@ -1005,26 +1005,32 @@ case 'getCsRecords':
   try {
     const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
     
-    // CS기록 시트의 모든 데이터 가져오기 (A2:V 대신 전체 범위로 가져온 후 처리)
+    console.log('getCsRecords 시작, spreadsheetId:', ordersSpreadsheetId);
+    
+    // CS기록 시트의 모든 데이터 가져오기
     let csData;
     try {
       csData = await getSheetData('CS기록!A:V', ordersSpreadsheetId);
+      console.log('CS기록 원본 데이터 길이:', csData?.length);
+      console.log('첫 3행 데이터:', csData?.slice(0, 3));
     } catch (error) {
-      console.log('CS기록 시트 읽기 실패:', error);
+      console.error('CS기록 시트 읽기 실패:', error);
       return res.status(200).json({ 
         success: true, 
-        data: [] 
+        data: [],
+        error: error.message 
       });
     }
     
     if (!csData || csData.length < 2) {
+      console.log('데이터 없음 또는 헤더만 있음');
       return res.status(200).json({ 
         success: true, 
         data: [] 
       });
     }
     
-    // 첫 번째 행은 헤더, 두 번째 행부터가 데이터
+    // 헤더 정의
     const headers = [
       '연번', '접수번호', '마켓명', '접수일', '해결방법', 
       '재발송상품', '재발송수량', 'CS 내용', '부분환불금액', 
@@ -1033,14 +1039,15 @@ case 'getCsRecords':
       '옵션명', '수량', '특이/요청사항', '발송요청일', '상태'
     ];
     
-    // 데이터 행만 추출 (헤더 제외)
+    // 데이터 행만 추출 (첫 번째 행 헤더 제외)
     const dataRows = csData.slice(1);
+    console.log('데이터 행 수:', dataRows.length);
     
     // 데이터를 객체 배열로 변환
-    const formattedData = dataRows.map(row => {
+    const formattedData = dataRows.map((row, index) => {
       const obj = {};
-      headers.forEach((header, index) => {
-        obj[header] = row[index] || '';
+      headers.forEach((header, idx) => {
+        obj[header] = row[idx] || '';
       });
       
       // 추가 필드 설정
@@ -1051,9 +1058,19 @@ case 'getCsRecords':
       obj['담당자'] = '-';
       
       return obj;
-    }).filter(row => row['주문번호'] || row['접수번호']); // 빈 행 제거
+    }).filter((row, index) => {
+      // 빈 행 필터링 - 최소한 하나의 필드라도 값이 있어야 함
+      const hasData = row['연번'] || row['접수번호'] || row['주문번호'] || row['마켓명'];
+      if (!hasData) {
+        console.log(`행 ${index + 2} 제거됨 - 빈 행`);
+      }
+      return hasData;
+    });
     
-    console.log('CS기록 로드:', formattedData.length + '건');
+    console.log('최종 CS기록 개수:', formattedData.length);
+    if (formattedData.length > 0) {
+      console.log('첫 번째 레코드:', formattedData[0]);
+    }
     
     return res.status(200).json({ 
       success: true, 
@@ -1061,7 +1078,7 @@ case 'getCsRecords':
     });
     
   } catch (error) {
-    console.error('getCsRecords 오류:', error);
+    console.error('getCsRecords 전체 오류:', error);
     return res.status(500).json({ 
       success: false, 
       error: error.message || 'CS 기록 조회 실패' 
