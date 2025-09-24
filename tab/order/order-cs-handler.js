@@ -655,7 +655,7 @@ onDateRangeChange() {
     } catch (error) {
         console.error('CS 기록 로드 실패:', error);
     }
-}
+},
     
 search() {
         console.log('검색 시작');
