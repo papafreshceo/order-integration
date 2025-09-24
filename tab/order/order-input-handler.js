@@ -1339,14 +1339,14 @@ showUnshippedOrdersModal(orders) {
                                 <input type="checkbox" id="selectAllCheckbox" onchange="OrderInputHandler.selectAllUnshipped(this.checked)">
                             </th>
                             <th style="padding: 8px; text-align: left;">주문자</th>
+                            <th style="padding: 8px; text-align: left;">주문자 전화번호</th>
                             <th style="padding: 8px; text-align: left;">수령인</th>
+                            <th style="padding: 8px; text-align: center;">마켓</th>
+                            <th style="padding: 8px; text-align: center;">등록일</th>
                             <th style="padding: 8px; text-align: left;">옵션명</th>
                             <th style="padding: 8px; text-align: center;">수량</th>
                             <th style="padding: 8px; text-align: right;">금액</th>
-                            <th style="padding: 8px; text-align: center;">마켓</th>
-                            <th style="padding: 8px; text-align: left;">결제일</th>
                             <th style="padding: 8px; text-align: left;">주문번호</th>
-                            <th style="padding: 8px; text-align: center;">등록일</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1356,20 +1356,20 @@ showUnshippedOrdersModal(orders) {
                                     <input type="checkbox" class="order-checkbox" data-index="${index}">
                                 </td>
                                 <td style="padding: 8px; font-weight: 500;">${order['주문자'] || '-'}</td>
+                                <td style="padding: 8px;">${order['주문자전화번호'] || order['주문자 전화번호'] || '-'}</td>
                                 <td style="padding: 8px;">${order['수령인'] || order['수취인'] || '-'}</td>
-                                <td style="padding: 8px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${order['옵션명'] || ''}">${order['옵션명'] || '-'}</td>
-                                <td style="padding: 8px; text-align: center; ${parseInt(order['수량']) >= 2 ? 'color: #dc3545; font-weight: 600;' : ''}">${order['수량'] || '1'}</td>
-                                <td style="padding: 8px; text-align: right; font-weight: 500;">${(parseFloat(order['상품금액']) || 0).toLocaleString()}원</td>
                                 <td style="padding: 8px; text-align: center;">
                                     <span style="padding: 2px 6px; background: ${order['마켓명'] === 'CS발송' ? '#fee2e2' : '#e0e7ff'}; color: ${order['마켓명'] === 'CS발송' ? '#dc3545' : '#4f46e5'}; border-radius: 4px; font-size: 11px; font-weight: 500;">
                                         ${order['마켓명']}
                                     </span>
                                 </td>
-                                <td style="padding: 8px; font-size: 11px;">${order['결제일'] || '-'}</td>
-                                <td style="padding: 8px; font-family: monospace; font-size: 11px;">${order['주문번호'] || '-'}</td>
                                 <td style="padding: 8px; text-align: center; font-weight: 500;">
                                     ${order._sheetDate ? order._sheetDate.substring(4, 6) + '/' + order._sheetDate.substring(6, 8) : '-'}
                                 </td>
+                                <td style="padding: 8px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${order['옵션명'] || ''}">${order['옵션명'] || '-'}</td>
+                                <td style="padding: 8px; text-align: center; ${parseInt(order['수량']) >= 2 ? 'color: #dc3545; font-weight: 600;' : ''}">${order['수량'] || '1'}</td>
+                                <td style="padding: 8px; text-align: right; font-weight: 500;">${(parseFloat(order['상품금액']) || 0).toLocaleString()}원</td>
+                                <td style="padding: 8px; font-family: monospace; font-size: 11px;">${order['주문번호'] || '-'}</td>
                             </tr>
                         `).join('')}
                     </tbody>
