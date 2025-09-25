@@ -853,55 +853,106 @@
         },
         
         initTable() {
-            const container = document.getElementById('hot-container');
-            
-            this.hot = new Handsontable(container, {
-                data: [],
-                columns: this.getColumns(),
-colHeaders: this.getColumnHeaders(),
-                rowHeaders: true,
-                height: 550,
-                stretchH: 'all',
-                autoWrapRow: true,
-                contextMenu: true,
-                manualRowMove: true,
-                manualColumnMove: false,
-                filters: true,
-                dropdownMenu: true,
-                licenseKey: 'non-commercial-and-evaluation',
-                
-                afterChange: (changes, source) => {
-                    if (source === 'loadData') return;
-                    
-                    changes?.forEach(([row, prop, oldValue, newValue]) => {
-                        // 거래처 변경 시
-                        if (prop === '거래처' && newValue === '직접입력') {
-                            setTimeout(() => {
-                                const actualValue = prompt('새 거래처명을 입력하세요:');
-                                if (actualValue) {
-                                    this.hot.setDataAtCell(row, 1, actualValue);
-                                    this.openVendorModal(actualValue);
-                                } else {
-                                    this.hot.setDataAtCell(row, 1, '');
-                                }
-                            }, 100);
-                        }
-                        
-                        // 수량, 단가, 수수료 변경 시 자동계산
-                        if (['수량', '단가', '수수료'].includes(prop)) {
-                            this.calculateRow(row);
-                        }
-                        
-                        // 계좌번호 자동 입력 (조회 모드)
-                        if (prop === '거래처' && this.currentMode === 'view') {
-                            const accountNumber = this.vendorAccounts[newValue] || '';
-                            const accountCol = this.hot.propToCol('계좌번호');
-                            if (accountCol !== null) {
-                                this.hot.setDataAtCell(row, accountCol, accountNumber);
-                            }
-                        }
-                    });
+    const container = document.getElementById('hot-container');
+    
+    this.hot = new Handsontable(container, {
+        data: [],
+        columns: this.getColumns(),
+        colHeaders: this.getColumnHeaders(),
+        rowHeaders: true,
+        height: 550,
+        stretchH: 'all',
+        autoWrapRow: true,
+        contextMenu: {
+            items: {
+                'row_above': {
+                    name: '위에 행 삽입'
                 },
+                'row_below': {
+                    name: '아래에 행 삽입'
+                },
+                'remove_row': {
+                    name: '행 삭제'
+                },
+                '---------': '---------',
+                'col_left': {
+                    name: '왼쪽에 열 삽입'
+                },
+                'col_right': {
+                    name: '오른쪽에 열 삽입'
+                },
+                'remove_col': {
+                    name: '열 삭제'
+                },
+                '---------2': '---------',
+                'copy': {
+                    name: '복사'
+                },
+                'cut': {
+                    name: '잘라내기'
+                },
+                '---------3': '---------',
+                'undo': {
+                    name: '실행취소'
+                },
+                'redo': {
+                    name: '다시실행'
+                },
+                '---------4': '---------',
+                'make_read_only': {
+                    name: '읽기전용 설정'
+                },
+                'clear_column': {
+                    name: '열 지우기'
+                }
+            }
+        },
+        manualRowMove: true,
+        manualColumnMove: false,
+        filters: true,
+        dropdownMenu: {
+            items: {
+                'filter_by_condition': {
+                    name: '조건으로 필터'
+                },
+                'filter_by_value': {
+                    name: '값으로 필터'
+                },
+                'filter_action_bar': {
+                    name: '필터 작업'
+                },
+                '---------': '---------',
+                'sort_asc': {
+                    name: '오름차순 정렬'
+                },
+                'sort_desc': {
+                    name: '내림차순 정렬'
+                },
+                '---------2': '---------',
+                'clear_column': {
+                    name: '열 지우기'
+                },
+                'alignment': {
+                    name: '정렬'
+                }
+            }
+        },
+        licenseKey: 'non-commercial-and-evaluation',
+        
+        // 추가 한글 설정
+        language: 'ko-KR',
+        
+        // 필터 플러그인 한글화
+        afterGetColHeader: function(col, TH) {
+            if (col >= 0) {
+                const button = TH.querySelector('.changeType');
+                if (button) {
+                    button.title = '필터 및 정렬';
+                }
+            }
+        }
+    });
+},
                 
                 cells: (row, col, prop) => {
     const cellProperties = {};
