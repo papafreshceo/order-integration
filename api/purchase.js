@@ -1,51 +1,20 @@
 import { google } from 'googleapis';
 
-export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ success: false, error: 'Method not allowed' });
-    }
-
-    try {
-        const { action, range, data, values } = req.body;
-        console.log('Purchase API - action:', action);
-        
-        // 환경 변수 디버깅
-        const envCheck = {
-            project_id: process.env.GOOGLE_PROJECT_ID ? 'exists' : 'missing',
-            private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID ? 'exists' : 'missing',
-            private_key: process.env.GOOGLE_PRIVATE_KEY ? 'exists' : 'missing',
-            client_email: process.env.GOOGLE_CLIENT_EMAIL ? 'exists' : 'missing',
-            client_id: process.env.GOOGLE_CLIENT_ID ? 'exists' : 'missing',
-            client_email_value: process.env.GOOGLE_CLIENT_EMAIL
-        };
-        
-        console.log('Environment variables status:', envCheck);
-        
-        // 환경 변수가 없으면 에러 반환
-        if (!process.env.GOOGLE_CLIENT_EMAIL) {
-            return res.status(500).json({
-                success: false,
-                error: 'GOOGLE_CLIENT_EMAIL environment variable is missing',
-                debug: envCheck
-            });
-        }
-
-        // Google Auth 설정
-        const auth = new google.auth.GoogleAuth({
-            credentials: {
-                type: 'service_account',
-                project_id: process.env.GOOGLE_PROJECT_ID,
-                private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
-                private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-                client_email: process.env.GOOGLE_CLIENT_EMAIL,
-                client_id: process.env.GOOGLE_CLIENT_ID,
-                auth_uri: 'https://accounts.google.com/o/oauth2/auth',
-                token_uri: 'https://oauth2.googleapis.com/token',
-                auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
-                client_x509_cert_url: process.env.GOOGLE_CLIENT_CERT_URL
-            },
-            scopes: ['https://www.googleapis.com/auth/spreadsheets']
-        });
+const auth = new google.auth.GoogleAuth({
+    credentials: {
+        type: 'service_account',
+        project_id: 'dalrae-market',  // 하드코딩
+        private_key_id: 'dummy_key_id',  // 임시값 (실제로 필요없음)
+        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,  // 기존 변수명 사용
+        client_id: '123456789',  // 임시값 (실제로 필요없음)
+        auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+        token_uri: 'https://oauth2.googleapis.com/token',
+        auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
+        client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '')}`
+    },
+    scopes: ['https://www.googleapis.com/auth/spreadsheets']
+});
 
         const sheets = google.sheets({ version: 'v4', auth });
 
