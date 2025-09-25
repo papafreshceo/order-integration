@@ -10,7 +10,9 @@ const {
   saveOrderData,
   mergeAndSaveOrderData,
   getOrderData,
-  updateOrderCell
+  updateOrderCell,
+  // 제품 시트 함수 추가
+  getProductSheetData
 } = require('../lib/google-sheets');
 
 export default async function handler(req, res) {
