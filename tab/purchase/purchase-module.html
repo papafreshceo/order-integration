@@ -9,22 +9,7 @@
     
     <style>
         * {
-            toggleGrouping() {
-                this.isGroupingEnabled = !this.isGroupingEnabled;
-                const btn = document.getElementById('groupBtn');
-                
-                if (this.isGroupingEnabled) {
-                    btn.textContent = '그룹 해제';
-                    btn.classList.remove('btn-info');
-                    btn.classList.add('btn-warning');
-                    this.applyGrouping();
-                } else {
-                    btn.textContent = '그룹 표시';
-                    btn.classList.add('btn-info');
-                    btn.classList.remove('btn-warning');
-                    this.removeGrouping();
-                }
-            },
+            
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -752,6 +737,13 @@
             tempData: null,    // 모드 전환시 임시 저장용
             isGroupingEnabled: false,
             originalData: [], // 그룹핑 전 원본 데이터
+            vendorTypeData: {  // 추가: 거래처 타입별 데이터 저장
+                '중매인': [],
+                '농가': [],
+                '기타': []
+            },
+            isEditingInView: false,  // 추가: 조회모드에서 수정 중인지 여부
+            statsData: [],  // 추가: 통계 데이터
             
             toggleEditInView() {
                 this.isEditingInView = !this.isEditingInView;
@@ -829,6 +821,25 @@
                     this.loadTabData();
                 }
             },
+            
+
+            toggleGrouping() {
+                this.isGroupingEnabled = !this.isGroupingEnabled;
+                const btn = document.getElementById('groupBtn');
+                
+                if (this.isGroupingEnabled) {
+                    btn.textContent = '그룹 해제';
+                    btn.classList.remove('btn-info');
+                    btn.classList.add('btn-warning');
+                    this.applyGrouping();
+                } else {
+                    btn.textContent = '그룹 표시';
+                    btn.classList.add('btn-info');
+                    btn.classList.remove('btn-warning');
+                    this.removeGrouping();
+                }
+            },
+
             
             applyGrouping() {
                 if (!this.hot || this.currentData.length === 0) return;
