@@ -6,6 +6,7 @@ window.OrderSearchHandler = {
     currentCsOrder: null,
     
     async init() {
+        this.dateType = 'sheet'; // 기본값을 주문통합일로 설정
         this.render();
         this.initializeFilters();
         await this.loadMarketList();
@@ -475,22 +476,27 @@ window.OrderSearchHandler = {
     font-weight: 300;
 }
 
-/* date input 년월일 텍스트 숨기기 */
-input[type="date"]::-webkit-input-placeholder {
-    visibility: hidden !important;
+/* date input 스타일 수정 - 날짜가 항상 보이도록 */
+.filter-input.date-input {
+    color: #212529 !important;
 }
+
+input[type="date"] {
+    color: #212529 !important;
+}
+
+input[type="date"]::-webkit-datetime-edit {
+    color: #212529 !important;
+}
+
+input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+    color: #212529 !important;
+}
+
 input[type="date"]::-webkit-datetime-edit-year-field,
 input[type="date"]::-webkit-datetime-edit-month-field,
 input[type="date"]::-webkit-datetime-edit-day-field {
-    color: transparent;
-}
-input[type="date"]::-webkit-datetime-edit-text {
-    display: none;
-}
-input[type="date"]:focus::-webkit-datetime-edit-year-field,
-input[type="date"]:focus::-webkit-datetime-edit-month-field,
-input[type="date"]:focus::-webkit-datetime-edit-day-field {
-    color: #042848;
+    color: #212529 !important;
 }
 
                 .cs-input-small {
@@ -610,11 +616,11 @@ input[type="date"]:focus::-webkit-datetime-edit-day-field {
                     <div style="display: flex; align-items: center; gap: 20px;">
                         <div class="date-type-switch">
                             <label class="switch-label">
-                                <input type="radio" name="dateType" value="payment" checked onchange="OrderSearchHandler.changeDateType('payment')">
+                                <input type="radio" name="dateType" value="payment" onchange="OrderSearchHandler.changeDateType('payment')">
                                 <span>결제일</span>
                             </label>
                             <label class="switch-label">
-                                <input type="radio" name="dateType" value="sheet" onchange="OrderSearchHandler.changeDateType('sheet')">
+                                <input type="radio" name="dateType" value="sheet" checked onchange="OrderSearchHandler.changeDateType('sheet')">
                                 <span>주문통합일</span>
                             </label>
                         </div>
@@ -628,12 +634,11 @@ input[type="date"]:focus::-webkit-datetime-edit-day-field {
                     </div>
                 </div>
 
-                <div class="search-section">
-                    <div class="quick-filters">
-                        <button class="quick-filter-btn active" onclick="OrderSearchHandler.setQuickFilter('today', this)">오늘</button>
+                  <div class="quick-filters">
+                        <button class="quick-filter-btn" onclick="OrderSearchHandler.setQuickFilter('today', this)">오늘</button>
                         <button class="quick-filter-btn" onclick="OrderSearchHandler.setQuickFilter('yesterday', this)">어제</button>
                         <button class="quick-filter-btn" onclick="OrderSearchHandler.setQuickFilter('week', this)">이번 주</button>
-                        <button class="quick-filter-btn" onclick="OrderSearchHandler.setQuickFilter('last7', this)">최근 7일</button>
+                        <button class="quick-filter-btn active" onclick="OrderSearchHandler.setQuickFilter('last7', this)">최근 7일</button>
                         <button class="quick-filter-btn" onclick="OrderSearchHandler.setQuickFilter('month', this)">이번 달</button>
                         <button class="quick-filter-btn" onclick="OrderSearchHandler.setQuickFilter('last30', this)">최근 30일</button>
                         <button class="quick-filter-btn" onclick="OrderSearchHandler.setQuickFilter('custom', this)">직접 설정</button>
@@ -862,9 +867,16 @@ input[type="date"]:focus::-webkit-datetime-edit-day-field {
     },
 
     initializeFilters() {
+        // 최근 7일을 기본값으로 설정
         const today = new Date();
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(today.getDate() - 6);
+        
         document.getElementById('searchEndDate').value = this.formatDate(today);
-        document.getElementById('searchStartDate').value = this.formatDate(today);
+        document.getElementById('searchStartDate').value = this.formatDate(sevenDaysAgo);
+        
+        // input type="date"의 표시 문제 해결
+        this.fixDateInputDisplay();
     },
 
     formatDate(date) {
@@ -924,6 +936,32 @@ input[type="date"]:focus::-webkit-datetime-edit-day-field {
         // 필터 변경 시 자동으로 데이터 로드
         this.loadOrders();
     },
+
+
+
+fixDateInputDisplay() {
+        // date input의 표시 문제 해결
+        const startInput = document.getElementById('searchStartDate');
+        const endInput = document.getElementById('searchEndDate');
+        
+        if (startInput && startInput.value) {
+            startInput.style.color = '#212529';
+            // 포커스 이벤트로 날짜 표시 강제
+            startInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        
+        if (endInput && endInput.value) {
+            endInput.style.color = '#212529';
+            endInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    },
+    
+    resetFilters() {
+        const today = new Date();
+        document.getElementById('searchStartDate').value = this.formatDate(today);
+        document.getElementById('searchEndDate').value = this.formatDate(today);
+
+
 
     resetFilters() {
         const today = new Date();
