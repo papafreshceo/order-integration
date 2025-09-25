@@ -1238,7 +1238,7 @@ this.tableHeaders = Object.keys(this.currentOrders[0]);
             
             const td = document.createElement('td');
             
-            const width = columnWidths[header] || 100;
+            const width = this.columnWidths[header] || 100;
             td.style.width = width + 'px';
             td.style.minWidth = width + 'px';
             td.style.maxWidth = width + 'px';
