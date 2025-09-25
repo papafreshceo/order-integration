@@ -615,7 +615,7 @@
         </div>
     </div>
 
-    <!-- 통계 및 결제 관리 모달 -->
+<!-- 통계 및 결제 관리 모달 -->
     <div id="statsModal" class="modal">
         <div class="modal-content" style="max-width: 1200px;">
             <div class="modal-header">
@@ -624,33 +624,36 @@
             </div>
             <div class="modal-body">
                 <!-- 필터 섹션 -->
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                    <!-- 기간 필터 -->
-                    <div style="margin-bottom: 15px;">
-                        <label style="font-size: 12px; color: #6c757d; display: block; margin-bottom: 8px;">기간 선택</label>
-                        <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                            <button class="filter-option active" onclick="PurchaseManager.setStatsDateRange('today')">오늘</button>
-                            <button class="filter-option" onclick="PurchaseManager.setStatsDateRange('7days')">최근 7일</button>
-                            <button class="filter-option" onclick="PurchaseManager.setStatsDateRange('30days')">최근 30일</button>
-                            <button class="filter-option" onclick="PurchaseManager.setStatsDateRange('custom')">직접입력</button>
-                        </div>
-                        <div id="statsCustomDateRange" style="display: none; gap: 10px; align-items: center;">
-                            <input type="date" id="statsStartDate" class="form-input" style="width: 150px;">
-                            <span>~</span>
-                            <input type="date" id="statsEndDate" class="form-input" style="width: 150px;">
-                        </div>
-                    </div>
-                    
-                    <!-- 거래처 및 결제상태 필터 -->
-                    <div style="display: flex; gap: 20px;">
+                <div style="background: #ffffff; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: flex; gap: 30px; align-items: flex-end;">
+                        <!-- 기간 선택 -->
                         <div style="flex: 1;">
-                            <label style="font-size: 12px; color: #6c757d; display: block; margin-bottom: 8px;">거래처</label>
-                            <select id="statsVendorFilter" class="form-select" onchange="PurchaseManager.updateStatsData()">
+                            <label style="font-size: 13px; font-weight: 400; color: #212529; display: block; margin-bottom: 8px;">기간</label>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="filter-option active" onclick="PurchaseManager.setStatsDateRange('today')">오늘</button>
+                                <button class="filter-option" onclick="PurchaseManager.setStatsDateRange('7days')">최근 7일</button>
+                                <button class="filter-option" onclick="PurchaseManager.setStatsDateRange('30days')">최근 30일</button>
+                                <button class="filter-option" onclick="PurchaseManager.setStatsDateRange('custom')">직접선택</button>
+                            </div>
+                            <div id="statsCustomDateRange" style="display: none; margin-top: 10px; gap: 10px; align-items: center;">
+                                <input type="date" id="statsStartDate" class="form-input" style="width: 150px; padding: 8px 12px;">
+                                <span style="color: #212529;">~</span>
+                                <input type="date" id="statsEndDate" class="form-input" style="width: 150px; padding: 8px 12px;">
+                                <button class="btn btn-primary" onclick="PurchaseManager.updateStatsData()">조회</button>
+                            </div>
+                        </div>
+                        
+                        <!-- 거래처 선택 -->
+                        <div style="width: 200px;">
+                            <label style="font-size: 13px; font-weight: 400; color: #212529; display: block; margin-bottom: 8px;">거래처</label>
+                            <select id="statsVendorFilter" class="form-select" onchange="PurchaseManager.updateStatsData()" style="width: 100%; padding: 8px 12px; font-size: 13px;">
                                 <option value="">전체</option>
                             </select>
                         </div>
-                        <div style="flex: 1;">
-                            <label style="font-size: 12px; color: #6c757d; display: block; margin-bottom: 8px;">결제상태</label>
+                        
+                        <!-- 결제상태 -->
+                        <div style="width: 250px;">
+                            <label style="font-size: 13px; font-weight: 400; color: #212529; display: block; margin-bottom: 8px;">결제상태</label>
                             <div style="display: flex; gap: 8px;">
                                 <button class="filter-option active" data-payment-status="all" onclick="PurchaseManager.setStatsPaymentStatus('all')">전체</button>
                                 <button class="filter-option" data-payment-status="unpaid" onclick="PurchaseManager.setStatsPaymentStatus('unpaid')">미결제</button>
@@ -660,21 +663,21 @@
                     </div>
                 </div>
                 
-                <!-- 집계 결과 테이블 -->
-                <div id="statsResult" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;">
-                    <table style="width: 100%; border-collapse: collapse;">
+                <!-- 테이블 -->
+                <div style="max-height: 400px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 8px; margin-bottom: 20px;">
+                    <table style="width: 100%; border-collapse: collapse; background: #ffffff;">
                         <thead>
-                            <tr style="background: #e7f3ff; position: sticky; top: 0;">
-                                <th style="border: 1px solid #dee2e6; padding: 10px; width: 30px;">
+                            <tr style="background: #f8f9fa; position: sticky; top: 0; z-index: 10;">
+                                <th style="border-bottom: 1px solid #dee2e6; padding: 12px; font-size: 13px; font-weight: 500; color: #212529; text-align: center; width: 40px;">
                                     <input type="checkbox" id="statsSelectAll" onchange="PurchaseManager.toggleAllStatsRows()">
                                 </th>
-                                <th style="border: 1px solid #dee2e6; padding: 10px;">거래처명</th>
-                                <th style="border: 1px solid #dee2e6; padding: 10px;">일자</th>
-                                <th style="border: 1px solid #dee2e6; padding: 10px;">건수</th>
-                                <th style="border: 1px solid #dee2e6; padding: 10px;">합계금액</th>
-                                <th style="border: 1px solid #dee2e6; padding: 10px;">결제방법</th>
-                                <th style="border: 1px solid #dee2e6; padding: 10px;">결제금액</th>
-                                <th style="border: 1px solid #dee2e6; padding: 10px;">결제일</th>
+                                <th style="border-bottom: 1px solid #dee2e6; padding: 12px; font-size: 13px; font-weight: 500; color: #212529; text-align: left;">거래처명</th>
+                                <th style="border-bottom: 1px solid #dee2e6; padding: 12px; font-size: 13px; font-weight: 500; color: #212529; text-align: center;">일자</th>
+                                <th style="border-bottom: 1px solid #dee2e6; padding: 12px; font-size: 13px; font-weight: 500; color: #212529; text-align: center;">건수</th>
+                                <th style="border-bottom: 1px solid #dee2e6; padding: 12px; font-size: 13px; font-weight: 500; color: #212529; text-align: right;">합계금액</th>
+                                <th style="border-bottom: 1px solid #dee2e6; padding: 12px; font-size: 13px; font-weight: 500; color: #212529; text-align: center;">결제방법</th>
+                                <th style="border-bottom: 1px solid #dee2e6; padding: 12px; font-size: 13px; font-weight: 500; color: #212529; text-align: right;">결제금액</th>
+                                <th style="border-bottom: 1px solid #dee2e6; padding: 12px; font-size: 13px; font-weight: 500; color: #212529; text-align: center;">결제일</th>
                             </tr>
                         </thead>
                         <tbody id="statsTableBody">
@@ -683,13 +686,13 @@
                     </table>
                 </div>
                 
-                <!-- 일괄 입력 섹션 -->
-                <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                    <h4 style="font-size: 14px; margin-bottom: 10px;">일괄 입력 (선택한 거래처에 동일하게 적용)</h4>
-                    <div style="display: flex; gap: 10px; align-items: end;">
+                <!-- 일괄 입력 -->
+                <div style="background: #ffffff; padding: 20px; border: 1px solid #dee2e6; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="font-size: 14px; font-weight: 500; color: #212529; margin-bottom: 15px;">일괄 입력</h4>
+                    <div style="display: flex; gap: 15px; align-items: flex-end;">
                         <div style="flex: 1;">
-                            <label style="font-size: 12px; color: #6c757d;">결제방법</label>
-                            <select id="bulkPaymentMethod" class="form-select">
+                            <label style="font-size: 12px; color: #495057; display: block; margin-bottom: 6px;">결제방법</label>
+                            <select id="bulkPaymentMethod" class="form-select" style="width: 100%; padding: 8px 12px; font-size: 13px;">
                                 <option value="">선택</option>
                                 <option value="현금">현금</option>
                                 <option value="계좌이체">계좌이체</option>
@@ -699,20 +702,17 @@
                             </select>
                         </div>
                         <div style="flex: 1;">
-                            <label style="font-size: 12px; color: #6c757d;">결제일</label>
-                            <input type="date" id="bulkPaymentDate" class="form-input">
+                            <label style="font-size: 12px; color: #495057; display: block; margin-bottom: 6px;">결제일</label>
+                            <input type="date" id="bulkPaymentDate" class="form-input" style="width: 100%; padding: 8px 12px; font-size: 13px;">
                         </div>
-                        <button class="btn btn-warning" onclick="PurchaseManager.applyBulkPayment()">선택항목 일괄적용</button>
+                        <button class="btn btn-primary" onclick="PurchaseManager.applyBulkPayment()">선택항목 일괄적용</button>
                     </div>
                 </div>
                 
                 <!-- 액션 버튼 -->
-                <div style="display: flex; justify-content: space-between;">
-                    <button class="btn btn-info" onclick="PurchaseManager.printStatement()">거래명세서 출력</button>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-secondary" onclick="PurchaseManager.closeStatsModal()">취소</button>
-                        <button class="btn btn-success" onclick="PurchaseManager.saveStatsPayments()">결제정보 저장</button>
-                    </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button class="btn btn-secondary" onclick="PurchaseManager.closeStatsModal()">취소</button>
+                    <button class="btn btn-success" onclick="PurchaseManager.saveStatsPayments()">결제정보 저장</button>
                 </div>
             </div>
         </div>
@@ -2296,13 +2296,22 @@
                 // 모달 초기화
                 this.statsDateRange = 'today';
                 this.statsPaymentStatus = 'all';
-                this.setStatsDateRange('today');
                 
-                // 거래처 목록 업데이트
-                this.updateStatsVendorFilter();
+                // 오늘 날짜로 초기 설정
+                const today = new Date();
+                document.getElementById('statsStartDate').value = today.toISOString().split('T')[0];
+                document.getElementById('statsEndDate').value = today.toISOString().split('T')[0];
                 
-                // 초기 데이터 로드
-                this.updateStatsData();
+                // 먼저 데이터 로드 확인
+                if (this.currentData.length === 0) {
+                    this.loadTabData().then(() => {
+                        this.updateStatsVendorFilter();
+                        this.updateStatsData();
+                    });
+                } else {
+                    this.updateStatsVendorFilter();
+                    this.updateStatsData();
+                }
                 
                 document.getElementById('statsModal').classList.add('show');
             },
@@ -2444,17 +2453,17 @@
                     const hasPayment = data.paymentMethod && data.paymentAmount && data.paymentDate;
                     
                     tr.innerHTML = `
-                        <td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">
+                        <td style="border-bottom: 1px solid #f1f3f5; padding: 10px; text-align: center; background: #ffffff;">
                             <input type="checkbox" data-index="${index}">
                         </td>
-                        <td style="border: 1px solid #dee2e6; padding: 8px;">${data.vendor}</td>
-                        <td style="border: 1px solid #dee2e6; padding: 8px;">${this.formatDateWithDay(data.date)}</td>
-                        <td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">${data.count}건</td>
-                        <td style="border: 1px solid #dee2e6; padding: 8px; text-align: right;">${data.totalAmount.toLocaleString()}</td>
-                        <td style="border: 1px solid #dee2e6; padding: 4px;">
+                        <td style="border-bottom: 1px solid #f1f3f5; padding: 10px; color: #212529; font-size: 13px; background: #ffffff;">${data.vendor}</td>
+                        <td style="border-bottom: 1px solid #f1f3f5; padding: 10px; text-align: center; color: #212529; font-size: 13px; background: #ffffff;">${this.formatDateWithDay(data.date)}</td>
+                        <td style="border-bottom: 1px solid #f1f3f5; padding: 10px; text-align: center; color: #212529; font-size: 13px; background: #ffffff;">${data.count}건</td>
+                        <td style="border-bottom: 1px solid #f1f3f5; padding: 10px; text-align: right; color: #212529; font-size: 13px; font-weight: 500; background: #ffffff;">${data.totalAmount.toLocaleString()}</td>
+                        <td style="border-bottom: 1px solid #f1f3f5; padding: 6px; background: #ffffff;">
                             <select class="form-select" data-field="paymentMethod" data-index="${index}" 
                                     onchange="PurchaseManager.updateStatsRow(${index})" 
-                                    style="width: 100%; padding: 4px;">
+                                    style="width: 100%; padding: 6px 10px; font-size: 13px; border: 1px solid #dee2e6; border-radius: 4px;">
                                 <option value="">선택</option>
                                 <option value="현금" ${data.paymentMethod === '현금' ? 'selected' : ''}>현금</option>
                                 <option value="계좌이체" ${data.paymentMethod === '계좌이체' ? 'selected' : ''}>계좌이체</option>
@@ -2463,19 +2472,23 @@
                                 <option value="기타" ${data.paymentMethod === '기타' ? 'selected' : ''}>기타</option>
                             </select>
                         </td>
-                        <td style="border: 1px solid #dee2e6; padding: 4px;">
+                        <td style="border-bottom: 1px solid #f1f3f5; padding: 6px; background: #ffffff;">
                             <input type="number" class="form-input" data-field="paymentAmount" data-index="${index}"
                                    value="${data.paymentAmount || data.totalAmount}" 
                                    onchange="PurchaseManager.updateStatsRow(${index})"
-                                   style="width: 100%; padding: 4px; text-align: right;">
+                                   style="width: 100%; padding: 6px 10px; font-size: 13px; text-align: right; border: 1px solid #dee2e6; border-radius: 4px;">
                         </td>
-                        <td style="border: 1px solid #dee2e6; padding: 4px;">
+                        <td style="border-bottom: 1px solid #f1f3f5; padding: 6px; background: #ffffff;">
                             <input type="date" class="form-input" data-field="paymentDate" data-index="${index}"
                                    value="${data.paymentDate || ''}"
                                    onchange="PurchaseManager.updateStatsRow(${index})"
-                                   style="width: 100%; padding: 4px;">
+                                   style="width: 100%; padding: 6px 10px; font-size: 13px; border: 1px solid #dee2e6; border-radius: 4px;">
                         </td>
                     `;
+                    
+                    if (!hasPayment) {
+                        tr.style.backgroundColor = '#fef9f9';
+                    }
                     
                     if (!hasPayment) {
                         tr.style.backgroundColor = '#fef2f2';
