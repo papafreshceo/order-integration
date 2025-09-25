@@ -107,39 +107,106 @@ export default async function handler(req, res) {
                 });
             }
 
-
-
             case 'getProductsData': {
-    const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_IDS.PRODUCTS,
-        range: '원물관리!A:J',
-    });
-    
-    return res.status(200).json({
-        success: true,
-        data: response.data.values || []
-    });
-}
+                const response = await sheets.spreadsheets.values.get({
+                    spreadsheetId: SPREADSHEET_IDS.PRODUCTS,
+                    range: '원물관리!A:J',
+                });
+                
+                return res.status(200).json({
+                    success: true,
+                    data: response.data.values || []
+                });
+            }
 
-case 'appendPurchaseData': {
-    const appendRange = range || '사입관리!A:Z';
-    const response = await sheets.spreadsheets.values.append({
-        spreadsheetId: SPREADSHEET_IDS.PURCHASE,
-        range: appendRange,
-        valueInputOption: 'USER_ENTERED',
-        insertDataOption: 'INSERT_ROWS',
-        resource: {
-            values: data
+            case 'appendPurchaseData': {
+                const appendRange = range || '사입관리!A:Z';
+                const response = await sheets.spreadsheets.values.append({
+                    spreadsheetId: SPREADSHEET_IDS.PURCHASE,
+                    range: appendRange,
+                    valueInputOption: 'USER_ENTERED',
+                    insertDataOption: 'INSERT_ROWS',
+                    resource: {
+                        values: data
+                    }
+                });
+                
+                return res.status(200).json({
+                    success: true,
+                    updatedRange: response.data.updates?.updatedRange
+                });
+            }
+
+            case 'getQualityData': {
+                const response = await sheets.spreadsheets.values.get({
+                    spreadsheetId: SPREADSHEET_IDS.PRODUCTS,
+                    range: '품질관리!A:J',
+                });
+                
+                return res.status(200).json({
+                    success: true,
+                    data: response.data.values || []
+                });
+            }
+
+            case 'addQualityData': {
+                // 먼저 기존 데이터를 가져와서 마지막 연번 확인
+                const getResponse = await sheets.spreadsheets.values.get({
+                    spreadsheetId: SPREADSHEET_IDS.PRODUCTS,
+                    range: '품질관리!A:J',
+                });
+                
+                const existingData = getResponse.data.values || [];
+                let nextNumber = 1;
+                
+                if (existingData.length > 1) {
+                    // 헤더 제외하고 마지막 행의 연번 확인
+                    const lastRow = existingData[existingData.length - 1];
+                    const lastNumber = parseInt(lastRow[0]) || 0;
+                    nextNumber = lastNumber + 1;
+                }
+                
+                // 새 데이터에 연번 추가
+                const today = new Date().toISOString().split('T')[0];
+                const qualityData = data.map((row, index) => {
+                    return [
+                        nextNumber + index,  // 연번
+                        row.출하자 || row.거래처,  // 농가/거래처
+                        row.품목,
+                        row.품종 || '',
+                        row.품종명 || '',
+                        row.작업 || '',
+                        row.맛 || '',
+                        '',  // 총점 (추후 계산 가능)
+                        row.선정결과,  // BEST 또는 최악
+                        today  // 선정일
+                    ];
+                });
+                
+                // 품질관리 시트에 추가
+                const appendResponse = await sheets.spreadsheets.values.append({
+                    spreadsheetId: SPREADSHEET_IDS.PRODUCTS,
+                    range: '품질관리!A:J',
+                    valueInputOption: 'USER_ENTERED',
+                    insertDataOption: 'INSERT_ROWS',
+                    resource: {
+                        values: qualityData
+                    }
+                });
+                
+                return res.status(200).json({
+                    success: true,
+                    updatedRange: appendResponse.data.updates?.updatedRange,
+                    addedRows: qualityData.length
+                });
+            }
+
+            default:
+                return res.status(400).json({
+                    success: false,
+                    error: `지원하지 않는 액션: ${action}`
+                });
         }
-    });
-    
-    return res.status(200).json({
-        success: true,
-        updatedRange: response.data.updates?.updatedRange
-    });
-}
-
-
     } catch (error) {
         console.error('구매관리 API 오류:', error);
         return res.status(500).json({
