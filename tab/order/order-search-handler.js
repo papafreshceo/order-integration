@@ -288,6 +288,7 @@ window.OrderSearchHandler = {
                     width: 100%;
                     border-collapse: collapse;
                     min-width: 1200px;
+                    table-layout: fixed;
                 }
 
                 .search-table thead {
@@ -1171,7 +1172,20 @@ fixDateInputDisplay() {
         
         // 매핑시트에서 가져온 모든 헤더 추가
         if (this.currentOrders.length > 0) {
-this.tableHeaders = Object.keys(this.currentOrders[0]);
+            // 테이블 전체 너비 계산
+            let totalWidth = 50; // checkbox width
+            this.tableHeaders = Object.keys(this.currentOrders[0]);
+            this.tableHeaders.forEach(header => {
+                totalWidth += this.columnWidths[header] || 100;
+            });
+            
+            // 테이블에 최소 너비 설정
+            const table = document.getElementById('searchTable');
+            if (table) {
+                table.style.minWidth = totalWidth + 'px';
+                table.style.width = totalWidth + 'px';
+            }
+            
             this.tableHeaders.forEach(header => {
                 const th = document.createElement('th');
                 th.textContent = header;
