@@ -1130,22 +1130,6 @@ window.OrderShippingHandler = {
             if (!headers.includes('택배사')) headers.push('택배사');
             if (!headers.includes('송장번호')) headers.push('송장번호');
         }
-            headers.push(h);
-            if (h === '주문번호') {
-                if (originalHeaders.includes('택배사') && !headers.includes('택배사')) {
-                    headers.push('택배사');
-                }
-                if (originalHeaders.includes('송장번호') && !headers.includes('송장번호')) {
-                    headers.push('송장번호');
-                }
-            }
-        }
-        
-        for (let h of originalHeaders) {
-            if (h !== '택배사' && h !== '송장번호' && !headers.includes(h)) {
-                headers.push(h);
-            }
-        }
 
         let totalWidth = 50;
         headers.forEach(header => {
