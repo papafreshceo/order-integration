@@ -2594,13 +2594,15 @@
             },
 
 async saveQualityData(result) {
-                const selected = this.hot.getSelected();
-                if (!selected || selected.length === 0) {
+                // getSelected() 대신 getSelectedRange() 사용
+                const selectedRanges = this.hot.getSelectedRangeLast();
+                if (!selectedRanges) {
                     this.showToast('품질 평가할 행을 선택하세요', 'error');
                     return;
                 }
                 
-                const [startRow, , endRow] = selected[0];
+                const startRow = selectedRanges.from.row;
+                const endRow = selectedRanges.to.row;
                 const selectedRows = [];
                 
                 // 선택된 행의 데이터 수집
