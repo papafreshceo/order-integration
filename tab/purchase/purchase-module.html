@@ -590,50 +590,65 @@
         },
 
         setDateRange(range) {
-            // 모든 버튼 비활성화
+    // 모든 기간 필터 버튼 비활성화
+    document.querySelectorAll('.filter-option').forEach(btn => {
+        if (btn.textContent === '오늘' || btn.textContent === '최근 7일' || 
+            btn.textContent === '최근 30일' || btn.textContent === '전체' || 
+            btn.textContent === '직접선택') {
+            btn.classList.remove('active');
+        }
+    });
+    
+    const today = new Date();
+    let startDate, endDate;
+    
+    switch(range) {
+        case 'today':
+            startDate = today;
+            endDate = today;
+            document.getElementById('customDateRange').style.display = 'none';
+            break;
+        case '7days':
+            startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            endDate = today;
+            document.getElementById('customDateRange').style.display = 'none';
+            break;
+        case '30days':
+            startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+            endDate = today;
+            document.getElementById('customDateRange').style.display = 'none';
+            break;
+        case 'all':
+            startDate = new Date('2020-01-01');
+            endDate = today;
+            document.getElementById('customDateRange').style.display = 'none';
+            break;
+        case 'custom':
+            document.getElementById('customDateRange').style.display = 'flex';
+            // event.target 대신 직접 찾아서 active 추가
             document.querySelectorAll('.filter-option').forEach(btn => {
-                if (btn.textContent === '오늘' || btn.textContent === '최근 7일' || 
-                    btn.textContent === '최근 30일' || btn.textContent === '전체' || 
-                    btn.textContent === '직접선택') {
-                    btn.classList.remove('active');
+                if (btn.textContent === '직접선택') {
+                    btn.classList.add('active');
                 }
             });
-            
-            const today = new Date();
-            let startDate, endDate;
-            
-            switch(range) {
-                case 'today':
-                    startDate = today;
-                    endDate = today;
-                    document.getElementById('customDateRange').style.display = 'none';
-                    break;
-                case '7days':
-                    startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-                    endDate = today;
-                    document.getElementById('customDateRange').style.display = 'none';
-                    break;
-                case '30days':
-                    startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-                    endDate = today;
-                    document.getElementById('customDateRange').style.display = 'none';
-                    break;
-                case 'all':
-                    startDate = new Date('2020-01-01');
-                    endDate = today;
-                    document.getElementById('customDateRange').style.display = 'none';
-                    break;
-                case 'custom':
-                    document.getElementById('customDateRange').style.display = 'flex';
-                    event.target.classList.add('active');
-                    return;
-            }
-            
-            document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
-            document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
-            event.target.classList.add('active');
-            this.currentDateRange = range;
-        },
+            return;
+    }
+    
+    document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+    document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+    
+    // 해당하는 버튼에 active 클래스 추가
+    document.querySelectorAll('.filter-option').forEach(btn => {
+        if ((range === 'today' && btn.textContent === '오늘') ||
+            (range === '7days' && btn.textContent === '최근 7일') ||
+            (range === '30days' && btn.textContent === '최근 30일') ||
+            (range === 'all' && btn.textContent === '전체')) {
+            btn.classList.add('active');
+        }
+    });
+    
+    this.currentDateRange = range;
+},
 
         setVendorType(type) {
             document.querySelectorAll('[data-type]').forEach(btn => {
