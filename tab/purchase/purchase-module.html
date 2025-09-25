@@ -3,45 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <title>구매관리</title>
+    
+    <!-- Handsontable CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@latest/dist/handsontable.full.min.css">
+    
     <style>
-        .purchase-container {
-            padding: 20px;
-            background: #fafafa;
-            min-height: 100vh;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafafa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* 헤더 섹션 */
         .header-section {
             background: #ffffff;
             border: 1px solid #dee2e6;
             border-radius: 16px;
             padding: 20px;
             margin-bottom: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            font-weight: 400;
+            color: #495057;
+            min-width: 60px;
+        }
+
+        .filter-input, .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 300;
+        }
+
+        .filter-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        /* 탭 네비게이션 */
+        .tab-nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #dee2e6;
+            background: #ffffff;
+            padding: 0 20px;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #495057;
+            font-size: 14px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: #f8f9fa;
+        }
+
+        .tab-btn.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+
+        /* 액션 섹션 */
+        .action-section {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 0 0 16px 16px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .header-title {
-            font-size: 24px;
-            font-weight: 500;
-            color: #212529;
+        .mode-buttons {
+            display: flex;
+            gap: 8px;
         }
 
-        .header-actions {
+        .action-buttons {
             display: flex;
-            gap: 12px;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
         }
 
         .btn-primary {
-            padding: 10px 20px;
             background: #2563eb;
-            color: #ffffff;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 300;
-            cursor: pointer;
-            transition: all 0.2s;
+            color: white;
         }
 
         .btn-primary:hover {
@@ -49,132 +135,149 @@
         }
 
         .btn-secondary {
-            padding: 10px 20px;
-            background: #ffffff;
+            background: white;
             color: #495057;
             border: 1px solid #dee2e6;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 300;
-            cursor: pointer;
-            transition: all 0.2s;
         }
 
         .btn-secondary:hover {
             background: #f8f9fa;
         }
 
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        /* 테이블 섹션 */
         .table-section {
             background: #ffffff;
             border: 1px solid #dee2e6;
             border-radius: 16px;
+            padding: 20px;
+            min-height: 500px;
+        }
+
+        #hot-container {
+            width: 100%;
+            height: 600px;
             overflow: hidden;
         }
 
-        .table-wrapper {
-            overflow-x: auto;
-            max-height: calc(100vh - 250px);
+        /* Handsontable 커스터마이징 */
+        .handsontable td.unpaid-row {
+            background-color: #fef2f2 !important;
         }
 
-        .purchase-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .purchase-table thead {
-            position: sticky;
-            top: 0;
-            background: #f8f9fa;
-            z-index: 10;
-        }
-
-        .purchase-table th {
-            padding: 12px 8px;
-            text-align: center;
-            font-size: 13px;
-            font-weight: 500;
-            color: #495057;
-            border: 1px solid #dee2e6;
-            white-space: nowrap;
-        }
-
-        .purchase-table td {
-            padding: 4px;
-            border: 1px solid #e9ecef;
-            position: relative;
-        }
-
-        .purchase-table tbody tr:hover {
-            background: #f8f9fa;
-        }
-
-        .cell-input {
-            width: 100%;
-            border: none;
-            padding: 6px 8px;
-            font-size: 13px;
-            font-weight: 300;
-            background: transparent;
-            outline: none;
-            text-align: center;
-        }
-
-        .cell-input:focus {
-            background: #ffffff;
-            box-shadow: inset 0 0 0 2px #2563eb;
-            border-radius: 4px;
-        }
-
-        .cell-input.number {
-            text-align: right;
-        }
-
-        .cell-input[readonly] {
-            background: #f8f9fa;
-            cursor: not-allowed;
+        .handsontable td.readonly {
+            background-color: #f8f9fa !important;
             color: #6c757d;
         }
 
-        .new-row-btn {
-            width: 100%;
-            padding: 12px;
-            background: #f8f9fa;
-            border: 1px dashed #dee2e6;
-            color: #6c757d;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 14px;
-        }
-
-        .new-row-btn:hover {
-            background: #e7f3ff;
-            border-color: #2563eb;
-            color: #2563eb;
-        }
-
-        .loading-overlay {
+        /* 모달 */
+        .modal {
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(255, 255, 255, 0.9);
-            display: none;
-            justify-content: center;
-            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
             z-index: 9999;
         }
 
-        .loading-overlay.show {
+        .modal.show {
             display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+            font-weight: 400;
+            color: #495057;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10000;
+        }
+
+        .loading.show {
+            display: block;
         }
 
         .spinner {
-            width: 40px;
-            height: 40px;
             border: 4px solid #f3f3f3;
             border-top: 4px solid #2563eb;
             border-radius: 50%;
+            width: 40px;
+            height: 40px;
             animation: spin 1s linear infinite;
         }
 
@@ -187,13 +290,13 @@
             position: fixed;
             bottom: 20px;
             right: 20px;
-            padding: 16px 24px;
+            padding: 12px 20px;
             background: #10b981;
             color: white;
             border-radius: 8px;
             display: none;
             animation: slideIn 0.3s ease;
-            z-index: 10000;
+            z-index: 10001;
         }
 
         .toast.show {
@@ -214,275 +317,582 @@
                 opacity: 1;
             }
         }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #6c757d;
-        }
-
-        .empty-state h3 {
-            font-size: 18px;
-            font-weight: 400;
-            margin-bottom: 20px;
-        }
     </style>
 </head>
 <body>
-    <div class="purchase-container">
+    <div class="container">
+        <!-- 조회 필터 섹션 -->
         <div class="header-section">
-            <h1 class="header-title">구매관리</h1>
-            <div class="header-actions">
-                <button class="btn-secondary" onclick="PurchaseManager.refreshData()">새로고침</button>
-                <button class="btn-primary" onclick="PurchaseManager.saveData()">저장</button>
+            <div class="filter-group">
+                <label class="filter-label">기간</label>
+                <input type="date" id="startDate" class="filter-input">
+                <span>~</span>
+                <input type="date" id="endDate" class="filter-input">
+                
+                <label class="filter-label">거래처</label>
+                <select id="vendorFilter" class="filter-select">
+                    <option value="">전체</option>
+                </select>
+                
+                <label class="filter-label">결제상태</label>
+                <select id="paymentFilter" class="filter-select">
+                    <option value="">전체</option>
+                    <option value="unpaid">미결제</option>
+                    <option value="paid">결제완료</option>
+                </select>
+                
+                <button class="btn btn-primary" onclick="PurchaseManager.searchData()">조회</button>
+                <button class="btn btn-secondary" onclick="PurchaseManager.resetFilter()">초기화</button>
             </div>
         </div>
 
+        <!-- 탭 네비게이션 -->
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="supply">사입관리</button>
+            <button class="tab-btn" data-tab="purchase">구매관리</button>
+            <button class="tab-btn" data-tab="expense">지출관리</button>
+        </div>
+
+        <!-- 액션 버튼 섹션 -->
+        <div class="action-section">
+            <div class="mode-buttons">
+                <button id="viewModeBtn" class="btn btn-secondary" onclick="PurchaseManager.setViewMode()">조회 모드</button>
+                <button id="editModeBtn" class="btn btn-primary" onclick="PurchaseManager.setEditMode()">입력 모드</button>
+                <select id="vendorTypeFilter" class="filter-select" style="display:none; margin-left: 12px;">
+                    <option value="중매인">중매인</option>
+                    <option value="농가">농가</option>
+                    <option value="기타">기타</option>
+                </select>
+            </div>
+            <div class="action-buttons">
+                <button id="saveBtn" class="btn btn-success" onclick="PurchaseManager.saveData()">저장</button>
+                <button id="deleteBtn" class="btn btn-danger" onclick="PurchaseManager.deleteRows()" style="display:none;">선택 행 삭제</button>
+            </div>
+        </div>
+
+        <!-- 테이블 섹션 -->
         <div class="table-section">
-            <div class="table-wrapper">
-                <table class="purchase-table" id="purchaseTable">
-                    <thead>
-                        <tr>
-                            <th style="width: 100px;">날짜</th>
-                            <th style="width: 100px;">중매인</th>
-                            <th style="width: 100px;">출하자</th>
-                            <th style="width: 100px;">품종</th>
-                            <th style="width: 100px;">규격</th>
-                            <th style="width: 80px;">수량</th>
-                            <th style="width: 100px;">단가</th>
-                            <th style="width: 120px;">금액</th>
-                            <th style="width: 100px;">수수료</th>
-                            <th style="width: 120px;">합계</th>
-                            <th style="width: 100px;">작업</th>
-                            <th style="width: 100px;">맛</th>
-                            <th style="width: 200px;">비고</th>
-                        </tr>
-                    </thead>
-                    <tbody id="purchaseTableBody">
-                        <tr>
-                            <td colspan="13">
-                                <div class="empty-state">
-                                    <h3>데이터 로딩 중...</h3>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div id="hot-container"></div>
+        </div>
+    </div>
+
+    <!-- 거래처 등록 모달 -->
+    <div id="vendorModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">신규 거래처 등록</h3>
+                <button class="btn" onclick="PurchaseManager.closeVendorModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">구분 *</label>
+                    <select id="vendorCategory" class="form-select">
+                        <option value="">선택</option>
+                        <option value="구매처(도매)">구매처(도매)</option>
+                        <option value="구매처(농가)">구매처(농가)</option>
+                        <option value="자재구입처">자재구입처</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">거래처명 *</label>
+                    <input type="text" id="vendorName" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">사업자명</label>
+                    <input type="text" id="businessName" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">사업자등록번호</label>
+                    <input type="text" id="businessNumber" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">대표</label>
+                    <input type="text" id="ceoName" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">대표전화번호</label>
+                    <input type="text" id="ceoPhone" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">담당자</label>
+                    <input type="text" id="managerName" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">담당자전화번호</label>
+                    <input type="text" id="managerPhone" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">계좌번호</label>
+                    <input type="text" id="accountNumber" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">주소</label>
+                    <input type="text" id="address" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">비고</label>
+                    <input type="text" id="notes" class="form-input">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="PurchaseManager.closeVendorModal()">취소</button>
+                <button class="btn btn-primary" onclick="PurchaseManager.saveNewVendor()">저장</button>
             </div>
         </div>
     </div>
 
-    <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading" id="loading">
         <div class="spinner"></div>
     </div>
 
     <div class="toast" id="toast"></div>
 
+    <!-- Handsontable JS -->
+    <script src="https://cdn.jsdelivr.net/npm/handsontable@latest/dist/handsontable.full.min.js"></script>
+    
     <script>
         const PurchaseManager = {
-            data: [],
-            hasChanges: false,
-
+            hot: null,
+            currentTab: 'supply',
+            currentMode: 'view',
+            vendors: [],
+            vendorAccounts: {},
+            currentData: [],
+            
             async init() {
-                console.log('구매관리 초기화 시작');
-                await this.loadData();
-                this.setupAutoSave();
+                console.log('구매관리 초기화');
+                
+                // 날짜 기본값 설정
+                const today = new Date();
+                const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                document.getElementById('startDate').value = firstDay.toISOString().split('T')[0];
+                document.getElementById('endDate').value = today.toISOString().split('T')[0];
+                
+                // 탭 이벤트 리스너
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.currentTab = e.target.dataset.tab;
+                        this.loadTabData();
+                    });
+                });
+                
+                // 거래처 데이터 로드
+                await this.loadVendors();
+                
+                // 테이블 초기화
+                this.initTable();
+                
+                // 초기 데이터 로드
+                await this.loadTabData();
             },
-
-            async loadData() {
+            
+            async loadVendors() {
                 this.showLoading();
                 try {
+                    const response = await fetch('/api/sheets', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'getSheetData',
+                            spreadsheetId: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg',
+                            range: '거래처관리!A:P'
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success && result.data) {
+                        const headers = result.data[0];
+                        this.vendors = result.data.slice(1).map(row => {
+                            const vendor = {};
+                            headers.forEach((header, index) => {
+                                vendor[header] = row[index] || '';
+                            });
+                            return vendor;
+                        });
+                        
+                        // 거래처별 계좌번호 매핑
+                        this.vendors.forEach(vendor => {
+                            this.vendorAccounts[vendor['거래처명']] = vendor['계좌번호'] || '';
+                        });
+                        
+                        this.updateVendorFilter();
+                    }
+                } catch (error) {
+                    console.error('거래처 로드 실패:', error);
+                } finally {
+                    this.hideLoading();
+                }
+            },
+            
+            updateVendorFilter() {
+                const filter = document.getElementById('vendorFilter');
+                filter.innerHTML = '<option value="">전체</option>';
+                
+                const vendorType = document.getElementById('vendorTypeFilter').value;
+                let filteredVendors = [];
+                
+                if (this.currentTab === 'supply') {
+                    if (vendorType === '중매인') {
+                        filteredVendors = this.vendors.filter(v => v['구분'] === '구매처(도매)');
+                    } else if (vendorType === '농가') {
+                        filteredVendors = this.vendors.filter(v => v['구분'] === '구매처(농가)');
+                    } else {
+                        filteredVendors = this.vendors;
+                    }
+                } else if (this.currentTab === 'purchase') {
+                    filteredVendors = this.vendors.filter(v => v['구분'] === '자재구입처');
+                }
+                
+                filteredVendors.forEach(vendor => {
+                    const option = document.createElement('option');
+                    option.value = vendor['거래처명'];
+                    option.textContent = vendor['거래처명'];
+                    filter.appendChild(option);
+                });
+            },
+            
+            getColumns() {
+                let columns = [];
+                
+                if (this.currentTab === 'supply') {
+                    columns = [
+                        { data: '날짜', type: 'date', dateFormat: 'YYYY-MM-DD' },
+                        { 
+                            data: '거래처', 
+                            type: 'dropdown',
+                            source: this.getVendorList()
+                        },
+                        { data: '출하자', type: 'text' },
+                        { data: '품목', type: 'text' },
+                        { data: '품종명', type: 'text' },
+                        { data: '규격', type: 'text' },
+                        { data: '수량', type: 'numeric', numericFormat: { pattern: '0,0' } },
+                        { data: '단가', type: 'numeric', numericFormat: { pattern: '0,0' } },
+                        { data: '금액', type: 'numeric', numericFormat: { pattern: '0,0' }, readOnly: true },
+                        { data: '수수료', type: 'numeric', numericFormat: { pattern: '0,0' } },
+                        { data: '합계', type: 'numeric', numericFormat: { pattern: '0,0' }, readOnly: true },
+                        { data: '작업', type: 'text' },
+                        { data: '맛', type: 'text' },
+                        { data: '비고', type: 'text' }
+                    ];
+                    
+                    // 조회 모드일 때 계좌번호, 결제금액, 결제일 추가
+                    if (this.currentMode === 'view') {
+                        columns.push(
+                            { data: '계좌번호', type: 'text', readOnly: true },
+                            { data: '결제금액', type: 'numeric', numericFormat: { pattern: '0,0' } },
+                            { data: '결제일', type: 'date', dateFormat: 'YYYY-MM-DD' }
+                        );
+                    } else {
+                        columns.push(
+                            { data: '결제금액', type: 'numeric', numericFormat: { pattern: '0,0' } },
+                            { data: '결제일', type: 'date', dateFormat: 'YYYY-MM-DD' }
+                        );
+                    }
+                }
+                
+                return columns;
+            },
+            
+            getVendorList() {
+                const list = ['직접입력'];
+                const vendorType = document.getElementById('vendorTypeFilter').value;
+                
+                if (this.currentTab === 'supply') {
+                    if (vendorType === '중매인') {
+                        list.push(...this.vendors.filter(v => v['구분'] === '구매처(도매)').map(v => v['거래처명']));
+                    } else if (vendorType === '농가') {
+                        list.push(...this.vendors.filter(v => v['구분'] === '구매처(농가)').map(v => v['거래처명']));
+                    } else {
+                        list.push(...this.vendors.map(v => v['거래처명']));
+                    }
+                } else if (this.currentTab === 'purchase') {
+                    list.push(...this.vendors.filter(v => v['구분'] === '자재구입처').map(v => v['거래처명']));
+                }
+                
+                return list;
+            },
+            
+            initTable() {
+                const container = document.getElementById('hot-container');
+                
+                this.hot = new Handsontable(container, {
+                    data: [],
+                    columns: this.getColumns(),
+                    colHeaders: true,
+                    rowHeaders: true,
+                    height: 550,
+                    stretchH: 'all',
+                    autoWrapRow: true,
+                    contextMenu: true,
+                    manualRowMove: true,
+                    manualColumnMove: false,
+                    filters: true,
+                    dropdownMenu: true,
+                    licenseKey: 'non-commercial-and-evaluation',
+                    
+                    afterChange: (changes, source) => {
+                        if (source === 'loadData') return;
+                        
+                        changes?.forEach(([row, prop, oldValue, newValue]) => {
+                            // 거래처 변경 시
+                            if (prop === '거래처' && newValue === '직접입력') {
+                                setTimeout(() => {
+                                    const actualValue = prompt('새 거래처명을 입력하세요:');
+                                    if (actualValue) {
+                                        this.hot.setDataAtCell(row, 1, actualValue);
+                                        this.openVendorModal(actualValue);
+                                    } else {
+                                        this.hot.setDataAtCell(row, 1, '');
+                                    }
+                                }, 100);
+                            }
+                            
+                            // 수량, 단가, 수수료 변경 시 자동계산
+                            if (['수량', '단가', '수수료'].includes(prop)) {
+                                this.calculateRow(row);
+                            }
+                            
+                            // 계좌번호 자동 입력 (조회 모드)
+                            if (prop === '거래처' && this.currentMode === 'view') {
+                                const accountNumber = this.vendorAccounts[newValue] || '';
+                                const accountCol = this.hot.propToCol('계좌번호');
+                                if (accountCol !== null) {
+                                    this.hot.setDataAtCell(row, accountCol, accountNumber);
+                                }
+                            }
+                        });
+                    },
+                    
+                    cells: (row, col, prop) => {
+                        const cellProperties = {};
+                        const data = this.hot.getDataAtRow(row);
+                        
+                        // 미결제 행 강조
+                        if (data && (!data[15] || !data[16])) { // 결제금액 또는 결제일이 없으면
+                            cellProperties.className = 'unpaid-row';
+                        }
+                        
+                        // 조회 모드에서 미결제가 아닌 경우 결제금액/결제일 수정 불가
+                        if (this.currentMode === 'view' && data && data[15] && data[16]) {
+                            if (prop === '결제금액' || prop === '결제일') {
+                                cellProperties.readOnly = true;
+                                cellProperties.className = 'readonly';
+                            }
+                        }
+                        
+                        // 농가 선택 시 출하자, 수수료 비활성화
+                        const vendorType = document.getElementById('vendorTypeFilter').value;
+                        if (vendorType === '농가') {
+                            if (prop === '출하자' || prop === '수수료') {
+                                cellProperties.readOnly = true;
+                                cellProperties.className = 'readonly';
+                            }
+                        }
+                        
+                        return cellProperties;
+                    }
+                });
+            },
+            
+            calculateRow(row) {
+                const data = this.hot.getDataAtRow(row);
+                const quantity = parseFloat(data[6]) || 0;
+                const price = parseFloat(data[7]) || 0;
+                const commission = parseFloat(data[9]) || 0;
+                
+                const amount = quantity * price;
+                const total = amount + commission;
+                
+                this.hot.setDataAtCell(row, 8, amount);
+                this.hot.setDataAtCell(row, 10, total);
+            },
+            
+            async loadTabData() {
+                this.showLoading();
+                try {
+                    let sheetName = '';
+                    if (this.currentTab === 'supply') {
+                        sheetName = '사입관리';
+                        document.getElementById('vendorTypeFilter').style.display = 'inline-block';
+                    } else if (this.currentTab === 'purchase') {
+                        sheetName = '구매관리';
+                        document.getElementById('vendorTypeFilter').style.display = 'none';
+                    } else {
+                        sheetName = '지출관리';
+                        document.getElementById('vendorTypeFilter').style.display = 'none';
+                    }
+                    
                     const response = await fetch('/api/purchase', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             action: 'getPurchaseData',
-                            range: '구매관리!A:M'
+                            range: `${sheetName}!A:Q`
                         })
                     });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
+                    
                     const result = await response.json();
-                    console.log('API 응답:', result);
                     
                     if (result.success && result.data) {
-                        this.data = result.data.slice(1) || []; // 헤더 제외
-                        this.renderTable();
-                        this.showToast('데이터 로드 완료');
-                    } else {
-                        // 데이터가 없으면 빈 테이블 표시
-                        this.data = [];
-                        this.renderTable();
+                        const headers = result.data[0];
+                        const data = result.data.slice(1).map(row => {
+                            const obj = {};
+                            headers.forEach((header, index) => {
+                                obj[header] = row[index] || '';
+                            });
+                            
+                            // 조회 모드에서 계좌번호 추가
+                            if (this.currentMode === 'view') {
+                                obj['계좌번호'] = this.vendorAccounts[obj['거래처']] || '';
+                            }
+                            
+                            return obj;
+                        });
+                        
+                        this.currentData = data;
+                        
+                        // 컬럼 업데이트
+                        this.hot.updateSettings({
+                            columns: this.getColumns()
+                        });
+                        
+                        this.hot.loadData(data);
                     }
                 } catch (error) {
                     console.error('데이터 로드 실패:', error);
                     this.showToast('데이터 로드 실패', 'error');
-                    // 에러 시 빈 테이블 표시
-                    this.data = [];
-                    this.renderTable();
                 } finally {
                     this.hideLoading();
                 }
             },
-
-            renderTable() {
-                const tbody = document.getElementById('purchaseTableBody');
-                tbody.innerHTML = '';
-
-                // 데이터가 있으면 렌더링
-                if (this.data && this.data.length > 0) {
-                    this.data.forEach((row, index) => {
-                        this.addRow(row, index);
-                    });
-                }
-
-                // 새 행 추가 버튼
-                const newRowTr = document.createElement('tr');
-                newRowTr.innerHTML = `
-                    <td colspan="13">
-                        <button class="new-row-btn" onclick="PurchaseManager.addNewRow()">+ 새 행 추가</button>
-                    </td>
-                `;
-                tbody.appendChild(newRowTr);
-            },
-
-            addRow(rowData = [], rowIndex) {
-                const tbody = document.getElementById('purchaseTableBody');
-                const tr = document.createElement('tr');
-                tr.dataset.rowIndex = rowIndex;
-
-                const columns = [
-                    { index: 0, type: 'date', name: '날짜' },
-                    { index: 1, type: 'text', name: '중매인' },
-                    { index: 2, type: 'text', name: '출하자' },
-                    { index: 3, type: 'text', name: '품종' },
-                    { index: 4, type: 'text', name: '규격' },
-                    { index: 5, type: 'number', name: '수량' },
-                    { index: 6, type: 'number', name: '단가' },
-                    { index: 7, type: 'number', name: '금액', readonly: true },
-                    { index: 8, type: 'number', name: '수수료' },
-                    { index: 9, type: 'number', name: '합계', readonly: true },
-                    { index: 10, type: 'text', name: '작업' },
-                    { index: 11, type: 'text', name: '맛' },
-                    { index: 12, type: 'text', name: '비고' }
-                ];
-
-                columns.forEach(col => {
-                    const td = document.createElement('td');
-                    const input = document.createElement('input');
-                    
-                    input.className = 'cell-input';
-                    
-                    if (col.type === 'date') {
-                        input.type = 'date';
-                    } else if (col.type === 'number') {
-                        input.type = 'text';
-                        input.className += ' number';
-                    } else {
-                        input.type = 'text';
-                    }
-
-                    if (col.readonly) {
-                        input.readOnly = true;
-                    }
-
-                    input.value = rowData[col.index] || '';
-                    input.dataset.column = col.index;
-                    input.dataset.row = rowIndex;
-
-                    // 이벤트 리스너
-                    if (col.name === '수량' || col.name === '단가' || col.name === '수수료') {
-                        input.addEventListener('input', () => this.calculateRow(rowIndex));
-                    }
-
-                    input.addEventListener('change', () => {
-                        this.updateCell(rowIndex, col.index, input.value);
-                    });
-
-                    td.appendChild(input);
-                    tr.appendChild(td);
-                });
-
-                // 마지막 행 앞에 삽입
-                const lastRow = tbody.lastElementChild;
-                if (lastRow && lastRow.querySelector('.new-row-btn')) {
-                    tbody.insertBefore(tr, lastRow);
-                } else {
-                    tbody.appendChild(tr);
-                }
-
-                // 자동 계산
-                this.calculateRow(rowIndex);
-            },
-
-            addNewRow() {
-                const newIndex = this.data.length;
-                const today = new Date().toISOString().split('T')[0];
-                const newRow = Array(13).fill('');
-                newRow[0] = today;
+            
+            setViewMode() {
+                this.currentMode = 'view';
+                document.getElementById('viewModeBtn').classList.add('btn-primary');
+                document.getElementById('viewModeBtn').classList.remove('btn-secondary');
+                document.getElementById('editModeBtn').classList.remove('btn-primary');
+                document.getElementById('editModeBtn').classList.add('btn-secondary');
+                document.getElementById('deleteBtn').style.display = 'none';
                 
-                this.data.push(newRow);
-                this.addRow(newRow, newIndex);
-                this.hasChanges = true;
+                this.hot.updateSettings({
+                    readOnly: false,
+                    columns: this.getColumns()
+                });
+                
+                this.loadTabData();
             },
-
-            calculateRow(rowIndex) {
-                const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
-                if (!row) return;
-
-                const quantity = parseFloat(row.querySelector('input[data-column="5"]').value) || 0;
-                const unitPrice = parseFloat(row.querySelector('input[data-column="6"]').value) || 0;
-                const commission = parseFloat(row.querySelector('input[data-column="8"]').value) || 0;
-
-                const amount = quantity * unitPrice;
-                const total = amount + commission;
-
-                row.querySelector('input[data-column="7"]').value = amount ? amount.toLocaleString() : '';
-                row.querySelector('input[data-column="9"]').value = total ? total.toLocaleString() : '';
-
-                // 데이터 업데이트
-                if (!this.data[rowIndex]) {
-                    this.data[rowIndex] = Array(13).fill('');
+            
+            setEditMode() {
+                this.currentMode = 'edit';
+                document.getElementById('editModeBtn').classList.add('btn-primary');
+                document.getElementById('editModeBtn').classList.remove('btn-secondary');
+                document.getElementById('viewModeBtn').classList.remove('btn-primary');
+                document.getElementById('viewModeBtn').classList.add('btn-secondary');
+                document.getElementById('deleteBtn').style.display = 'inline-block';
+                
+                // 빈 데이터로 시작
+                const emptyData = Array(10).fill(null).map(() => ({
+                    날짜: new Date().toISOString().split('T')[0],
+                    거래처: '',
+                    출하자: '',
+                    품목: '',
+                    품종명: '',
+                    규격: '',
+                    수량: '',
+                    단가: '',
+                    금액: '',
+                    수수료: '',
+                    합계: '',
+                    작업: '',
+                    맛: '',
+                    비고: '',
+                    결제금액: '',
+                    결제일: ''
+                }));
+                
+                this.hot.updateSettings({
+                    readOnly: false,
+                    columns: this.getColumns()
+                });
+                
+                this.hot.loadData(emptyData);
+            },
+            
+            async searchData() {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                const vendor = document.getElementById('vendorFilter').value;
+                const paymentStatus = document.getElementById('paymentFilter').value;
+                
+                await this.loadTabData();
+                
+                let filteredData = [...this.currentData];
+                
+                // 날짜 필터
+                if (startDate) {
+                    filteredData = filteredData.filter(row => row['날짜'] >= startDate);
                 }
-                this.data[rowIndex][7] = amount.toString();
-                this.data[rowIndex][9] = total.toString();
-                this.hasChanges = true;
-            },
-
-            updateCell(rowIndex, columnIndex, value) {
-                if (!this.data[rowIndex]) {
-                    this.data[rowIndex] = Array(13).fill('');
+                if (endDate) {
+                    filteredData = filteredData.filter(row => row['날짜'] <= endDate);
                 }
-                this.data[rowIndex][columnIndex] = value;
-                this.hasChanges = true;
+                
+                // 거래처 필터
+                if (vendor) {
+                    filteredData = filteredData.filter(row => row['거래처'] === vendor);
+                }
+                
+                // 결제상태 필터
+                if (paymentStatus === 'unpaid') {
+                    filteredData = filteredData.filter(row => !row['결제금액'] || !row['결제일']);
+                } else if (paymentStatus === 'paid') {
+                    filteredData = filteredData.filter(row => row['결제금액'] && row['결제일']);
+                }
+                
+                this.hot.loadData(filteredData);
             },
-
+            
+            resetFilter() {
+                document.getElementById('startDate').value = '';
+                document.getElementById('endDate').value = '';
+                document.getElementById('vendorFilter').value = '';
+                document.getElementById('paymentFilter').value = '';
+                
+                this.loadTabData();
+            },
+            
             async saveData() {
-                if (!this.hasChanges) {
-                    this.showToast('변경사항이 없습니다');
-                    return;
-                }
-
                 this.showLoading();
                 try {
+                    const data = this.hot.getData();
+                    
+                    // 빈 행 제거
+                    const filteredData = data.filter(row => 
+                        row.some(cell => cell !== null && cell !== '')
+                    );
+                    
+                    let sheetName = '';
+                    if (this.currentTab === 'supply') sheetName = '사입관리';
+                    else if (this.currentTab === 'purchase') sheetName = '구매관리';
+                    else sheetName = '지출관리';
+                    
                     const response = await fetch('/api/purchase', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             action: 'updatePurchaseData',
-                            range: '구매관리!A2:M',
-                            data: this.data
+                            range: `${sheetName}!A2:Q`,
+                            data: filteredData
                         })
                     });
-
+                    
                     const result = await response.json();
                     
                     if (result.success) {
                         this.showToast('저장 완료');
-                        this.hasChanges = false;
+                        await this.loadTabData();
                     } else {
                         throw new Error('저장 실패');
                     }
@@ -493,41 +903,96 @@
                     this.hideLoading();
                 }
             },
-
-            async refreshData() {
-                if (this.hasChanges) {
-                    if (!confirm('저장하지 않은 변경사항이 있습니다. 새로고침하시겠습니까?')) {
-                        return;
+            
+            deleteRows() {
+                const selected = this.hot.getSelected();
+                if (selected && selected.length > 0) {
+                    const [startRow, , endRow] = selected[0];
+                    const count = endRow - startRow + 1;
+                    
+                    if (confirm(`선택한 ${count}개 행을 삭제하시겠습니까?`)) {
+                        this.hot.alter('remove_row', startRow, count);
                     }
                 }
-                await this.loadData();
             },
-
-            setupAutoSave() {
-                // 5분마다 자동 저장
-                setInterval(() => {
-                    if (this.hasChanges) {
-                        this.saveData();
-                    }
-                }, 300000);
-
-                // 페이지 떠나기 전 확인
-                window.addEventListener('beforeunload', (e) => {
-                    if (this.hasChanges) {
-                        e.preventDefault();
-                        e.returnValue = '';
-                    }
-                });
+            
+            openVendorModal(vendorName) {
+                document.getElementById('vendorName').value = vendorName || '';
+                document.getElementById('vendorModal').classList.add('show');
             },
-
+            
+            closeVendorModal() {
+                document.getElementById('vendorModal').classList.remove('show');
+            },
+            
+            async saveNewVendor() {
+                const category = document.getElementById('vendorCategory').value;
+                const name = document.getElementById('vendorName').value;
+                
+                if (!category || !name) {
+                    alert('구분과 거래처명은 필수입니다.');
+                    return;
+                }
+                
+                this.showLoading();
+                try {
+                    // 새 거래처 데이터 생성
+                    const newVendor = [
+                        '', // 연번
+                        category,
+                        '', // 거래처코드
+                        name,
+                        document.getElementById('businessName').value,
+                        document.getElementById('businessNumber').value,
+                        document.getElementById('address').value,
+                        document.getElementById('ceoName').value,
+                        document.getElementById('ceoPhone').value,
+                        '', // 이메일
+                        document.getElementById('managerName').value,
+                        document.getElementById('managerPhone').value,
+                        '', // 거래품목
+                        '', // 결제조건
+                        document.getElementById('accountNumber').value,
+                        document.getElementById('notes').value
+                    ];
+                    
+                    // 거래처관리 시트에 추가
+                    const response = await fetch('/api/sheets', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'appendSheetData',
+                            spreadsheetId: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg',
+                            range: '거래처관리!A:P',
+                            values: [newVendor]
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.showToast('거래처 등록 완료');
+                        this.closeVendorModal();
+                        await this.loadVendors();
+                    } else {
+                        throw new Error('거래처 등록 실패');
+                    }
+                } catch (error) {
+                    console.error('거래처 등록 오류:', error);
+                    this.showToast('거래처 등록 실패', 'error');
+                } finally {
+                    this.hideLoading();
+                }
+            },
+            
             showLoading() {
-                document.getElementById('loadingOverlay').classList.add('show');
+                document.getElementById('loading').classList.add('show');
             },
-
+            
             hideLoading() {
-                document.getElementById('loadingOverlay').classList.remove('show');
+                document.getElementById('loading').classList.remove('show');
             },
-
+            
             showToast(message, type = 'success') {
                 const toast = document.getElementById('toast');
                 toast.textContent = message;
@@ -538,7 +1003,7 @@
                 }, 3000);
             }
         };
-
+        
         // 초기화
         document.addEventListener('DOMContentLoaded', () => {
             PurchaseManager.init();
