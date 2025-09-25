@@ -236,15 +236,26 @@
             overflow: hidden;
         }
 
-        /* Handsontable 커스터마이징 */
+         /* Handsontable 커스터마이징 */
+        .handsontable td {
+            vertical-align: middle !important;
+            color: #212529 !important;
+        }
+        
         .handsontable td.unpaid-row {
             background-color: #fef2f2 !important;
+            color: #212529 !important;
         }
 
         .handsontable td.readonly {
             background-color: #f5f6fa !important;
-            color: #6c757d;
-            cursor: default !important; /* 기본 마우스 커서 */
+            color: #212529 !important;
+            cursor: default !important;
+        }
+        
+        .handsontable th {
+            vertical-align: middle !important;
+            color: #212529 !important;
         }
 
         /* 모달 */
@@ -840,7 +851,7 @@
                 }
             },
 
-            
+
             applyGrouping() {
                 if (!this.hot || this.currentData.length === 0) return;
                 
