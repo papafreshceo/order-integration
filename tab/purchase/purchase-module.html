@@ -489,42 +489,40 @@
             },
             
             async loadVendors() {
-                this.showLoading();
-                try {
-                    const response = await fetch('/api/sheets', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            action: 'getSheetData',
-                            spreadsheetId: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg',
-                            range: '거래처관리!A:P'
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    if (result.success && result.data) {
-                        const headers = result.data[0];
-                        this.vendors = result.data.slice(1).map(row => {
-                            const vendor = {};
-                            headers.forEach((header, index) => {
-                                vendor[header] = row[index] || '';
-                            });
-                            return vendor;
-                        });
-                        
-                        // 거래처별 계좌번호 매핑
-                        this.vendors.forEach(vendor => {
-                            this.vendorAccounts[vendor['거래처명']] = vendor['계좌번호'] || '';
-                        });
-                        
-                        this.updateVendorFilter();
-                    }
-                } catch (error) {
-                    console.error('거래처 로드 실패:', error);
-                } finally {
-                    this.hideLoading();
-                }
-            },
+    this.showLoading();
+    try {
+        const response = await fetch('/api/purchase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'getVendors'
+            })
+        });
+        
+        const result = await response.json();
+        if (result.success && result.data) {
+            const headers = result.data[0];
+            this.vendors = result.data.slice(1).map(row => {
+                const vendor = {};
+                headers.forEach((header, index) => {
+                    vendor[header] = row[index] || '';
+                });
+                return vendor;
+            });
+            
+            // 거래처별 계좌번호 매핑
+            this.vendors.forEach(vendor => {
+                this.vendorAccounts[vendor['거래처명']] = vendor['계좌번호'] || '';
+            });
+            
+            this.updateVendorFilter();
+        }
+    } catch (error) {
+        console.error('거래처 로드 실패:', error);
+    } finally {
+        this.hideLoading();
+    }
+},
             
             updateVendorFilter() {
                 const filter = document.getElementById('vendorFilter');
@@ -926,64 +924,60 @@
             },
             
             async saveNewVendor() {
-                const category = document.getElementById('vendorCategory').value;
-                const name = document.getElementById('vendorName').value;
-                
-                if (!category || !name) {
-                    alert('구분과 거래처명은 필수입니다.');
-                    return;
-                }
-                
-                this.showLoading();
-                try {
-                    // 새 거래처 데이터 생성
-                    const newVendor = [
-                        '', // 연번
-                        category,
-                        '', // 거래처코드
-                        name,
-                        document.getElementById('businessName').value,
-                        document.getElementById('businessNumber').value,
-                        document.getElementById('address').value,
-                        document.getElementById('ceoName').value,
-                        document.getElementById('ceoPhone').value,
-                        '', // 이메일
-                        document.getElementById('managerName').value,
-                        document.getElementById('managerPhone').value,
-                        '', // 거래품목
-                        '', // 결제조건
-                        document.getElementById('accountNumber').value,
-                        document.getElementById('notes').value
-                    ];
-                    
-                    // 거래처관리 시트에 추가
-                    const response = await fetch('/api/sheets', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            action: 'appendSheetData',
-                            spreadsheetId: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg',
-                            range: '거래처관리!A:P',
-                            values: [newVendor]
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        this.showToast('거래처 등록 완료');
-                        this.closeVendorModal();
-                        await this.loadVendors();
-                    } else {
-                        throw new Error('거래처 등록 실패');
-                    }
-                } catch (error) {
-                    console.error('거래처 등록 오류:', error);
-                    this.showToast('거래처 등록 실패', 'error');
-                } finally {
-                    this.hideLoading();
-                }
-            },
+    const category = document.getElementById('vendorCategory').value;
+    const name = document.getElementById('vendorName').value;
+    
+    if (!category || !name) {
+        alert('구분과 거래처명은 필수입니다.');
+        return;
+    }
+    
+    this.showLoading();
+    try {
+        const newVendor = [
+            '', // 연번
+            category,
+            '', // 거래처코드
+            name,
+            document.getElementById('businessName').value,
+            document.getElementById('businessNumber').value,
+            document.getElementById('address').value,
+            document.getElementById('ceoName').value,
+            document.getElementById('ceoPhone').value,
+            '', // 이메일
+            document.getElementById('managerName').value,
+            document.getElementById('managerPhone').value,
+            '', // 거래품목
+            '', // 결제조건
+            document.getElementById('accountNumber').value,
+            document.getElementById('notes').value
+        ];
+        
+        const response = await fetch('/api/purchase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'addVendor',
+                values: [newVendor]
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            this.showToast('거래처 등록 완료');
+            this.closeVendorModal();
+            await this.loadVendors();
+        } else {
+            throw new Error('거래처 등록 실패');
+        }
+    } catch (error) {
+        console.error('거래처 등록 오류:', error);
+        this.showToast('거래처 등록 실패', 'error');
+    } finally {
+        this.hideLoading();
+    }
+},
             
             showLoading() {
                 document.getElementById('loading').classList.add('show');
