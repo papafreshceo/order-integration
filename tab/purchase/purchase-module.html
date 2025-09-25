@@ -1060,8 +1060,9 @@
                         },
                         { 
                             data: '거래처', 
-                            type: 'dropdown',
-                            source: this.getVendorList()
+                            // 입력모드에서 기타 선택시 텍스트 입력, 그 외는 드롭다운
+                            type: (this.currentMode === 'edit' && this.currentEditVendorType === '기타') ? 'text' : 'dropdown',
+                            source: (this.currentMode === 'edit' && this.currentEditVendorType === '기타') ? undefined : this.getVendorList()
                         },
                         { data: '출하자', type: 'text' },
                         { data: '대분류', type: 'text', readOnly: true },
@@ -1174,6 +1175,11 @@
             },
             
             getVendorList() {
+                // 입력모드에서 기타 선택시 리스트 반환하지 않음
+                if (this.currentMode === 'edit' && this.currentEditVendorType === '기타') {
+                    return [];
+                }
+                
                 const list = ['', '직접입력'];  // 빈 값을 첫 번째로 추가
                 
                 if (this.currentTab === 'supply') {
@@ -1182,11 +1188,8 @@
                             list.push(...this.vendors.filter(v => v['구분'] === '구매처(도매)').map(v => v['거래처명']));
                         } else if (this.currentEditVendorType === '농가') {
                             list.push(...this.vendors.filter(v => v['구분'] === '구매처(농가)').map(v => v['거래처명']));
-                        } else {
-                            list.push(...this.vendors.filter(v => 
-                                v['구분'] !== '구매처(도매)' && v['구분'] !== '구매처(농가)' && v['구분'] !== '자재구입처'
-                            ).map(v => v['거래처명']));
                         }
+                        // 기타는 이미 위에서 빈 배열 반환
                     } else {
                         list.push(...this.vendors.filter(v => v['구분'] !== '자재구입처').map(v => v['거래처명']));
                     }
