@@ -1451,49 +1451,94 @@
                 let columns = [];
                 
                 if (this.currentTab === 'supply') {
-                    columns = [
-                        { 
-                            data: '날짜', 
-                            type: 'date', 
-                            dateFormat: 'YYYY-MM-DD',
-                            renderer: (instance, td, row, col, prop, value) => {
-                                td.innerHTML = this.formatDateWithDay(value);
-                                
-                                // 미결제 행 표시
-                                const rowData = instance.getDataAtRow(row);
-                                const paymentMethodCol = instance.propToCol('결제방법');
-                                const paymentAmountCol = instance.propToCol('결제금액');
-                                const paymentDateCol = instance.propToCol('결제일');
-                                
-                                if (paymentMethodCol !== null && paymentAmountCol !== null && paymentDateCol !== null) {
-                                    if (!rowData[paymentMethodCol] || !rowData[paymentAmountCol] || !rowData[paymentDateCol]) {
-                                        td.classList.add('unpaid-row');
+                    // 입력모드 - 농가
+                    if (this.currentMode === 'edit' && this.currentEditVendorType === '농가') {
+                        columns = [
+                            { data: '날짜', type: 'date', dateFormat: 'YYYY-MM-DD' },
+                            { 
+                                data: '농가', 
+                                type: 'dropdown',
+                                source: this.getVendorList()
+                            },
+                            { data: '대분류', type: 'text', readOnly: true },
+                            { data: '중분류', type: 'text', readOnly: true },
+                            { data: '품목', type: 'dropdown', source: this.getProductList() },
+                            { data: '품종', type: 'dropdown', source: [] },
+                            { data: '품종명', type: 'text' },
+                            { data: '규격', type: 'text' },
+                            { data: '수량', type: 'numeric', numericFormat: { pattern: '0,0' } },
+                            { data: '단가', type: 'numeric', numericFormat: { pattern: '0,0' } },
+                            { data: '금액', type: 'numeric', numericFormat: { pattern: '0,0' }, readOnly: true },
+                            { data: '수수료', type: 'numeric', numericFormat: { pattern: '0,0' }, readOnly: true },
+                            { data: '합계', type: 'numeric', numericFormat: { pattern: '0,0' }, readOnly: true },
+                            { data: '작업', type: 'text' },
+                            { data: '맛', type: 'text' },
+                            { data: '비고', type: 'text' }
+                        ];
+                    }
+                    // 입력모드 - 기타
+                    else if (this.currentMode === 'edit' && this.currentEditVendorType === '기타') {
+                        columns = [
+                            { data: '날짜', type: 'date', dateFormat: 'YYYY-MM-DD' },
+                            { data: '상호(이름)', type: 'text' },
+                            { data: '대분류', type: 'text', readOnly: true },
+                            { data: '중분류', type: 'text', readOnly: true },
+                            { data: '품목', type: 'dropdown', source: this.getProductList() },
+                            { data: '품종', type: 'dropdown', source: [] },
+                            { data: '출하자', type: 'text' },
+                            { data: '품종명', type: 'text' },
+                            { data: '규격', type: 'text' },
+                            { data: '수량', type: 'numeric', numericFormat: { pattern: '0,0' } },
+                            { data: '단가', type: 'numeric', numericFormat: { pattern: '0,0' } },
+                            { data: '금액', type: 'numeric', numericFormat: { pattern: '0,0' }, readOnly: true },
+                            { data: '수수료', type: 'numeric', numericFormat: { pattern: '0,0' }, readOnly: true },
+                            { data: '합계', type: 'numeric', numericFormat: { pattern: '0,0' }, readOnly: true },
+                            { data: '작업', type: 'text' },
+                            { data: '맛', type: 'text' },
+                            { data: '비고', type: 'text' }
+                        ];
+                    }
+                    // 입력모드 - 중매인 또는 조회모드
+                    else {
+                        columns = [
+                            { 
+                                data: '날짜', 
+                                type: 'date', 
+                                dateFormat: 'YYYY-MM-DD',
+                                renderer: this.currentMode === 'view' ? (instance, td, row, col, prop, value) => {
+                                    td.innerHTML = this.formatDateWithDay(value);
+                                    const rowData = instance.getDataAtRow(row);
+                                    const paymentMethodCol = instance.propToCol('결제방법');
+                                    const paymentAmountCol = instance.propToCol('결제금액');
+                                    const paymentDateCol = instance.propToCol('결제일');
+                                    
+                                    if (paymentMethodCol !== null && paymentAmountCol !== null && paymentDateCol !== null) {
+                                        if (!rowData[paymentMethodCol] || !rowData[paymentAmountCol] || !rowData[paymentDateCol]) {
+                                            td.classList.add('unpaid-row');
+                                        }
                                     }
-                                }
-                                
-                                return td;
-                            }
-                        },
-                        { 
-                            data: '거래처', 
-                            // 조회모드는 텍스트, 입력모드에서 기타 선택시 텍스트, 그 외는 드롭다운
-                            type: (this.currentMode === 'view' || (this.currentMode === 'edit' && this.currentEditVendorType === '기타')) ? 'text' : 'dropdown',
-                            source: (this.currentMode === 'view' || (this.currentMode === 'edit' && this.currentEditVendorType === '기타')) ? undefined : this.getVendorList()
-                        },
-                        { data: '대분류', type: 'text', readOnly: true },
-                        { data: '중분류', type: 'text', readOnly: true },
-                        { 
-                            data: '품목', 
-                            type: this.currentMode === 'view' ? 'text' : 'dropdown',
-                            source: this.currentMode === 'view' ? undefined : this.getProductList()
-                        },
-                        { 
-                            data: '품종', 
-                            type: this.currentMode === 'view' ? 'text' : 'dropdown',
-                            source: this.currentMode === 'view' ? undefined : []
-                        },
-                        { data: '출하자', type: 'text' },
-                        { data: '품종명', type: 'text' },
+                                    return td;
+                                } : undefined
+                            },
+                            { 
+                                data: '거래처', 
+                                type: this.currentMode === 'view' ? 'text' : 'dropdown',
+                                source: this.currentMode === 'view' ? undefined : this.getVendorList()
+                            },
+                            { data: '대분류', type: 'text', readOnly: true },
+                            { data: '중분류', type: 'text', readOnly: true },
+                            { 
+                                data: '품목', 
+                                type: this.currentMode === 'view' ? 'text' : 'dropdown',
+                                source: this.currentMode === 'view' ? undefined : this.getProductList()
+                            },
+                            { 
+                                data: '품종', 
+                                type: this.currentMode === 'view' ? 'text' : 'dropdown',
+                                source: this.currentMode === 'view' ? undefined : []
+                            },
+                            { data: '출하자', type: 'text' },
+                            { data: '품종명', type: 'text' },
                         { data: '규격', type: 'text' },
                         { data: '수량', type: 'numeric', numericFormat: { pattern: '0,0' } },
                         { data: '단가', type: 'numeric', numericFormat: { pattern: '0,0' } },
@@ -1563,10 +1608,25 @@
 
             getColumnHeaders() {
                 if (this.currentTab === 'supply') {
+                    // 입력모드에서 거래처 타입별 헤더 변경
+                    if (this.currentMode === 'edit') {
+                        if (this.currentEditVendorType === '농가') {
+                            return ['날짜', '농가', '대분류', '중분류', '품목', '품종', '품종명', 
+                                   '규격', '수량', '단가', '금액', '수수료', '합계', '작업', '맛', '비고'];
+                        } else if (this.currentEditVendorType === '기타') {
+                            return ['날짜', '상호(이름)', '대분류', '중분류', '품목', '품종', '출하자', '품종명', 
+                                   '규격', '수량', '단가', '금액', '수수료', '합계', '작업', '맛', '비고'];
+                        } else {
+                            // 중매인
+                            return ['날짜', '거래처', '대분류', '중분류', '품목', '품종', '출하자', '품종명', 
+                                   '규격', '수량', '단가', '금액', '수수료', '합계', '작업', '맛', '비고'];
+                        }
+                    }
+                    
+                    // 조회모드
                     const headers = ['날짜', '거래처', '대분류', '중분류', '품목', '품종', '출하자', '품종명', 
                                     '규격', '수량', '단가', '금액', '수수료', '합계', '작업', '맛', '비고'];
                     
-                    // 조회모드에서만 결제 관련 컬럼 추가
                     if (this.currentMode === 'view') {
                         headers.push('결제조건', '계좌번호', '결제방법', '결제금액', '결제일');
                     }
@@ -1646,20 +1706,19 @@
                             cellProperties.className = 'readonly';
                         }
                         
-                        // 거래처가 농가인 경우 출하자 비활성화
-                        const vendorCol = this.hot.propToCol('거래처');
-                        const vendor = data[vendorCol];
-                        const vendorType = this.vendorTypeMap[vendor];
-                        
-                        if (vendorType === '농가' && prop === '출하자') {
+                        // 농가, 기타 타입에서는 수수료 항상 읽기전용
+                        if ((this.currentEditVendorType === '농가' || this.currentEditVendorType === '기타') && prop === '수수료') {
                             cellProperties.readOnly = true;
                             cellProperties.className = 'readonly';
                         }
-                        
-                        // 수수료는 거래처에 설정이 있을 때만 자동계산 (없으면 수동입력 가능)
-                        if (prop === '수수료' && vendor && this.vendorCommissionType[vendor]) {
-                            cellProperties.readOnly = true;
-                            cellProperties.className = 'readonly';
+                        // 중매인 타입에서는 거래처에 수수료 설정이 있을 때만 읽기전용
+                        else if (this.currentEditVendorType === '중매인' && prop === '수수료') {
+                            const vendorCol = this.hot.propToCol('거래처');
+                            const vendor = data[vendorCol];
+                            if (vendor && this.vendorCommissionType[vendor]) {
+                                cellProperties.readOnly = true;
+                                cellProperties.className = 'readonly';
+                            }
                         }
                     }
                     
