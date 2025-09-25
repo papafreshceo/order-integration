@@ -276,8 +276,8 @@ case 'addCsOrder':
         try {
           const productSpreadsheetId = process.env.SPREADSHEET_ID_PRODUCTS || '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg';
           
-          // getSheetData 사용 (이미 import됨)
-          const productSheetData = await getSheetData('통합상품마스터!A:DZ', productSpreadsheetId);
+          // getProductSheetData 사용 (주문 시트가 아닌 제품 시트 전용 함수)
+          const productSheetData = await getProductSheetData(productSpreadsheetId, '통합상품마스터!A:DZ');
           const productInfo = {};
           
           if (productSheetData && productSheetData.length > 1) {
