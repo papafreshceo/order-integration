@@ -768,11 +768,13 @@
             async loadProductsData() {
                 this.showLoading();
                 try {
-                    const response = await fetch('/api/purchase', {
+                    // 거래처관리와 동일한 방식으로 sheets API 직접 사용
+                    const response = await fetch('/api/sheets', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            action: 'getProductsData'
+                            spreadsheetId: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg',
+                            range: '원물관리!A:J'
                         })
                     });
                     

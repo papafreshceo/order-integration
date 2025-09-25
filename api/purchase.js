@@ -107,6 +107,39 @@ export default async function handler(req, res) {
                 });
             }
 
+
+
+            case 'getProductsData': {
+    const response = await sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_IDS.PRODUCTS,
+        range: '원물관리!A:J',
+    });
+    
+    return res.status(200).json({
+        success: true,
+        data: response.data.values || []
+    });
+}
+
+case 'appendPurchaseData': {
+    const appendRange = range || '사입관리!A:Z';
+    const response = await sheets.spreadsheets.values.append({
+        spreadsheetId: SPREADSHEET_IDS.PURCHASE,
+        range: appendRange,
+        valueInputOption: 'USER_ENTERED',
+        insertDataOption: 'INSERT_ROWS',
+        resource: {
+            values: data
+        }
+    });
+    
+    return res.status(200).json({
+        success: true,
+        updatedRange: response.data.updates?.updatedRange
+    });
+}
+
+
             default:
                 return res.status(400).json({
                     success: false,
