@@ -1216,10 +1216,10 @@
                     } else {
                         // 빈 데이터로 초기화
                         const emptyData = Array(10).fill(null).map(() => {
-                            const emptyRow = Array(this.getColumnHeaders().length).fill('');
-                            emptyRow[0] = this.getKoreanDate();
-                            return row;
-                        });
+    const emptyRow = Array(this.getColumnHeaders().length).fill('');
+    emptyRow[0] = this.getKoreanDate();
+    return emptyRow;  // 'emptyRow'로 수정
+});
                         this.hot.loadData(emptyData);
                     }
                 }
@@ -2102,11 +2102,11 @@ getColumns() {
                     }
                 } else {
                     // 빈 데이터로 초기화
-                    dataToLoad = Array(10).fill(null).map(() => {
-                        const row = Array(this.getColumnHeaders().length).fill('');
-                        row[0] = new Date().toISOString().split('T')[0]; // 날짜
-                        return row;
-                    });
+dataToLoad = Array(10).fill(null).map(() => {
+    const row = Array(this.getColumnHeaders().length).fill('');
+    row[0] = this.getKoreanDate(); // 한국 시간 사용
+    return row;
+});
                 }
                 
                 // 컬럼 업데이트
