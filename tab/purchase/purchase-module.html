@@ -745,9 +745,19 @@
                 '기타': []
             },
             isEditingInView: false,  // 추가: 조회모드에서 수정 중인지 여부
-            statsData: [],  // 추가: 통계 데이터
+           statsData: [],  // 추가: 통계 데이터
             statsDateRange: 'today',  // 추가: 통계 날짜 범위
             statsPaymentStatus: 'all',  // 추가: 통계 결제상태
+            filterStartDate: null,  // 추가: 필터 시작 날짜
+            filterEndDate: null,  // 추가: 필터 종료 날짜
+            
+            getDefaultStartDate() {
+                return new Date().toISOString().split('T')[0];
+            },
+            
+            getDefaultEndDate() {
+                return new Date().toISOString().split('T')[0];
+            },
             
             toggleEditInView() {
                 this.isEditingInView = !this.isEditingInView;
@@ -1940,8 +1950,8 @@ getColumns() {
                 let filteredData = [...this.allData];
                 
                 // 날짜 필터
-                const startDate = document.getElementById('startDate').value;
-                const endDate = document.getElementById('endDate').value;
+                const startDate = this.filterStartDate || this.getDefaultStartDate();
+                const endDate = this.filterEndDate || this.getDefaultEndDate();
                 
                 if (startDate) {
                     filteredData = filteredData.filter(row => row['날짜'] >= startDate);
