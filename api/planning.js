@@ -1,7 +1,8 @@
 // /api/planning.js
 import { google } from 'googleapis';
 
-const SPREADSHEET_ID = '1PhLfmWEP-XZ_3cv85okVksG3Q28zwS8qE7L5kyW76SY';
+// 환경변수에서 스프레드시트 ID 가져오기
+const SPREADSHEET_ID = process.env.SPREADSHEET_ID_PLANNING || '1PhLfmWEP-XZ_3cv85okVksG3Q28zwS8qE7L5kyW76SY';
 
 async function authorize() {
     const auth = new google.auth.GoogleAuth({
@@ -13,6 +14,7 @@ async function authorize() {
     });
     return await auth.getClient();
 }
+
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
