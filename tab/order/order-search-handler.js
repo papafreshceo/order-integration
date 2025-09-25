@@ -1177,6 +1177,18 @@ input[type="date"]:focus::-webkit-datetime-edit-day-field {
             row.classList.add('has-tracking');
         }
         
+        // 사용자 권한 확인
+        const userRole = window.currentUser?.role || 'staff';
+        const isAdmin = userRole === 'admin';
+        
+        // 금액 필드 정의
+        const amountFields = [
+            '셀러공급가', '출고비용', '정산예정금액', '정산대상금액',
+            '상품금액', '최종결제금액', '할인금액', '마켓부담할인금액',
+            '판매자할인쿠폰할인', '구매쿠폰적용금액', '쿠폰할인금액',
+            '기타지원금할인금', '수수료1', '수수료2'
+        ];
+        
         const tdCheckbox = document.createElement('td');
         tdCheckbox.className = 'checkbox-cell';
         tdCheckbox.style.width = '50px';
@@ -1234,6 +1246,11 @@ input[type="date"]:focus::-webkit-datetime-edit-day-field {
         };
         
         this.tableHeaders.forEach(header => {
+            // 직원이고 금액 필드면 스킵
+            if (!isAdmin && amountFields.some(field => header.includes(field))) {
+                return;
+            }
+            
             const td = document.createElement('td');
             
             const width = columnWidths[header] || 100;

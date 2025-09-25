@@ -1060,6 +1060,18 @@ window.OrderShippingHandler = {
         const thead = document.getElementById('shippingTableHead');
         const tbody = document.getElementById('shippingTableBody');
         
+        // 사용자 권한 확인
+        const userRole = window.currentUser?.role || 'staff';
+        const isAdmin = userRole === 'admin';
+        
+        // 금액 관련 필드
+        const amountFields = [
+            '셀러공급가', '출고비용', '정산예정금액', '정산대상금액', 
+            '상품금액', '최종결제금액', '할인금액', '마켓부담할인금액',
+            '판매자할인쿠폰할인', '구매쿠폰적용금액', '쿠폰할인금액',
+            '기타지원금할인금', '수수료1', '수수료2'
+        ];
+        
         const columnWidths = {
             '연번': 40,
             '마켓명': 100,
@@ -1100,6 +1112,10 @@ window.OrderShippingHandler = {
         const headers = [];
         
         for (let h of originalHeaders) {
+            // 직원이면 금액 필드 제외
+            if (!isAdmin && amountFields.includes(h)) {
+                continue;
+            }
             headers.push(h);
             if (h === '주문번호') {
                 if (originalHeaders.includes('택배사') && !headers.includes('택배사')) {

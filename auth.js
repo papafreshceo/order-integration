@@ -257,11 +257,14 @@ function getErrorMessage(errorCode) {
 // 역할별 UI 조정 함수
 function adjustUIByRole() {
     if (currentUser.role !== 'admin') {
-        // 직원인 경우 설정 탭 숨기기
+        // 직원인 경우 탭 숨기기
         const settingsTab = document.querySelector('[data-tab="settings"]');
-        if (settingsTab) {
-            settingsTab.style.display = 'none';
-        }
+        const dashboardTab = document.querySelector('[data-tab="dashboard"]');
+        const expenseTab = document.querySelector('[data-tab="expense"]');
+        
+        if (settingsTab) settingsTab.style.display = 'none';
+        if (dashboardTab) dashboardTab.style.display = 'none';
+        if (expenseTab) expenseTab.style.display = 'none';
         
         // 구글 시트 저장 버튼은 유지 (직원도 저장 가능)
     }

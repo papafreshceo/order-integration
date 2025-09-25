@@ -1502,6 +1502,24 @@ displayResults() {
 const resultSection = document.getElementById('resultSection');
     resultSection.style.display = 'block';
     
+    // 사용자 권한 확인
+    const userRole = window.currentUser?.role || 'staff';
+    const isAdmin = userRole === 'admin';
+    
+    // 금액 관련 필드 정의
+    const amountFields = [
+        '셀러공급가', '출고비용', '정산예정금액', '정산대상금액', 
+        '상품금액', '최종결제금액', '할인금액', '마켓부담할인금액',
+        '판매자할인쿠폰할인', '구매쿠폰적용금액', '쿠폰할인금액',
+        '기타지원금할인금', '수수료1', '수수료2'
+    ];
+    
+    // 직원인 경우 금액 필드 제거
+    let displayHeaders = this.processedData.headers;
+    if (!isAdmin) {
+        displayHeaders = this.processedData.headers.filter(h => !amountFields.includes(h));
+    }
+    
     // 열너비 설정
     const columnWidths = {
         '연번': 50, '마켓명': 100, '마켓': 60, '결제일': 150, '주문번호': 140,
@@ -1533,7 +1551,7 @@ const resultSection = document.getElementById('resultSection');
     
     // thead HTML
     html += '<thead id="excelResultHead"><tr>';
-    this.processedData.headers.forEach(h => {
+    displayHeaders.forEach(h => {
         html += `<th style="width:${columnWidths[h] || 100}px">${h}</th>`;
     });
 
@@ -1588,7 +1606,7 @@ function getAlignment(fieldName) {
         return 'center';
     }
 
-    this.processedData.headers.forEach((header, colIndex) => {
+    displayHeaders.forEach((header, colIndex) => {
 const td = document.createElement('td');
     let value = row[header] || '';
     
