@@ -1325,6 +1325,7 @@
             async loadVendors() {
                 this.showLoading();
                 try {
+                    console.log('거래처 데이터 로드 시작');
                     const response = await fetch('/api/purchase', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1338,15 +1339,22 @@
                     }
                     
                     const result = await response.json();
-                    if (result.success && result.data) {
+                    console.log('거래처 API 응답:', result);
+                    
+                    if (result.success && result.data && result.data.length > 0) {
                         const headers = result.data[0];
-                        this.vendors = result.data.slice(1).map(row => {
+                        console.log('거래처 헤더:', headers);
+                        
+                        this.vendors = result.data.slice(1).filter(row => row && row.length > 0).map(row => {
                             const vendor = {};
                             headers.forEach((header, index) => {
                                 vendor[header] = row[index] || '';
                             });
                             return vendor;
                         });
+                        
+                        console.log('로드된 거래처 수:', this.vendors.length);
+                        console.log('거래처 목록:', this.vendors.map(v => v['거래처명']));
                         
                         // 거래처 정보 매핑
                         this.vendors.forEach(vendor => {
@@ -1386,8 +1394,12 @@
             
             updateVendorFilter() {
                 const filter = document.getElementById('vendorFilter');
+                if (!filter) return;
+                
                 const currentValue = filter.value;
                 filter.innerHTML = '<option value="">전체</option>';
+                
+                console.log('updateVendorFilter 호출, 전체 거래처 수:', this.vendors.length);
                 
                 let filteredVendors = [];
                 
