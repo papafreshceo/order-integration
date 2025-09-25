@@ -273,18 +273,17 @@
             },
 
             async loadData() {
-                this.showLoading();
-                try {
-                    const response = await fetch('/api/sheets', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            action: 'getPurchaseData',
-                            spreadsheetId: this.spreadsheetId,
-                            range: `${this.sheetName}!A:M`
-                        })
-                    });
-
+    this.showLoading();
+    try {
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'getSheetData',
+                spreadsheetId: this.spreadsheetId,
+                range: `${this.sheetName}!A:M`
+            })
+        });
                     const result = await response.json();
                     
                     if (result.success && result.data) {
@@ -433,12 +432,11 @@
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            action: 'updatePurchaseData',
-                            spreadsheetId: this.spreadsheetId,
-                            range: `${this.sheetName}!A2:M`,
-                            data: this.data
-                        })
-                    });
+    action: 'updateSheetData',
+    spreadsheetId: this.spreadsheetId,
+    range: `${this.sheetName}!A2:M`,
+    values: this.data
+})
 
                     const result = await response.json();
                     
