@@ -1,30 +1,37 @@
 import { google } from 'googleapis';
 
-const auth = new google.auth.GoogleAuth({
-    credentials: {
-        type: 'service_account',
-        project_id: 'dalrae-market',  // 하드코딩
-        private_key_id: 'dummy_key_id',  // 임시값 (실제로 필요없음)
-        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,  // 기존 변수명 사용
-        client_id: '123456789',  // 임시값 (실제로 필요없음)
-        auth_uri: 'https://accounts.google.com/o/oauth2/auth',
-        token_uri: 'https://oauth2.googleapis.com/token',
-        auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
-        client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '')}`
-    },
-    scopes: ['https://www.googleapis.com/auth/spreadsheets']
-});
+export default async function handler(req, res) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ success: false, error: 'Method not allowed' });
+    }
+
+    try {
+        const { action, range, data, values } = req.body;
+        console.log('Purchase API - action:', action);
+
+        const auth = new google.auth.GoogleAuth({
+            credentials: {
+                type: 'service_account',
+                project_id: 'dalrae-market',
+                private_key_id: 'dummy_key_id',
+                private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+                client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+                client_id: '123456789',
+                auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+                token_uri: 'https://oauth2.googleapis.com/token',
+                auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
+                client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '')}`
+            },
+            scopes: ['https://www.googleapis.com/auth/spreadsheets']
+        });
 
         const sheets = google.sheets({ version: 'v4', auth });
 
-        // 스프레드시트 ID
         const SPREADSHEET_IDS = {
             PURCHASE: '1a55b0APC5LlmgXhh-Lw4O-7V_gLT_9luDqfvkkesof0',
             PRODUCTS: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg'
         };
 
-        // action에 따른 처리
         switch (action) {
             case 'getPurchaseData': {
                 const response = await sheets.spreadsheets.values.get({
