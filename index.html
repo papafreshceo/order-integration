@@ -400,9 +400,9 @@
             <div class="main-content">
                 <!-- 탭 네비게이션 부분 -->
                 <div class="tab-navigation">
-                    <button class="tab-button active" data-tab="dashboard">대시보드</button>
+                    <button class="tab-button" data-tab="dashboard">대시보드</button>
                     <button class="tab-button" data-tab="products">상품조회</button>
-                    <button class="tab-button" data-tab="ordermanage">주문통합관리</button>
+                    <button class="tab-button active" data-tab="ordermanage">주문통합관리</button>
                     <button class="tab-button" data-tab="purchase">구매관리</button>
                     <button class="tab-button" data-tab="farms">농가관리</button>
                     <button class="tab-button" data-tab="inventory">재고관리</button>
@@ -416,7 +416,7 @@
                 </div>
                 
                 <!-- 탭 컨텐츠 영역 -->
-                <div id="dashboard-tab" class="tab-content active">
+                <div id="dashboard-tab" class="tab-content">
                     <iframe src="tab/dashboard/dashboard-module.html"></iframe>
                 </div>
 
@@ -424,7 +424,7 @@
                     <iframe src="tab/products/products-module.html"></iframe>
                 </div>
 
-                <div id="ordermanage-tab" class="tab-content">
+                <div id="ordermanage-tab" class="tab-content active">
                     <iframe src="tab/order/order-module.html"></iframe>
                 </div>
 
