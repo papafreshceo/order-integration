@@ -1,5 +1,15 @@
 import { google } from 'googleapis';
 
+// 환경 변수 로깅 (디버깅용)
+console.log('Environment check:', {
+    has_project_id: !!process.env.GOOGLE_PROJECT_ID,
+    has_private_key_id: !!process.env.GOOGLE_PRIVATE_KEY_ID,
+    has_private_key: !!process.env.GOOGLE_PRIVATE_KEY,
+    has_client_email: !!process.env.GOOGLE_CLIENT_EMAIL,
+    has_client_id: !!process.env.GOOGLE_CLIENT_ID,
+    client_email_value: process.env.GOOGLE_CLIENT_EMAIL // 실제 값 확인
+});
+
 const auth = new google.auth.GoogleAuth({
     credentials: {
         type: 'service_account',
@@ -11,7 +21,7 @@ const auth = new google.auth.GoogleAuth({
         auth_uri: 'https://accounts.google.com/o/oauth2/auth',
         token_uri: 'https://oauth2.googleapis.com/token',
         auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
-        client_x509_cert_url: process.env.GOOGLE_CLIENT_CERT_URL
+        client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(process.env.GOOGLE_CLIENT_EMAIL || '')}`
     },
     scopes: ['https://www.googleapis.com/auth/spreadsheets']
 });
