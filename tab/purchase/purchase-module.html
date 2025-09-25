@@ -413,8 +413,30 @@
             background: #1d4ed8;
         }
 
-        .stats-highlight {
+        .group-header {
             background-color: #e7f3ff !important;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .group-subtotal {
+            background-color: #f8f9fa !important;
+            font-weight: 500;
+            border-top: 2px solid #dee2e6;
+        }
+
+        .group-collapsed {
+            display: none;
+        }
+
+        .expand-icon {
+            margin-right: 5px;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+
+        .expand-icon.collapsed {
+            transform: rotate(-90deg);
         }
     </style>
 </head>
@@ -496,6 +518,7 @@
                 </div>
             </div>
             <div class="action-buttons">
+                <button id="groupBtn" class="btn btn-info" onclick="PurchaseManager.toggleGrouping()" style="display:none;">그룹 표시</button>
                 <button id="statsBtn" class="btn btn-info" onclick="PurchaseManager.showStatsModal()" style="display:none;">통계</button>
                 <button id="saveBtn" class="btn btn-success" onclick="PurchaseManager.saveData()">저장</button>
                 <button id="deleteBtn" class="btn btn-danger" onclick="PurchaseManager.deleteRows()" style="display:none;">선택 행 삭제</button>
@@ -634,7 +657,153 @@
             currentData: [],   // 현재 표시 데이터
             productsData: [],
             tempData: null,    // 모드 전환시 임시 저장용
-            isInitializing: true,
+            isGroupingEnabled: false,
+            originalData: [], // 그룹핑 전 원본 데이터
+            
+            toggleGrouping() {
+                this.isGroupingEnabled = !this.isGroupingEnabled;
+                const btn = document.getElementById('groupBtn');
+                
+                if (this.isGroupingEnabled) {
+                    btn.textContent = '그룹 해제';
+                    btn.classList.remove('btn-info');
+                    btn.classList.add('btn-warning');
+                    this.applyGrouping();
+                } else {
+                    btn.textContent = '그룹 표시';
+                    btn.classList.add('btn-info');
+                    btn.classList.remove('btn-warning');
+                    this.removeGrouping();
+                }
+            },
+            
+            applyGrouping() {
+                if (!this.hot || this.currentData.length === 0) return;
+                
+                // 원본 데이터 저장
+                this.originalData = [...this.currentData];
+                
+                // 날짜와 거래처별로 그룹화
+                const grouped = {};
+                this.currentData.forEach(row => {
+                    const date = row['날짜'];
+                    const vendor = row['거래처'];
+                    
+                    if (!date || !vendor) return;
+                    
+                    if (!grouped[date]) {
+                        grouped[date] = {};
+                    }
+                    if (!grouped[date][vendor]) {
+                        grouped[date][vendor] = [];
+                    }
+                    grouped[date][vendor].push(row);
+                });
+                
+                // 그룹화된 데이터로 새 배열 생성
+                const groupedData = [];
+                const sortedDates = Object.keys(grouped).sort();
+                
+                sortedDates.forEach(date => {
+                    const dateGroup = grouped[date];
+                    const sortedVendors = Object.keys(dateGroup).sort();
+                    
+                    let dateTotalAmount = 0;
+                    let dateTotalCommission = 0;
+                    let dateTotalSum = 0;
+                    
+                    sortedVendors.forEach(vendor => {
+                        const vendorRows = dateGroup[vendor];
+                        
+                        // 거래처별 데이터 추가
+                        vendorRows.forEach(row => {
+                            groupedData.push(row);
+                        });
+                        
+                        // 거래처별 소계 계산
+                        const vendorTotal = vendorRows.reduce((acc, row) => {
+                            const amount = parseFloat(row['금액']) || 0;
+                            const commission = parseFloat(row['수수료']) || 0;
+                            const total = parseFloat(row['합계']) || 0;
+                            
+                            return {
+                                amount: acc.amount + amount,
+                                commission: acc.commission + commission,
+                                total: acc.total + total,
+                                count: acc.count + 1
+                            };
+                        }, { amount: 0, commission: 0, total: 0, count: 0 });
+                        
+                        // 거래처 소계 행 추가
+                        const subtotalRow = {};
+                        this.getColumnHeaders().forEach(header => {
+                            subtotalRow[header] = '';
+                        });
+                        subtotalRow['날짜'] = '';
+                        subtotalRow['거래처'] = `【${vendor} 소계】`;
+                        subtotalRow['수량'] = `${vendorTotal.count}건`;
+                        subtotalRow['금액'] = vendorTotal.amount;
+                        subtotalRow['수수료'] = vendorTotal.commission;
+                        subtotalRow['합계'] = vendorTotal.total;
+                        subtotalRow['_isSubtotal'] = true;
+                        
+                        groupedData.push(subtotalRow);
+                        
+                        dateTotalAmount += vendorTotal.amount;
+                        dateTotalCommission += vendorTotal.commission;
+                        dateTotalSum += vendorTotal.total;
+                    });
+                    
+                    // 날짜별 일계 행 추가
+                    const dayTotalRow = {};
+                    this.getColumnHeaders().forEach(header => {
+                        dayTotalRow[header] = '';
+                    });
+                    dayTotalRow['날짜'] = this.formatDateWithDay(date);
+                    dayTotalRow['거래처'] = `【일계】`;
+                    dayTotalRow['금액'] = dateTotalAmount;
+                    dayTotalRow['수수료'] = dateTotalCommission;
+                    dayTotalRow['합계'] = dateTotalSum;
+                    dayTotalRow['_isDayTotal'] = true;
+                    
+                    groupedData.push(dayTotalRow);
+                });
+                
+                // 테이블에 적용
+                this.hot.loadData(groupedData);
+                
+                // 스타일 적용
+                this.hot.updateSettings({
+                    cells: (row, col, prop) => {
+                        const cellProperties = this.getCellsFunction()(row, col, prop);
+                        const data = this.hot.getDataAtRow(row);
+                        
+                        if (data) {
+                            // 소계 행 스타일
+                            if (data['_isSubtotal']) {
+                                cellProperties.className = 'group-subtotal';
+                                cellProperties.readOnly = true;
+                            }
+                            // 일계 행 스타일
+                            else if (data['_isDayTotal']) {
+                                cellProperties.className = 'group-header';
+                                cellProperties.readOnly = true;
+                            }
+                        }
+                        
+                        return cellProperties;
+                    }
+                });
+            },
+            
+            removeGrouping() {
+                if (this.originalData.length > 0) {
+                    this.hot.loadData(this.originalData);
+                    this.hot.updateSettings({
+                        cells: this.getCellsFunction()
+                    });
+                }
+            },
             
             async init() {
                 console.log('구매관리 초기화 시작');
@@ -1592,6 +1761,7 @@
                 document.getElementById('editModeBtn').classList.add('btn-secondary');
                 document.getElementById('deleteBtn').style.display = 'none';
                 document.getElementById('statsBtn').style.display = 'inline-block';
+                document.getElementById('groupBtn').style.display = 'inline-block';
                 document.getElementById('vendorTypeSelector').style.display = 'none';
                 
                 // 컬럼 업데이트
