@@ -814,6 +814,25 @@
             
             return columns;
         },
+
+
+        getColumnHeaders() {
+    if (this.currentTab === 'supply') {
+        const headers = ['날짜', '거래처', '출하자', '품목', '품종명', '규격', '수량', '단가', '금액', '수수료', '합계', '작업', '맛', '비고'];
+        
+        if (this.currentMode === 'view') {
+            headers.push('계좌번호', '결제금액', '결제일');
+        } else {
+            headers.push('결제금액', '결제일');
+        }
+        return headers;
+    } else if (this.currentTab === 'purchase') {
+        return ['날짜', '거래처', '품목', '규격', '수량', '단가', '금액', '비고', '결제금액', '결제일'];
+    } else {
+        return ['날짜', '분류', '내역', '금액', '결제수단', '비고'];
+    }
+},
+
         
         getVendorList() {
             const list = ['직접입력'];
@@ -839,7 +858,7 @@
             this.hot = new Handsontable(container, {
                 data: [],
                 columns: this.getColumns(),
-                colHeaders: true,
+colHeaders: this.getColumnHeaders(),
                 rowHeaders: true,
                 height: 550,
                 stretchH: 'all',
