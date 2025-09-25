@@ -2569,7 +2569,7 @@
                 }
             },
 
-            async saveQualityData(result) {
+async saveQualityData(result) {
                 const selected = this.hot.getSelected();
                 if (!selected || selected.length === 0) {
                     this.showToast('품질 평가할 행을 선택하세요', 'error');
@@ -2590,7 +2590,8 @@
                     });
                     
                     // 품질관리에 필요한 데이터가 있는 행만 추가
-                    if (row['출하자'] && row['품목']) {
+                    if ((row['출하자'] || row['거래처']) && row['품목']) {
+                        row['선정결과'] = result;
                         selectedRows.push(row);
                     }
                 }
@@ -2602,60 +2603,21 @@
                 
                 this.showLoading();
                 try {
-                    // 먼저 기존 품질관리 데이터를 가져옴
-                    const getResponse = await fetch('/api/sheets', {
+                    const response = await fetch('/api/purchase', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            spreadsheetId: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg',
-                            range: '품질관리!A:J'
-                        })
-                    });
-                    
-                    const getData = await getResponse.json();
-                    let nextNumber = 1;
-                    
-                    if (getData.success && getData.data && getData.data.length > 1) {
-                        // 마지막 연번 확인
-                        const lastRow = getData.data[getData.data.length - 1];
-                        const lastNumber = parseInt(lastRow[0]) || 0;
-                        nextNumber = lastNumber + 1;
-                    }
-                    
-                    // 품질관리 데이터 생성
-                    const today = new Date().toISOString().split('T')[0];
-                    const qualityData = selectedRows.map((row, index) => {
-                        return [
-                            nextNumber + index,  // 연번
-                            row['출하자'],      // 농가
-                            row['품목'],        // 품목
-                            row['품종'],        // 품종
-                            row['품종명'],      // 품종명
-                            row['작업'],        // 작업
-                            row['맛'],          // 맛
-                            '',                 // 총점 (추후 계산 가능)
-                            result,             // 선정결과 (BEST 또는 최악)
-                            today               // 선정일
-                        ];
-                    });
-                    
-                    // 품질관리 시트에 추가
-                    const response = await fetch('/api/sheets/append', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            spreadsheetId: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg',
-                            range: '품질관리!A:J',
-                            values: qualityData
+                            action: 'addQualityData',
+                            data: selectedRows
                         })
                     });
                     
                     const saveResult = await response.json();
                     
                     if (saveResult.success) {
-                        this.showToast(`${selectedRows.length}건이 ${result}로 품질관리에 등록되었습니다`);
+                        this.showToast(`${saveResult.addedRows}건이 ${result}로 품질관리에 등록되었습니다`);
                         
-                        // 선택한 행에 시각적 표시 (선택사항)
+                        // 선택한 행에 시각적 표시
                         for (let i = startRow; i <= endRow; i++) {
                             const row = document.querySelector(`.handsontable tr:nth-child(${i + 2})`);
                             if (row) {
@@ -2667,7 +2629,7 @@
                             }
                         }
                     } else {
-                        throw new Error('품질관리 데이터 저장 실패');
+                        throw new Error(saveResult.error || '품질관리 데이터 저장 실패');
                     }
                 } catch (error) {
                     console.error('품질관리 저장 오류:', error);

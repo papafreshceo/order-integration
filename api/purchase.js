@@ -140,12 +140,6 @@ case 'appendPurchaseData': {
 }
 
 
-            default:
-                return res.status(400).json({
-                    success: false,
-                    error: `지원하지 않는 액션: ${action}`
-                });
-        }
     } catch (error) {
         console.error('구매관리 API 오류:', error);
         return res.status(500).json({
