@@ -462,9 +462,8 @@
             </div>
 
             <div style="margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end;">
-                <button class="btn btn-primary" onclick="PurchaseManager.searchData()">조회</button>
-                <button class="btn btn-secondary" onclick="PurchaseManager.resetFilter()">초기화</button>
-            </div>
+    <button class="btn btn-secondary" onclick="PurchaseManager.resetFilter()">초기화</button>
+</div>
         </div>
 
         <!-- 탭 네비게이션 -->
@@ -479,7 +478,7 @@
             <div class="mode-buttons">
                 <button id="viewModeBtn" class="btn btn-secondary" onclick="PurchaseManager.setViewMode()">조회 모드</button>
                 <button id="editModeBtn" class="btn btn-primary" onclick="PurchaseManager.setEditMode()">입력 모드</button>
-                <div class="vendor-type-selector" id="vendorTypeSelector" style="display:none; margin-left: 12px;">
+                <div class="vendor-type-selector" id="vendorTypeSelector" style="display:none; margin-left: 40px;">
                     <button class="vendor-type-btn active" data-vendor-type="중매인" onclick="PurchaseManager.selectVendorType('중매인')">중매인</button>
                     <button class="vendor-type-btn" data-vendor-type="농가" onclick="PurchaseManager.selectVendorType('농가')">농가</button>
                     <button class="vendor-type-btn" data-vendor-type="기타" onclick="PurchaseManager.selectVendorType('기타')">기타</button>
@@ -611,8 +610,8 @@
             currentTab: 'supply',
             currentMode: 'view',
             currentVendorType: 'all',
-            currentPaymentStatus: 'all', 
-            currentDateRange: 'today',
+currentPaymentStatus: 'all', 
+currentDateRange: 'today',
             currentEditVendorType: '중매인',
             vendors: [],
             vendorAccounts: {},
@@ -645,7 +644,11 @@
                         this.updateVendorFilter();
                         this.loadTabData();
                     });
-                });
+                
+
+                document.getElementById('vendorFilter').addEventListener('change', () => {
+    this.searchData();
+});
                 
                 // 데이터 로드
                 await this.loadVendors();
@@ -797,6 +800,8 @@
                 });
                 
                 this.currentDateRange = range;
+                this.searchData(); // 자동 조회 추가
+
             },
 
             setVendorType(type) {
@@ -806,8 +811,9 @@
                 document.querySelector(`[data-type="${type}"]`).classList.add('active');
                 
                 this.currentVendorType = type;
-                this.updateVendorFilter();
-            },
+    this.updateVendorFilter();
+    this.searchData(); // 자동 조회 추가
+},
 
             setPaymentStatus(status) {
                 document.querySelectorAll('[data-payment]').forEach(btn => {
@@ -815,7 +821,8 @@
                 });
                 document.querySelector(`[data-payment="${status}"]`).classList.add('active');
                 this.currentPaymentStatus = status;
-            },
+    this.searchData(); // 자동 조회 추가
+},
 
             resetFilter() {
                 this.setDateRange('today');
@@ -1378,14 +1385,17 @@
             },
             
             async searchData() {
-                const startDate = document.getElementById('startDate').value;
-                const endDate = document.getElementById('endDate').value;
-                const vendor = document.getElementById('vendorFilter').value;
-                const paymentStatus = this.currentPaymentStatus;
-                
-                await this.loadTabData();
-                
-                let filteredData = [...this.currentData];
+    // 데이터가 없으면 먼저 로드
+    if (!this.currentData || this.currentData.length === 0) {
+        await this.loadTabData();
+    }
+    
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    const vendor = document.getElementById('vendorFilter').value;
+    const paymentStatus = this.currentPaymentStatus;
+    
+    let filteredData = [...this.currentData];
                 
                 // 날짜 필터
                 if (startDate) {
