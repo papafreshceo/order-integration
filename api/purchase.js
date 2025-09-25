@@ -1,39 +1,5 @@
 import { google } from 'googleapis';
 
-// 환경 변수 로깅 (디버깅용)
-console.log('Environment check:', {
-    has_project_id: !!process.env.GOOGLE_PROJECT_ID,
-    has_private_key_id: !!process.env.GOOGLE_PRIVATE_KEY_ID,
-    has_private_key: !!process.env.GOOGLE_PRIVATE_KEY,
-    has_client_email: !!process.env.GOOGLE_CLIENT_EMAIL,
-    has_client_id: !!process.env.GOOGLE_CLIENT_ID,
-    client_email_value: process.env.GOOGLE_CLIENT_EMAIL // 실제 값 확인
-});
-
-const auth = new google.auth.GoogleAuth({
-    credentials: {
-        type: 'service_account',
-        project_id: process.env.GOOGLE_PROJECT_ID,
-        private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
-        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-        client_email: process.env.GOOGLE_CLIENT_EMAIL,
-        client_id: process.env.GOOGLE_CLIENT_ID,
-        auth_uri: 'https://accounts.google.com/o/oauth2/auth',
-        token_uri: 'https://oauth2.googleapis.com/token',
-        auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
-        client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(process.env.GOOGLE_CLIENT_EMAIL || '')}`
-    },
-    scopes: ['https://www.googleapis.com/auth/spreadsheets']
-});
-
-const sheets = google.sheets({ version: 'v4', auth });
-
-// 스프레드시트 ID 정의
-const SPREADSHEET_IDS = {
-    PURCHASE: process.env.SPREADSHEET_ID_PURCHASE || '1a55b0APC5LlmgXhh-Lw4O-7V_gLT_9luDqfvkkesof0',
-    PRODUCTS: process.env.SPREADSHEET_ID_PRODUCTS || '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg'
-};
-
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ success: false, error: 'Method not allowed' });
@@ -42,7 +8,54 @@ export default async function handler(req, res) {
     try {
         const { action, range, data, values } = req.body;
         console.log('Purchase API - action:', action);
+        
+        // 환경 변수 디버깅
+        const envCheck = {
+            project_id: process.env.GOOGLE_PROJECT_ID ? 'exists' : 'missing',
+            private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID ? 'exists' : 'missing',
+            private_key: process.env.GOOGLE_PRIVATE_KEY ? 'exists' : 'missing',
+            client_email: process.env.GOOGLE_CLIENT_EMAIL ? 'exists' : 'missing',
+            client_id: process.env.GOOGLE_CLIENT_ID ? 'exists' : 'missing',
+            client_email_value: process.env.GOOGLE_CLIENT_EMAIL
+        };
+        
+        console.log('Environment variables status:', envCheck);
+        
+        // 환경 변수가 없으면 에러 반환
+        if (!process.env.GOOGLE_CLIENT_EMAIL) {
+            return res.status(500).json({
+                success: false,
+                error: 'GOOGLE_CLIENT_EMAIL environment variable is missing',
+                debug: envCheck
+            });
+        }
 
+        // Google Auth 설정
+        const auth = new google.auth.GoogleAuth({
+            credentials: {
+                type: 'service_account',
+                project_id: process.env.GOOGLE_PROJECT_ID,
+                private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
+                private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+                client_email: process.env.GOOGLE_CLIENT_EMAIL,
+                client_id: process.env.GOOGLE_CLIENT_ID,
+                auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+                token_uri: 'https://oauth2.googleapis.com/token',
+                auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
+                client_x509_cert_url: process.env.GOOGLE_CLIENT_CERT_URL
+            },
+            scopes: ['https://www.googleapis.com/auth/spreadsheets']
+        });
+
+        const sheets = google.sheets({ version: 'v4', auth });
+
+        // 스프레드시트 ID
+        const SPREADSHEET_IDS = {
+            PURCHASE: '1a55b0APC5LlmgXhh-Lw4O-7V_gLT_9luDqfvkkesof0',
+            PRODUCTS: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg'
+        };
+
+        // action에 따른 처리
         switch (action) {
             case 'getPurchaseData': {
                 const response = await sheets.spreadsheets.values.get({
@@ -56,21 +69,29 @@ export default async function handler(req, res) {
                 });
             }
 
+            case 'getVendors': {
+                const response = await sheets.spreadsheets.values.get({
+                    spreadsheetId: SPREADSHEET_IDS.PRODUCTS,
+                    range: '거래처관리!A:P',
+                });
+                
+                return res.status(200).json({
+                    success: true,
+                    data: response.data.values || []
+                });
+            }
+
             case 'updatePurchaseData': {
                 const updateRange = range || '구매관리!A2:Q';
-                
-                // 빈 행 제거
                 const filteredData = data.filter(row => 
                     row && row.some(cell => cell !== undefined && cell !== null && cell !== '')
                 );
                 
-                // 시트 클리어
                 await sheets.spreadsheets.values.clear({
                     spreadsheetId: SPREADSHEET_IDS.PURCHASE,
                     range: updateRange,
                 });
                 
-                // 데이터 쓰기
                 if (filteredData.length > 0) {
                     const response = await sheets.spreadsheets.values.update({
                         spreadsheetId: SPREADSHEET_IDS.PURCHASE,
@@ -93,18 +114,6 @@ export default async function handler(req, res) {
                 });
             }
 
-            case 'getVendors': {
-                const response = await sheets.spreadsheets.values.get({
-                    spreadsheetId: SPREADSHEET_IDS.PRODUCTS,
-                    range: '거래처관리!A:P',
-                });
-                
-                return res.status(200).json({
-                    success: true,
-                    data: response.data.values || []
-                });
-            }
-
             case 'addVendor': {
                 const response = await sheets.spreadsheets.values.append({
                     spreadsheetId: SPREADSHEET_IDS.PRODUCTS,
@@ -123,7 +132,6 @@ export default async function handler(req, res) {
             }
 
             default:
-                console.error('Unknown action:', action);
                 return res.status(400).json({
                     success: false,
                     error: `지원하지 않는 액션: ${action}`
