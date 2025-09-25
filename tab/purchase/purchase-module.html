@@ -535,6 +535,8 @@
             </div>
             <div class="action-buttons">
                 <button id="editInViewBtn" class="btn btn-warning" onclick="PurchaseManager.toggleEditInView()" style="display:none;">수정</button>
+                <button id="bestBtn" class="btn btn-success" onclick="PurchaseManager.saveQualityData('BEST')" style="display:none;">BEST</button>
+                <button id="worstBtn" class="btn btn-danger" onclick="PurchaseManager.saveQualityData('최악')" style="display:none;">최악</button>
                 <button id="groupBtn" class="btn btn-info" onclick="PurchaseManager.toggleGrouping()" style="display:none;">그룹 표시</button>
                 <button id="statsBtn" class="btn btn-info" onclick="PurchaseManager.showStatsModal()" style="display:none;">통계</button>
                 <button id="saveBtn" class="btn btn-success" onclick="PurchaseManager.saveData()" style="display:none;">저장</button>
@@ -1968,6 +1970,8 @@
                 document.getElementById('statsBtn').style.display = 'inline-block';
                 document.getElementById('groupBtn').style.display = 'inline-block';
                 document.getElementById('editInViewBtn').style.display = 'inline-block';
+                document.getElementById('bestBtn').style.display = 'inline-block';
+                document.getElementById('worstBtn').style.display = 'inline-block';
                 document.getElementById('vendorTypeSelector').style.display = 'none';
                 
                 // 저장 버튼 텍스트 변경
@@ -2565,101 +2569,112 @@
                 }
             },
 
-            printStatement() {
-                const selected = document.querySelectorAll('#statsTableBody input[type="checkbox"]:checked');
-                if (selected.length === 0) {
-                    this.showToast('출력할 거래처를 선택하세요', 'error');
+            async saveQualityData(result) {
+                const selected = this.hot.getSelected();
+                if (!selected || selected.length === 0) {
+                    this.showToast('품질 평가할 행을 선택하세요', 'error');
                     return;
                 }
                 
-                // 선택된 거래처의 상세 내역 생성
-                const printWindow = window.open('', '_blank');
-                let html = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <title>거래명세서</title>
-                        <style>
-                            body { font-family: 'Noto Sans KR', sans-serif; }
-                            .page { page-break-after: always; padding: 20px; }
-                            h1 { text-align: center; font-size: 24px; margin-bottom: 30px; }
-                            .info { margin-bottom: 20px; }
-                            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                            th, td { border: 1px solid #000; padding: 8px; text-align: center; }
-                            th { background: #f0f0f0; }
-                            .total { font-weight: bold; background: #fffacd; }
-                            .footer { margin-top: 50px; text-align: right; }
-                            @media print { .page { page-break-after: always; } }
-                        </style>
-                    </head>
-                    <body>
-                `;
+                const [startRow, , endRow] = selected[0];
+                const selectedRows = [];
                 
-                selected.forEach(cb => {
-                    const index = cb.dataset.index;
-                    const data = this.statsData[index];
+                // 선택된 행의 데이터 수집
+                for (let i = startRow; i <= endRow; i++) {
+                    const rowData = this.hot.getDataAtRow(i);
+                    const headers = this.getColumnHeaders();
+                    const row = {};
                     
-                    html += `
-                        <div class="page">
-                            <h1>거 래 명 세 서</h1>
-                            <div class="info">
-                                <p><strong>거래처:</strong> ${data.vendor}</p>
-                                <p><strong>거래일:</strong> ${this.formatDateWithDay(data.date)}</p>
-                            </div>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>품목</th>
-                                        <th>품종</th>
-                                        <th>규격</th>
-                                        <th>수량</th>
-                                        <th>단가</th>
-                                        <th>금액</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                    `;
-                    
-                    let totalAmount = 0;
-                    data.rows.forEach(row => {
-                        const amount = parseFloat(row['금액']) || 0;
-                        totalAmount += amount;
-                        
-                        html += `
-                            <tr>
-                                <td>${row['품목'] || ''}</td>
-                                <td>${row['품종'] || ''}</td>
-                                <td>${row['규격'] || ''}</td>
-                                <td>${row['수량'] || ''}</td>
-                                <td>${(parseFloat(row['단가']) || 0).toLocaleString()}</td>
-                                <td>${amount.toLocaleString()}</td>
-                            </tr>
-                        `;
+                    headers.forEach((header, index) => {
+                        row[header] = rowData[index] || '';
                     });
                     
-                    html += `
-                                <tr class="total">
-                                    <td colspan="5">합계</td>
-                                    <td>${totalAmount.toLocaleString()}</td>
-                                </tr>
-                                </tbody>
-                            </table>
-                            <div class="footer">
-                                <p>위 금액을 정히 청구합니다.</p>
-                                <p style="margin-top: 30px;">20___년 ___월 ___일</p>
-                            </div>
-                        </div>
-                    `;
-                });
+                    // 품질관리에 필요한 데이터가 있는 행만 추가
+                    if (row['출하자'] && row['품목']) {
+                        selectedRows.push(row);
+                    }
+                }
                 
-                html += `
-                    </body>
-                    </html>
-                `;
+                if (selectedRows.length === 0) {
+                    this.showToast('선택한 행에 유효한 데이터가 없습니다', 'error');
+                    return;
+                }
                 
-                printWindow.document.write(html);
-                printWindow.document.close();
-                printWindow.print();
+                this.showLoading();
+                try {
+                    // 먼저 기존 품질관리 데이터를 가져옴
+                    const getResponse = await fetch('/api/sheets', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            spreadsheetId: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg',
+                            range: '품질관리!A:J'
+                        })
+                    });
+                    
+                    const getData = await getResponse.json();
+                    let nextNumber = 1;
+                    
+                    if (getData.success && getData.data && getData.data.length > 1) {
+                        // 마지막 연번 확인
+                        const lastRow = getData.data[getData.data.length - 1];
+                        const lastNumber = parseInt(lastRow[0]) || 0;
+                        nextNumber = lastNumber + 1;
+                    }
+                    
+                    // 품질관리 데이터 생성
+                    const today = new Date().toISOString().split('T')[0];
+                    const qualityData = selectedRows.map((row, index) => {
+                        return [
+                            nextNumber + index,  // 연번
+                            row['출하자'],      // 농가
+                            row['품목'],        // 품목
+                            row['품종'],        // 품종
+                            row['품종명'],      // 품종명
+                            row['작업'],        // 작업
+                            row['맛'],          // 맛
+                            '',                 // 총점 (추후 계산 가능)
+                            result,             // 선정결과 (BEST 또는 최악)
+                            today               // 선정일
+                        ];
+                    });
+                    
+                    // 품질관리 시트에 추가
+                    const response = await fetch('/api/sheets/append', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            spreadsheetId: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg',
+                            range: '품질관리!A:J',
+                            values: qualityData
+                        })
+                    });
+                    
+                    const saveResult = await response.json();
+                    
+                    if (saveResult.success) {
+                        this.showToast(`${selectedRows.length}건이 ${result}로 품질관리에 등록되었습니다`);
+                        
+                        // 선택한 행에 시각적 표시 (선택사항)
+                        for (let i = startRow; i <= endRow; i++) {
+                            const row = document.querySelector(`.handsontable tr:nth-child(${i + 2})`);
+                            if (row) {
+                                if (result === 'BEST') {
+                                    row.style.backgroundColor = '#d4edda';
+                                } else {
+                                    row.style.backgroundColor = '#f8d7da';
+                                }
+                            }
+                        }
+                    } else {
+                        throw new Error('품질관리 데이터 저장 실패');
+                    }
+                } catch (error) {
+                    console.error('품질관리 저장 오류:', error);
+                    this.showToast('품질관리 데이터 저장 중 오류가 발생했습니다', 'error');
+                } finally {
+                    this.hideLoading();
+                }
             },
             
             showLoading() {
