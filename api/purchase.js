@@ -20,8 +20,8 @@ const sheets = google.sheets({ version: 'v4', auth });
 
 // 스프레드시트 ID 정의
 const SPREADSHEET_IDS = {
-    PURCHASE: '1a55b0APC5LlmgXhh-Lw4O-7V_gLT_9luDqfvkkesof0',
-    PRODUCTS: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg'
+    PURCHASE: process.env.SPREADSHEET_ID_PURCHASE || '1a55b0APC5LlmgXhh-Lw4O-7V_gLT_9luDqfvkkesof0',
+    PRODUCTS: process.env.SPREADSHEET_ID_PRODUCTS || '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg'
 };
 
 export default async function handler(req, res) {
