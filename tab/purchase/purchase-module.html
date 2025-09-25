@@ -1977,12 +1977,6 @@ getColumns() {
                     });
                 }
                 
-                // 거래처 필터
-                const vendor = document.getElementById('vendorFilter').value;
-                if (vendor) {
-                    filteredData = filteredData.filter(row => row['거래처'] === vendor);
-                }
-                
                 // 결제상태 필터
                 if (this.currentPaymentStatus === 'unpaid') {
                     filteredData = filteredData.filter(row => 
