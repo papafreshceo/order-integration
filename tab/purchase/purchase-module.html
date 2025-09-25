@@ -241,8 +241,8 @@
         }
 
         .handsontable td.readonly {
-            background-color: #ffffff !important;
-            color: #212529;
+            background-color: #f5f6fa !important;
+            color: #6c757d;
             cursor: not-allowed;
         }
 
@@ -300,6 +300,11 @@
             font-size: 13px;
             font-weight: 400;
             color: #495057;
+        }
+
+        .form-label.required::after {
+            content: ' *';
+            color: #ef4444;
         }
 
         .form-input, .form-select {
@@ -407,6 +412,10 @@
         .vendor-type-btn.active:hover {
             background: #1d4ed8;
         }
+
+        .stats-highlight {
+            background-color: #e7f3ff !important;
+        }
     </style>
 </head>
 <body>
@@ -428,6 +437,7 @@
                         <input type="date" id="startDate" class="filter-input">
                         <span>~</span>
                         <input type="date" id="endDate" class="filter-input">
+                        <button class="btn btn-primary" onclick="PurchaseManager.applyCustomDateRange()">적용</button>
                     </div>
                 </div>
 
@@ -462,8 +472,9 @@
             </div>
 
             <div style="margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end;">
-    <button class="btn btn-secondary" onclick="PurchaseManager.resetFilter()">초기화</button>
-</div>
+                <button class="btn btn-secondary" onclick="PurchaseManager.resetFilter()">초기화</button>
+                <button class="btn btn-primary" onclick="PurchaseManager.searchData()">조회</button>
+            </div>
         </div>
 
         <!-- 탭 네비게이션 -->
@@ -506,7 +517,7 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label class="form-label">구분 *</label>
+                    <label class="form-label required">구분</label>
                     <select id="vendorCategory" class="form-select">
                         <option value="">선택</option>
                         <option value="구매처(도매)">구매처(도매)</option>
@@ -515,7 +526,7 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">거래처명 *</label>
+                    <label class="form-label required">거래처명</label>
                     <input type="text" id="vendorName" class="form-input">
                 </div>
                 <div class="form-group">
@@ -610,45 +621,32 @@
             currentTab: 'supply',
             currentMode: 'view',
             currentVendorType: 'all',
-currentPaymentStatus: 'all', 
-currentDateRange: 'today',
+            currentPaymentStatus: 'all',
+            currentDateRange: 'today',
             currentEditVendorType: '중매인',
             vendors: [],
             vendorAccounts: {},
             vendorPaymentTerms: {},
-            currentData: [],
+            vendorTypeMap: {}, // 거래처별 구분 매핑
+            allData: [],       // 전체 원본 데이터
+            currentData: [],   // 현재 표시 데이터
             productsData: [],
+            tempData: null,    // 모드 전환시 임시 저장용
+            isInitializing: true,
             
             async init() {
-                console.log('구매관리 초기화');
+                console.log('구매관리 초기화 시작');
+                this.isInitializing = true;
                 
-                // 오늘 날짜 기본값 설정
-                this.setDateRange('today');
+                // 날짜 필터 이벤트 리스너 추가
+                document.getElementById('startDate').addEventListener('change', this.handleCustomDateChange.bind(this));
+                document.getElementById('endDate').addEventListener('change', this.handleCustomDateChange.bind(this));
+                
+                // 거래처 필터 이벤트 리스너
+                document.getElementById('vendorFilter').addEventListener('change', this.handleVendorFilterChange.bind(this));
                 
                 // 탭 이벤트 리스너
-                document.querySelectorAll('.tab-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                        e.target.classList.add('active');
-                        this.currentTab = e.target.dataset.tab;
-                        
-                        // 탭에 따라 거래처 구분 카드 표시/숨김
-                        if (this.currentTab === 'supply') {
-                            document.getElementById('vendorTypeCard').style.display = 'block';
-                            document.getElementById('vendorTypeSelector').style.display = this.currentMode === 'edit' ? 'inline-flex' : 'none';
-                        } else {
-                            document.getElementById('vendorTypeCard').style.display = 'none';
-                            document.getElementById('vendorTypeSelector').style.display = 'none';
-                        }
-                        
-                        this.updateVendorFilter();
-                        this.loadTabData();
-                    });
-                
-});
-                document.getElementById('vendorFilter').addEventListener('change', () => {
-    this.searchData();
-});
+                this.initTabEvents();
                 
                 // 데이터 로드
                 await this.loadVendors();
@@ -657,8 +655,100 @@ currentDateRange: 'today',
                 // 테이블 초기화
                 this.initTable();
                 
+                // 초기 날짜 설정
+                this.setDateRange('today', false);
+                
                 // 초기 데이터 로드
                 await this.loadTabData();
+                
+                this.isInitializing = false;
+                console.log('구매관리 초기화 완료');
+            },
+
+            initTabEvents() {
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        // 현재 데이터 임시 저장
+                        if (this.currentMode === 'edit' && this.hot) {
+                            this.tempData = this.hot.getData();
+                        }
+                        
+                        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.currentTab = e.target.dataset.tab;
+                        
+                        // 탭별 UI 조정
+                        this.updateTabUI();
+                        
+                        // 필터 초기화
+                        this.resetFilterStates();
+                        
+                        // 데이터 로드
+                        await this.loadTabData();
+                    });
+                });
+            },
+
+            updateTabUI() {
+                const vendorTypeCard = document.getElementById('vendorTypeCard');
+                const vendorTypeSelector = document.getElementById('vendorTypeSelector');
+                
+                if (this.currentTab === 'supply') {
+                    vendorTypeCard.style.display = 'block';
+                    vendorTypeSelector.style.display = this.currentMode === 'edit' ? 'inline-flex' : 'none';
+                } else {
+                    vendorTypeCard.style.display = 'none';
+                    vendorTypeSelector.style.display = 'none';
+                }
+                
+                this.updateVendorFilter();
+            },
+
+            resetFilterStates() {
+                this.currentVendorType = 'all';
+                this.currentPaymentStatus = 'all';
+                
+                // UI 초기화
+                document.querySelectorAll('[data-type]').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.type === 'all');
+                });
+                
+                document.querySelectorAll('[data-payment]').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.payment === 'all');
+                });
+                
+                document.getElementById('vendorFilter').value = '';
+            },
+
+            handleCustomDateChange() {
+                // 직접선택 모드일 때만 동작
+                const customRange = document.getElementById('customDateRange');
+                if (customRange.style.display !== 'none') {
+                    this.currentDateRange = 'custom';
+                }
+            },
+
+            handleVendorFilterChange() {
+                if (!this.isInitializing) {
+                    this.applyFilters();
+                }
+            },
+
+            applyCustomDateRange() {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                
+                if (!startDate || !endDate) {
+                    this.showToast('시작일과 종료일을 모두 선택하세요', 'error');
+                    return;
+                }
+                
+                if (startDate > endDate) {
+                    this.showToast('시작일이 종료일보다 늦을 수 없습니다', 'error');
+                    return;
+                }
+                
+                this.searchData();
             },
 
             formatDateWithDay(dateStr) {
@@ -702,6 +792,7 @@ currentDateRange: 'today',
                     }
                 } catch (error) {
                     console.error('원물관리 데이터 로드 실패:', error);
+                    this.showToast('원물관리 데이터 로드 실패', 'error');
                 } finally {
                     this.hideLoading();
                 }
@@ -730,27 +821,25 @@ currentDateRange: 'today',
 
             selectVendorType(type) {
                 document.querySelectorAll('.vendor-type-btn').forEach(btn => {
-                    btn.classList.remove('active');
+                    btn.classList.toggle('active', btn.dataset.vendorType === type);
                 });
-                document.querySelector(`.vendor-type-btn[data-vendor-type="${type}"]`).classList.add('active');
                 this.currentEditVendorType = type;
                 this.updateVendorFilter();
                 
-                // Handsontable 거래처 컬럼 업데이트
-                if (this.hot) {
+                // Handsontable 업데이트
+                if (this.hot && this.currentMode === 'edit') {
                     this.hot.updateSettings({
-                        columns: this.getColumns()
+                        columns: this.getColumns(),
+                        cells: this.getCellsFunction()
                     });
                 }
             },
 
-            setDateRange(range) {
+            setDateRange(range, autoSearch = true) {
+                // UI 업데이트
                 document.querySelectorAll('.filter-option').forEach(btn => {
-                    if (btn.textContent === '오늘' || btn.textContent === '최근 7일' || 
-                        btn.textContent === '최근 30일' || btn.textContent === '전체' || 
-                        btn.textContent === '직접선택') {
-                        btn.classList.remove('active');
-                    }
+                    const text = btn.textContent;
+                    btn.classList.remove('active');
                 });
                 
                 const today = new Date();
@@ -779,58 +868,75 @@ currentDateRange: 'today',
                         break;
                     case 'custom':
                         document.getElementById('customDateRange').style.display = 'flex';
-                        document.querySelectorAll('.filter-option').forEach(btn => {
-                            if (btn.textContent === '직접선택') {
-                                btn.classList.add('active');
-                            }
-                        });
-                        return;
+                        const currentStart = document.getElementById('startDate').value;
+                        const currentEnd = document.getElementById('endDate').value;
+                        if (!currentStart || !currentEnd) {
+                            document.getElementById('startDate').value = today.toISOString().split('T')[0];
+                            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+                        }
+                        break;
                 }
                 
-                document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
-                document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+                if (range !== 'custom') {
+                    document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+                    document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+                }
                 
+                // 버튼 활성화
                 document.querySelectorAll('.filter-option').forEach(btn => {
-                    if ((range === 'today' && btn.textContent === '오늘') ||
-                        (range === '7days' && btn.textContent === '최근 7일') ||
-                        (range === '30days' && btn.textContent === '최근 30일') ||
-                        (range === 'all' && btn.textContent === '전체')) {
+                    const text = btn.textContent;
+                    if ((range === 'today' && text === '오늘') ||
+                        (range === '7days' && text === '최근 7일') ||
+                        (range === '30days' && text === '최근 30일') ||
+                        (range === 'all' && text === '전체') ||
+                        (range === 'custom' && text === '직접선택')) {
                         btn.classList.add('active');
                     }
                 });
                 
                 this.currentDateRange = range;
-                this.searchData(); // 자동 조회 추가
-
+                
+                // 자동 조회 옵션
+                if (autoSearch && !this.isInitializing) {
+                    this.searchData();
+                }
             },
 
             setVendorType(type) {
                 document.querySelectorAll('[data-type]').forEach(btn => {
-                    btn.classList.remove('active');
+                    btn.classList.toggle('active', btn.dataset.type === type);
                 });
-                document.querySelector(`[data-type="${type}"]`).classList.add('active');
                 
                 this.currentVendorType = type;
-    this.updateVendorFilter();
-    this.searchData(); // 자동 조회 추가
-},
+                this.updateVendorFilter();
+                
+                if (!this.isInitializing) {
+                    this.applyFilters();
+                }
+            },
 
             setPaymentStatus(status) {
                 document.querySelectorAll('[data-payment]').forEach(btn => {
-                    btn.classList.remove('active');
+                    btn.classList.toggle('active', btn.dataset.payment === status);
                 });
-                document.querySelector(`[data-payment="${status}"]`).classList.add('active');
                 this.currentPaymentStatus = status;
-    this.searchData(); // 자동 조회 추가
-},
+                
+                if (!this.isInitializing) {
+                    this.applyFilters();
+                }
+            },
 
             resetFilter() {
-                this.setDateRange('today');
+                this.setDateRange('today', false);
+                this.currentVendorType = 'all';
+                this.currentPaymentStatus = 'all';
+                
                 document.querySelectorAll('[data-type="all"], [data-payment="all"]').forEach(btn => {
-                    btn.click();
+                    btn.classList.add('active');
                 });
                 document.getElementById('vendorFilter').value = '';
-                this.loadTabData();
+                
+                this.searchData();
             },
             
             async loadVendors() {
@@ -845,10 +951,7 @@ currentDateRange: 'today',
                     });
                     
                     if (!response.ok) {
-                        console.error('거래처 API 에러:', response.status);
-                        this.vendors = [];
-                        this.updateVendorFilter();
-                        return;
+                        throw new Error(`거래처 API 에러: ${response.status}`);
                     }
                     
                     const result = await response.json();
@@ -862,18 +965,28 @@ currentDateRange: 'today',
                             return vendor;
                         });
                         
-                        // 거래처별 계좌번호와 결제조건 매핑
+                        // 거래처 정보 매핑
                         this.vendors.forEach(vendor => {
-                            this.vendorAccounts[vendor['거래처명']] = vendor['계좌번호'] || '';
-                            this.vendorPaymentTerms[vendor['거래처명']] = vendor['결제조건'] || '';
+                            const name = vendor['거래처명'];
+                            this.vendorAccounts[name] = vendor['계좌번호'] || '';
+                            this.vendorPaymentTerms[name] = vendor['결제조건'] || '';
+                            
+                            // 거래처 구분 매핑
+                            if (vendor['구분'] === '구매처(도매)') {
+                                this.vendorTypeMap[name] = '중매인';
+                            } else if (vendor['구분'] === '구매처(농가)') {
+                                this.vendorTypeMap[name] = '농가';
+                            } else {
+                                this.vendorTypeMap[name] = '기타';
+                            }
                         });
                         
                         this.updateVendorFilter();
                     }
                 } catch (error) {
                     console.error('거래처 로드 실패:', error);
+                    this.showToast('거래처 목록을 불러올 수 없습니다', 'error');
                     this.vendors = [];
-                    this.updateVendorFilter();
                 } finally {
                     this.hideLoading();
                 }
@@ -881,21 +994,24 @@ currentDateRange: 'today',
             
             updateVendorFilter() {
                 const filter = document.getElementById('vendorFilter');
+                const currentValue = filter.value;
                 filter.innerHTML = '<option value="">전체</option>';
                 
                 let filteredVendors = [];
                 
                 if (this.currentTab === 'supply') {
-                    if (this.currentVendorType === '중매인' || this.currentEditVendorType === '중매인') {
+                    const typeToFilter = this.currentMode === 'edit' ? this.currentEditVendorType : this.currentVendorType;
+                    
+                    if (typeToFilter === '중매인') {
                         filteredVendors = this.vendors.filter(v => v['구분'] === '구매처(도매)');
-                    } else if (this.currentVendorType === '농가' || this.currentEditVendorType === '농가') {
+                    } else if (typeToFilter === '농가') {
                         filteredVendors = this.vendors.filter(v => v['구분'] === '구매처(농가)');
-                    } else if (this.currentVendorType === '기타' || this.currentEditVendorType === '기타') {
+                    } else if (typeToFilter === '기타') {
                         filteredVendors = this.vendors.filter(v => 
                             v['구분'] !== '구매처(도매)' && v['구분'] !== '구매처(농가)' && v['구분'] !== '자재구입처'
                         );
                     } else {
-                        filteredVendors = this.vendors;
+                        filteredVendors = this.vendors.filter(v => v['구분'] !== '자재구입처');
                     }
                 } else if (this.currentTab === 'purchase') {
                     filteredVendors = this.vendors.filter(v => v['구분'] === '자재구입처');
@@ -909,6 +1025,11 @@ currentDateRange: 'today',
                     option.textContent = vendor['거래처명'];
                     filter.appendChild(option);
                 });
+                
+                // 이전 값 복원
+                if (currentValue && Array.from(filter.options).some(opt => opt.value === currentValue)) {
+                    filter.value = currentValue;
+                }
             },
             
             getColumns() {
@@ -922,6 +1043,18 @@ currentDateRange: 'today',
                             dateFormat: 'YYYY-MM-DD',
                             renderer: (instance, td, row, col, prop, value) => {
                                 td.innerHTML = this.formatDateWithDay(value);
+                                
+                                // 미결제 행 표시
+                                const rowData = instance.getDataAtRow(row);
+                                const paymentAmountCol = instance.propToCol('결제금액');
+                                const paymentDateCol = instance.propToCol('결제일');
+                                
+                                if (paymentAmountCol !== null && paymentDateCol !== null) {
+                                    if (!rowData[paymentAmountCol] || !rowData[paymentDateCol]) {
+                                        td.classList.add('unpaid-row');
+                                    }
+                                }
+                                
                                 return td;
                             }
                         },
@@ -994,6 +1127,29 @@ currentDateRange: 'today',
                             }
                         );
                     }
+                } else if (this.currentTab === 'purchase') {
+                    columns = [
+                        { data: '날짜', type: 'date', dateFormat: 'YYYY-MM-DD' },
+                        { data: '거래처', type: 'dropdown', source: this.getVendorList() },
+                        { data: '품목', type: 'text' },
+                        { data: '규격', type: 'text' },
+                        { data: '수량', type: 'numeric', numericFormat: { pattern: '0,0' } },
+                        { data: '단가', type: 'numeric', numericFormat: { pattern: '0,0' } },
+                        { data: '금액', type: 'numeric', numericFormat: { pattern: '0,0' }, readOnly: true },
+                        { data: '비고', type: 'text' },
+                        { data: '결제방법', type: 'dropdown', source: ['', '현금', '계좌이체', '카드', '어음', '기타'] },
+                        { data: '결제금액', type: 'numeric', numericFormat: { pattern: '0,0' } },
+                        { data: '결제일', type: 'date', dateFormat: 'YYYY-MM-DD' }
+                    ];
+                } else {
+                    columns = [
+                        { data: '날짜', type: 'date', dateFormat: 'YYYY-MM-DD' },
+                        { data: '분류', type: 'text' },
+                        { data: '내역', type: 'text' },
+                        { data: '금액', type: 'numeric', numericFormat: { pattern: '0,0' } },
+                        { data: '결제수단', type: 'dropdown', source: ['', '현금', '계좌이체', '카드', '어음', '기타'] },
+                        { data: '비고', type: 'text' }
+                    ];
                 }
                 
                 return columns;
@@ -1022,7 +1178,6 @@ currentDateRange: 'today',
                 
                 if (this.currentTab === 'supply') {
                     if (this.currentMode === 'edit') {
-                        // 입력모드에서는 선택된 거래처 구분에 따라 필터링
                         if (this.currentEditVendorType === '중매인') {
                             list.push(...this.vendors.filter(v => v['구분'] === '구매처(도매)').map(v => v['거래처명']));
                         } else if (this.currentEditVendorType === '농가') {
@@ -1033,8 +1188,7 @@ currentDateRange: 'today',
                             ).map(v => v['거래처명']));
                         }
                     } else {
-                        // 조회모드에서는 전체 표시
-                        list.push(...this.vendors.map(v => v['거래처명']));
+                        list.push(...this.vendors.filter(v => v['구분'] !== '자재구입처').map(v => v['거래처명']));
                     }
                 } else if (this.currentTab === 'purchase') {
                     list.push(...this.vendors.filter(v => v['구분'] === '자재구입처').map(v => v['거래처명']));
@@ -1042,9 +1196,56 @@ currentDateRange: 'today',
                 
                 return list;
             },
+
+            getCellsFunction() {
+                return (row, col, prop) => {
+                    const cellProperties = {};
+                    
+                    if (!this.hot || !this.hot.getDataAtRow) {
+                        return cellProperties;
+                    }
+                    
+                    const data = this.hot.getDataAtRow(row);
+                    
+                    if (!data) {
+                        return cellProperties;
+                    }
+                    
+                    // 조회모드 처리
+                    if (this.currentMode === 'view') {
+                        if (prop !== '결제방법' && prop !== '결제금액' && prop !== '결제일') {
+                            cellProperties.readOnly = true;
+                            cellProperties.className = 'readonly';
+                        }
+                    } else {
+                        // 입력모드 처리
+                        // 대분류, 중분류, 금액, 합계는 항상 읽기전용
+                        if (prop === '대분류' || prop === '중분류' || prop === '금액' || prop === '합계') {
+                            cellProperties.readOnly = true;
+                            cellProperties.className = 'readonly';
+                        }
+                        
+                        // 거래처가 농가인 경우 출하자, 수수료 비활성화
+                        const vendorCol = this.hot.propToCol('거래처');
+                        const vendor = data[vendorCol];
+                        const vendorType = this.vendorTypeMap[vendor];
+                        
+                        if (vendorType === '농가' && (prop === '출하자' || prop === '수수료')) {
+                            cellProperties.readOnly = true;
+                            cellProperties.className = 'readonly';
+                        }
+                    }
+                    
+                    return cellProperties;
+                };
+            },
             
             initTable() {
                 const container = document.getElementById('hot-container');
+                
+                if (this.hot) {
+                    this.hot.destroy();
+                }
                 
                 this.hot = new Handsontable(container, {
                     data: [],
@@ -1056,29 +1257,15 @@ currentDateRange: 'today',
                     autoWrapRow: true,
                     contextMenu: {
                         items: {
-                            'row_above': {
-                                name: '위에 행 삽입'
-                            },
-                            'row_below': {
-                                name: '아래에 행 삽입'
-                            },
-                            'remove_row': {
-                                name: '행 삭제'
-                            },
+                            'row_above': { name: '위에 행 삽입' },
+                            'row_below': { name: '아래에 행 삽입' },
+                            'remove_row': { name: '행 삭제' },
                             '---------': '---------',
-                            'copy': {
-                                name: '복사'
-                            },
-                            'cut': {
-                                name: '잘라내기'
-                            },
+                            'copy': { name: '복사' },
+                            'cut': { name: '잘라내기' },
                             '---------2': '---------',
-                            'undo': {
-                                name: '실행취소'
-                            },
-                            'redo': {
-                                name: '다시실행'
-                            }
+                            'undo': { name: '실행취소' },
+                            'redo': { name: '다시실행' }
                         }
                     },
                     manualRowMove: true,
@@ -1086,123 +1273,103 @@ currentDateRange: 'today',
                     filters: true,
                     dropdownMenu: {
                         items: {
-                            'filter_by_condition': {
-                                name: '조건으로 필터'
-                            },
-                            'filter_by_value': {
-                                name: '값으로 필터'
-                            },
+                            'filter_by_condition': { name: '조건으로 필터' },
+                            'filter_by_value': { name: '값으로 필터' },
                             '---------': '---------',
-                            'sort_asc': {
-                                name: '오름차순 정렬'
-                            },
-                            'sort_desc': {
-                                name: '내림차순 정렬'
-                            },
+                            'sort_asc': { name: '오름차순 정렬' },
+                            'sort_desc': { name: '내림차순 정렬' },
                             '---------2': '---------',
-                            'clear_column': {
-                                name: '열 지우기'
-                            }
+                            'clear_column': { name: '열 지우기' }
                         }
                     },
                     licenseKey: 'non-commercial-and-evaluation',
                     language: 'ko-KR',
                     
-                    afterChange: (changes, source) => {
-                        if (source === 'loadData') return;
-                        
-                        changes?.forEach(([row, prop, oldValue, newValue]) => {
-                            // 거래처 변경 시
-                            if (prop === '거래처') {
-                                if (newValue === '직접입력') {
-                                    setTimeout(() => {
-                                        const actualValue = prompt('새 거래처명을 입력하세요:');
-                                        if (actualValue) {
-                                            this.hot.setDataAtCell(row, 1, actualValue);
-                                            this.openVendorModal(actualValue);
-                                        } else {
-                                            this.hot.setDataAtCell(row, 1, '');
-                                        }
-                                    }, 100);
-                                } else if (newValue) {
-                                    // 결제조건 자동 입력
-                                    const paymentTerm = this.vendorPaymentTerms[newValue] || '';
-                                    const termCol = this.hot.propToCol('결제조건');
-                                    if (termCol !== null) {
-                                        this.hot.setDataAtCell(row, termCol, paymentTerm);
-                                    }
-                                    
-                                    // 계좌번호 자동 입력
-                                    const accountNumber = this.vendorAccounts[newValue] || '';
-                                    const accountCol = this.hot.propToCol('계좌번호');
-                                    if (accountCol !== null) {
-                                        this.hot.setDataAtCell(row, accountCol, accountNumber);
-                                    }
-                                }
-                            }
-                            
-                            // 품목 변경 시
-                            if (prop === '품목' && newValue) {
-                                // 대분류, 중분류 자동 입력
-                                const categoryInfo = this.getCategoryInfo(newValue);
-                                const 대분류Col = this.hot.propToCol('대분류');
-                                const 중분류Col = this.hot.propToCol('중분류');
-                                
-                                if (대분류Col !== null) {
-                                    this.hot.setDataAtCell(row, 대분류Col, categoryInfo.대분류);
-                                }
-                                if (중분류Col !== null) {
-                                    this.hot.setDataAtCell(row, 중분류Col, categoryInfo.중분류);
-                                }
-                                
-                                // 품종 드롭다운 업데이트
-                                const varieties = this.getVarietyList(newValue);
-                                const 품종Col = this.hot.propToCol('품종');
-                                if (품종Col !== null) {
-                                    this.hot.setCellMeta(row, 품종Col, 'source', varieties);
-                                }
-                            }
-                            
-                            // 수량, 단가, 수수료 변경 시 자동계산
-                            if (['수량', '단가', '수수료'].includes(prop)) {
-                                this.calculateRow(row);
-                            }
-                        });
-                    },
+                    afterChange: this.handleAfterChange.bind(this),
+                    cells: this.getCellsFunction()
+                });
+            },
+
+            handleAfterChange(changes, source) {
+                if (source === 'loadData') return;
+                
+                changes?.forEach(([row, prop, oldValue, newValue]) => {
+                    // 거래처 변경 처리
+                    if (prop === '거래처') {
+                        this.handleVendorChange(row, newValue);
+                    }
                     
-                    cells: (row, col, prop) => {
-                        const cellProperties = {};
-                        
-                        if (!this.hot || !this.hot.getDataAtRow) {
-                            return cellProperties;
-                        }
-                        
-                        const data = this.hot.getDataAtRow(row);
-                        
-                        if (!data) {
-                            return cellProperties;
-                        }
-                        
-                        // 조회모드에서 전체 읽기전용
-                        if (this.currentMode === 'view') {
-                            // 결제방법, 결제금액, 결제일은 편집 가능
-                            if (prop !== '결제방법' && prop !== '결제금액' && prop !== '결제일') {
-                                cellProperties.readOnly = true;
-                                cellProperties.className = 'readonly';
-                            }
-                        }
-                        
-                        // 농가 선택 시 출하자, 수수료 비활성화
-                        if (this.currentEditVendorType === '농가' && this.currentMode === 'edit') {
-                            if (prop === '출하자' || prop === '수수료') {
-                                cellProperties.readOnly = true;
-                                cellProperties.className = 'readonly';
-                            }
-                        }
-                        
-                        return cellProperties;
+                    // 품목 변경 처리
+                    if (prop === '품목' && newValue) {
+                        this.handleProductChange(row, newValue);
+                    }
+                    
+                    // 수량, 단가, 수수료 변경시 자동계산
+                    if (['수량', '단가', '수수료'].includes(prop)) {
+                        this.calculateRow(row);
                     }
                 });
+            },
+
+            handleVendorChange(row, vendor) {
+                if (vendor === '직접입력') {
+                    setTimeout(() => {
+                        const actualValue = prompt('새 거래처명을 입력하세요:');
+                        if (actualValue) {
+                            this.hot.setDataAtCell(row, 1, actualValue);
+                            this.openVendorModal(actualValue);
+                        } else {
+                            this.hot.setDataAtCell(row, 1, '');
+                        }
+                    }, 100);
+                } else if (vendor) {
+                    // 조회 모드에서만 결제조건, 계좌번호 자동입력
+                    if (this.currentMode === 'view') {
+                        const termCol = this.hot.propToCol('결제조건');
+                        const accountCol = this.hot.propToCol('계좌번호');
+                        
+                        if (termCol !== null) {
+                            this.hot.setDataAtCell(row, termCol, this.vendorPaymentTerms[vendor] || '');
+                        }
+                        if (accountCol !== null) {
+                            this.hot.setDataAtCell(row, accountCol, this.vendorAccounts[vendor] || '');
+                        }
+                    }
+                    
+                    // 거래처가 농가인 경우 출하자, 수수료 초기화
+                    if (this.vendorTypeMap[vendor] === '농가') {
+                        const 출하자Col = this.hot.propToCol('출하자');
+                        const 수수료Col = this.hot.propToCol('수수료');
+                        
+                        if (출하자Col !== null) {
+                            this.hot.setDataAtCell(row, 출하자Col, '');
+                        }
+                        if (수수료Col !== null) {
+                            this.hot.setDataAtCell(row, 수수료Col, 0);
+                        }
+                    }
+                }
+            },
+
+            handleProductChange(row, product) {
+                const categoryInfo = this.getCategoryInfo(product);
+                const 대분류Col = this.hot.propToCol('대분류');
+                const 중분류Col = this.hot.propToCol('중분류');
+                
+                if (대분류Col !== null) {
+                    this.hot.setDataAtCell(row, 대분류Col, categoryInfo.대분류);
+                }
+                if (중분류Col !== null) {
+                    this.hot.setDataAtCell(row, 중분류Col, categoryInfo.중분류);
+                }
+                
+                // 품종 드롭다운 업데이트
+                const varieties = this.getVarietyList(product);
+                const 품종Col = this.hot.propToCol('품종');
+                if (품종Col !== null) {
+                    this.hot.setCellMeta(row, 품종Col, 'source', varieties);
+                    this.hot.render();
+                }
             },
             
             calculateRow(row) {
@@ -1213,15 +1380,21 @@ currentDateRange: 'today',
                 const commissionCol = this.hot.propToCol('수수료');
                 const totalCol = this.hot.propToCol('합계');
                 
+                if (quantityCol === null || priceCol === null) return;
+                
                 const quantity = parseFloat(data[quantityCol]) || 0;
                 const price = parseFloat(data[priceCol]) || 0;
-                const commission = parseFloat(data[commissionCol]) || 0;
+                const commission = commissionCol !== null ? (parseFloat(data[commissionCol]) || 0) : 0;
                 
                 const amount = quantity * price;
                 const total = amount + commission;
                 
-                this.hot.setDataAtCell(row, amountCol, amount);
-                this.hot.setDataAtCell(row, totalCol, total);
+                if (amountCol !== null) {
+                    this.hot.setDataAtCell(row, amountCol, amount, 'autocalc');
+                }
+                if (totalCol !== null) {
+                    this.hot.setDataAtCell(row, totalCol, total, 'autocalc');
+                }
             },
             
             async loadTabData() {
@@ -1230,13 +1403,10 @@ currentDateRange: 'today',
                     let sheetName = '';
                     if (this.currentTab === 'supply') {
                         sheetName = '사입관리';
-                        document.getElementById('vendorTypeCard').style.display = 'block';
                     } else if (this.currentTab === 'purchase') {
                         sheetName = '구매관리';
-                        document.getElementById('vendorTypeCard').style.display = 'none';
                     } else {
                         sheetName = '지출관리';
-                        document.getElementById('vendorTypeCard').style.display = 'none';
                     }
                     
                     const response = await fetch('/api/purchase', {
@@ -1258,8 +1428,8 @@ currentDateRange: 'today',
                                 obj[header] = row[index] || '';
                             });
                             
-                            // 조회 모드에서 결제조건, 계좌번호 추가
-                            if (this.currentMode === 'view') {
+                            // 조회모드에서 추가 정보 표시
+                            if (this.currentMode === 'view' && this.currentTab === 'supply') {
                                 obj['결제조건'] = this.vendorPaymentTerms[obj['거래처']] || '';
                                 obj['계좌번호'] = this.vendorAccounts[obj['거래처']] || '';
                             }
@@ -1267,25 +1437,93 @@ currentDateRange: 'today',
                             return obj;
                         });
                         
-                        this.currentData = data;
+                        this.allData = data;
+                        this.currentData = [...data];
                         
                         // 컬럼 업데이트
                         this.hot.updateSettings({
                             columns: this.getColumns(),
-                            colHeaders: this.getColumnHeaders()
+                            colHeaders: this.getColumnHeaders(),
+                            cells: this.getCellsFunction()
                         });
                         
-                        this.hot.loadData(data);
+                        // 필터 적용
+                        this.applyFilters();
                     }
                 } catch (error) {
                     console.error('데이터 로드 실패:', error);
-                    this.showToast('데이터 로드 실패', 'error');
+                    this.showToast('데이터를 불러올 수 없습니다', 'error');
                 } finally {
                     this.hideLoading();
                 }
             },
+
+            applyFilters() {
+                let filteredData = [...this.allData];
+                
+                // 날짜 필터
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                
+                if (startDate) {
+                    filteredData = filteredData.filter(row => row['날짜'] >= startDate);
+                }
+                if (endDate) {
+                    filteredData = filteredData.filter(row => row['날짜'] <= endDate);
+                }
+                
+                // 거래처 구분 필터 (사입관리 탭에서만)
+                if (this.currentTab === 'supply' && this.currentVendorType !== 'all') {
+                    filteredData = filteredData.filter(row => {
+                        const vendor = row['거래처'];
+                        const vendorType = this.vendorTypeMap[vendor];
+                        
+                        if (this.currentVendorType === '중매인') {
+                            return vendorType === '중매인';
+                        } else if (this.currentVendorType === '농가') {
+                            return vendorType === '농가';
+                        } else if (this.currentVendorType === '기타') {
+                            return vendorType === '기타' || !vendorType;
+                        }
+                        return true;
+                    });
+                }
+                
+                // 거래처 필터
+                const vendor = document.getElementById('vendorFilter').value;
+                if (vendor) {
+                    filteredData = filteredData.filter(row => row['거래처'] === vendor);
+                }
+                
+                // 결제상태 필터
+                if (this.currentPaymentStatus === 'unpaid') {
+                    filteredData = filteredData.filter(row => 
+                        !row['결제금액'] || row['결제금액'] === '0' || !row['결제일']
+                    );
+                } else if (this.currentPaymentStatus === 'paid') {
+                    filteredData = filteredData.filter(row => 
+                        row['결제금액'] && row['결제금액'] !== '0' && row['결제일']
+                    );
+                }
+                
+                this.currentData = filteredData;
+                this.hot.loadData(filteredData);
+            },
+
+            searchData() {
+                if (this.allData.length === 0) {
+                    this.loadTabData();
+                } else {
+                    this.applyFilters();
+                }
+            },
             
             setViewMode() {
+                // 현재 데이터 저장
+                if (this.currentMode === 'edit' && this.hot) {
+                    this.tempData = this.hot.getData();
+                }
+                
                 this.currentMode = 'view';
                 document.getElementById('viewModeBtn').classList.add('btn-primary');
                 document.getElementById('viewModeBtn').classList.remove('btn-secondary');
@@ -1295,26 +1533,23 @@ currentDateRange: 'today',
                 document.getElementById('statsBtn').style.display = 'inline-block';
                 document.getElementById('vendorTypeSelector').style.display = 'none';
                 
+                // 컬럼 업데이트
                 this.hot.updateSettings({
                     columns: this.getColumns(),
                     colHeaders: this.getColumnHeaders(),
-                    cells: (row, col, prop) => {
-                        const cellProperties = {};
-                        
-                        // 결제방법, 결제금액, 결제일만 편집 가능
-                        if (prop !== '결제방법' && prop !== '결제금액' && prop !== '결제일') {
-                            cellProperties.readOnly = true;
-                            cellProperties.className = 'readonly';
-                        }
-                        
-                        return cellProperties;
-                    }
+                    cells: this.getCellsFunction()
                 });
                 
+                // 데이터 다시 로드
                 this.loadTabData();
             },
             
             setEditMode() {
+                // 현재 데이터 저장
+                if (this.currentMode === 'view' && this.hot) {
+                    this.tempData = this.hot.getData();
+                }
+                
                 this.currentMode = 'edit';
                 document.getElementById('editModeBtn').classList.add('btn-primary');
                 document.getElementById('editModeBtn').classList.remove('btn-secondary');
@@ -1327,97 +1562,27 @@ currentDateRange: 'today',
                     document.getElementById('vendorTypeSelector').style.display = 'inline-flex';
                 }
                 
-                // 빈 데이터로 시작
-                const emptyData = Array(10).fill(null).map(() => ({
-                    날짜: new Date().toISOString().split('T')[0],
-                    거래처: '',
-                    출하자: '',
-                    대분류: '',
-                    중분류: '',
-                    품목: '',
-                    품종: '',
-                    품종명: '',
-                    규격: '',
-                    수량: '',
-                    단가: '',
-                    금액: '',
-                    수수료: '',
-                    합계: '',
-                    작업: '',
-                    맛: '',
-                    비고: '',
-                    결제방법: '',
-                    결제금액: '',
-                    결제일: ''
-                }));
+                // 빈 데이터로 초기화
+                const emptyData = Array(10).fill(null).map(() => {
+                    const obj = { 날짜: new Date().toISOString().split('T')[0] };
+                    
+                    this.getColumnHeaders().forEach(header => {
+                        if (header !== '날짜') {
+                            obj[header] = '';
+                        }
+                    });
+                    
+                    return obj;
+                });
                 
+                // 컬럼 업데이트
                 this.hot.updateSettings({
                     columns: this.getColumns(),
                     colHeaders: this.getColumnHeaders(),
-                    cells: (row, col, prop) => {
-                        const cellProperties = {};
-                        
-                        // 대분류, 중분류는 항상 읽기전용
-                        if (prop === '대분류' || prop === '중분류') {
-                            cellProperties.readOnly = true;
-                            cellProperties.className = 'readonly';
-                        }
-                        
-                        // 금액, 합계는 자동계산
-                        if (prop === '금액' || prop === '합계') {
-                            cellProperties.readOnly = true;
-                            cellProperties.className = 'readonly';
-                        }
-                        
-                        // 농가 선택 시 출하자, 수수료 비활성화
-                        if (this.currentEditVendorType === '농가') {
-                            if (prop === '출하자' || prop === '수수료') {
-                                cellProperties.readOnly = true;
-                                cellProperties.className = 'readonly';
-                            }
-                        }
-                        
-                        return cellProperties;
-                    }
+                    cells: this.getCellsFunction()
                 });
                 
                 this.hot.loadData(emptyData);
-            },
-            
-            async searchData() {
-    // 데이터가 없으면 먼저 로드
-    if (!this.currentData || this.currentData.length === 0) {
-        await this.loadTabData();
-    }
-    
-    const startDate = document.getElementById('startDate').value;
-    const endDate = document.getElementById('endDate').value;
-    const vendor = document.getElementById('vendorFilter').value;
-    const paymentStatus = this.currentPaymentStatus;
-    
-    let filteredData = [...this.currentData];
-                
-                // 날짜 필터
-                if (startDate) {
-                    filteredData = filteredData.filter(row => row['날짜'] >= startDate);
-                }
-                if (endDate) {
-                    filteredData = filteredData.filter(row => row['날짜'] <= endDate);
-                }
-                
-                // 거래처 필터
-                if (vendor) {
-                    filteredData = filteredData.filter(row => row['거래처'] === vendor);
-                }
-                
-                // 결제상태 필터
-                if (paymentStatus === 'unpaid') {
-                    filteredData = filteredData.filter(row => !row['결제금액'] || !row['결제일']);
-                } else if (paymentStatus === 'paid') {
-                    filteredData = filteredData.filter(row => row['결제금액'] && row['결제일']);
-                }
-                
-                this.hot.loadData(filteredData);
             },
             
             async saveData() {
@@ -1427,21 +1592,29 @@ currentDateRange: 'today',
                     
                     // 빈 행 제거
                     const filteredData = data.filter(row => 
-                        row.some(cell => cell !== null && cell !== '')
+                        row.some(cell => cell !== null && cell !== '' && cell !== 0)
                     );
+                    
+                    if (filteredData.length === 0) {
+                        this.showToast('저장할 데이터가 없습니다', 'error');
+                        return;
+                    }
                     
                     let sheetName = '';
                     if (this.currentTab === 'supply') sheetName = '사입관리';
                     else if (this.currentTab === 'purchase') sheetName = '구매관리';
                     else sheetName = '지출관리';
                     
+                    // 입력 모드인 경우 데이터 추가, 조회 모드인 경우 전체 업데이트
+                    const action = this.currentMode === 'edit' ? 'appendPurchaseData' : 'updatePurchaseData';
+                    
                     const response = await fetch('/api/purchase', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            action: 'updatePurchaseData',
-                            range: `${sheetName}!A2:Z`,
-                            data: filteredData
+                            action: action,
+                            range: this.currentMode === 'edit' ? `${sheetName}!A:Z` : `${sheetName}!A2:Z`,
+                            data: this.currentMode === 'edit' ? filteredData : this.allData
                         })
                     });
                     
@@ -1449,13 +1622,19 @@ currentDateRange: 'today',
                     
                     if (result.success) {
                         this.showToast('저장 완료');
-                        await this.loadTabData();
+                        
+                        // 입력 모드인 경우 조회 모드로 전환
+                        if (this.currentMode === 'edit') {
+                            this.setViewMode();
+                        } else {
+                            await this.loadTabData();
+                        }
                     } else {
-                        throw new Error('저장 실패');
+                        throw new Error(result.message || '저장 실패');
                     }
                 } catch (error) {
                     console.error('저장 오류:', error);
-                    this.showToast('저장 실패', 'error');
+                    this.showToast(error.message || '저장 중 오류가 발생했습니다', 'error');
                 } finally {
                     this.hideLoading();
                 }
@@ -1463,26 +1642,35 @@ currentDateRange: 'today',
             
             deleteRows() {
                 const selected = this.hot.getSelected();
-                if (selected && selected.length > 0) {
-                    const [startRow, , endRow] = selected[0];
-                    const count = endRow - startRow + 1;
-                    
-                    if (confirm(`선택한 ${count}개 행을 삭제하시겠습니까?`)) {
-                        this.hot.alter('remove_row', startRow, count);
-                    }
+                if (!selected || selected.length === 0) {
+                    this.showToast('삭제할 행을 선택하세요', 'error');
+                    return;
+                }
+                
+                const [startRow, , endRow] = selected[0];
+                const count = endRow - startRow + 1;
+                
+                if (confirm(`선택한 ${count}개 행을 삭제하시겠습니까?`)) {
+                    this.hot.alter('remove_row', startRow, count);
                 }
             },
             
-            openVendorModal(vendorName) {
-                document.getElementById('vendorName').value = vendorName || '';
+            openVendorModal(vendorName = '') {
+                // 모달 필드 초기화
+                document.getElementById('vendorModal').querySelectorAll('input, select').forEach(el => {
+                    el.value = '';
+                });
+                
+                // 거래처명 설정
+                document.getElementById('vendorName').value = vendorName;
                 
                 // 현재 거래처 구분에 따라 카테고리 자동 설정
                 if (this.currentEditVendorType === '중매인') {
                     document.getElementById('vendorCategory').value = '구매처(도매)';
                 } else if (this.currentEditVendorType === '농가') {
                     document.getElementById('vendorCategory').value = '구매처(농가)';
-                } else {
-                    document.getElementById('vendorCategory').value = '';
+                } else if (this.currentTab === 'purchase') {
+                    document.getElementById('vendorCategory').value = '자재구입처';
                 }
                 
                 document.getElementById('vendorModal').classList.add('show');
@@ -1494,11 +1682,16 @@ currentDateRange: 'today',
             
             async saveNewVendor() {
                 const category = document.getElementById('vendorCategory').value;
-                const name = document.getElementById('vendorName').value;
-                const paymentTerm = document.getElementById('paymentTerm').value;
+                const name = document.getElementById('vendorName').value.trim();
                 
                 if (!category || !name) {
-                    alert('구분과 거래처명은 필수입니다.');
+                    this.showToast('구분과 거래처명은 필수입니다', 'error');
+                    return;
+                }
+                
+                // 중복 체크
+                if (this.vendors.some(v => v['거래처명'] === name)) {
+                    this.showToast('이미 존재하는 거래처명입니다', 'error');
                     return;
                 }
                 
@@ -1518,7 +1711,7 @@ currentDateRange: 'today',
                         document.getElementById('managerName').value,
                         document.getElementById('managerPhone').value,
                         '', // 거래품목
-                        paymentTerm, // 결제조건
+                        document.getElementById('paymentTerm').value,
                         document.getElementById('accountNumber').value,
                         document.getElementById('notes').value
                     ];
@@ -1538,12 +1731,19 @@ currentDateRange: 'today',
                         this.showToast('거래처 등록 완료');
                         this.closeVendorModal();
                         await this.loadVendors();
+                        
+                        // 새로 등록한 거래처 선택
+                        const vendorCol = this.hot.propToCol('거래처');
+                        const selectedRow = this.hot.getSelected()?.[0]?.[0];
+                        if (selectedRow !== undefined && vendorCol !== null) {
+                            this.hot.setDataAtCell(selectedRow, vendorCol, name);
+                        }
                     } else {
-                        throw new Error('거래처 등록 실패');
+                        throw new Error(result.message || '거래처 등록 실패');
                     }
                 } catch (error) {
                     console.error('거래처 등록 오류:', error);
-                    this.showToast('거래처 등록 실패', 'error');
+                    this.showToast(error.message || '거래처 등록 중 오류가 발생했습니다', 'error');
                 } finally {
                     this.hideLoading();
                 }
@@ -1565,31 +1765,51 @@ currentDateRange: 'today',
                 const startDate = document.getElementById('statsStartDate').value;
                 const endDate = document.getElementById('statsEndDate').value;
                 
+                if (!startDate || !endDate) {
+                    this.showToast('시작일과 종료일을 선택하세요', 'error');
+                    return;
+                }
+                
                 const data = this.hot.getData();
-                const stats = {};
+                const statsMap = new Map();
                 
                 // 데이터 집계
-                data.forEach(row => {
-                    const date = row[0];  // 날짜
-                    const vendor = row[1];  // 거래처
-                    const quantity = parseFloat(row[9]) || 0;  // 수량
-                    const total = parseFloat(row[13]) || 0;  // 합계
+                data.forEach((row, rowIndex) => {
+                    const date = row[0];
+                    const vendor = row[1];
+                    const quantity = parseFloat(row[9]) || 0;
+                    const total = parseFloat(row[13]) || 0;
+                    const paymentMethod = row[this.hot.propToCol('결제방법')] || '';
+                    const paymentAmount = parseFloat(row[this.hot.propToCol('결제금액')]) || 0;
+                    const paymentDate = row[this.hot.propToCol('결제일')] || '';
                     
                     if (date >= startDate && date <= endDate && vendor) {
                         const key = `${date}_${vendor}`;
-                        if (!stats[key]) {
-                            stats[key] = {
+                        
+                        if (!statsMap.has(key)) {
+                            statsMap.set(key, {
                                 date: date,
                                 vendor: vendor,
+                                rows: [],
                                 quantity: 0,
                                 total: 0,
-                                paymentMethod: '',
-                                paymentAmount: 0,
-                                paymentDate: ''
-                            };
+                                paymentMethod: paymentMethod,
+                                paymentAmount: paymentAmount,
+                                paymentDate: paymentDate
+                            });
                         }
-                        stats[key].quantity += quantity;
-                        stats[key].total += total;
+                        
+                        const stat = statsMap.get(key);
+                        stat.rows.push(rowIndex);
+                        stat.quantity += quantity;
+                        stat.total += total;
+                        
+                        // 결제정보가 있으면 우선 사용
+                        if (!stat.paymentMethod && paymentMethod) {
+                            stat.paymentMethod = paymentMethod;
+                            stat.paymentAmount = paymentAmount;
+                            stat.paymentDate = paymentDate;
+                        }
                     }
                 });
                 
@@ -1600,6 +1820,7 @@ currentDateRange: 'today',
                             <tr style="background: #f8f9fa;">
                                 <th style="border: 1px solid #dee2e6; padding: 8px;">날짜</th>
                                 <th style="border: 1px solid #dee2e6; padding: 8px;">거래처</th>
+                                <th style="border: 1px solid #dee2e6; padding: 8px;">건수</th>
                                 <th style="border: 1px solid #dee2e6; padding: 8px;">수량 합계</th>
                                 <th style="border: 1px solid #dee2e6; padding: 8px;">금액 합계</th>
                                 <th style="border: 1px solid #dee2e6; padding: 8px;">결제방법</th>
@@ -1613,54 +1834,66 @@ currentDateRange: 'today',
                 
                 let totalQuantity = 0;
                 let totalAmount = 0;
+                let index = 0;
                 
-                Object.values(stats).sort((a, b) => {
+                // 정렬 및 표시
+                const sortedStats = Array.from(statsMap.values()).sort((a, b) => {
                     if (a.date === b.date) {
                         return a.vendor.localeCompare(b.vendor);
                     }
                     return a.date.localeCompare(b.date);
-                }).forEach((stat, index) => {
+                });
+                
+                sortedStats.forEach((stat) => {
                     totalQuantity += stat.quantity;
                     totalAmount += stat.total;
                     
+                    const rowClass = stat.paymentAmount > 0 ? '' : 'stats-highlight';
+                    
                     html += `
-                        <tr>
+                        <tr class="${rowClass}">
                             <td style="border: 1px solid #dee2e6; padding: 8px;">${this.formatDateWithDay(stat.date)}</td>
                             <td style="border: 1px solid #dee2e6; padding: 8px;">${stat.vendor}</td>
+                            <td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">${stat.rows.length}</td>
                             <td style="border: 1px solid #dee2e6; padding: 8px; text-align: right;">${stat.quantity.toLocaleString()}</td>
                             <td style="border: 1px solid #dee2e6; padding: 8px; text-align: right;">${stat.total.toLocaleString()}</td>
                             <td style="border: 1px solid #dee2e6; padding: 4px;">
                                 <select class="form-select" id="stats-payment-${index}" style="width: 100%; padding: 4px;">
                                     <option value="">선택</option>
-                                    <option value="현금">현금</option>
-                                    <option value="계좌이체">계좌이체</option>
-                                    <option value="카드">카드</option>
-                                    <option value="어음">어음</option>
+                                    <option value="현금" ${stat.paymentMethod === '현금' ? 'selected' : ''}>현금</option>
+                                    <option value="계좌이체" ${stat.paymentMethod === '계좌이체' ? 'selected' : ''}>계좌이체</option>
+                                    <option value="카드" ${stat.paymentMethod === '카드' ? 'selected' : ''}>카드</option>
+                                    <option value="어음" ${stat.paymentMethod === '어음' ? 'selected' : ''}>어음</option>
+                                    <option value="기타" ${stat.paymentMethod === '기타' ? 'selected' : ''}>기타</option>
                                 </select>
                             </td>
                             <td style="border: 1px solid #dee2e6; padding: 4px;">
                                 <input type="number" class="form-input" id="stats-amount-${index}" 
-                                       value="${stat.total}" style="width: 100%; padding: 4px; text-align: right;">
+                                       value="${stat.paymentAmount || stat.total}" 
+                                       style="width: 100%; padding: 4px; text-align: right;">
                             </td>
                             <td style="border: 1px solid #dee2e6; padding: 4px;">
                                 <input type="date" class="form-input" id="stats-date-${index}" 
+                                       value="${stat.paymentDate || ''}"
                                        style="width: 100%; padding: 4px;">
                             </td>
                             <td style="border: 1px solid #dee2e6; padding: 4px;">
                                 <button class="btn btn-sm btn-primary" 
-                                        onclick="PurchaseManager.applyStatsToTable(${index}, '${stat.date}', '${stat.vendor}')"
+                                        data-rows="${stat.rows.join(',')}"
+                                        onclick="PurchaseManager.applyStatsToTable(${index}, '${stat.date}', '${stat.vendor}', this)"
                                         style="padding: 4px 8px; font-size: 12px;">
                                     적용
                                 </button>
                             </td>
                         </tr>
                     `;
+                    index++;
                 });
                 
                 // 총계 행
                 html += `
                         <tr style="background: #e7f3ff; font-weight: bold;">
-                            <td colspan="2" style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">총계</td>
+                            <td colspan="3" style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">총계</td>
                             <td style="border: 1px solid #dee2e6; padding: 8px; text-align: right;">${totalQuantity.toLocaleString()}</td>
                             <td style="border: 1px solid #dee2e6; padding: 8px; text-align: right;">${totalAmount.toLocaleString()}</td>
                             <td colspan="4" style="border: 1px solid #dee2e6; padding: 8px;"></td>
@@ -1675,46 +1908,43 @@ currentDateRange: 'today',
                 document.getElementById('statsResult').innerHTML = html;
             },
 
-            applyStatsToTable(index, date, vendor) {
+            applyStatsToTable(index, date, vendor, button) {
                 const paymentMethod = document.getElementById(`stats-payment-${index}`).value;
                 const paymentAmount = document.getElementById(`stats-amount-${index}`).value;
                 const paymentDate = document.getElementById(`stats-date-${index}`).value;
                 
                 if (!paymentMethod || !paymentAmount || !paymentDate) {
-                    alert('결제방법, 결제금액, 결제일을 모두 입력해주세요.');
+                    this.showToast('결제방법, 결제금액, 결제일을 모두 입력하세요', 'error');
                     return;
                 }
                 
-                // 테이블 데이터 업데이트
-                const data = this.hot.getData();
-                let updated = false;
+                // 해당하는 행들 가져오기
+                const rows = button.dataset.rows.split(',').map(r => parseInt(r));
                 
-                data.forEach((row, rowIndex) => {
-                    if (row[0] === date && row[1] === vendor) {
-                        // 결제 정보 업데이트
-                        const paymentMethodCol = this.hot.propToCol('결제방법');
-                        const paymentAmountCol = this.hot.propToCol('결제금액');
-                        const paymentDateCol = this.hot.propToCol('결제일');
-                        
-                        if (paymentMethodCol !== null) {
-                            this.hot.setDataAtCell(rowIndex, paymentMethodCol, paymentMethod);
-                        }
-                        if (paymentAmountCol !== null) {
-                            this.hot.setDataAtCell(rowIndex, paymentAmountCol, parseFloat(paymentAmount));
-                        }
-                        if (paymentDateCol !== null) {
-                            this.hot.setDataAtCell(rowIndex, paymentDateCol, paymentDate);
-                        }
-                        
-                        updated = true;
+                // 각 행에 결제 정보 적용
+                rows.forEach(rowIndex => {
+                    const paymentMethodCol = this.hot.propToCol('결제방법');
+                    const paymentAmountCol = this.hot.propToCol('결제금액');
+                    const paymentDateCol = this.hot.propToCol('결제일');
+                    
+                    if (paymentMethodCol !== null) {
+                        this.hot.setDataAtCell(rowIndex, paymentMethodCol, paymentMethod);
+                    }
+                    if (paymentAmountCol !== null) {
+                        this.hot.setDataAtCell(rowIndex, paymentAmountCol, parseFloat(paymentAmount));
+                    }
+                    if (paymentDateCol !== null) {
+                        this.hot.setDataAtCell(rowIndex, paymentDateCol, paymentDate);
                     }
                 });
                 
-                if (updated) {
-                    this.showToast('결제 정보가 적용되었습니다.');
-                } else {
-                    this.showToast('해당 데이터를 찾을 수 없습니다.', 'error');
-                }
+                this.showToast(`${rows.length}건의 결제 정보가 적용되었습니다`);
+                
+                // 버튼 비활성화
+                button.disabled = true;
+                button.textContent = '적용됨';
+                button.classList.remove('btn-primary');
+                button.classList.add('btn-secondary');
             },
 
             async saveStatsChanges() {
