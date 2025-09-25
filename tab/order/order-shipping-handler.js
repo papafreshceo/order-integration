@@ -1096,9 +1096,7 @@ window.OrderShippingHandler = {
             '송장번호': 150
         };
         
-        const amountFields = [
-            '셀러공급가', '출고비용', '정산예정금액', '정산대상금액', '상품금액'
-        ];
+        
         
         const addressFields = ['주소', '수취인주소', '수령인주소', '발송지주소', '배송메세지', '배송메시지'];
         
