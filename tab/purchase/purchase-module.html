@@ -772,9 +772,8 @@
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            action: 'getSheetData',
                             spreadsheetId: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg',
-                            range: '원물관리!A:Z'
+                            range: '원물관리!A:J'
                         })
                     });
                     
@@ -946,9 +945,8 @@
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            action: 'getSheetData',
                             spreadsheetId: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg',
-                            range: '거래처관리!A:Z'
+                            range: '거래처관리!A:P'
                         })
                     });
                     
@@ -987,8 +985,9 @@
                     }
                 } catch (error) {
                     console.error('거래처 로드 실패:', error);
-                    this.showToast('거래처 목록을 불러올 수 없습니다', 'error');
+                    // 오류 발생해도 계속 진행
                     this.vendors = [];
+                    this.updateVendorFilter();
                 } finally {
                     this.hideLoading();
                 }
@@ -1424,9 +1423,8 @@
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            action: 'getSheetData',
                             spreadsheetId: '1a55b0APC5LlmgXhh-Lw4O-7V_gLT_9luDqfvkkesof0',
-                            range: `${sheetName}!A:Z`
+                            range: `${sheetName}!A:W`
                         })
                     });
                     
@@ -1464,7 +1462,6 @@
                     }
                 } catch (error) {
                     console.error('데이터 로드 실패:', error);
-                    this.showToast('데이터를 불러올 수 없습니다', 'error');
                     // 빈 데이터로 초기화
                     this.allData = [];
                     this.currentData = [];
@@ -1619,6 +1616,7 @@
                     
                     if (filteredData.length === 0) {
                         this.showToast('저장할 데이터가 없습니다', 'error');
+                        this.hideLoading();
                         return;
                     }
                     
@@ -1627,16 +1625,14 @@
                     else if (this.currentTab === 'purchase') sheetName = '구매관리';
                     else sheetName = '지출관리';
                     
-                    // 입력 모드인 경우 데이터 추가, 조회 모드인 경우 전체 업데이트
+                    // 입력 모드인 경우 데이터 추가
                     if (this.currentMode === 'edit') {
-                        // 데이터 추가
-                        const response = await fetch('/api/sheets', {
+                        const response = await fetch('/api/sheets/append', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                action: 'appendData',
                                 spreadsheetId: '1a55b0APC5LlmgXhh-Lw4O-7V_gLT_9luDqfvkkesof0',
-                                range: `${sheetName}!A:Z`,
+                                range: `${sheetName}!A:W`,
                                 values: filteredData
                             })
                         });
@@ -1650,18 +1646,19 @@
                             throw new Error(result.message || '저장 실패');
                         }
                     } else {
-                        // 전체 데이터 업데이트
-                        const response = await fetch('/api/sheets', {
+                        // 조회 모드에서는 전체 데이터 업데이트
+                        const headers = this.getColumnHeaders();
+                        const updateData = this.allData.map(row => {
+                            return headers.map(header => row[header] || '');
+                        });
+                        
+                        const response = await fetch('/api/sheets/update', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                action: 'updateData',
                                 spreadsheetId: '1a55b0APC5LlmgXhh-Lw4O-7V_gLT_9luDqfvkkesof0',
-                                range: `${sheetName}!A2:Z`,
-                                values: this.allData.map(row => {
-                                    const headers = this.getColumnHeaders();
-                                    return headers.map(header => row[header] || '');
-                                })
+                                range: `${sheetName}!A2:W${updateData.length + 1}`,
+                                values: updateData
                             })
                         });
                         
@@ -1739,8 +1736,21 @@
                 
                 this.showLoading();
                 try {
+                    // 먼저 현재 데이터를 가져옴
+                    const getResponse = await fetch('/api/sheets', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            spreadsheetId: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg',
+                            range: '거래처관리!A:P'
+                        })
+                    });
+                    
+                    const getData = await getResponse.json();
+                    const lastRow = getData.data ? getData.data.length : 1;
+                    
                     const newVendor = [
-                        '', // 연번
+                        String(lastRow), // 연번
                         category,
                         '', // 거래처코드
                         name,
@@ -1758,11 +1768,11 @@
                         document.getElementById('notes').value
                     ];
                     
-                    const response = await fetch('/api/sheets', {
+                    // 새 행 추가
+                    const response = await fetch('/api/sheets/append', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            action: 'appendData',
                             spreadsheetId: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg',
                             range: '거래처관리!A:P',
                             values: [newVendor]
