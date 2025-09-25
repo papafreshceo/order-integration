@@ -916,10 +916,10 @@ input[type="date"]::-webkit-datetime-edit-day-field {
         }, 100);
     },
 
-    initializeFilters() {
-        // 최근 7일을 기본값으로 설정
-        const today = new Date();
-        const sevenDaysAgo = new Date();
+     initializeFilters() {
+        // 최근 7일을 기본값으로 설정 (한국 시간 기준)
+        const today = this.getKoreanDate();
+        const sevenDaysAgo = new Date(today);
         sevenDaysAgo.setDate(today.getDate() - 6);
         
         document.getElementById('searchEndDate').value = this.formatDate(today);
@@ -927,6 +927,13 @@ input[type="date"]::-webkit-datetime-edit-day-field {
         
         // input type="date"의 표시 문제 해결
         this.fixDateInputDisplay();
+    },
+    
+    getKoreanDate() {
+        const now = new Date();
+        const kstOffset = 9 * 60; // KST는 UTC+9
+        const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+        return new Date(utcTime + (kstOffset * 60000));
     },
 
     formatDate(date) {
@@ -945,16 +952,17 @@ input[type="date"]::-webkit-datetime-edit-day-field {
             buttonElement.classList.add('active');
         }
 
-        const today = new Date();
-        let startDate = new Date();
-        let endDate = new Date();
+        const today = this.getKoreanDate();
+        let startDate = new Date(today);
+        let endDate = new Date(today);
 
         switch(type) {
             case 'today':
-                startDate = today;
-                endDate = today;
+                startDate = new Date(today);
+                endDate = new Date(today);
                 break;
             case 'yesterday':
+                startDate = new Date(today);
                 startDate.setDate(today.getDate() - 1);
                 endDate = new Date(startDate);
                 break;
@@ -969,16 +977,18 @@ input[type="date"]::-webkit-datetime-edit-day-field {
                 endDate = new Date(today);
                 break;
             case 'month':
+                startDate = new Date(today);
                 startDate.setDate(1);
-                endDate = today;
+                endDate = new Date(today);
                 break;
             case 'last30':
+                startDate = new Date(today);
                 startDate.setDate(today.getDate() - 30);
-                endDate = today;
+                endDate = new Date(today);
                 break;
             case 'custom':
                 return;
-        }
+        } 
 
         document.getElementById('searchStartDate').value = this.formatDate(startDate);
         document.getElementById('searchEndDate').value = this.formatDate(endDate);
@@ -1011,7 +1021,7 @@ fixDateInputDisplay() {
 
 
     resetFilters() {
-        const today = new Date();
+        const today = this.getKoreanDate();
         document.getElementById('searchStartDate').value = this.formatDate(today);
         document.getElementById('searchEndDate').value = this.formatDate(today);
         document.getElementById('searchMarketFilter').value = '';
@@ -1406,7 +1416,8 @@ fixDateInputDisplay() {
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, '주문목록');
         
-        const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
+        const koreanDate = this.getKoreanDate();
+        const date = koreanDate.toISOString().split('T')[0].replace(/-/g, '');
         XLSX.writeFile(wb, `주문조회_${date}.xlsx`);
     },
 
