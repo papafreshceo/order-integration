@@ -240,6 +240,7 @@
         .handsontable td {
             vertical-align: middle !important;
             color: #212529 !important;
+            background-color: #ffffff !important;
         }
         
         .handsontable td.unpaid-row {
@@ -249,13 +250,23 @@
 
         .handsontable td.readonly {
             background-color: #f5f6fa !important;
-            color: #212529 !important;
+            color: #6c757d !important;
             cursor: default !important;
         }
         
         .handsontable th {
             vertical-align: middle !important;
             color: #212529 !important;
+        }
+        
+        /* 입력모드에서 편집 가능한 셀 */
+        .handsontable td.htDimmed {
+            background-color: #f8f9fa !important;
+        }
+        
+        /* 선택된 셀 */
+        .handsontable td.current {
+            background-color: #e7f3ff !important;
         }
 
         /* 모달 */
@@ -1607,18 +1618,20 @@
                         return cellProperties;
                     }
                     
-                    // 미결제 행 체크
-                    const paymentMethodCol = this.hot.propToCol('결제방법');
-                    const paymentAmountCol = this.hot.propToCol('결제금액');
-                    const paymentDateCol = this.hot.propToCol('결제일');
-                    
-                    const hasPaymentMethod = data[paymentMethodCol] && data[paymentMethodCol] !== '';
-                    const hasPaymentAmount = data[paymentAmountCol] && data[paymentAmountCol] !== '' && data[paymentAmountCol] !== '0';
-                    const hasPaymentDate = data[paymentDateCol] && data[paymentDateCol] !== '';
-                    
-                    // 결제정보 중 하나라도 비어있으면 분홍색 배경
-                    if (!hasPaymentMethod || !hasPaymentAmount || !hasPaymentDate) {
-                        cellProperties.className = (cellProperties.className || '') + ' unpaid-row';
+                    // 조회모드에서만 미결제 행 체크
+                    if (this.currentMode === 'view') {
+                        const paymentMethodCol = this.hot.propToCol('결제방법');
+                        const paymentAmountCol = this.hot.propToCol('결제금액');
+                        const paymentDateCol = this.hot.propToCol('결제일');
+                        
+                        const hasPaymentMethod = data[paymentMethodCol] && data[paymentMethodCol] !== '';
+                        const hasPaymentAmount = data[paymentAmountCol] && data[paymentAmountCol] !== '' && data[paymentAmountCol] !== '0';
+                        const hasPaymentDate = data[paymentDateCol] && data[paymentDateCol] !== '';
+                        
+                        // 결제정보 중 하나라도 비어있으면 분홍색 배경
+                        if (!hasPaymentMethod || !hasPaymentAmount || !hasPaymentDate) {
+                            cellProperties.className = (cellProperties.className || '') + ' unpaid-row';
+                        }
                     }
                     
                     // 조회모드에서는 모든 필드 읽기전용
