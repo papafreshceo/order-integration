@@ -30,10 +30,10 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { action, range, data, values, spreadsheetId } = req.body;
+        const { action, range, data, values } = req.body;
+        console.log('Purchase API - action:', action);
 
         switch (action) {
-            // 구매관리 데이터 조회
             case 'getPurchaseData': {
                 const response = await sheets.spreadsheets.values.get({
                     spreadsheetId: SPREADSHEET_IDS.PURCHASE,
@@ -46,7 +46,6 @@ export default async function handler(req, res) {
                 });
             }
 
-            // 구매관리 데이터 업데이트
             case 'updatePurchaseData': {
                 const updateRange = range || '구매관리!A2:Q';
                 
@@ -84,7 +83,6 @@ export default async function handler(req, res) {
                 });
             }
 
-            // 거래처관리 데이터 조회
             case 'getVendors': {
                 const response = await sheets.spreadsheets.values.get({
                     spreadsheetId: SPREADSHEET_IDS.PRODUCTS,
@@ -97,7 +95,6 @@ export default async function handler(req, res) {
                 });
             }
 
-            // 거래처 추가
             case 'addVendor': {
                 const response = await sheets.spreadsheets.values.append({
                     spreadsheetId: SPREADSHEET_IDS.PRODUCTS,
@@ -115,39 +112,8 @@ export default async function handler(req, res) {
                 });
             }
 
-            // 결제 정보 업데이트 (특정 행만 업데이트)
-            case 'updatePayment': {
-                const { rowIndex, paymentAmount, paymentDate, sheetName } = req.body;
-                
-                // 먼저 현재 데이터 가져오기
-                const getResponse = await sheets.spreadsheets.values.get({
-                    spreadsheetId: SPREADSHEET_IDS.PURCHASE,
-                    range: `${sheetName}!A${rowIndex + 2}:Q${rowIndex + 2}` // 헤더 고려 +2
-                });
-                
-                const currentRow = getResponse.data.values?.[0] || [];
-                
-                // 결제금액과 결제일 업데이트 (열 인덱스 15, 16)
-                currentRow[15] = paymentAmount;
-                currentRow[16] = paymentDate;
-                
-                // 업데이트
-                const updateResponse = await sheets.spreadsheets.values.update({
-                    spreadsheetId: SPREADSHEET_IDS.PURCHASE,
-                    range: `${sheetName}!A${rowIndex + 2}:Q${rowIndex + 2}`,
-                    valueInputOption: 'USER_ENTERED',
-                    resource: {
-                        values: [currentRow]
-                    }
-                });
-                
-                return res.status(200).json({
-                    success: true,
-                    updatedCells: updateResponse.data.updatedCells
-                });
-            }
-
             default:
+                console.error('Unknown action:', action);
                 return res.status(400).json({
                     success: false,
                     error: `지원하지 않는 액션: ${action}`
