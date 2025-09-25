@@ -768,12 +768,11 @@
             async loadProductsData() {
                 this.showLoading();
                 try {
-                    const response = await fetch('/api/sheets', {
+                    const response = await fetch('/api/purchase', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            spreadsheetId: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg',
-                            range: '원물관리!A:J'
+                            action: 'getProductsData'
                         })
                     });
                     
@@ -941,12 +940,11 @@
             async loadVendors() {
                 this.showLoading();
                 try {
-                    const response = await fetch('/api/sheets', {
+                    const response = await fetch('/api/purchase', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            spreadsheetId: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg',
-                            range: '거래처관리!A:P'
+                            action: 'getVendors'
                         })
                     });
                     
@@ -985,7 +983,6 @@
                     }
                 } catch (error) {
                     console.error('거래처 로드 실패:', error);
-                    // 오류 발생해도 계속 진행
                     this.vendors = [];
                     this.updateVendorFilter();
                 } finally {
@@ -1419,12 +1416,12 @@
                         sheetName = '지출관리';
                     }
                     
-                    const response = await fetch('/api/sheets', {
+                    const response = await fetch('/api/purchase', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            spreadsheetId: '1a55b0APC5LlmgXhh-Lw4O-7V_gLT_9luDqfvkkesof0',
-                            range: `${sheetName}!A:W`
+                            action: 'getPurchaseData',
+                            range: `${sheetName}!A:Z`
                         })
                     });
                     
@@ -1625,51 +1622,32 @@
                     else if (this.currentTab === 'purchase') sheetName = '구매관리';
                     else sheetName = '지출관리';
                     
-                    // 입력 모드인 경우 데이터 추가
-                    if (this.currentMode === 'edit') {
-                        const response = await fetch('/api/sheets/append', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                spreadsheetId: '1a55b0APC5LlmgXhh-Lw4O-7V_gLT_9luDqfvkkesof0',
-                                range: `${sheetName}!A:W`,
-                                values: filteredData
-                            })
-                        });
+                    // 입력 모드인 경우 데이터 추가, 조회 모드인 경우 전체 업데이트
+                    const action = this.currentMode === 'edit' ? 'appendPurchaseData' : 'updatePurchaseData';
+                    
+                    const response = await fetch('/api/purchase', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: action,
+                            range: this.currentMode === 'edit' ? `${sheetName}!A:Z` : `${sheetName}!A2:Z`,
+                            data: this.currentMode === 'edit' ? filteredData : this.allData
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.showToast('저장 완료');
                         
-                        const result = await response.json();
-                        
-                        if (result.success) {
-                            this.showToast('저장 완료');
+                        // 입력 모드인 경우 조회 모드로 전환
+                        if (this.currentMode === 'edit') {
                             this.setViewMode();
                         } else {
-                            throw new Error(result.message || '저장 실패');
+                            await this.loadTabData();
                         }
                     } else {
-                        // 조회 모드에서는 전체 데이터 업데이트
-                        const headers = this.getColumnHeaders();
-                        const updateData = this.allData.map(row => {
-                            return headers.map(header => row[header] || '');
-                        });
-                        
-                        const response = await fetch('/api/sheets/update', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                spreadsheetId: '1a55b0APC5LlmgXhh-Lw4O-7V_gLT_9luDqfvkkesof0',
-                                range: `${sheetName}!A2:W${updateData.length + 1}`,
-                                values: updateData
-                            })
-                        });
-                        
-                        const result = await response.json();
-                        
-                        if (result.success) {
-                            this.showToast('저장 완료');
-                            await this.loadTabData();
-                        } else {
-                            throw new Error(result.message || '저장 실패');
-                        }
+                        throw new Error(result.message || '저장 실패');
                     }
                 } catch (error) {
                     console.error('저장 오류:', error);
@@ -1736,21 +1714,8 @@
                 
                 this.showLoading();
                 try {
-                    // 먼저 현재 데이터를 가져옴
-                    const getResponse = await fetch('/api/sheets', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            spreadsheetId: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg',
-                            range: '거래처관리!A:P'
-                        })
-                    });
-                    
-                    const getData = await getResponse.json();
-                    const lastRow = getData.data ? getData.data.length : 1;
-                    
                     const newVendor = [
-                        String(lastRow), // 연번
+                        '', // 연번
                         category,
                         '', // 거래처코드
                         name,
@@ -1768,13 +1733,11 @@
                         document.getElementById('notes').value
                     ];
                     
-                    // 새 행 추가
-                    const response = await fetch('/api/sheets/append', {
+                    const response = await fetch('/api/purchase', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            spreadsheetId: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg',
-                            range: '거래처관리!A:P',
+                            action: 'addVendor',
                             values: [newVendor]
                         })
                     });
