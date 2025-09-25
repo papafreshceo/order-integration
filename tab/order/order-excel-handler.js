@@ -46,6 +46,12 @@ window.OrderExcelHandler = {
                         body: JSON.stringify({ action: 'getProductData' })
                     });
                     
+                    if (!response.ok) {
+                        console.error('API 응답 실패:', response.status);
+                        this.isLoaded = false;
+                        return false;
+                    }
+                    
                     const result = await response.json();
                     if (result.productData) {
                         this.productData = result.productData;
@@ -54,9 +60,11 @@ window.OrderExcelHandler = {
                         console.log('제품 데이터 로드 완료:', Object.keys(this.productData).length + '개');
                         return true;
                     }
+                    this.isLoaded = false;
                     return false;
                 } catch (error) {
                     console.error('제품 데이터 로드 실패:', error);
+                    this.isLoaded = false;
                     return false;
                 }
             },
