@@ -243,7 +243,7 @@
         .handsontable td.readonly {
             background-color: #f5f6fa !important;
             color: #6c757d;
-            cursor: not-allowed;
+            cursor: default !important; /* 기본 마우스 커서 */
         }
 
         /* 모달 */
@@ -1212,12 +1212,10 @@
                         return cellProperties;
                     }
                     
-                    // 조회모드 처리
+                    // 조회모드에서는 모든 필드 읽기전용
                     if (this.currentMode === 'view') {
-                        if (prop !== '결제방법' && prop !== '결제금액' && prop !== '결제일') {
-                            cellProperties.readOnly = true;
-                            cellProperties.className = 'readonly';
-                        }
+                        cellProperties.readOnly = true;
+                        cellProperties.className = 'readonly';
                     } else {
                         // 입력모드 처리
                         // 대분류, 중분류, 금액, 합계는 항상 읽기전용
