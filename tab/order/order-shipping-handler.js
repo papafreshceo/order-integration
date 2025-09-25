@@ -1107,13 +1107,29 @@ window.OrderShippingHandler = {
         }
         
         const originalHeaders = Object.keys(this.currentOrders[0]);
-        const headers = [];
         
-        for (let h of originalHeaders) {
-            // 직원이면 금액 필드 제외
-            if (!isAdmin && amountFields.includes(h)) {
-                continue;
+        // 직원이면 금액 필드를 완전히 제거한 헤더 배열 생성
+        const headers = originalHeaders.filter(header => {
+            // 택배사와 송장번호는 특별 처리
+            if (header === '택배사' || header === '송장번호') {
+                return false; // 일단 제외, 나중에 추가
             }
+            // 직원이고 금액 필드면 제외
+            if (!isAdmin && amountFields.some(field => header.includes(field))) {
+                return false;
+            }
+            return true;
+        });
+        
+        // 주문번호 뒤에 택배사, 송장번호 추가
+        const orderIndex = headers.indexOf('주문번호');
+        if (orderIndex !== -1) {
+            headers.splice(orderIndex + 1, 0, '택배사', '송장번호');
+        } else {
+            // 주문번호가 없으면 끝에 추가
+            if (!headers.includes('택배사')) headers.push('택배사');
+            if (!headers.includes('송장번호')) headers.push('송장번호');
+        }
             headers.push(h);
             if (h === '주문번호') {
                 if (originalHeaders.includes('택배사') && !headers.includes('택배사')) {
