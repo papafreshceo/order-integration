@@ -1821,10 +1821,17 @@
                 try {
                     const data = this.hot.getData();
                     
-                    // 빈 행 제거
-                    const filteredData = data.filter(row => 
-                        row.some(cell => cell !== null && cell !== '' && cell !== 0)
-                    );
+                    // 빈 행 제거 - 날짜만 있고 다른 중요 필드가 비어있는 행 제외
+                    const filteredData = data.filter(row => {
+                        // 날짜 외에 거래처, 품목, 수량, 단가 중 하나라도 있어야 유효한 데이터
+                        const hasVendor = row[1] && row[1] !== ''; // 거래처
+                        const hasProduct = row[4] && row[4] !== ''; // 품목
+                        const hasQuantity = row[9] && row[9] !== '' && row[9] !== 0; // 수량
+                        const hasPrice = row[10] && row[10] !== '' && row[10] !== 0; // 단가
+                        
+                        // 거래처, 품목, 수량, 단가 중 하나라도 있으면 저장
+                        return hasVendor || hasProduct || hasQuantity || hasPrice;
+                    });
                     
                     if (filteredData.length === 0) {
                         this.showToast('저장할 데이터가 없습니다', 'error');
@@ -1846,7 +1853,15 @@
                         body: JSON.stringify({
                             action: action,
                             range: this.currentMode === 'edit' ? `${sheetName}!A:Z` : `${sheetName}!A2:Z`,
-                            data: this.currentMode === 'edit' ? filteredData : this.allData
+                            data: this.currentMode === 'edit' ? filteredData : this.allData.filter(row => {
+                                // 조회모드에서도 동일한 필터 적용
+                                const hasVendor = row['거래처'] && row['거래처'] !== '';
+                                const hasProduct = row['품목'] && row['품목'] !== '';
+                                const hasQuantity = row['수량'] && row['수량'] !== '' && row['수량'] !== 0;
+                                const hasPrice = row['단가'] && row['단가'] !== '' && row['단가'] !== 0;
+                                
+                                return hasVendor || hasProduct || hasQuantity || hasPrice;
+                            })
                         })
                     });
                     
