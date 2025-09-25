@@ -755,6 +755,8 @@
             },
             isEditingInView: false,  // 추가: 조회모드에서 수정 중인지 여부
             statsData: [],  // 추가: 통계 데이터
+            statsDateRange: 'today',  // 추가: 통계 날짜 범위
+            statsPaymentStatus: 'all',  // 추가: 통계 결제상태
             
             toggleEditInView() {
                 this.isEditingInView = !this.isEditingInView;
