@@ -693,40 +693,52 @@
         },
         
         async loadVendors() {
-            this.showLoading();
-            try {
-                const response = await fetch('/api/purchase', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'getVendors'
-                    })
+    this.showLoading();
+    try {
+        const response = await fetch('/api/purchase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'getVendors'
+            })
+        });
+        
+        // 500 에러 처리
+        if (!response.ok) {
+            console.error('거래처 API 에러:', response.status);
+            // API 에러 시 빈 배열로 초기화
+            this.vendors = [];
+            this.updateVendorFilter();
+            return;
+        }
+        
+        const result = await response.json();
+        if (result.success && result.data) {
+            const headers = result.data[0];
+            this.vendors = result.data.slice(1).map(row => {
+                const vendor = {};
+                headers.forEach((header, index) => {
+                    vendor[header] = row[index] || '';
                 });
-                
-                const result = await response.json();
-                if (result.success && result.data) {
-                    const headers = result.data[0];
-                    this.vendors = result.data.slice(1).map(row => {
-                        const vendor = {};
-                        headers.forEach((header, index) => {
-                            vendor[header] = row[index] || '';
-                        });
-                        return vendor;
-                    });
-                    
-                    // 거래처별 계좌번호 매핑
-                    this.vendors.forEach(vendor => {
-                        this.vendorAccounts[vendor['거래처명']] = vendor['계좌번호'] || '';
-                    });
-                    
-                    this.updateVendorFilter();
-                }
-            } catch (error) {
-                console.error('거래처 로드 실패:', error);
-            } finally {
-                this.hideLoading();
-            }
-        },
+                return vendor;
+            });
+            
+            // 거래처별 계좌번호 매핑
+            this.vendors.forEach(vendor => {
+                this.vendorAccounts[vendor['거래처명']] = vendor['계좌번호'] || '';
+            });
+            
+            this.updateVendorFilter();
+        }
+    } catch (error) {
+        console.error('거래처 로드 실패:', error);
+        // 에러 시 빈 배열로 초기화
+        this.vendors = [];
+        this.updateVendorFilter();
+    } finally {
+        this.hideLoading();
+    }
+},
         
         updateVendorFilter() {
             const filter = document.getElementById('vendorFilter');
@@ -873,32 +885,42 @@
                 },
                 
                 cells: (row, col, prop) => {
-                    const cellProperties = {};
-                    const data = this.hot.getDataAtRow(row);
-                    
-                    // 미결제 행 강조
-                    if (data && (!data[15] || !data[16])) { // 결제금액 또는 결제일이 없으면
-                        cellProperties.className = 'unpaid-row';
-                    }
-                    
-                    // 조회 모드에서 미결제가 아닌 경우 결제금액/결제일 수정 불가
-                    if (this.currentMode === 'view' && data && data[15] && data[16]) {
-                        if (prop === '결제금액' || prop === '결제일') {
-                            cellProperties.readOnly = true;
-                            cellProperties.className = 'readonly';
-                        }
-                    }
-                    
-                    // 농가 선택 시 출하자, 수수료 비활성화
-                    if (this.currentVendorType === '농가') {
-                        if (prop === '출하자' || prop === '수수료') {
-                            cellProperties.readOnly = true;
-                            cellProperties.className = 'readonly';
-                        }
-                    }
-                    
-                    return cellProperties;
-                }
+    const cellProperties = {};
+    
+    // hot이 초기화되지 않았거나 데이터가 없으면 기본값 반환
+    if (!this.hot || !this.hot.getDataAtRow) {
+        return cellProperties;
+    }
+    
+    const data = this.hot.getDataAtRow(row);
+    
+    if (!data) {
+        return cellProperties;
+    }
+    
+    // 미결제 행 강조
+    if (data && (!data[15] || !data[16])) {
+        cellProperties.className = 'unpaid-row';
+    }
+    
+    // 조회 모드에서 미결제가 아닌 경우 결제금액/결제일 수정 불가
+    if (this.currentMode === 'view' && data && data[15] && data[16]) {
+        if (prop === '결제금액' || prop === '결제일') {
+            cellProperties.readOnly = true;
+            cellProperties.className = 'readonly';
+        }
+    }
+    
+    // 농가 선택 시 출하자, 수수료 비활성화
+    if (this.currentVendorType === '농가') {
+        if (prop === '출하자' || prop === '수수료') {
+            cellProperties.readOnly = true;
+            cellProperties.className = 'readonly';
+        }
+    }
+    
+    return cellProperties;
+}
             });
         },
         
