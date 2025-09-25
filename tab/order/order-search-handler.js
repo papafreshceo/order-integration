@@ -956,10 +956,7 @@ fixDateInputDisplay() {
         }
     },
     
-    resetFilters() {
-        const today = new Date();
-        document.getElementById('searchStartDate').value = this.formatDate(today);
-        document.getElementById('searchEndDate').value = this.formatDate(today);
+
 
 
 
