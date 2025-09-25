@@ -159,11 +159,10 @@
             right: 0;
             bottom: 0;
             background: rgba(255, 255, 255, 0.9);
-            display: flex;
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 9999;
-            display: none;
         }
 
         .loading-overlay.show {
@@ -194,6 +193,7 @@
             border-radius: 8px;
             display: none;
             animation: slideIn 0.3s ease;
+            z-index: 10000;
         }
 
         .toast.show {
@@ -213,6 +213,18 @@
                 transform: translateX(0);
                 opacity: 1;
             }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            font-weight: 400;
+            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -247,7 +259,13 @@
                         </tr>
                     </thead>
                     <tbody id="purchaseTableBody">
-                        <!-- 동적 생성 -->
+                        <tr>
+                            <td colspan="13">
+                                <div class="empty-state">
+                                    <h3>데이터 로딩 중...</h3>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -262,37 +280,49 @@
 
     <script>
         const PurchaseManager = {
-            spreadsheetId: '1a55b0APC5LlmgXhh-Lw4O-7V_gLT_9luDqfvkkesof0',
-            sheetName: '구매관리',
             data: [],
             hasChanges: false,
 
             async init() {
+                console.log('구매관리 초기화 시작');
                 await this.loadData();
                 this.setupAutoSave();
             },
 
             async loadData() {
-    this.showLoading();
-    try {
-        const response = await fetch('/api/sheets', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'getSheetData',
-                spreadsheetId: this.spreadsheetId,
-                range: `${this.sheetName}!A:M`
-            })
-        });
+                this.showLoading();
+                try {
+                    const response = await fetch('/api/purchase', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'getPurchaseData',
+                            range: '구매관리!A:M'
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
                     const result = await response.json();
+                    console.log('API 응답:', result);
                     
                     if (result.success && result.data) {
-                        this.data = result.data.slice(1); // 헤더 제외
+                        this.data = result.data.slice(1) || []; // 헤더 제외
+                        this.renderTable();
+                        this.showToast('데이터 로드 완료');
+                    } else {
+                        // 데이터가 없으면 빈 테이블 표시
+                        this.data = [];
                         this.renderTable();
                     }
                 } catch (error) {
                     console.error('데이터 로드 실패:', error);
                     this.showToast('데이터 로드 실패', 'error');
+                    // 에러 시 빈 테이블 표시
+                    this.data = [];
+                    this.renderTable();
                 } finally {
                     this.hideLoading();
                 }
@@ -302,10 +332,12 @@
                 const tbody = document.getElementById('purchaseTableBody');
                 tbody.innerHTML = '';
 
-                // 기존 데이터 렌더링
-                this.data.forEach((row, index) => {
-                    this.addRow(row, index);
-                });
+                // 데이터가 있으면 렌더링
+                if (this.data && this.data.length > 0) {
+                    this.data.forEach((row, index) => {
+                        this.addRow(row, index);
+                    });
+                }
 
                 // 새 행 추가 버튼
                 const newRowTr = document.createElement('tr');
@@ -342,14 +374,15 @@
                     const td = document.createElement('td');
                     const input = document.createElement('input');
                     
+                    input.className = 'cell-input';
+                    
                     if (col.type === 'date') {
                         input.type = 'date';
                     } else if (col.type === 'number') {
                         input.type = 'text';
-                        input.className = 'cell-input number';
+                        input.className += ' number';
                     } else {
                         input.type = 'text';
-                        input.className = 'cell-input';
                     }
 
                     if (col.readonly) {
@@ -373,21 +406,26 @@
                     tr.appendChild(td);
                 });
 
-                tbody.insertBefore(tr, tbody.lastElementChild);
+                // 마지막 행 앞에 삽입
+                const lastRow = tbody.lastElementChild;
+                if (lastRow && lastRow.querySelector('.new-row-btn')) {
+                    tbody.insertBefore(tr, lastRow);
+                } else {
+                    tbody.appendChild(tr);
+                }
 
                 // 자동 계산
-                if (rowData.length > 0) {
-                    this.calculateRow(rowIndex);
-                }
+                this.calculateRow(rowIndex);
             },
 
             addNewRow() {
                 const newIndex = this.data.length;
                 const today = new Date().toISOString().split('T')[0];
-                const newRow = [today, '', '', '', '', '', '', '', '', '', '', '', ''];
+                const newRow = Array(13).fill('');
+                newRow[0] = today;
                 
                 this.data.push(newRow);
-                this.renderTable();
+                this.addRow(newRow, newIndex);
                 this.hasChanges = true;
             },
 
@@ -402,19 +440,21 @@
                 const amount = quantity * unitPrice;
                 const total = amount + commission;
 
-                row.querySelector('input[data-column="7"]').value = amount.toLocaleString();
-                row.querySelector('input[data-column="9"]').value = total.toLocaleString();
+                row.querySelector('input[data-column="7"]').value = amount ? amount.toLocaleString() : '';
+                row.querySelector('input[data-column="9"]').value = total ? total.toLocaleString() : '';
 
                 // 데이터 업데이트
-                if (this.data[rowIndex]) {
-                    this.data[rowIndex][7] = amount.toString();
-                    this.data[rowIndex][9] = total.toString();
+                if (!this.data[rowIndex]) {
+                    this.data[rowIndex] = Array(13).fill('');
                 }
+                this.data[rowIndex][7] = amount.toString();
+                this.data[rowIndex][9] = total.toString();
+                this.hasChanges = true;
             },
 
             updateCell(rowIndex, columnIndex, value) {
                 if (!this.data[rowIndex]) {
-                    this.data[rowIndex] = [];
+                    this.data[rowIndex] = Array(13).fill('');
                 }
                 this.data[rowIndex][columnIndex] = value;
                 this.hasChanges = true;
@@ -428,15 +468,15 @@
 
                 this.showLoading();
                 try {
-                    const response = await fetch('/api/sheets', {
+                    const response = await fetch('/api/purchase', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-    action: 'updateSheetData',
-    spreadsheetId: this.spreadsheetId,
-    range: `${this.sheetName}!A2:M`,
-    values: this.data
-})
+                            action: 'updatePurchaseData',
+                            range: '구매관리!A2:M',
+                            data: this.data
+                        })
+                    });
 
                     const result = await response.json();
                     
@@ -455,8 +495,12 @@
             },
 
             async refreshData() {
+                if (this.hasChanges) {
+                    if (!confirm('저장하지 않은 변경사항이 있습니다. 새로고침하시겠습니까?')) {
+                        return;
+                    }
+                }
                 await this.loadData();
-                this.showToast('새로고침 완료');
             },
 
             setupAutoSave() {
@@ -487,7 +531,7 @@
             showToast(message, type = 'success') {
                 const toast = document.getElementById('toast');
                 toast.textContent = message;
-                toast.className = `toast show ${type}`;
+                toast.className = `toast show ${type === 'error' ? 'error' : ''}`;
                 
                 setTimeout(() => {
                     toast.classList.remove('show');
