@@ -628,6 +628,8 @@
             vendorAccounts: {},
             vendorPaymentTerms: {},
             vendorTypeMap: {}, // 거래처별 구분 매핑
+            vendorCommissionType: {}, // 거래처별 수수료방식 매핑
+            vendorCommissionRate: {}, // 거래처별 수수료율 매핑
             allData: [],       // 전체 원본 데이터
             currentData: [],   // 현재 표시 데이터
             productsData: [],
@@ -968,6 +970,15 @@
                             const name = vendor['거래처명'];
                             this.vendorAccounts[name] = vendor['계좌번호'] || '';
                             this.vendorPaymentTerms[name] = vendor['결제조건'] || '';
+                            this.vendorCommissionType[name] = vendor['수수료방식'] || '정액';
+                            
+                            // 수수료 처리 - % 기호가 있으면 제거하고 숫자만 추출
+                            const commissionValue = vendor['수수료'] || '0';
+                            if (typeof commissionValue === 'string' && commissionValue.includes('%')) {
+                                this.vendorCommissionRate[name] = parseFloat(commissionValue.replace('%', '')) || 0;
+                            } else {
+                                this.vendorCommissionRate[name] = parseFloat(commissionValue) || 0;
+                            }
                             
                             // 거래처 구분 매핑
                             if (vendor['구분'] === '구매처(도매)') {
@@ -1224,12 +1235,18 @@
                             cellProperties.className = 'readonly';
                         }
                         
-                        // 거래처가 농가인 경우 출하자, 수수료 비활성화
+                        // 거래처가 농가인 경우 출하자 비활성화, 수수료는 자동계산되므로 비활성화
                         const vendorCol = this.hot.propToCol('거래처');
                         const vendor = data[vendorCol];
                         const vendorType = this.vendorTypeMap[vendor];
                         
-                        if (vendorType === '농가' && (prop === '출하자' || prop === '수수료')) {
+                        if (vendorType === '농가' && prop === '출하자') {
+                            cellProperties.readOnly = true;
+                            cellProperties.className = 'readonly';
+                        }
+                        
+                        // 수수료는 항상 자동계산
+                        if (prop === '수수료') {
                             cellProperties.readOnly = true;
                             cellProperties.className = 'readonly';
                         }
@@ -1290,7 +1307,7 @@
             },
 
             handleAfterChange(changes, source) {
-                if (source === 'loadData') return;
+                if (source === 'loadData' || source === 'autocalc') return;
                 
                 changes?.forEach(([row, prop, oldValue, newValue]) => {
                     // 거래처 변경 처리
@@ -1303,8 +1320,8 @@
                         this.handleProductChange(row, newValue);
                     }
                     
-                    // 수량, 단가, 수수료 변경시 자동계산
-                    if (['수량', '단가', '수수료'].includes(prop)) {
+                    // 수량, 단가 변경시 자동계산 (수수료 제외)
+                    if (['수량', '단가'].includes(prop)) {
                         this.calculateRow(row);
                     }
                 });
@@ -1335,18 +1352,16 @@
                         }
                     }
                     
-                    // 거래처가 농가인 경우 출하자, 수수료 초기화
+                    // 거래처가 농가인 경우 출하자 초기화
                     if (this.vendorTypeMap[vendor] === '농가') {
                         const 출하자Col = this.hot.propToCol('출하자');
-                        const 수수료Col = this.hot.propToCol('수수료');
-                        
                         if (출하자Col !== null) {
                             this.hot.setDataAtCell(row, 출하자Col, '');
                         }
-                        if (수수료Col !== null) {
-                            this.hot.setDataAtCell(row, 수수료Col, 0);
-                        }
                     }
+                    
+                    // 수수료 자동계산
+                    this.calculateRow(row);
                 }
             },
 
@@ -1373,27 +1388,39 @@
             
             calculateRow(row) {
                 const data = this.hot.getDataAtRow(row);
+                const vendorCol = this.hot.propToCol('거래처');
                 const quantityCol = this.hot.propToCol('수량');
                 const priceCol = this.hot.propToCol('단가');
                 const amountCol = this.hot.propToCol('금액');
                 const commissionCol = this.hot.propToCol('수수료');
                 const totalCol = this.hot.propToCol('합계');
                 
-                if (quantityCol === null || priceCol === null) return;
-                
+                const vendor = data[vendorCol];
                 const quantity = parseFloat(data[quantityCol]) || 0;
                 const price = parseFloat(data[priceCol]) || 0;
-                const commission = commissionCol !== null ? (parseFloat(data[commissionCol]) || 0) : 0;
                 
                 const amount = quantity * price;
+                
+                // 수수료 자동계산 (거래처별 수수료방식 적용)
+                let commission = 0;
+                if (vendor && this.vendorCommissionType[vendor]) {
+                    const commissionType = this.vendorCommissionType[vendor];
+                    const commissionRate = this.vendorCommissionRate[vendor] || 0;
+                    
+                    if (commissionType === '정액') {
+                        // 정액: 수수료 = 거래처수수료 × 수량
+                        commission = commissionRate * quantity;
+                    } else if (commissionType === '정율') {
+                        // 정율: 수수료 = (단가 × 수량) × (수수료율 / 100)
+                        commission = amount * (commissionRate / 100);
+                    }
+                }
+                
                 const total = amount + commission;
                 
-                if (amountCol !== null) {
-                    this.hot.setDataAtCell(row, amountCol, amount, 'autocalc');
-                }
-                if (totalCol !== null) {
-                    this.hot.setDataAtCell(row, totalCol, total, 'autocalc');
-                }
+                this.hot.setDataAtCell(row, amountCol, amount, 'autocalc');
+                this.hot.setDataAtCell(row, commissionCol, commission, 'autocalc');
+                this.hot.setDataAtCell(row, totalCol, total, 'autocalc');
             },
             
             async loadTabData() {
