@@ -293,10 +293,22 @@ case 'addCsOrder':
                       if (header && header !== '옵션명') {
                           const value = productSheetData[i][idx];
                           if (header.includes('비용') || header.includes('가격') || header.includes('금액')) {
-                              rowData[header] = parseNumber(value);
-                          } else {
-                              rowData[header] = String(value || '').trim();
-                          }
+    // parseNumber 인라인 처리
+    let numValue = 0;
+    if (value !== null && value !== undefined && value !== '') {
+        if (typeof value === 'number') {
+            numValue = value;
+        } else {
+            let strValue = String(value).trim();
+            strValue = strValue.replace(/[,₩￦$¥£€\s]/g, '');
+            const num = parseFloat(strValue);
+            numValue = isNaN(num) ? 0 : num;
+        }
+    }
+    rowData[header] = numValue;
+} else {
+    rowData[header] = String(value || '').trim();
+}
                       }
                   });
                   
