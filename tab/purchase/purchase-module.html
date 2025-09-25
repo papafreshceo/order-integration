@@ -317,34 +317,126 @@
                 opacity: 1;
             }
         }
+
+
+
+        /* 필터 카드 스타일 추가 */
+.filter-cards {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-card {
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-card-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: #6c757d;
+    margin-bottom: 8px;
+}
+
+.filter-options {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filter-option {
+    padding: 6px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
+    background: #ffffff;
+    color: #495057;
+    font-size: 12px;
+    font-weight: 300;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-option:hover {
+    border-color: #2563eb;
+    color: #2563eb;
+}
+
+.filter-option.active {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+
+.date-range-custom {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 8px;
+}
+
+
+
     </style>
 </head>
 <body>
     <div class="container">
+
         <!-- 조회 필터 섹션 -->
-        <div class="header-section">
-            <div class="filter-group">
-                <label class="filter-label">기간</label>
+<div class="header-section">
+    <div class="filter-cards">
+        <!-- 기간 필터 카드 -->
+        <div class="filter-card">
+            <div class="filter-card-title">기간</div>
+            <div class="filter-options">
+                <button class="filter-option active" onclick="PurchaseManager.setDateRange('today')">오늘</button>
+                <button class="filter-option" onclick="PurchaseManager.setDateRange('7days')">최근 7일</button>
+                <button class="filter-option" onclick="PurchaseManager.setDateRange('30days')">최근 30일</button>
+                <button class="filter-option" onclick="PurchaseManager.setDateRange('all')">전체</button>
+                <button class="filter-option" onclick="PurchaseManager.setDateRange('custom')">직접선택</button>
+            </div>
+            <div class="date-range-custom" id="customDateRange" style="display:none;">
                 <input type="date" id="startDate" class="filter-input">
                 <span>~</span>
                 <input type="date" id="endDate" class="filter-input">
-                
-                <label class="filter-label">거래처</label>
-                <select id="vendorFilter" class="filter-select">
-                    <option value="">전체</option>
-                </select>
-                
-                <label class="filter-label">결제상태</label>
-                <select id="paymentFilter" class="filter-select">
-                    <option value="">전체</option>
-                    <option value="unpaid">미결제</option>
-                    <option value="paid">결제완료</option>
-                </select>
-                
-                <button class="btn btn-primary" onclick="PurchaseManager.searchData()">조회</button>
-                <button class="btn btn-secondary" onclick="PurchaseManager.resetFilter()">초기화</button>
             </div>
         </div>
+
+        <!-- 거래처 구분 필터 카드 (사입관리 탭에서만 표시) -->
+        <div class="filter-card" id="vendorTypeCard">
+            <div class="filter-card-title">거래처 구분</div>
+            <div class="filter-options">
+                <button class="filter-option active" data-type="all" onclick="PurchaseManager.setVendorType('all')">전체</button>
+                <button class="filter-option" data-type="중매인" onclick="PurchaseManager.setVendorType('중매인')">중매인</button>
+                <button class="filter-option" data-type="농가" onclick="PurchaseManager.setVendorType('농가')">농가</button>
+                <button class="filter-option" data-type="기타" onclick="PurchaseManager.setVendorType('기타')">기타</button>
+            </div>
+        </div>
+
+        <!-- 결제상태 필터 카드 -->
+        <div class="filter-card">
+            <div class="filter-card-title">결제상태</div>
+            <div class="filter-options">
+                <button class="filter-option active" data-payment="all" onclick="PurchaseManager.setPaymentStatus('all')">전체</button>
+                <button class="filter-option" data-payment="unpaid" onclick="PurchaseManager.setPaymentStatus('unpaid')">미결제</button>
+                <button class="filter-option" data-payment="paid" onclick="PurchaseManager.setPaymentStatus('paid')">결제완료</button>
+            </div>
+        </div>
+
+        <!-- 거래처 선택 -->
+        <div class="filter-card">
+            <div class="filter-card-title">거래처</div>
+            <select id="vendorFilter" class="filter-select" style="width: 100%;">
+                <option value="">전체</option>
+            </select>
+        </div>
+    </div>
+
+    <div style="margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end;">
+        <button class="btn btn-primary" onclick="PurchaseManager.searchData()">조회</button>
+        <button class="btn btn-secondary" onclick="PurchaseManager.resetFilter()">초기화</button>
+    </div>
+</div>
 
         <!-- 탭 네비게이션 -->
         <div class="tab-nav">
@@ -1002,6 +1094,171 @@
         document.addEventListener('DOMContentLoaded', () => {
             PurchaseManager.init();
         });
+
+
+
+
+        // PurchaseManager 객체에 다음 메서드들 추가
+
+currentVendorType: 'all',
+currentPaymentStatus: 'all',
+currentDateRange: 'today',
+
+setDateRange(range) {
+    // 모든 버튼 비활성화
+    document.querySelectorAll('.filter-option').forEach(btn => {
+        if (btn.textContent === '오늘' || btn.textContent === '최근 7일' || 
+            btn.textContent === '최근 30일' || btn.textContent === '전체' || 
+            btn.textContent === '직접선택') {
+            btn.classList.remove('active');
+        }
+    });
+    
+    const today = new Date();
+    let startDate, endDate;
+    
+    switch(range) {
+        case 'today':
+            startDate = today;
+            endDate = today;
+            document.getElementById('customDateRange').style.display = 'none';
+            break;
+        case '7days':
+            startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            endDate = today;
+            document.getElementById('customDateRange').style.display = 'none';
+            break;
+        case '30days':
+            startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+            endDate = today;
+            document.getElementById('customDateRange').style.display = 'none';
+            break;
+        case 'all':
+            startDate = new Date('2020-01-01');
+            endDate = today;
+            document.getElementById('customDateRange').style.display = 'none';
+            break;
+        case 'custom':
+            document.getElementById('customDateRange').style.display = 'flex';
+            event.target.classList.add('active');
+            return;
+    }
+    
+    document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+    document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+    event.target.classList.add('active');
+    this.currentDateRange = range;
+},
+
+setVendorType(type) {
+    document.querySelectorAll('[data-type]').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-type="${type}"]`).classList.add('active');
+    
+    this.currentVendorType = type;
+    
+    // 거래처 필터 업데이트
+    this.updateVendorFilter();
+    
+    // 입력 모드에서 농가 선택 시 출하자, 수수료 비활성화
+    if (this.currentMode === 'edit' && type === '농가') {
+        this.hot.updateSettings({
+            columns: this.getColumns()
+        });
+    }
+},
+
+setPaymentStatus(status) {
+    document.querySelectorAll('[data-payment]').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-payment="${status}"]`).classList.add('active');
+    this.currentPaymentStatus = status;
+},
+
+updateVendorFilter() {
+    const filter = document.getElementById('vendorFilter');
+    filter.innerHTML = '<option value="">전체</option>';
+    
+    let filteredVendors = [];
+    
+    if (this.currentTab === 'supply') {
+        if (this.currentVendorType === '중매인') {
+            filteredVendors = this.vendors.filter(v => v['구분'] === '구매처(도매)');
+        } else if (this.currentVendorType === '농가') {
+            filteredVendors = this.vendors.filter(v => v['구분'] === '구매처(농가)');
+        } else if (this.currentVendorType === '기타') {
+            filteredVendors = this.vendors.filter(v => 
+                v['구분'] !== '구매처(도매)' && v['구분'] !== '구매처(농가)' && v['구분'] !== '자재구입처'
+            );
+        } else {
+            filteredVendors = this.vendors;
+        }
+    } else if (this.currentTab === 'purchase') {
+        filteredVendors = this.vendors.filter(v => v['구분'] === '자재구입처');
+    } else {
+        filteredVendors = this.vendors;
+    }
+    
+    filteredVendors.forEach(vendor => {
+        const option = document.createElement('option');
+        option.value = vendor['거래처명'];
+        option.textContent = vendor['거래처명'];
+        filter.appendChild(option);
+    });
+},
+
+// init 메서드 수정
+async init() {
+    console.log('구매관리 초기화');
+    
+    // 오늘 날짜 기본값 설정
+    this.setDateRange('today');
+    
+    // 탭 이벤트 리스너
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            this.currentTab = e.target.dataset.tab;
+            
+            // 탭에 따라 거래처 구분 카드 표시/숨김
+            if (this.currentTab === 'supply') {
+                document.getElementById('vendorTypeCard').style.display = 'block';
+            } else {
+                document.getElementById('vendorTypeCard').style.display = 'none';
+            }
+            
+            this.updateVendorFilter();
+            this.loadTabData();
+        });
+    });
+    
+    // 거래처 데이터 로드
+    await this.loadVendors();
+    
+    // 테이블 초기화
+    this.initTable();
+    
+    // 초기 데이터 로드
+    await this.loadTabData();
+},
+
+resetFilter() {
+    // 오늘로 리셋
+    this.setDateRange('today');
+    
+    // 전체 선택
+    document.querySelectorAll('[data-type="all"], [data-payment="all"]').forEach(btn => {
+        btn.click();
+    });
+    
+    // 거래처 전체
+    document.getElementById('vendorFilter').value = '';
+    
+    this.loadTabData();
+}
     </script>
 </body>
 </html>
