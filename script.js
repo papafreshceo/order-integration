@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
 async function initializeApp() {
     await loadMappingData();
     setupEventListeners();
-    switchTab('dashboard');
+    switchTab('ordermanage');
 }
 
 // ===========================
