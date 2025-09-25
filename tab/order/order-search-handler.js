@@ -1172,10 +1172,28 @@ fixDateInputDisplay() {
         
         // 매핑시트에서 가져온 모든 헤더 추가
         if (this.currentOrders.length > 0) {
+            // 사용자 권한 확인
+            const userRole = window.currentUser?.role || 'staff';
+            const isAdmin = userRole === 'admin';
+            
+            // 금액 필드 정의
+            const amountFields = [
+                '셀러공급가', '출고비용', '정산예정금액', '정산대상금액',
+                '상품금액', '최종결제금액', '할인금액', '마켓부담할인금액',
+                '판매자할인쿠폰할인', '구매쿠폰적용금액', '쿠폰할인금액',
+                '기타지원금할인금', '수수료1', '수수료2', '택배비'
+            ];
+            
             // 테이블 전체 너비 계산
             let totalWidth = 50; // checkbox width
             this.tableHeaders = Object.keys(this.currentOrders[0]);
-            this.tableHeaders.forEach(header => {
+            
+            // 직원이면 금액 필드 제외
+            const visibleHeaders = this.tableHeaders.filter(header => 
+                isAdmin || !amountFields.some(field => header.includes(field))
+            );
+            
+            visibleHeaders.forEach(header => {
                 totalWidth += this.columnWidths[header] || 100;
             });
             
@@ -1186,7 +1204,7 @@ fixDateInputDisplay() {
                 table.style.width = totalWidth + 'px';
             }
             
-            this.tableHeaders.forEach(header => {
+            visibleHeaders.forEach(header => {
                 const th = document.createElement('th');
                 th.textContent = header;
                 const width = this.columnWidths[header] || 100;
@@ -1234,7 +1252,7 @@ fixDateInputDisplay() {
             '셀러공급가', '출고비용', '정산예정금액', '정산대상금액',
             '상품금액', '최종결제금액', '할인금액', '마켓부담할인금액',
             '판매자할인쿠폰할인', '구매쿠폰적용금액', '쿠폰할인금액',
-            '기타지원금할인금', '수수료1', '수수료2'
+            '기타지원금할인금', '수수료1', '수수료2', '택배비'
         ];
         
         const tdCheckbox = document.createElement('td');
@@ -1243,12 +1261,12 @@ fixDateInputDisplay() {
         tdCheckbox.innerHTML = `<input type="checkbox" class="order-checkbox" data-index="${serialNumber - 1}">`;
         row.appendChild(tdCheckbox);
         
+        // 직원이면 금액 필드 제외한 헤더만 처리
+        const visibleHeaders = this.tableHeaders.filter(header => 
+            isAdmin || !amountFields.some(field => header.includes(field))
+        );
 
-        this.tableHeaders.forEach(header => {
-            // 직원이고 금액 필드면 스킵
-            if (!isAdmin && amountFields.some(field => header.includes(field))) {
-                return;
-            }
+        visibleHeaders.forEach(header => {
             
             const td = document.createElement('td');
             
