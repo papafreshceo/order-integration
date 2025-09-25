@@ -768,13 +768,11 @@
             async loadProductsData() {
                 this.showLoading();
                 try {
-                    // 거래처관리와 동일한 방식으로 sheets API 직접 사용
-                    const response = await fetch('/api/sheets', {
+                    const response = await fetch('/api/purchase', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            spreadsheetId: '17MGwbu1DZf5yg-BLhfZr-DO-OPiau3aeyBMtSssv7Sg',
-                            range: '원물관리!A:J'
+                            action: 'getProductsData'
                         })
                     });
                     
@@ -1064,7 +1062,6 @@
                             type: (this.currentMode === 'edit' && this.currentEditVendorType === '기타') ? 'text' : 'dropdown',
                             source: (this.currentMode === 'edit' && this.currentEditVendorType === '기타') ? undefined : this.getVendorList()
                         },
-                        { data: '출하자', type: 'text' },
                         { data: '대분류', type: 'text', readOnly: true },
                         { data: '중분류', type: 'text', readOnly: true },
                         { 
@@ -1077,6 +1074,7 @@
                             type: 'dropdown',
                             source: []
                         },
+                        { data: '출하자', type: 'text' },
                         { data: '품종명', type: 'text' },
                         { data: '규격', type: 'text' },
                         { data: '수량', type: 'numeric', numericFormat: { pattern: '0,0' } },
@@ -1158,7 +1156,7 @@
 
             getColumnHeaders() {
                 if (this.currentTab === 'supply') {
-                    const headers = ['날짜', '거래처', '출하자', '대분류', '중분류', '품목', '품종', '품종명', 
+                    const headers = ['날짜', '거래처', '대분류', '중분류', '품목', '품종', '출하자', '품종명', 
                                     '규격', '수량', '단가', '금액', '수수료', '합계', '작업', '맛', '비고'];
                     
                     if (this.currentMode === 'view') {
