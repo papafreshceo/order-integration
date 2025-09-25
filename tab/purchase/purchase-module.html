@@ -9,6 +9,22 @@
     
     <style>
         * {
+            toggleGrouping() {
+                this.isGroupingEnabled = !this.isGroupingEnabled;
+                const btn = document.getElementById('groupBtn');
+                
+                if (this.isGroupingEnabled) {
+                    btn.textContent = '그룹 해제';
+                    btn.classList.remove('btn-info');
+                    btn.classList.add('btn-warning');
+                    this.applyGrouping();
+                } else {
+                    btn.textContent = '그룹 표시';
+                    btn.classList.add('btn-info');
+                    btn.classList.remove('btn-warning');
+                    this.removeGrouping();
+                }
+            },
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -518,9 +534,10 @@
                 </div>
             </div>
             <div class="action-buttons">
+                <button id="editInViewBtn" class="btn btn-warning" onclick="PurchaseManager.toggleEditInView()" style="display:none;">수정</button>
                 <button id="groupBtn" class="btn btn-info" onclick="PurchaseManager.toggleGrouping()" style="display:none;">그룹 표시</button>
                 <button id="statsBtn" class="btn btn-info" onclick="PurchaseManager.showStatsModal()" style="display:none;">통계</button>
-                <button id="saveBtn" class="btn btn-success" onclick="PurchaseManager.saveData()">저장</button>
+                <button id="saveBtn" class="btn btn-success" onclick="PurchaseManager.saveData()" style="display:none;">저장</button>
                 <button id="deleteBtn" class="btn btn-danger" onclick="PurchaseManager.deleteRows()" style="display:none;">선택 행 삭제</button>
             </div>
         </div>
@@ -600,30 +617,104 @@
         </div>
     </div>
 
-    <!-- 통계 모달 -->
+    <!-- 통계 및 결제 관리 모달 -->
     <div id="statsModal" class="modal">
-        <div class="modal-content" style="max-width: 1000px;">
+        <div class="modal-content" style="max-width: 1200px;">
             <div class="modal-header">
-                <h3 class="modal-title">일자별 거래처별 통계</h3>
+                <h3 class="modal-title">거래처별 결제 관리</h3>
                 <button class="btn" onclick="PurchaseManager.closeStatsModal()">✕</button>
             </div>
             <div class="modal-body">
-                <div class="form-group" style="display: flex; gap: 20px;">
-                    <div style="flex: 1;">
-                        <label class="form-label">시작일</label>
-                        <input type="date" id="statsStartDate" class="form-input">
+                <!-- 필터 섹션 -->
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <!-- 기간 필터 -->
+                    <div style="margin-bottom: 15px;">
+                        <label style="font-size: 12px; color: #6c757d; display: block; margin-bottom: 8px;">기간 선택</label>
+                        <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                            <button class="filter-option active" onclick="PurchaseManager.setStatsDateRange('today')">오늘</button>
+                            <button class="filter-option" onclick="PurchaseManager.setStatsDateRange('7days')">최근 7일</button>
+                            <button class="filter-option" onclick="PurchaseManager.setStatsDateRange('30days')">최근 30일</button>
+                            <button class="filter-option" onclick="PurchaseManager.setStatsDateRange('custom')">직접입력</button>
+                        </div>
+                        <div id="statsCustomDateRange" style="display: none; gap: 10px; align-items: center;">
+                            <input type="date" id="statsStartDate" class="form-input" style="width: 150px;">
+                            <span>~</span>
+                            <input type="date" id="statsEndDate" class="form-input" style="width: 150px;">
+                        </div>
                     </div>
-                    <div style="flex: 1;">
-                        <label class="form-label">종료일</label>
-                        <input type="date" id="statsEndDate" class="form-input">
-                    </div>
-                    <div style="flex: 1; display: flex; align-items: flex-end;">
-                        <button class="btn btn-primary" style="width: 100%;" onclick="PurchaseManager.generateStats()">통계 생성</button>
+                    
+                    <!-- 거래처 및 결제상태 필터 -->
+                    <div style="display: flex; gap: 20px;">
+                        <div style="flex: 1;">
+                            <label style="font-size: 12px; color: #6c757d; display: block; margin-bottom: 8px;">거래처</label>
+                            <select id="statsVendorFilter" class="form-select" onchange="PurchaseManager.updateStatsData()">
+                                <option value="">전체</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 12px; color: #6c757d; display: block; margin-bottom: 8px;">결제상태</label>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="filter-option active" data-payment-status="all" onclick="PurchaseManager.setStatsPaymentStatus('all')">전체</button>
+                                <button class="filter-option" data-payment-status="unpaid" onclick="PurchaseManager.setStatsPaymentStatus('unpaid')">미결제</button>
+                                <button class="filter-option" data-payment-status="paid" onclick="PurchaseManager.setStatsPaymentStatus('paid')">결제완료</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
-                <div id="statsResult" style="margin-top: 20px; max-height: 500px; overflow-y: auto;">
-                    <!-- 통계 결과 표시 영역 -->
+                <!-- 집계 결과 테이블 -->
+                <div id="statsResult" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #e7f3ff; position: sticky; top: 0;">
+                                <th style="border: 1px solid #dee2e6; padding: 10px; width: 30px;">
+                                    <input type="checkbox" id="statsSelectAll" onchange="PurchaseManager.toggleAllStatsRows()">
+                                </th>
+                                <th style="border: 1px solid #dee2e6; padding: 10px;">거래처명</th>
+                                <th style="border: 1px solid #dee2e6; padding: 10px;">일자</th>
+                                <th style="border: 1px solid #dee2e6; padding: 10px;">건수</th>
+                                <th style="border: 1px solid #dee2e6; padding: 10px;">합계금액</th>
+                                <th style="border: 1px solid #dee2e6; padding: 10px;">결제방법</th>
+                                <th style="border: 1px solid #dee2e6; padding: 10px;">결제금액</th>
+                                <th style="border: 1px solid #dee2e6; padding: 10px;">결제일</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statsTableBody">
+                            <!-- 동적 생성 -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 일괄 입력 섹션 -->
+                <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="font-size: 14px; margin-bottom: 10px;">일괄 입력 (선택한 거래처에 동일하게 적용)</h4>
+                    <div style="display: flex; gap: 10px; align-items: end;">
+                        <div style="flex: 1;">
+                            <label style="font-size: 12px; color: #6c757d;">결제방법</label>
+                            <select id="bulkPaymentMethod" class="form-select">
+                                <option value="">선택</option>
+                                <option value="현금">현금</option>
+                                <option value="계좌이체">계좌이체</option>
+                                <option value="카드">카드</option>
+                                <option value="어음">어음</option>
+                                <option value="기타">기타</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 12px; color: #6c757d;">결제일</label>
+                            <input type="date" id="bulkPaymentDate" class="form-input">
+                        </div>
+                        <button class="btn btn-warning" onclick="PurchaseManager.applyBulkPayment()">선택항목 일괄적용</button>
+                    </div>
+                </div>
+                
+                <!-- 액션 버튼 -->
+                <div style="display: flex; justify-content: space-between;">
+                    <button class="btn btn-info" onclick="PurchaseManager.printStatement()">거래명세서 출력</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="PurchaseManager.closeStatsModal()">취소</button>
+                        <button class="btn btn-success" onclick="PurchaseManager.saveStatsPayments()">결제정보 저장</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -660,20 +751,80 @@
             isGroupingEnabled: false,
             originalData: [], // 그룹핑 전 원본 데이터
             
-            toggleGrouping() {
-                this.isGroupingEnabled = !this.isGroupingEnabled;
-                const btn = document.getElementById('groupBtn');
+            toggleEditInView() {
+                this.isEditingInView = !this.isEditingInView;
+                const btn = document.getElementById('editInViewBtn');
+                const saveBtn = document.getElementById('saveBtn');
                 
-                if (this.isGroupingEnabled) {
-                    btn.textContent = '그룹 해제';
-                    btn.classList.remove('btn-info');
-                    btn.classList.add('btn-warning');
-                    this.applyGrouping();
-                } else {
-                    btn.textContent = '그룹 표시';
-                    btn.classList.add('btn-info');
+                if (this.isEditingInView) {
+                    btn.textContent = '수정 취소';
                     btn.classList.remove('btn-warning');
-                    this.removeGrouping();
+                    btn.classList.add('btn-secondary');
+                    saveBtn.style.display = 'inline-block';
+                    saveBtn.textContent = '수정 완료';
+                    
+                    // 그룹 해제
+                    if (this.isGroupingEnabled) {
+                        this.toggleGrouping();
+                    }
+                    document.getElementById('groupBtn').style.display = 'none';
+                    document.getElementById('statsBtn').style.display = 'none';
+                    
+                    // 편집 가능하게 변경
+                    this.hot.updateSettings({
+                        cells: (row, col, prop) => {
+                            const cellProperties = {};
+                            const data = this.hot.getDataAtRow(row);
+                            
+                            if (!data) return cellProperties;
+                            
+                            // 미결제 행 체크
+                            const paymentMethodCol = this.hot.propToCol('결제방법');
+                            const paymentAmountCol = this.hot.propToCol('결제금액');
+                            const paymentDateCol = this.hot.propToCol('결제일');
+                            
+                            const hasPaymentMethod = data[paymentMethodCol] && data[paymentMethodCol] !== '';
+                            const hasPaymentAmount = data[paymentAmountCol] && data[paymentAmountCol] !== '' && data[paymentAmountCol] !== '0';
+                            const hasPaymentDate = data[paymentDateCol] && data[paymentDateCol] !== '';
+                            
+                            if (!hasPaymentMethod || !hasPaymentAmount || !hasPaymentDate) {
+                                cellProperties.className = (cellProperties.className || '') + ' unpaid-row';
+                            }
+                            
+                            // 자동계산 필드만 읽기전용
+                            if (prop === '대분류' || prop === '중분류' || prop === '금액' || prop === '합계') {
+                                cellProperties.readOnly = true;
+                                cellProperties.className = 'readonly';
+                            }
+                            
+                            // 거래처에 수수료 설정이 있을 때만 수수료 자동계산
+                            const vendorCol = this.hot.propToCol('거래처');
+                            const vendor = data[vendorCol];
+                            
+                            if (prop === '수수료' && vendor && this.vendorCommissionType[vendor]) {
+                                cellProperties.readOnly = true;
+                                cellProperties.className = 'readonly';
+                            }
+                            
+                            return cellProperties;
+                        }
+                    });
+                } else {
+                    btn.textContent = '수정';
+                    btn.classList.add('btn-warning');
+                    btn.classList.remove('btn-secondary');
+                    saveBtn.style.display = 'none';
+                    
+                    document.getElementById('groupBtn').style.display = 'inline-block';
+                    document.getElementById('statsBtn').style.display = 'inline-block';
+                    
+                    // 읽기전용으로 변경
+                    this.hot.updateSettings({
+                        cells: this.getCellsFunction()
+                    });
+                    
+                    // 데이터 새로고침
+                    this.loadTabData();
                 }
             },
             
@@ -989,6 +1140,20 @@
             },
 
             selectVendorType(type) {
+                // 이전 타입의 데이터 저장
+                if (this.currentMode === 'edit' && this.hot) {
+                    const prevData = this.hot.getData();
+                    // 실제 데이터가 있는 행만 저장
+                    this.vendorTypeData[this.currentEditVendorType] = prevData.filter(row => {
+                        const hasVendor = row[1] && row[1] !== '';
+                        const hasProduct = row[4] && row[4] !== '';
+                        const hasQuantity = row[9] && row[9] !== '' && row[9] !== 0;
+                        const hasPrice = row[10] && row[10] !== '' && row[10] !== 0;
+                        return hasVendor || hasProduct || hasQuantity || hasPrice;
+                    });
+                }
+                
+                // 새 타입으로 전환
                 document.querySelectorAll('.vendor-type-btn').forEach(btn => {
                     btn.classList.toggle('active', btn.dataset.vendorType === type);
                 });
@@ -1001,6 +1166,29 @@
                         columns: this.getColumns(),
                         cells: this.getCellsFunction()
                     });
+                    
+                    // 저장된 데이터가 있으면 로드, 없으면 빈 데이터
+                    if (this.vendorTypeData[type] && this.vendorTypeData[type].length > 0) {
+                        // 저장된 데이터에 빈 행 추가
+                        const savedData = [...this.vendorTypeData[type]];
+                        const emptyRowsNeeded = Math.max(10 - savedData.length, 3);
+                        
+                        for (let i = 0; i < emptyRowsNeeded; i++) {
+                            const emptyRow = Array(this.getColumnHeaders().length).fill('');
+                            emptyRow[0] = new Date().toISOString().split('T')[0];
+                            savedData.push(emptyRow);
+                        }
+                        
+                        this.hot.loadData(savedData);
+                    } else {
+                        // 빈 데이터로 초기화
+                        const emptyData = Array(10).fill(null).map(() => {
+                            const row = Array(this.getColumnHeaders().length).fill('');
+                            row[0] = new Date().toISOString().split('T')[0]; // 날짜
+                            return row;
+                        });
+                        this.hot.loadData(emptyData);
+                    }
                 }
             },
 
@@ -1268,6 +1456,7 @@
                         { data: '비고', type: 'text' }
                     ];
                     
+                    // 조회모드에서만 결제 관련 컬럼 추가
                     if (this.currentMode === 'view') {
                         columns.push(
                             { data: '결제조건', type: 'text', readOnly: true },
@@ -1293,25 +1482,8 @@
                                 }
                             }
                         );
-                    } else {
-                        columns.push(
-                            { 
-                                data: '결제방법', 
-                                type: 'dropdown', 
-                                source: ['', '현금', '계좌이체', '카드', '어음', '기타']
-                            },
-                            { data: '결제금액', type: 'numeric', numericFormat: { pattern: '0,0' } },
-                            { 
-                                data: '결제일', 
-                                type: 'date', 
-                                dateFormat: 'YYYY-MM-DD',
-                                renderer: (instance, td, row, col, prop, value) => {
-                                    td.innerHTML = this.formatDateWithDay(value);
-                                    return td;
-                                }
-                            }
-                        );
                     }
+                    // 입력모드에서는 결제 관련 컬럼 없음
                 } else if (this.currentTab === 'purchase') {
                     columns = [
                         { data: '날짜', type: 'date', dateFormat: 'YYYY-MM-DD' },
@@ -1345,10 +1517,9 @@
                     const headers = ['날짜', '거래처', '대분류', '중분류', '품목', '품종', '출하자', '품종명', 
                                     '규격', '수량', '단가', '금액', '수수료', '합계', '작업', '맛', '비고'];
                     
+                    // 조회모드에서만 결제 관련 컬럼 추가
                     if (this.currentMode === 'view') {
                         headers.push('결제조건', '계좌번호', '결제방법', '결제금액', '결제일');
-                    } else {
-                        headers.push('결제방법', '결제금액', '결제일');
                     }
                     return headers;
                 } else if (this.currentTab === 'purchase') {
@@ -1424,7 +1595,7 @@
                             cellProperties.className = 'readonly';
                         }
                         
-                        // 거래처가 농가인 경우 출하자 비활성화, 수수료는 자동계산되므로 비활성화
+                        // 거래처가 농가인 경우 출하자 비활성화
                         const vendorCol = this.hot.propToCol('거래처');
                         const vendor = data[vendorCol];
                         const vendorType = this.vendorTypeMap[vendor];
@@ -1434,8 +1605,8 @@
                             cellProperties.className = 'readonly';
                         }
                         
-                        // 수수료는 항상 자동계산
-                        if (prop === '수수료') {
+                        // 수수료는 거래처에 설정이 있을 때만 자동계산 (없으면 수동입력 가능)
+                        if (prop === '수수료' && vendor && this.vendorCommissionType[vendor]) {
                             cellProperties.readOnly = true;
                             cellProperties.className = 'readonly';
                         }
@@ -1490,6 +1661,33 @@
                     licenseKey: 'non-commercial-and-evaluation',
                     // language: 'ko-KR', // 한국어 언어팩이 없으므로 제거
                     
+                    beforeChange: (changes, source) => {
+                        if (source === 'loadData' || source === 'autocalc') return;
+                        
+                        changes?.forEach(change => {
+                            const [row, prop, oldValue, newValue] = change;
+                            
+                            // 수량, 단가 컬럼에서 숫자가 아닌 값 입력 방지
+                            if (prop === '수량' || prop === '단가') {
+                                // 빈 값은 허용
+                                if (newValue === '' || newValue === null) {
+                                    return;
+                                }
+                                
+                                // 숫자가 아닌 경우
+                                const numValue = parseFloat(newValue);
+                                if (isNaN(numValue)) {
+                                    change[3] = oldValue; // 이전 값으로 복원
+                                    this.showToast('숫자만 입력 가능합니다', 'error');
+                                } else if (numValue < 0) {
+                                    change[3] = oldValue; // 음수 방지
+                                    this.showToast('음수는 입력할 수 없습니다', 'error');
+                                } else {
+                                    change[3] = numValue; // 숫자 값으로 변경
+                                }
+                            }
+                        });
+                    },
                     afterChange: this.handleAfterChange.bind(this),
                     cells: this.getCellsFunction()
                 });
@@ -1509,8 +1707,8 @@
                         this.handleProductChange(row, newValue);
                     }
                     
-                    // 수량, 단가 변경시 자동계산 (수수료 제외)
-                    if (['수량', '단가'].includes(prop)) {
+                    // 수량, 단가, 수수료 변경시 자동계산
+                    if (['수량', '단가', '수수료'].includes(prop)) {
                         this.calculateRow(row);
                     }
                 });
@@ -1590,25 +1788,30 @@
                 
                 const amount = quantity * price;
                 
-                // 수수료 자동계산 (거래처별 수수료방식 적용)
+                // 수수료 계산
                 let commission = 0;
+                
+                // 거래처에 수수료 설정이 있으면 자동계산
                 if (vendor && this.vendorCommissionType[vendor]) {
                     const commissionType = this.vendorCommissionType[vendor];
                     const commissionRate = this.vendorCommissionRate[vendor] || 0;
                     
                     if (commissionType === '정액') {
-                        // 정액: 수수료 = 거래처수수료 × 수량
                         commission = commissionRate * quantity;
                     } else if (commissionType === '정율') {
-                        // 정율: 수수료 = (단가 × 수량) × (수수료율 / 100)
                         commission = amount * (commissionRate / 100);
                     }
+                    
+                    // 자동계산된 수수료 설정
+                    this.hot.setDataAtCell(row, commissionCol, commission, 'autocalc');
+                } else {
+                    // 거래처 수수료 설정이 없으면 수동입력된 값 사용
+                    commission = parseFloat(data[commissionCol]) || 0;
                 }
                 
                 const total = amount + commission;
                 
                 this.hot.setDataAtCell(row, amountCol, amount, 'autocalc');
-                this.hot.setDataAtCell(row, commissionCol, commission, 'autocalc');
                 this.hot.setDataAtCell(row, totalCol, total, 'autocalc');
             },
             
@@ -1755,6 +1958,7 @@
                 }
                 
                 this.currentMode = 'view';
+                this.isEditingInView = false;
                 document.getElementById('viewModeBtn').classList.add('btn-primary');
                 document.getElementById('viewModeBtn').classList.remove('btn-secondary');
                 document.getElementById('editModeBtn').classList.remove('btn-primary');
@@ -1762,7 +1966,12 @@
                 document.getElementById('deleteBtn').style.display = 'none';
                 document.getElementById('statsBtn').style.display = 'inline-block';
                 document.getElementById('groupBtn').style.display = 'inline-block';
+                document.getElementById('editInViewBtn').style.display = 'inline-block';
                 document.getElementById('vendorTypeSelector').style.display = 'none';
+                
+                // 저장 버튼 텍스트 변경
+                document.getElementById('saveBtn').textContent = '저장';
+                document.getElementById('saveBtn').style.display = 'none';
                 
                 // 컬럼 업데이트
                 this.hot.updateSettings({
@@ -1788,23 +1997,37 @@
                 document.getElementById('viewModeBtn').classList.add('btn-secondary');
                 document.getElementById('deleteBtn').style.display = 'inline-block';
                 document.getElementById('statsBtn').style.display = 'none';
+                document.getElementById('groupBtn').style.display = 'none';
+                document.getElementById('editInViewBtn').style.display = 'none';
+                document.getElementById('saveBtn').style.display = 'inline-block';
+                document.getElementById('saveBtn').textContent = '저장';
                 
                 if (this.currentTab === 'supply') {
                     document.getElementById('vendorTypeSelector').style.display = 'inline-flex';
                 }
                 
-                // 빈 데이터로 초기화
-                const emptyData = Array(10).fill(null).map(() => {
-                    const obj = { 날짜: new Date().toISOString().split('T')[0] };
+                // 저장된 데이터가 있으면 로드, 없으면 빈 데이터
+                const currentTypeData = this.vendorTypeData[this.currentEditVendorType];
+                
+                let dataToLoad;
+                if (currentTypeData && currentTypeData.length > 0) {
+                    // 저장된 데이터 사용
+                    dataToLoad = [...currentTypeData];
+                    const emptyRowsNeeded = Math.max(10 - dataToLoad.length, 3);
                     
-                    this.getColumnHeaders().forEach(header => {
-                        if (header !== '날짜') {
-                            obj[header] = '';
-                        }
+                    for (let i = 0; i < emptyRowsNeeded; i++) {
+                        const emptyRow = Array(this.getColumnHeaders().length).fill('');
+                        emptyRow[0] = new Date().toISOString().split('T')[0];
+                        dataToLoad.push(emptyRow);
+                    }
+                } else {
+                    // 빈 데이터로 초기화
+                    dataToLoad = Array(10).fill(null).map(() => {
+                        const row = Array(this.getColumnHeaders().length).fill('');
+                        row[0] = new Date().toISOString().split('T')[0]; // 날짜
+                        return row;
                     });
-                    
-                    return obj;
-                });
+                }
                 
                 // 컬럼 업데이트
                 this.hot.updateSettings({
@@ -1813,71 +2036,115 @@
                     cells: this.getCellsFunction()
                 });
                 
-                this.hot.loadData(emptyData);
+                this.hot.loadData(dataToLoad);
             },
             
             async saveData() {
                 this.showLoading();
                 try {
-                    const data = this.hot.getData();
-                    
-                    // 빈 행 제거 - 날짜만 있고 다른 중요 필드가 비어있는 행 제외
-                    const filteredData = data.filter(row => {
-                        // 날짜 외에 거래처, 품목, 수량, 단가 중 하나라도 있어야 유효한 데이터
-                        const hasVendor = row[1] && row[1] !== ''; // 거래처
-                        const hasProduct = row[4] && row[4] !== ''; // 품목
-                        const hasQuantity = row[9] && row[9] !== '' && row[9] !== 0; // 수량
-                        const hasPrice = row[10] && row[10] !== '' && row[10] !== 0; // 단가
+                    // 조회모드에서 수정 중인 경우
+                    if (this.currentMode === 'view' && this.isEditingInView) {
+                        const data = this.hot.getData();
                         
-                        // 거래처, 품목, 수량, 단가 중 하나라도 있으면 저장
-                        return hasVendor || hasProduct || hasQuantity || hasPrice;
-                    });
-                    
-                    if (filteredData.length === 0) {
-                        this.showToast('저장할 데이터가 없습니다', 'error');
+                        // 전체 데이터 업데이트
+                        const headers = this.getColumnHeaders();
+                        const updateData = data.map(row => {
+                            return headers.map(header => {
+                                const colIndex = headers.indexOf(header);
+                                return row[colIndex] || '';
+                            });
+                        });
+                        
+                        let sheetName = '';
+                        if (this.currentTab === 'supply') sheetName = '사입관리';
+                        else if (this.currentTab === 'purchase') sheetName = '구매관리';
+                        else sheetName = '지출관리';
+                        
+                        const response = await fetch('/api/purchase', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                action: 'updatePurchaseData',
+                                range: `${sheetName}!A2:Z`,
+                                data: updateData
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            this.showToast('수정 완료');
+                            this.toggleEditInView(); // 수정 모드 종료
+                        } else {
+                            throw new Error(result.message || '수정 실패');
+                        }
+                        
                         this.hideLoading();
                         return;
                     }
                     
-                    let sheetName = '';
-                    if (this.currentTab === 'supply') sheetName = '사입관리';
-                    else if (this.currentTab === 'purchase') sheetName = '구매관리';
-                    else sheetName = '지출관리';
-                    
-                    // 입력 모드인 경우 데이터 추가, 조회 모드인 경우 전체 업데이트
-                    const action = this.currentMode === 'edit' ? 'appendPurchaseData' : 'updatePurchaseData';
-                    
-                    const response = await fetch('/api/purchase', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            action: action,
-                            range: this.currentMode === 'edit' ? `${sheetName}!A:Z` : `${sheetName}!A2:Z`,
-                            data: this.currentMode === 'edit' ? filteredData : this.allData.filter(row => {
-                                // 조회모드에서도 동일한 필터 적용
-                                const hasVendor = row['거래처'] && row['거래처'] !== '';
-                                const hasProduct = row['품목'] && row['품목'] !== '';
-                                const hasQuantity = row['수량'] && row['수량'] !== '' && row['수량'] !== 0;
-                                const hasPrice = row['단가'] && row['단가'] !== '' && row['단가'] !== 0;
-                                
-                                return hasVendor || hasProduct || hasQuantity || hasPrice;
-                            })
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        this.showToast('저장 완료');
+                    // 입력 모드인 경우
+                    if (this.currentMode === 'edit') {
+                        // 현재 거래처 타입의 데이터 저장
+                        const currentData = this.hot.getData();
                         
-                        // 입력 모드인 경우 조회 모드로 전환
-                        if (this.currentMode === 'edit') {
+                        // 모든 거래처 타입의 데이터 수집
+                        let allDataToSave = [];
+                        
+                        // 현재 타입의 데이터 포함
+                        this.vendorTypeData[this.currentEditVendorType] = currentData.filter(row => {
+                            const hasVendor = row[1] && row[1] !== '';
+                            const hasProduct = row[4] && row[4] !== '';
+                            const hasQuantity = row[9] && row[9] !== '' && row[9] !== 0;
+                            const hasPrice = row[10] && row[10] !== '' && row[10] !== 0;
+                            return hasVendor || hasProduct || hasQuantity || hasPrice;
+                        });
+                        
+                        // 모든 타입의 데이터 합치기
+                        ['중매인', '농가', '기타'].forEach(type => {
+                            if (this.vendorTypeData[type] && this.vendorTypeData[type].length > 0) {
+                                allDataToSave = allDataToSave.concat(this.vendorTypeData[type]);
+                            }
+                        });
+                        
+                        if (allDataToSave.length === 0) {
+                            this.showToast('저장할 데이터가 없습니다', 'error');
+                            this.hideLoading();
+                            return;
+                        }
+                        
+                        let sheetName = '';
+                        if (this.currentTab === 'supply') sheetName = '사입관리';
+                        else if (this.currentTab === 'purchase') sheetName = '구매관리';
+                        else sheetName = '지출관리';
+                        
+                        const response = await fetch('/api/purchase', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                action: 'appendPurchaseData',
+                                range: `${sheetName}!A:Z`,
+                                data: allDataToSave
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            this.showToast('저장 완료');
+                            
+                            // 저장 후 데이터 초기화
+                            this.vendorTypeData = {
+                                '중매인': [],
+                                '농가': [],
+                                '기타': []
+                            };
+                            
+                            // 조회 모드로 전환
                             this.setViewMode();
                         } else {
-                            await this.loadTabData();
+                            throw new Error(result.message || '저장 실패');
                         }
-                    } else {
-                        throw new Error(result.message || '저장 실패');
                     }
                 } catch (error) {
                     console.error('저장 오류:', error);
@@ -1997,10 +2264,17 @@
             },
 
             showStatsModal() {
-                const today = new Date();
-                const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-                document.getElementById('statsStartDate').value = firstDay.toISOString().split('T')[0];
-                document.getElementById('statsEndDate').value = today.toISOString().split('T')[0];
+                // 모달 초기화
+                this.statsDateRange = 'today';
+                this.statsPaymentStatus = 'all';
+                this.setStatsDateRange('today');
+                
+                // 거래처 목록 업데이트
+                this.updateStatsVendorFilter();
+                
+                // 초기 데이터 로드
+                this.updateStatsData();
+                
                 document.getElementById('statsModal').classList.add('show');
             },
 
@@ -2008,195 +2282,383 @@
                 document.getElementById('statsModal').classList.remove('show');
             },
 
-            async generateStats() {
-                const startDate = document.getElementById('statsStartDate').value;
-                const endDate = document.getElementById('statsEndDate').value;
+            setStatsDateRange(range) {
+                this.statsDateRange = range;
                 
-                if (!startDate || !endDate) {
-                    this.showToast('시작일과 종료일을 선택하세요', 'error');
-                    return;
-                }
-                
-                const data = this.hot.getData();
-                const statsMap = new Map();
-                
-                // 데이터 집계
-                data.forEach((row, rowIndex) => {
-                    const date = row[0];
-                    const vendor = row[1];
-                    const quantity = parseFloat(row[9]) || 0;
-                    const total = parseFloat(row[13]) || 0;
-                    const paymentMethod = row[this.hot.propToCol('결제방법')] || '';
-                    const paymentAmount = parseFloat(row[this.hot.propToCol('결제금액')]) || 0;
-                    const paymentDate = row[this.hot.propToCol('결제일')] || '';
-                    
-                    if (date >= startDate && date <= endDate && vendor) {
-                        const key = `${date}_${vendor}`;
-                        
-                        if (!statsMap.has(key)) {
-                            statsMap.set(key, {
-                                date: date,
-                                vendor: vendor,
-                                rows: [],
-                                quantity: 0,
-                                total: 0,
-                                paymentMethod: paymentMethod,
-                                paymentAmount: paymentAmount,
-                                paymentDate: paymentDate
-                            });
-                        }
-                        
-                        const stat = statsMap.get(key);
-                        stat.rows.push(rowIndex);
-                        stat.quantity += quantity;
-                        stat.total += total;
-                        
-                        // 결제정보가 있으면 우선 사용
-                        if (!stat.paymentMethod && paymentMethod) {
-                            stat.paymentMethod = paymentMethod;
-                            stat.paymentAmount = paymentAmount;
-                            stat.paymentDate = paymentDate;
-                        }
+                // 버튼 활성화 상태 변경
+                document.querySelectorAll('#statsModal .filter-option').forEach(btn => {
+                    if (btn.onclick && btn.onclick.toString().includes('setStatsDateRange')) {
+                        btn.classList.remove('active');
                     }
                 });
                 
-                // 결과 표시
-                let html = `
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #f8f9fa;">
-                                <th style="border: 1px solid #dee2e6; padding: 8px;">날짜</th>
-                                <th style="border: 1px solid #dee2e6; padding: 8px;">거래처</th>
-                                <th style="border: 1px solid #dee2e6; padding: 8px;">건수</th>
-                                <th style="border: 1px solid #dee2e6; padding: 8px;">수량 합계</th>
-                                <th style="border: 1px solid #dee2e6; padding: 8px;">금액 합계</th>
-                                <th style="border: 1px solid #dee2e6; padding: 8px;">결제방법</th>
-                                <th style="border: 1px solid #dee2e6; padding: 8px;">결제금액</th>
-                                <th style="border: 1px solid #dee2e6; padding: 8px;">결제일</th>
-                                <th style="border: 1px solid #dee2e6; padding: 8px;">작업</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
+                const today = new Date();
+                let startDate, endDate;
                 
-                let totalQuantity = 0;
-                let totalAmount = 0;
-                let index = 0;
+                switch(range) {
+                    case 'today':
+                        startDate = endDate = today;
+                        document.getElementById('statsCustomDateRange').style.display = 'none';
+                        break;
+                    case '7days':
+                        startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                        endDate = today;
+                        document.getElementById('statsCustomDateRange').style.display = 'none';
+                        break;
+                    case '30days':
+                        startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+                        endDate = today;
+                        document.getElementById('statsCustomDateRange').style.display = 'none';
+                        break;
+                    case 'custom':
+                        document.getElementById('statsCustomDateRange').style.display = 'flex';
+                        event.target.classList.add('active');
+                        this.updateStatsData();
+                        return;
+                }
                 
-                // 정렬 및 표시
-                const sortedStats = Array.from(statsMap.values()).sort((a, b) => {
-                    if (a.date === b.date) {
-                        return a.vendor.localeCompare(b.vendor);
+                document.getElementById('statsStartDate').value = startDate.toISOString().split('T')[0];
+                document.getElementById('statsEndDate').value = endDate.toISOString().split('T')[0];
+                
+                event.target.classList.add('active');
+                this.updateStatsData();
+            },
+
+            setStatsPaymentStatus(status) {
+                this.statsPaymentStatus = status;
+                
+                document.querySelectorAll('[data-payment-status]').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.paymentStatus === status);
+                });
+                
+                this.updateStatsData();
+            },
+
+            updateStatsVendorFilter() {
+                const filter = document.getElementById('statsVendorFilter');
+                filter.innerHTML = '<option value="">전체</option>';
+                
+                // 현재 데이터에서 거래처 목록 추출
+                const vendorsInData = [...new Set(this.currentData.map(row => row['거래처']))].filter(v => v);
+                vendorsInData.sort().forEach(vendor => {
+                    const option = document.createElement('option');
+                    option.value = vendor;
+                    option.textContent = vendor;
+                    filter.appendChild(option);
+                });
+            },
+
+            updateStatsData() {
+                const startDate = document.getElementById('statsStartDate').value;
+                const endDate = document.getElementById('statsEndDate').value;
+                const selectedVendor = document.getElementById('statsVendorFilter').value;
+                
+                if (!startDate || !endDate) return;
+                
+                // 데이터 필터링 및 집계
+                const filteredData = this.currentData.filter(row => {
+                    const date = row['날짜'];
+                    const vendor = row['거래처'];
+                    
+                    if (!date || !vendor) return false;
+                    if (date < startDate || date > endDate) return false;
+                    if (selectedVendor && vendor !== selectedVendor) return false;
+                    
+                    // 결제상태 필터
+                    const hasPayment = row['결제방법'] && row['결제금액'] && row['결제일'];
+                    if (this.statsPaymentStatus === 'paid' && !hasPayment) return false;
+                    if (this.statsPaymentStatus === 'unpaid' && hasPayment) return false;
+                    
+                    return true;
+                });
+                
+                // 거래처별 일자별 집계
+                const aggregated = {};
+                filteredData.forEach(row => {
+                    const key = `${row['날짜']}_${row['거래처']}`;
+                    if (!aggregated[key]) {
+                        aggregated[key] = {
+                            vendor: row['거래처'],
+                            date: row['날짜'],
+                            rows: [],
+                            totalAmount: 0,
+                            count: 0,
+                            paymentMethod: '',
+                            paymentAmount: 0,
+                            paymentDate: ''
+                        };
                     }
+                    
+                    aggregated[key].rows.push(row);
+                    aggregated[key].totalAmount += parseFloat(row['합계']) || 0;
+                    aggregated[key].count++;
+                    
+                    // 기존 결제정보가 있으면 사용
+                    if (!aggregated[key].paymentMethod && row['결제방법']) {
+                        aggregated[key].paymentMethod = row['결제방법'];
+                        aggregated[key].paymentAmount = row['결제금액'];
+                        aggregated[key].paymentDate = row['결제일'];
+                    }
+                });
+                
+                // 테이블 생성
+                const tbody = document.getElementById('statsTableBody');
+                tbody.innerHTML = '';
+                
+                this.statsData = Object.values(aggregated).sort((a, b) => {
+                    if (a.date === b.date) return a.vendor.localeCompare(b.vendor);
                     return a.date.localeCompare(b.date);
                 });
                 
-                sortedStats.forEach((stat) => {
-                    totalQuantity += stat.quantity;
-                    totalAmount += stat.total;
+                this.statsData.forEach((data, index) => {
+                    const tr = document.createElement('tr');
+                    const hasPayment = data.paymentMethod && data.paymentAmount && data.paymentDate;
                     
-                    const rowClass = stat.paymentAmount > 0 ? '' : 'stats-highlight';
-                    
-                    html += `
-                        <tr class="${rowClass}">
-                            <td style="border: 1px solid #dee2e6; padding: 8px;">${this.formatDateWithDay(stat.date)}</td>
-                            <td style="border: 1px solid #dee2e6; padding: 8px;">${stat.vendor}</td>
-                            <td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">${stat.rows.length}</td>
-                            <td style="border: 1px solid #dee2e6; padding: 8px; text-align: right;">${stat.quantity.toLocaleString()}</td>
-                            <td style="border: 1px solid #dee2e6; padding: 8px; text-align: right;">${stat.total.toLocaleString()}</td>
-                            <td style="border: 1px solid #dee2e6; padding: 4px;">
-                                <select class="form-select" id="stats-payment-${index}" style="width: 100%; padding: 4px;">
-                                    <option value="">선택</option>
-                                    <option value="현금" ${stat.paymentMethod === '현금' ? 'selected' : ''}>현금</option>
-                                    <option value="계좌이체" ${stat.paymentMethod === '계좌이체' ? 'selected' : ''}>계좌이체</option>
-                                    <option value="카드" ${stat.paymentMethod === '카드' ? 'selected' : ''}>카드</option>
-                                    <option value="어음" ${stat.paymentMethod === '어음' ? 'selected' : ''}>어음</option>
-                                    <option value="기타" ${stat.paymentMethod === '기타' ? 'selected' : ''}>기타</option>
-                                </select>
-                            </td>
-                            <td style="border: 1px solid #dee2e6; padding: 4px;">
-                                <input type="number" class="form-input" id="stats-amount-${index}" 
-                                       value="${stat.paymentAmount || stat.total}" 
-                                       style="width: 100%; padding: 4px; text-align: right;">
-                            </td>
-                            <td style="border: 1px solid #dee2e6; padding: 4px;">
-                                <input type="date" class="form-input" id="stats-date-${index}" 
-                                       value="${stat.paymentDate || ''}"
-                                       style="width: 100%; padding: 4px;">
-                            </td>
-                            <td style="border: 1px solid #dee2e6; padding: 4px;">
-                                <button class="btn btn-sm btn-primary" 
-                                        data-rows="${stat.rows.join(',')}"
-                                        onclick="PurchaseManager.applyStatsToTable(${index}, '${stat.date}', '${stat.vendor}', this)"
-                                        style="padding: 4px 8px; font-size: 12px;">
-                                    적용
-                                </button>
-                            </td>
-                        </tr>
+                    tr.innerHTML = `
+                        <td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">
+                            <input type="checkbox" data-index="${index}">
+                        </td>
+                        <td style="border: 1px solid #dee2e6; padding: 8px;">${data.vendor}</td>
+                        <td style="border: 1px solid #dee2e6; padding: 8px;">${this.formatDateWithDay(data.date)}</td>
+                        <td style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">${data.count}건</td>
+                        <td style="border: 1px solid #dee2e6; padding: 8px; text-align: right;">${data.totalAmount.toLocaleString()}</td>
+                        <td style="border: 1px solid #dee2e6; padding: 4px;">
+                            <select class="form-select" data-field="paymentMethod" data-index="${index}" 
+                                    onchange="PurchaseManager.updateStatsRow(${index})" 
+                                    style="width: 100%; padding: 4px;">
+                                <option value="">선택</option>
+                                <option value="현금" ${data.paymentMethod === '현금' ? 'selected' : ''}>현금</option>
+                                <option value="계좌이체" ${data.paymentMethod === '계좌이체' ? 'selected' : ''}>계좌이체</option>
+                                <option value="카드" ${data.paymentMethod === '카드' ? 'selected' : ''}>카드</option>
+                                <option value="어음" ${data.paymentMethod === '어음' ? 'selected' : ''}>어음</option>
+                                <option value="기타" ${data.paymentMethod === '기타' ? 'selected' : ''}>기타</option>
+                            </select>
+                        </td>
+                        <td style="border: 1px solid #dee2e6; padding: 4px;">
+                            <input type="number" class="form-input" data-field="paymentAmount" data-index="${index}"
+                                   value="${data.paymentAmount || data.totalAmount}" 
+                                   onchange="PurchaseManager.updateStatsRow(${index})"
+                                   style="width: 100%; padding: 4px; text-align: right;">
+                        </td>
+                        <td style="border: 1px solid #dee2e6; padding: 4px;">
+                            <input type="date" class="form-input" data-field="paymentDate" data-index="${index}"
+                                   value="${data.paymentDate || ''}"
+                                   onchange="PurchaseManager.updateStatsRow(${index})"
+                                   style="width: 100%; padding: 4px;">
+                        </td>
                     `;
-                    index++;
+                    
+                    if (!hasPayment) {
+                        tr.style.backgroundColor = '#fef2f2';
+                    }
+                    
+                    tbody.appendChild(tr);
                 });
-                
-                // 총계 행
-                html += `
-                        <tr style="background: #e7f3ff; font-weight: bold;">
-                            <td colspan="3" style="border: 1px solid #dee2e6; padding: 8px; text-align: center;">총계</td>
-                            <td style="border: 1px solid #dee2e6; padding: 8px; text-align: right;">${totalQuantity.toLocaleString()}</td>
-                            <td style="border: 1px solid #dee2e6; padding: 8px; text-align: right;">${totalAmount.toLocaleString()}</td>
-                            <td colspan="4" style="border: 1px solid #dee2e6; padding: 8px;"></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div style="margin-top: 20px; text-align: center;">
-                    <button class="btn btn-success" onclick="PurchaseManager.saveStatsChanges()">변경사항 저장</button>
-                </div>
-                `;
-                
-                document.getElementById('statsResult').innerHTML = html;
             },
 
-            applyStatsToTable(index, date, vendor, button) {
-                const paymentMethod = document.getElementById(`stats-payment-${index}`).value;
-                const paymentAmount = document.getElementById(`stats-amount-${index}`).value;
-                const paymentDate = document.getElementById(`stats-date-${index}`).value;
+            updateStatsRow(index) {
+                const row = this.statsData[index];
+                row.paymentMethod = document.querySelector(`[data-field="paymentMethod"][data-index="${index}"]`).value;
+                row.paymentAmount = document.querySelector(`[data-field="paymentAmount"][data-index="${index}"]`).value;
+                row.paymentDate = document.querySelector(`[data-field="paymentDate"][data-index="${index}"]`).value;
+            },
+
+            toggleAllStatsRows() {
+                const selectAll = document.getElementById('statsSelectAll');
+                document.querySelectorAll('#statsTableBody input[type="checkbox"]').forEach(cb => {
+                    cb.checked = selectAll.checked;
+                });
+            },
+
+            applyBulkPayment() {
+                const method = document.getElementById('bulkPaymentMethod').value;
+                const date = document.getElementById('bulkPaymentDate').value;
                 
-                if (!paymentMethod || !paymentAmount || !paymentDate) {
-                    this.showToast('결제방법, 결제금액, 결제일을 모두 입력하세요', 'error');
+                if (!method || !date) {
+                    this.showToast('결제방법과 결제일을 선택하세요', 'error');
                     return;
                 }
                 
-                // 해당하는 행들 가져오기
-                const rows = button.dataset.rows.split(',').map(r => parseInt(r));
-                
-                // 각 행에 결제 정보 적용
-                rows.forEach(rowIndex => {
-                    const paymentMethodCol = this.hot.propToCol('결제방법');
-                    const paymentAmountCol = this.hot.propToCol('결제금액');
-                    const paymentDateCol = this.hot.propToCol('결제일');
+                // 선택된 항목에 일괄 적용
+                document.querySelectorAll('#statsTableBody input[type="checkbox"]:checked').forEach(cb => {
+                    const index = cb.dataset.index;
+                    const row = this.statsData[index];
                     
-                    if (paymentMethodCol !== null) {
-                        this.hot.setDataAtCell(rowIndex, paymentMethodCol, paymentMethod);
+                    // 결제방법과 결제일 설정
+                    document.querySelector(`[data-field="paymentMethod"][data-index="${index}"]`).value = method;
+                    document.querySelector(`[data-field="paymentDate"][data-index="${index}"]`).value = date;
+                    
+                    // 결제금액은 합계금액으로 자동 설정 (변경 가능)
+                    const amountInput = document.querySelector(`[data-field="paymentAmount"][data-index="${index}"]`);
+                    if (!amountInput.value || amountInput.value === '0') {
+                        amountInput.value = row.totalAmount;
                     }
-                    if (paymentAmountCol !== null) {
-                        this.hot.setDataAtCell(rowIndex, paymentAmountCol, parseFloat(paymentAmount));
-                    }
-                    if (paymentDateCol !== null) {
-                        this.hot.setDataAtCell(rowIndex, paymentDateCol, paymentDate);
-                    }
+                    
+                    // 데이터 업데이트
+                    this.updateStatsRow(index);
                 });
                 
-                this.showToast(`${rows.length}건의 결제 정보가 적용되었습니다`);
-                
-                // 버튼 비활성화
-                button.disabled = true;
-                button.textContent = '적용됨';
-                button.classList.remove('btn-primary');
-                button.classList.add('btn-secondary');
+                this.showToast('일괄 적용 완료');
             },
 
-            async saveStatsChanges() {
-                await this.saveData();
-                this.closeStatsModal();
+            async saveStatsPayments() {
+                this.showLoading();
+                try {
+                    // 결제정보가 입력된 항목만 처리
+                    const toUpdate = this.statsData.filter(data => 
+                        data.paymentMethod && data.paymentAmount && data.paymentDate
+                    );
+                    
+                    if (toUpdate.length === 0) {
+                        this.showToast('저장할 결제정보가 없습니다', 'error');
+                        this.hideLoading();
+                        return;
+                    }
+                    
+                    // 각 거래의 결제정보 업데이트
+                    let updatedCount = 0;
+                    toUpdate.forEach(data => {
+                        data.rows.forEach(row => {
+                            row['결제방법'] = data.paymentMethod;
+                            row['결제금액'] = '일괄';  // 일괄 표시
+                            row['결제일'] = data.paymentDate;
+                        });
+                        updatedCount += data.rows.length;
+                    });
+                    
+                    // 전체 데이터 저장
+                    let sheetName = '';
+                    if (this.currentTab === 'supply') sheetName = '사입관리';
+                    else if (this.currentTab === 'purchase') sheetName = '구매관리';
+                    else sheetName = '지출관리';
+                    
+                    const headers = this.getColumnHeaders();
+                    const updateData = this.currentData.map(row => {
+                        return headers.map(header => row[header] || '');
+                    });
+                    
+                    const response = await fetch('/api/purchase', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'updatePurchaseData',
+                            range: `${sheetName}!A2:Z`,
+                            data: updateData
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.showToast(`${updatedCount}건의 결제정보가 저장되었습니다`);
+                        this.closeStatsModal();
+                        await this.loadTabData();
+                    } else {
+                        throw new Error(result.message || '저장 실패');
+                    }
+                } catch (error) {
+                    console.error('결제정보 저장 오류:', error);
+                    this.showToast('저장 중 오류가 발생했습니다', 'error');
+                } finally {
+                    this.hideLoading();
+                }
+            },
+
+            printStatement() {
+                const selected = document.querySelectorAll('#statsTableBody input[type="checkbox"]:checked');
+                if (selected.length === 0) {
+                    this.showToast('출력할 거래처를 선택하세요', 'error');
+                    return;
+                }
+                
+                // 선택된 거래처의 상세 내역 생성
+                const printWindow = window.open('', '_blank');
+                let html = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>거래명세서</title>
+                        <style>
+                            body { font-family: 'Noto Sans KR', sans-serif; }
+                            .page { page-break-after: always; padding: 20px; }
+                            h1 { text-align: center; font-size: 24px; margin-bottom: 30px; }
+                            .info { margin-bottom: 20px; }
+                            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                            th, td { border: 1px solid #000; padding: 8px; text-align: center; }
+                            th { background: #f0f0f0; }
+                            .total { font-weight: bold; background: #fffacd; }
+                            .footer { margin-top: 50px; text-align: right; }
+                            @media print { .page { page-break-after: always; } }
+                        </style>
+                    </head>
+                    <body>
+                `;
+                
+                selected.forEach(cb => {
+                    const index = cb.dataset.index;
+                    const data = this.statsData[index];
+                    
+                    html += `
+                        <div class="page">
+                            <h1>거 래 명 세 서</h1>
+                            <div class="info">
+                                <p><strong>거래처:</strong> ${data.vendor}</p>
+                                <p><strong>거래일:</strong> ${this.formatDateWithDay(data.date)}</p>
+                            </div>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>품목</th>
+                                        <th>품종</th>
+                                        <th>규격</th>
+                                        <th>수량</th>
+                                        <th>단가</th>
+                                        <th>금액</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    let totalAmount = 0;
+                    data.rows.forEach(row => {
+                        const amount = parseFloat(row['금액']) || 0;
+                        totalAmount += amount;
+                        
+                        html += `
+                            <tr>
+                                <td>${row['품목'] || ''}</td>
+                                <td>${row['품종'] || ''}</td>
+                                <td>${row['규격'] || ''}</td>
+                                <td>${row['수량'] || ''}</td>
+                                <td>${(parseFloat(row['단가']) || 0).toLocaleString()}</td>
+                                <td>${amount.toLocaleString()}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += `
+                                <tr class="total">
+                                    <td colspan="5">합계</td>
+                                    <td>${totalAmount.toLocaleString()}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <div class="footer">
+                                <p>위 금액을 정히 청구합니다.</p>
+                                <p style="margin-top: 30px;">20___년 ___월 ___일</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                    </body>
+                    </html>
+                `;
+                
+                printWindow.document.write(html);
+                printWindow.document.close();
+                printWindow.print();
             },
             
             showLoading() {
