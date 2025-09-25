@@ -465,62 +465,8 @@
 </head>
 <body>
     <div class="container">
-        <!-- 조회 필터 섹션 -->
-        <div class="header-section">
-            <div class="filter-cards">
-                <!-- 기간 필터 카드 -->
-                <div class="filter-card">
-                    <div class="filter-card-title">기간</div>
-                    <div class="filter-options">
-                        <button class="filter-option active" onclick="PurchaseManager.setDateRange('today')">오늘</button>
-                        <button class="filter-option" onclick="PurchaseManager.setDateRange('7days')">최근 7일</button>
-                        <button class="filter-option" onclick="PurchaseManager.setDateRange('30days')">최근 30일</button>
-                        <button class="filter-option" onclick="PurchaseManager.setDateRange('all')">전체</button>
-                        <button class="filter-option" onclick="PurchaseManager.setDateRange('custom')">직접선택</button>
-                    </div>
-                    <div class="date-range-custom" id="customDateRange" style="display:none;">
-                        <input type="date" id="startDate" class="filter-input">
-                        <span>~</span>
-                        <input type="date" id="endDate" class="filter-input">
-                        <button class="btn btn-primary" onclick="PurchaseManager.applyCustomDateRange()">적용</button>
-                    </div>
-                </div>
 
-                <!-- 거래처 구분 필터 카드 (사입관리 탭에서만 표시) -->
-                <div class="filter-card" id="vendorTypeCard">
-                    <div class="filter-card-title">거래처 구분</div>
-                    <div class="filter-options">
-                        <button class="filter-option active" data-type="all" onclick="PurchaseManager.setVendorType('all')">전체</button>
-                        <button class="filter-option" data-type="중매인" onclick="PurchaseManager.setVendorType('중매인')">중매인</button>
-                        <button class="filter-option" data-type="농가" onclick="PurchaseManager.setVendorType('농가')">농가</button>
-                        <button class="filter-option" data-type="기타" onclick="PurchaseManager.setVendorType('기타')">기타</button>
-                    </div>
-                </div>
 
-                <!-- 결제상태 필터 카드 -->
-                <div class="filter-card">
-                    <div class="filter-card-title">결제상태</div>
-                    <div class="filter-options">
-                        <button class="filter-option active" data-payment="all" onclick="PurchaseManager.setPaymentStatus('all')">전체</button>
-                        <button class="filter-option" data-payment="unpaid" onclick="PurchaseManager.setPaymentStatus('unpaid')">미결제</button>
-                        <button class="filter-option" data-payment="paid" onclick="PurchaseManager.setPaymentStatus('paid')">결제완료</button>
-                    </div>
-                </div>
-
-                <!-- 거래처 선택 -->
-                <div class="filter-card">
-                    <div class="filter-card-title">거래처</div>
-                    <select id="vendorFilter" class="filter-select" style="width: 100%;">
-                        <option value="">전체</option>
-                    </select>
-                </div>
-            </div>
-
-            <div style="margin-top: 16px; display: flex; gap: 8px; justify-content: flex-end;">
-                <button class="btn btn-secondary" onclick="PurchaseManager.resetFilter()">초기화</button>
-                <button class="btn btn-primary" onclick="PurchaseManager.searchData()">조회</button>
-            </div>
-        </div>
 
         <!-- 탭 네비게이션 -->
         <div class="tab-nav">
@@ -534,6 +480,36 @@
             <div class="mode-buttons">
                 <button id="viewModeBtn" class="btn btn-primary" onclick="PurchaseManager.setViewMode()">조회 모드</button>
                 <button id="editModeBtn" class="btn btn-secondary" onclick="PurchaseManager.setEditMode()">입력 모드</button>
+                
+                <!-- 조회모드 필터 -->
+                <div id="viewFilters" style="display:inline-flex; gap: 20px; margin-left: 40px;">
+                    <!-- 기간 필터 -->
+                    <div class="vendor-type-selector">
+                        <button class="vendor-type-btn active" onclick="PurchaseManager.setDateRange('today')">오늘</button>
+                        <button class="vendor-type-btn" onclick="PurchaseManager.setDateRange('7days')">최근 7일</button>
+                        <button class="vendor-type-btn" onclick="PurchaseManager.setDateRange('30days')">최근 30일</button>
+                        <button class="vendor-type-btn" onclick="PurchaseManager.setDateRange('all')">전체</button>
+                    </div>
+                    
+                    <!-- 거래처 구분 필터 (사입관리에서만 표시) -->
+                    <div class="vendor-type-selector" id="vendorTypeFilter">
+                        <button class="vendor-type-btn active" onclick="PurchaseManager.setVendorType('all')">전체</button>
+                        <button class="vendor-type-btn" onclick="PurchaseManager.setVendorType('중매인')">중매인</button>
+                        <button class="vendor-type-btn" onclick="PurchaseManager.setVendorType('농가')">농가</button>
+                        <button class="vendor-type-btn" onclick="PurchaseManager.setVendorType('기타')">기타</button>
+                    </div>
+                    
+                    <!-- 결제상태 필터 -->
+                    <div class="vendor-type-selector">
+                        <button class="vendor-type-btn active" onclick="PurchaseManager.setPaymentStatus('all')">전체</button>
+                        <button class="vendor-type-btn" onclick="PurchaseManager.setPaymentStatus('unpaid')">미결제</button>
+                        <button class="vendor-type-btn" onclick="PurchaseManager.setPaymentStatus('paid')">결제완료</button>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="PurchaseManager.searchData()">조회</button>
+                </div>
+                
+                <!-- 입력모드 거래처 타입 선택 -->
                 <div class="vendor-type-selector" id="vendorTypeSelector" style="display:none; margin-left: 40px;">
                     <button class="vendor-type-btn active" data-vendor-type="중매인" onclick="PurchaseManager.selectVendorType('중매인')">중매인</button>
                     <button class="vendor-type-btn" data-vendor-type="농가" onclick="PurchaseManager.selectVendorType('농가')">농가</button>
@@ -541,11 +517,11 @@
                 </div>
             </div>
             <div class="action-buttons">
-                <button id="editInViewBtn" class="btn btn-warning" onclick="PurchaseManager.toggleEditInView()" style="display:none;">수정</button>
-                <button id="bestBtn" class="btn btn-success" onclick="PurchaseManager.saveQualityData('BEST')" style="display:none;">BEST</button>
-                <button id="worstBtn" class="btn btn-danger" onclick="PurchaseManager.saveQualityData('최악')" style="display:none;">최악</button>
-                <button id="groupBtn" class="btn btn-info" onclick="PurchaseManager.toggleGrouping()" style="display:none;">그룹 표시</button>
-                <button id="statsBtn" class="btn btn-info" onclick="PurchaseManager.showStatsModal()" style="display:none;">통계</button>
+                <button id="editInViewBtn" class="btn btn-warning" onclick="PurchaseManager.toggleEditInView()">수정</button>
+                <button id="bestBtn" class="btn btn-success" onclick="PurchaseManager.saveQualityData('BEST')">BEST</button>
+                <button id="worstBtn" class="btn btn-danger" onclick="PurchaseManager.saveQualityData('최악')">최악</button>
+                <button id="groupBtn" class="btn btn-info" onclick="PurchaseManager.toggleGrouping()">그룹 표시</button>
+                <button id="statsBtn" class="btn btn-info" onclick="PurchaseManager.showStatsModal()">통계</button>
                 <button id="saveBtn" class="btn btn-success" onclick="PurchaseManager.saveData()" style="display:none;">저장</button>
                 <button id="deleteBtn" class="btn btn-danger" onclick="PurchaseManager.deleteRows()" style="display:none;">선택 행 삭제</button>
             </div>
@@ -1277,13 +1253,13 @@
                 }
                 
                 // 버튼 활성화
-                document.querySelectorAll('.filter-option').forEach(btn => {
+                document.querySelectorAll('#viewFilters .vendor-type-selector:first-child .vendor-type-btn').forEach(btn => {
+                    btn.classList.remove('active');
                     const text = btn.textContent;
                     if ((range === 'today' && text === '오늘') ||
                         (range === '7days' && text === '최근 7일') ||
                         (range === '30days' && text === '최근 30일') ||
-                        (range === 'all' && text === '전체') ||
-                        (range === 'custom' && text === '직접선택')) {
+                        (range === 'all' && text === '전체')) {
                         btn.classList.add('active');
                     }
                 });
@@ -2056,17 +2032,19 @@ getColumns() {
                 document.getElementById('viewModeBtn').classList.remove('btn-secondary');
                 document.getElementById('editModeBtn').classList.remove('btn-primary');
                 document.getElementById('editModeBtn').classList.add('btn-secondary');
-                document.getElementById('deleteBtn').style.display = 'none';
-                document.getElementById('statsBtn').style.display = 'inline-block';
-                document.getElementById('groupBtn').style.display = 'inline-block';
+                
+                // 조회모드 필터 표시
+                document.getElementById('viewFilters').style.display = 'inline-flex';
+                document.getElementById('vendorTypeSelector').style.display = 'none';
+                
+                // 액션 버튼 표시
                 document.getElementById('editInViewBtn').style.display = 'inline-block';
                 document.getElementById('bestBtn').style.display = 'inline-block';
                 document.getElementById('worstBtn').style.display = 'inline-block';
-                document.getElementById('vendorTypeSelector').style.display = 'none';
-                
-                // 저장 버튼 텍스트 변경
-                document.getElementById('saveBtn').textContent = '저장';
+                document.getElementById('groupBtn').style.display = 'inline-block';
+                document.getElementById('statsBtn').style.display = 'inline-block';
                 document.getElementById('saveBtn').style.display = 'none';
+                document.getElementById('deleteBtn').style.display = 'none';
                 
                 // 컬럼 업데이트
                 this.hot.updateSettings({
