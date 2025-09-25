@@ -2030,6 +2030,18 @@ async loadVendorTemplates() {
     },
 
     async exportByMarket(marketName) {
+        // XLSX 라이브러리 확인
+        if (typeof XLSX === 'undefined') {
+            this.showMessage('엑셀 라이브러리를 로드하는 중입니다. 잠시 후 다시 시도해주세요.', 'info');
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+            script.onload = () => {
+                this.showMessage('엑셀 라이브러리가 로드되었습니다. 다시 시도해주세요.', 'success');
+            };
+            document.head.appendChild(script);
+            return;
+        }
+        
         this.showLoading();
         try {
             const marketOrders = this.currentOrders.filter(order => order['마켓명'] === marketName);
