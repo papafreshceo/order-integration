@@ -751,12 +751,20 @@
             filterStartDate: null,  // 추가: 필터 시작 날짜
             filterEndDate: null,  // 추가: 필터 종료 날짜
             
+            getKoreanDate() {
+                const now = new Date();
+                const kstOffset = 9 * 60; // KST는 UTC+9
+                const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+                const kstTime = new Date(utcTime + (kstOffset * 60000));
+                return kstTime.toISOString().split('T')[0];
+            },
+            
             getDefaultStartDate() {
-                return new Date().toISOString().split('T')[0];
+                return this.getKoreanDate();
             },
             
             getDefaultEndDate() {
-                return new Date().toISOString().split('T')[0];
+                return this.getKoreanDate();
             },
             
             toggleEditInView() {
@@ -1200,7 +1208,7 @@
                         
                         for (let i = 0; i < emptyRowsNeeded; i++) {
                             const emptyRow = Array(this.getColumnHeaders().length).fill('');
-                            emptyRow[0] = new Date().toISOString().split('T')[0];
+                            emptyRow[0] = this.getKoreanDate();
                             savedData.push(emptyRow);
                         }
                         
@@ -1208,8 +1216,8 @@
                     } else {
                         // 빈 데이터로 초기화
                         const emptyData = Array(10).fill(null).map(() => {
-                            const row = Array(this.getColumnHeaders().length).fill('');
-                            row[0] = new Date().toISOString().split('T')[0]; // 날짜
+                            const emptyRow = Array(this.getColumnHeaders().length).fill('');
+                            emptyRow[0] = this.getKoreanDate();
                             return row;
                         });
                         this.hot.loadData(emptyData);
@@ -1218,7 +1226,12 @@
             },
 
             setDateRange(range, autoSearch = true) {
-                const today = new Date();
+                // 한국 시간 기준으로 날짜 계산
+                const now = new Date();
+                const kstOffset = 9 * 60;
+                const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+                const today = new Date(utcTime + (kstOffset * 60000));
+                
                 let startDate, endDate;
                 
                 switch(range) {
@@ -2084,7 +2097,7 @@ getColumns() {
                     
                     for (let i = 0; i < emptyRowsNeeded; i++) {
                         const emptyRow = Array(this.getColumnHeaders().length).fill('');
-                        emptyRow[0] = new Date().toISOString().split('T')[0];
+                        emptyRow[0] = this.getKoreanDate();
                         dataToLoad.push(emptyRow);
                     }
                 } else {
