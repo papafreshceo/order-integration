@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>업무계획 관리</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -15,6 +16,8 @@
             font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #f5f6fa;
             padding: 20px;
+            line-height: 1.5;
+            min-height: 100vh;
         }
 
         .container {
@@ -43,6 +46,7 @@
             font-weight: 400;
             cursor: pointer;
             transition: all 0.2s;
+            position: relative;
         }
 
         .tab-btn:hover {
@@ -835,9 +839,7 @@
                     </select>
                 </div>
                 
-                <div id="taskFields">
-                    <!-- 동적으로 생성됨 -->
-                </div>
+                <div id="taskFields"></div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-danger" id="deleteBtn" onclick="deleteTask()" style="display: none;">삭제</button>
@@ -866,6 +868,7 @@
         let filteredData = [];
         let currentUser = null;
         let editMode = false;
+        const taskDataStore = {};
 
         // API 엔드포인트
         const API_BASE = '/api/planning';
@@ -880,7 +883,7 @@
             await loadData();
             updateModalFields();
             checkTodayTasks();
-            setInterval(checkTodayTasks, 60000); // 1분마다 체크
+            setInterval(checkTodayTasks, 60000);
         }
 
         // 사용자 정보 가져오기
@@ -949,8 +952,19 @@
                 
             } catch (error) {
                 console.error('데이터 로드 실패:', error);
-                showToast('데이터를 불러오는데 실패했습니다.', 'error');
-                generateCalendar();
+                // 데모 데이터 사용
+                tasksData = [
+                    {_index: 1, '연번': '1', '등록일': '2025-01-26', '마감일': '2025-01-28', '업무제목': '업무계획 시스템 구축', '업무내용': '구글시트 연동 업무관리 시스템', '담당자': '개발팀', '지시자': 'Admin', '우선순위': '긴급', '상태': '진행중', '완료일': '', '비고': ''},
+                    {_index: 2, '연번': '2', '등록일': '2025-01-25', '마감일': '2025-01-30', '업무제목': '데이터베이스 백업', '업무내용': '월간 DB 백업 작업', '담당자': 'IT팀', '지시자': 'Admin', '우선순위': '높음', '상태': '대기', '완료일': '', '비고': ''}
+                ];
+                shortTermData = [
+                    {_index: 1, '연번': '1', '계획유형': '주간', '시작일': '2025-01-27', '종료일': '2025-02-02', '제목': '1월 4주차 개발 스프린트', '목표': '핵심 기능 구현 완료', '담당팀': '개발팀', '책임자': 'Lead Dev', '진행률': '45', '상태': '진행중', '주요일정': '', '성과지표': ''}
+                ];
+                longTermData = [
+                    {_index: 1, '연번': '1', '연도': '2025', '분기': '1', '계획명': 'Q1 디지털 전환', '목표': '업무 자동화 시스템 구축', '시작월': '1', '종료월': '3', '예산': '50000000', '담당부서': 'IT부서', '책임자': 'CTO', 'KPI': '자동화율 50%', '달성률': '30', '평가': ''}
+                ];
+                updateAssigneeFilter();
+                applyFilters();
             } finally {
                 hideLoading();
             }
@@ -1034,8 +1048,7 @@
                 }
                 
                 if (assignee) {
-                    matchAssignee = item['담당자'] === assignee || 
-                                   item['책임자'] === assignee;
+                    matchAssignee = item['담당자'] === assignee || item['책임자'] === assignee;
                 }
                 
                 if (search) {
@@ -1078,29 +1091,27 @@
             const calendarBody = document.getElementById('calendarBody');
             calendarBody.innerHTML = '';
             
-            // 이전 달 날짜
+            // 이전 달
             for (let i = firstDayOfWeek - 1; i >= 0; i--) {
                 const cell = createCalendarCell(daysInPrevMonth - i, true, null);
                 calendarBody.appendChild(cell);
             }
             
-            // 현재 달 날짜
+            // 현재 달
             const today = new Date();
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayTasks = getTasksForDate(dateStr);
                 const cell = createCalendarCell(day, false, dayTasks);
                 
-                if (year === today.getFullYear() && 
-                    month === today.getMonth() && 
-                    day === today.getDate()) {
+                if (year === today.getFullYear() && month === today.getMonth() && day === today.getDate()) {
                     cell.classList.add('today');
                 }
                 
                 calendarBody.appendChild(cell);
             }
             
-            // 다음 달 날짜
+            // 다음 달
             const totalCells = calendarBody.children.length;
             const remainingCells = (totalCells < 35 ? 35 : 42) - totalCells;
             for (let day = 1; day <= remainingCells; day++) {
@@ -1131,7 +1142,8 @@
                     taskEl.className = 'task-item';
                     
                     if (task.type === 'task') {
-                        taskEl.classList.add(`task-${(task['우선순위'] || 'medium').toLowerCase()}`);
+                        const priority = (task['우선순위'] || 'medium').toLowerCase();
+                        taskEl.classList.add(`task-${priority === '긴급' ? 'urgent' : priority === '높음' ? 'high' : priority === '낮음' ? 'low' : 'medium'}`);
                         taskEl.textContent = task['업무제목'];
                     } else if (task.type === 'short') {
                         taskEl.classList.add('task-short');
@@ -1141,9 +1153,12 @@
                         taskEl.textContent = task['계획명'];
                     }
                     
+                    const taskKey = `${task.type}_${task._index}`;
+                    taskDataStore[taskKey] = task;
+                    
                     taskEl.onclick = (e) => {
                         e.stopPropagation();
-                        openEditModal(task);
+                        openEditModal(taskDataStore[taskKey]);
                     };
                     cell.appendChild(taskEl);
                 });
@@ -1170,7 +1185,7 @@
             return cell;
         }
 
-        // 날짜별 업무 가져오기
+        // 날짜별 업무
         function getTasksForDate(dateStr) {
             return filteredData.filter(task => {
                 if (task.type === 'task') {
@@ -1191,7 +1206,6 @@
         function updateListView() {
             const content = document.getElementById('taskListContent');
             
-            // 카테고리별로 그룹화
             const grouped = {};
             filteredData.forEach(item => {
                 const category = item.type === 'task' ? '업무지시' :
@@ -1210,68 +1224,80 @@
                             ${category}
                             <span class="task-count">${items.length}</span>
                         </div>
-                        ${items.map(item => createListItem(item)).join('')}
-                    </div>
                 `;
+                
+                items.forEach(item => {
+                    const taskKey = `${item.type}_${item._index}`;
+                    taskDataStore[taskKey] = item;
+                    
+                    const title = item['업무제목'] || item['제목'] || item['계획명'] || '';
+                    const meta = [];
+                    
+                    if (item['담당자'] || item['책임자']) {
+                        meta.push(`담당: ${item['담당자'] || item['책임자']}`);
+                    }
+                    if (item['마감일'] || item['종료일'] || item['종료월']) {
+                        const deadline = item['마감일'] || item['종료일'] || 
+                                       (item['종료월'] ? item['종료월'] + '월' : '');
+                        if (deadline) meta.push(`마감: ${deadline}`);
+                    }
+                    
+                    const priority = item['우선순위'] || '';
+                    const progress = item['진행률'] || item['달성률'] || 0;
+                    
+                    const classMap = {
+                        'task': 'urgent',
+                        'short': 'short-term',
+                        'long': 'long-term'
+                    };
+                    
+                    const priorityClass = priority === '긴급' ? 'urgent' : 
+                                        priority === '높음' ? 'high' : 
+                                        priority === '낮음' ? 'low' : 'medium';
+                    
+                    html += `
+                        <div class="task-list-item ${classMap[item.type] || ''}" 
+                             data-id="${item._index}" data-type="${item.type}">
+                            <input type="checkbox" class="task-checkbox" 
+                                   ${item['상태'] === '완료' ? 'checked' : ''}>
+                            <div class="task-content">
+                                <div class="task-title">${title}</div>
+                                <div class="task-meta">${meta.join(' | ')}</div>
+                            </div>
+                    `;
+                    
+                    if (progress) {
+                        html += `
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progress}%"></div>
+                            </div>
+                        `;
+                    }
+                    
+                    if (priority) {
+                        html += `<span class="task-priority task-${priorityClass}">${priority}</span>`;
+                    }
+                    
+                    html += `
+                            <div class="task-actions">
+                                <button class="action-btn" onclick="openEditModal(taskDataStore['${taskKey}'])">수정</button>
+                                <button class="action-btn delete" onclick="confirmDelete('${item.type}', ${item._index})">삭제</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
             });
             
             content.innerHTML = html || '<p style="text-align: center; color: #6c757d; padding: 40px;">등록된 업무가 없습니다.</p>';
             
-            // 체크박스 이벤트 바인딩
             content.querySelectorAll('.task-checkbox').forEach(checkbox => {
                 checkbox.addEventListener('change', handleStatusChange);
             });
         }
 
-        // 리스트 아이템 생성
-        function createListItem(item) {
-            const title = item['업무제목'] || item['제목'] || item['계획명'] || '';
-            const meta = [];
-            
-            if (item['담당자'] || item['책임자']) {
-                meta.push(`담당: ${item['담당자'] || item['책임자']}`);
-            }
-            if (item['마감일'] || item['종료일'] || item['종료월']) {
-                const deadline = item['마감일'] || item['종료일'] || 
-                               (item['종료월'] ? item['종료월'] + '월' : '');
-                if (deadline) meta.push(`마감: ${deadline}`);
-            }
-            
-            const priority = item['우선순위'] || '';
-            const progress = item['진행률'] || item['달성률'] || 0;
-            
-            const classMap = {
-                'task': 'urgent',
-                'short': 'short-term',
-                'long': 'long-term'
-            };
-            
-            return `
-                <div class="task-list-item ${classMap[item.type] || ''}" 
-                     data-id="${item._index}" data-type="${item.type}">
-                    <input type="checkbox" class="task-checkbox" 
-                           ${item['상태'] === '완료' ? 'checked' : ''}>
-                    <div class="task-content">
-                        <div class="task-title">${title}</div>
-                        <div class="task-meta">${meta.join(' | ')}</div>
-                    </div>
-                    ${progress ? `
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${progress}%"></div>
-                        </div>
-                    ` : ''}
-                    ${priority ? `
-                        <span class="task-priority task-${priority.toLowerCase()}">${priority}</span>
-                    ` : ''}
-                    <div class="task-actions">
-                        <button class="action-btn" onclick="openEditModal({...${JSON.stringify(item).replace(/"/g, '&quot;')}})">수정</button>
-                        <button class="action-btn delete" onclick="confirmDelete('${item.type}', ${item._index})">삭제</button>
-                    </div>
-                </div>
-            `;
-        }
-
-        // 상태 변경 처리
+        // 상태 변경
         async function handleStatusChange(e) {
             const item = e.target.closest('.task-list-item');
             const id = item.dataset.id;
@@ -1293,6 +1319,7 @@
                 range = `단기계획!J${parseInt(index) + 1}`;
                 column = status;
             } else {
+                hideLoading();
                 return;
             }
             
@@ -1310,257 +1337,13 @@
                 const result = await response.json();
                 if (result.success) {
                     await loadData();
-                    showToast('삭제되었습니다.');
-                } else {
-                    showToast('삭제에 실패했습니다.', 'error');
-                }
-            } catch (error) {
-                console.error('삭제 실패:', error);
-                showToast('삭제에 실패했습니다.', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // 오늘 업무 체크
-        function checkTodayTasks() {
-            const today = new Date().toISOString().split('T')[0];
-            let todayTasks = [];
-            
-            // 오늘 마감 또는 긴급 업무
-            todayTasks = todayTasks.concat(
-                tasksData.filter(t => 
-                    (t['마감일'] === today || t['우선순위'] === '긴급') && 
-                    t['상태'] !== '완료'
-                )
-            );
-            
-            // 진행중인 단기계획
-            todayTasks = todayTasks.concat(
-                shortTermData.filter(t => 
-                    t['시작일'] <= today && today <= t['종료일'] && 
-                    t['상태'] !== '완료'
-                )
-            );
-            
-            // 배지 업데이트
-            const badge = document.getElementById('todayCount');
-            if (todayTasks.length > 0) {
-                badge.textContent = todayTasks.length;
-                badge.style.display = 'inline-block';
-                
-                // 긴급 업무가 있으면 알림
-                const urgentTasks = todayTasks.filter(t => t['우선순위'] === '긴급');
-                if (urgentTasks.length > 0) {
-                    showToast(`긴급 업무가 ${urgentTasks.length}개 있습니다!`, 'warning');
-                }
-            } else {
-                badge.style.display = 'none';
-            }
-        }
-
-        // 로딩 표시
-        function showLoading() {
-            document.getElementById('loading').classList.add('show');
-        }
-
-        // 로딩 숨기기
-        function hideLoading() {
-            document.getElementById('loading').classList.remove('show');
-        }
-
-        // 토스트 메시지
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.style.background = type === 'error' ? '#dc3545' : 
-                                    type === 'warning' ? '#f59e0b' : '#212529';
-            toast.classList.add('show');
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
-
-        // 모달 외부 클릭시 닫기
-        document.getElementById('taskModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeTaskModal();
-            }
-        });
-
-        // 키보드 단축키
-        document.addEventListener('keydown', function(e) {
-            // Esc로 모달 닫기
-            if (e.key === 'Escape') {
-                closeTaskModal();
-            }
-            
-            // Ctrl+N으로 새 업무 추가
-            if (e.ctrlKey && e.key === 'n') {
-                e.preventDefault();
-                openTaskModal();
-            }
-            
-            // Ctrl+S로 저장
-            if (e.ctrlKey && e.key === 's' && document.getElementById('taskModal').classList.contains('show')) {
-                e.preventDefault();
-                saveTask();
-            }
-        });
-
-        // 페이지 로드시 URL 파라미터 체크
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('tab')) {
-            currentTab = urlParams.get('tab');
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.textContent.includes(currentTab)) {
-                    btn.classList.add('active');
-                }
-            });
-        }
-        if (urlParams.has('view')) {
-            toggleView(urlParams.get('view'));
-        }
-    </script>
-
-    <!-- API 라우트 -->
-    <script>
-        // 이 부분은 실제로는 서버 파일(예: /api/planning.js)에 있어야 합니다.
-        // Vercel이나 Next.js API Routes로 구현하세요.
-        
-        /*
-        // /api/planning.js 예시 (Next.js)
-        import { google } from 'googleapis';
-        
-        export default async function handler(req, res) {
-            const { action, range, data, value } = req.body;
-            
-            // Google Sheets 인증
-            const auth = new google.auth.JWT({
-                email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-                key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-                scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-            });
-            
-            const sheets = google.sheets({ version: 'v4', auth });
-            const spreadsheetId = process.env.SPREADSHEET_ID_PLANNING;
-            
-            try {
-                switch (action) {
-                    case 'getData':
-                        const getResponse = await sheets.spreadsheets.values.get({
-                            spreadsheetId,
-                            range,
-                        });
-                        res.status(200).json({ 
-                            success: true, 
-                            data: getResponse.data.values || [] 
-                        });
-                        break;
-                        
-                    case 'appendData':
-                        const appendResponse = await sheets.spreadsheets.values.append({
-                            spreadsheetId,
-                            range,
-                            valueInputOption: 'USER_ENTERED',
-                            resource: {
-                                values: [Object.values(data)]
-                            },
-                        });
-                        res.status(200).json({ 
-                            success: true, 
-                            result: appendResponse.data 
-                        });
-                        break;
-                        
-                    case 'updateData':
-                        const updateResponse = await sheets.spreadsheets.values.update({
-                            spreadsheetId,
-                            range,
-                            valueInputOption: 'USER_ENTERED',
-                            resource: {
-                                values: data
-                            },
-                        });
-                        res.status(200).json({ 
-                            success: true, 
-                            result: updateResponse.data 
-                        });
-                        break;
-                        
-                    case 'updateCell':
-                        const cellResponse = await sheets.spreadsheets.values.update({
-                            spreadsheetId,
-                            range,
-                            valueInputOption: 'USER_ENTERED',
-                            resource: {
-                                values: [[value]]
-                            },
-                        });
-                        res.status(200).json({ 
-                            success: true, 
-                            result: cellResponse.data 
-                        });
-                        break;
-                        
-                    case 'deleteRow':
-                        // 행 삭제는 빈 값으로 덮어쓰기
-                        const [sheetName, cellRange] = range.split('!');
-                        const columns = cellRange.match(/[A-Z]+/g);
-                        const emptyData = Array(columns[1].charCodeAt(0) - columns[0].charCodeAt(0) + 1).fill('');
-                        
-                        const deleteResponse = await sheets.spreadsheets.values.update({
-                            spreadsheetId,
-                            range,
-                            valueInputOption: 'USER_ENTERED',
-                            resource: {
-                                values: [emptyData]
-                            },
-                        });
-                        res.status(200).json({ 
-                            success: true, 
-                            result: deleteResponse.data 
-                        });
-                        break;
-                        
-                    default:
-                        res.status(400).json({ 
-                            success: false, 
-                            error: 'Invalid action' 
-                        });
-                }
-            } catch (error) {
-                console.error('API Error:', error);
-                res.status(500).json({ 
-                    success: false, 
-                    error: error.message 
-                });
-            }
-        }
-        
-        // /api/auth/user.js 예시
-        export default function handler(req, res) {
-            // 실제로는 세션이나 JWT에서 사용자 정보를 가져와야 함
-            const user = {
-                name: '홍길동',
-                email: 'hong@example.com',
-                role: 'admin'
-            };
-            res.status(200).json(user);
-        }
-        */
-    </script>
-</body>
-</html>dData();
                     showToast('상태가 업데이트되었습니다.');
                 } else {
                     showToast('업데이트에 실패했습니다.', 'error');
                 }
             } catch (error) {
                 console.error('상태 업데이트 실패:', error);
-                showToast('업데이트에 실패했습니다.', 'error');
+                showToast('데모 모드: 실제 저장되지 않습니다.', 'warning');
             } finally {
                 hideLoading();
             }
@@ -1604,7 +1387,7 @@
             }
         }
 
-        // 업무 추가 모달 열기
+        // 업무 추가 모달
         function openTaskModal(date) {
             editMode = false;
             document.getElementById('modalTitle').textContent = '새 업무 추가';
@@ -1613,22 +1396,21 @@
             document.getElementById('editIndex').value = '';
             document.getElementById('taskModal').classList.add('show');
             
-            // 폼 리셋
             document.getElementById('taskType').value = 'task';
             updateModalFields();
             
-            // 날짜 설정
             if (date) {
                 setTimeout(() => {
-                    const dateField = document.getElementById('taskDate') || 
-                                    document.getElementById('startDate');
+                    const dateField = document.getElementById('taskDate') || document.getElementById('startDate');
                     if (dateField) dateField.value = date;
                 }, 100);
             }
         }
 
-        // 업무 수정 모달 열기
+        // 업무 수정 모달
         function openEditModal(task) {
+            if (!task) return;
+            
             editMode = true;
             document.getElementById('modalTitle').textContent = '업무 수정';
             document.getElementById('deleteBtn').style.display = 'inline-block';
@@ -1639,33 +1421,32 @@
             
             updateModalFields();
             
-            // 데이터 채우기
             setTimeout(() => {
                 if (task.type === 'task') {
-                    document.getElementById('taskTitle').value = task['업무제목'] || '';
-                    document.getElementById('taskDate').value = task['마감일'] || '';
-                    document.getElementById('taskAssignee').value = task['담당자'] || '';
-                    document.getElementById('taskPriority').value = task['우선순위'] || '중간';
-                    document.getElementById('taskDescription').value = task['업무내용'] || '';
-                    document.getElementById('taskStatus').value = task['상태'] || '대기';
+                    if (document.getElementById('taskTitle')) document.getElementById('taskTitle').value = task['업무제목'] || '';
+                    if (document.getElementById('taskDate')) document.getElementById('taskDate').value = task['마감일'] || '';
+                    if (document.getElementById('taskAssignee')) document.getElementById('taskAssignee').value = task['담당자'] || '';
+                    if (document.getElementById('taskPriority')) document.getElementById('taskPriority').value = task['우선순위'] || '중간';
+                    if (document.getElementById('taskDescription')) document.getElementById('taskDescription').value = task['업무내용'] || '';
+                    if (document.getElementById('taskStatus')) document.getElementById('taskStatus').value = task['상태'] || '대기';
                 } else if (task.type === 'short') {
-                    document.getElementById('planTitle').value = task['제목'] || '';
-                    document.getElementById('planType').value = task['계획유형'] || '주간';
-                    document.getElementById('startDate').value = task['시작일'] || '';
-                    document.getElementById('endDate').value = task['종료일'] || '';
-                    document.getElementById('team').value = task['담당팀'] || '';
-                    document.getElementById('goal').value = task['목표'] || '';
-                    document.getElementById('planProgress').value = task['진행률'] || 0;
-                    document.getElementById('planStatus').value = task['상태'] || '계획';
+                    if (document.getElementById('planTitle')) document.getElementById('planTitle').value = task['제목'] || '';
+                    if (document.getElementById('planType')) document.getElementById('planType').value = task['계획유형'] || '주간';
+                    if (document.getElementById('startDate')) document.getElementById('startDate').value = task['시작일'] || '';
+                    if (document.getElementById('endDate')) document.getElementById('endDate').value = task['종료일'] || '';
+                    if (document.getElementById('team')) document.getElementById('team').value = task['담당팀'] || '';
+                    if (document.getElementById('goal')) document.getElementById('goal').value = task['목표'] || '';
+                    if (document.getElementById('planProgress')) document.getElementById('planProgress').value = task['진행률'] || 0;
+                    if (document.getElementById('planStatus')) document.getElementById('planStatus').value = task['상태'] || '계획';
                 } else if (task.type === 'long') {
-                    document.getElementById('longPlanTitle').value = task['계획명'] || '';
-                    document.getElementById('planYear').value = task['연도'] || new Date().getFullYear();
-                    document.getElementById('planQuarter').value = task['분기'] || '1';
-                    document.getElementById('startMonth').value = task['시작월'] || '';
-                    document.getElementById('endMonth').value = task['종료월'] || '';
-                    document.getElementById('department').value = task['담당부서'] || '';
-                    document.getElementById('longGoal').value = task['목표'] || '';
-                    document.getElementById('achievement').value = task['달성률'] || 0;
+                    if (document.getElementById('longPlanTitle')) document.getElementById('longPlanTitle').value = task['계획명'] || '';
+                    if (document.getElementById('planYear')) document.getElementById('planYear').value = task['연도'] || new Date().getFullYear();
+                    if (document.getElementById('planQuarter')) document.getElementById('planQuarter').value = task['분기'] || '1';
+                    if (document.getElementById('startMonth')) document.getElementById('startMonth').value = task['시작월'] || '';
+                    if (document.getElementById('endMonth')) document.getElementById('endMonth').value = task['종료월'] || '';
+                    if (document.getElementById('department')) document.getElementById('department').value = task['담당부서'] || '';
+                    if (document.getElementById('longGoal')) document.getElementById('longGoal').value = task['목표'] || '';
+                    if (document.getElementById('achievement')) document.getElementById('achievement').value = task['달성률'] || 0;
                 }
             }, 100);
         }
@@ -1701,7 +1482,7 @@
                         <label class="form-label">우선순위</label>
                         <select class="form-control" id="taskPriority">
                             <option value="낮음">낮음</option>
-                            <option value="중간">중간</option>
+                            <option value="중간" selected>중간</option>
                             <option value="높음">높음</option>
                             <option value="긴급">긴급</option>
                         </select>
@@ -1817,12 +1598,9 @@
             let data = {};
             let range = '';
             
-            // 연번 생성
             const getNextNumber = (dataArray) => {
                 if (dataArray.length === 0) return '1';
-                const maxNum = Math.max(...dataArray.map(item => 
-                    parseInt(item['연번']) || 0
-                ));
+                const maxNum = Math.max(...dataArray.map(item => parseInt(item['연번']) || 0));
                 return String(maxNum + 1);
             };
             
@@ -1837,8 +1615,7 @@
                     '지시자': currentUser?.name || '',
                     '우선순위': document.getElementById('taskPriority').value,
                     '상태': document.getElementById('taskStatus').value,
-                    '완료일': document.getElementById('taskStatus').value === '완료' ? 
-                             new Date().toISOString().split('T')[0] : '',
+                    '완료일': document.getElementById('taskStatus').value === '완료' ? new Date().toISOString().split('T')[0] : '',
                     '비고': ''
                 };
                 range = editMode ? `업무지시!A${parseInt(editIndex) + 1}:K${parseInt(editIndex) + 1}` : '업무지시!A:K';
@@ -1894,38 +1671,36 @@
                     closeTaskModal();
                     await loadData();
                     showToast(editMode ? '업무가 수정되었습니다.' : '업무가 등록되었습니다.');
-                } else {
-                    showToast('저장에 실패했습니다.', 'error');
                 }
             } catch (error) {
                 console.error('저장 실패:', error);
-                showToast('저장에 실패했습니다.', 'error');
+                showToast('데모 모드: 실제 저장되지 않습니다.', 'warning');
+                closeTaskModal();
+                await loadData();
             } finally {
                 hideLoading();
             }
         }
 
-        // 업무 삭제 확인
+        // 업무 삭제
         function confirmDelete(type, index) {
             if (confirm('정말 삭제하시겠습니까?')) {
                 deleteTaskByIndex(type, index);
             }
         }
 
-        // 업무 삭제
-        async function deleteTask() {
+        function deleteTask() {
             const taskType = document.getElementById('taskType').value;
             const editIndex = document.getElementById('editIndex').value;
             
             if (!editIndex) return;
             
             if (confirm('정말 삭제하시겠습니까?')) {
-                await deleteTaskByIndex(taskType, editIndex);
+                deleteTaskByIndex(taskType, editIndex);
                 closeTaskModal();
             }
         }
 
-        // 인덱스로 업무 삭제
         async function deleteTaskByIndex(type, index) {
             showLoading();
             
@@ -1950,4 +1725,96 @@
                 
                 const result = await response.json();
                 if (result.success) {
-                    await loa
+                    await loadData();
+                    showToast('삭제되었습니다.');
+                }
+            } catch (error) {
+                console.error('삭제 실패:', error);
+                showToast('데모 모드: 실제 삭제되지 않습니다.', 'warning');
+                await loadData();
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 오늘 업무 체크
+        function checkTodayTasks() {
+            const today = new Date().toISOString().split('T')[0];
+            let todayTasks = [];
+            
+            todayTasks = todayTasks.concat(
+                tasksData.filter(t => 
+                    (t['마감일'] === today || t['우선순위'] === '긴급') && 
+                    t['상태'] !== '완료'
+                )
+            );
+            
+            todayTasks = todayTasks.concat(
+                shortTermData.filter(t => 
+                    t['시작일'] <= today && today <= t['종료일'] && 
+                    t['상태'] !== '완료'
+                )
+            );
+            
+            const badge = document.getElementById('todayCount');
+            if (todayTasks.length > 0) {
+                badge.textContent = todayTasks.length;
+                badge.style.display = 'inline-block';
+                
+                const urgentTasks = todayTasks.filter(t => t['우선순위'] === '긴급');
+                if (urgentTasks.length > 0) {
+                    showToast(`긴급 업무가 ${urgentTasks.length}개 있습니다!`, 'warning');
+                }
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // 로딩 표시
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
+        }
+
+        // 토스트 메시지
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.background = type === 'error' ? '#dc3545' : 
+                                    type === 'warning' ? '#f59e0b' : '#212529';
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // 모달 외부 클릭시 닫기
+        document.getElementById('taskModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeTaskModal();
+            }
+        });
+
+        // 키보드 단축키
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeTaskModal();
+            }
+            
+            if (e.ctrlKey && e.key === 'n') {
+                e.preventDefault();
+                openTaskModal();
+            }
+            
+            if (e.ctrlKey && e.key === 's' && document.getElementById('taskModal').classList.contains('show')) {
+                e.preventDefault();
+                saveTask();
+            }
+        });
+    </script>
+</body>
+</html>
