@@ -1430,24 +1430,254 @@ async function getUserInfo() {
         }
 
         // 업무 추가 모달
-        function openTaskModal(date) {
-            editMode = false;
-            document.getElementById('modalTitle').textContent = '새 업무 추가';
-            document.getElementById('deleteBtn').style.display = 'none';
-            document.getElementById('taskId').value = '';
-            document.getElementById('editIndex').value = '';
-            document.getElementById('taskModal').classList.add('show');
-            
-            document.getElementById('taskType').value = 'task';
-            updateModalFields();
-            
-            if (date) {
-                setTimeout(() => {
-                    const dateField = document.getElementById('taskDate') || document.getElementById('startDate');
-                    if (dateField) dateField.value = date;
-                }, 100);
-            }
+        // 수정된 코드 시작
+function openTaskModal(date) {
+    // 날짜별 일정 보기 모달로 변경
+    showDateScheduleModal(date);
+}
+
+function showDateScheduleModal(dateStr) {
+    // 해당 날짜의 모든 일정 가져오기
+    const dayTasks = getTasksForDate(dateStr);
+    const dateObj = new Date(dateStr);
+    const dateFormatted = `${dateObj.getMonth() + 1}월 ${dateObj.getDate()}일`;
+    
+    // 모달 생성
+    let modal = document.getElementById('dateScheduleModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'dateScheduleModal';
+        modal.className = 'modal';
+        document.body.appendChild(modal);
+    }
+    
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 class="modal-title">${dateFormatted} 일정</h3>
+                <button class="modal-close" onclick="closeDateScheduleModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- 일정 목록 -->
+                <div id="scheduleList" style="max-height: 400px; overflow-y: auto;">
+                    ${dayTasks.length > 0 ? `
+                        <div class="schedule-groups">
+                            ${generateScheduleGroups(dayTasks, dateStr)}
+                        </div>
+                    ` : '<p style="text-align: center; color: #6c757d; padding: 20px;">등록된 일정이 없습니다.</p>'}
+                </div>
+                
+                <!-- 플로팅 추가 버튼 (기존 페이지 하단 스타일과 동일) -->
+                <button class="add-task-btn-inline" onclick="openNewTaskModal('${dateStr}')" style="
+                    position: absolute;
+                    bottom: 30px;
+                    right: 30px;
+                    width: 48px;
+                    height: 48px;
+                    background: #2563eb;
+                    color: white;
+                    border: none;
+                    border-radius: 50%;
+                    font-size: 20px;
+                    cursor: pointer;
+                    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+                    transition: all 0.2s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                ">+</button>
+            </div>
+        </div>
+    `;
+    
+    modal.style.display = 'flex';
+    
+    // 일정 클릭 이벤트 바인딩
+    setTimeout(() => {
+        document.querySelectorAll('.schedule-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const type = this.dataset.type;
+                const index = this.dataset.index;
+                const task = dayTasks.find(t => t.type === type && t._index == index);
+                if (task) {
+                    closeDateScheduleModal();
+                    openEditModal(task);
+                }
+            });
+        });
+    }, 100);
+}
+
+function generateScheduleGroups(tasks, dateStr) {
+    const groups = {
+        urgent: [],
+        task: [],
+        short: [],
+        long: []
+    };
+    
+    tasks.forEach(task => {
+        if (task.type === 'task' && task['우선순위'] === '긴급') {
+            groups.urgent.push(task);
+        } else if (task.type === 'task') {
+            groups.task.push(task);
+        } else if (task.type === 'short') {
+            groups.short.push(task);
+        } else if (task.type === 'long') {
+            groups.long.push(task);
         }
+    });
+    
+    let html = '';
+    
+    if (groups.urgent.length > 0) {
+        html += `
+            <div class="schedule-group" style="margin-bottom: 20px;">
+                <div class="schedule-group-title" style="
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: #dc3545;
+                    margin-bottom: 8px;
+                    padding-bottom: 4px;
+                    border-bottom: 1px solid #fee2e2;
+                ">
+                    🚨 긴급 업무 (${groups.urgent.length})
+                </div>
+                ${groups.urgent.map(task => createScheduleItem(task, 'urgent')).join('')}
+            </div>
+        `;
+    }
+    
+    if (groups.task.length > 0) {
+        html += `
+            <div class="schedule-group" style="margin-bottom: 20px;">
+                <div class="schedule-group-title" style="
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: #212529;
+                    margin-bottom: 8px;
+                    padding-bottom: 4px;
+                    border-bottom: 1px solid #dee2e6;
+                ">
+                    📋 업무지시 (${groups.task.length})
+                </div>
+                ${groups.task.map(task => createScheduleItem(task, 'task')).join('')}
+            </div>
+        `;
+    }
+    
+    if (groups.short.length > 0) {
+        html += `
+            <div class="schedule-group" style="margin-bottom: 20px;">
+                <div class="schedule-group-title" style="
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: #16a34a;
+                    margin-bottom: 8px;
+                    padding-bottom: 4px;
+                    border-bottom: 1px solid #d4f4e7;
+                ">
+                    📅 단기계획 (${groups.short.length})
+                </div>
+                ${groups.short.map(task => createScheduleItem(task, 'short')).join('')}
+            </div>
+        `;
+    }
+    
+    if (groups.long.length > 0) {
+        html += `
+            <div class="schedule-group" style="margin-bottom: 20px;">
+                <div class="schedule-group-title" style="
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: #9333ea;
+                    margin-bottom: 8px;
+                    padding-bottom: 4px;
+                    border-bottom: 1px solid #f3e8ff;
+                ">
+                    🎯 장기계획 (${groups.long.length})
+                </div>
+                ${groups.long.map(task => createScheduleItem(task, 'long')).join('')}
+            </div>
+        `;
+    }
+    
+    return html;
+}
+
+function createScheduleItem(task, type) {
+    const title = task['업무제목'] || task['제목'] || task['계획명'] || '';
+    const status = task['상태'] || '대기';
+    const priority = task['우선순위'] || '';
+    const assignee = task['담당자'] || task['책임자'] || '';
+    const progress = task['진행률'] || task['달성률'] || 0;
+    
+    const statusColor = status === '완료' ? '#10b981' : 
+                       status === '진행중' ? '#2563eb' : 
+                       status === '보류' ? '#6c757d' : '#f59e0b';
+    
+    const bgColor = type === 'urgent' ? '#fee2e2' :
+                   type === 'short' ? '#d4f4e7' :
+                   type === 'long' ? '#f3e8ff' : '#f8f9fa';
+    
+    return `
+        <div class="schedule-item" data-type="${task.type}" data-index="${task._index}" style="
+            padding: 12px;
+            margin-bottom: 8px;
+            background: ${bgColor};
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid ${type === 'urgent' ? '#dc3545' : 
+                                    type === 'short' ? '#16a34a' : 
+                                    type === 'long' ? '#9333ea' : '#2563eb'};
+        " onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform='translateX(0)'">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div style="flex: 1;">
+                    <div style="font-weight: 500; font-size: 14px; color: #212529; margin-bottom: 4px;">
+                        ${title}
+                    </div>
+                    <div style="font-size: 12px; color: #6c757d;">
+                        ${assignee ? `담당: ${assignee} | ` : ''}
+                        상태: <span style="color: ${statusColor}; font-weight: 500;">${status}</span>
+                        ${progress > 0 ? ` | 진행률: ${progress}%` : ''}
+                    </div>
+                </div>
+                ${priority === '긴급' ? '<span style="padding: 2px 6px; background: #dc3545; color: white; border-radius: 4px; font-size: 11px;">긴급</span>' : ''}
+            </div>
+        </div>
+    `;
+}
+
+function closeDateScheduleModal() {
+    const modal = document.getElementById('dateScheduleModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function openNewTaskModal(date) {
+    closeDateScheduleModal();
+    
+    // 새 업무 추가 모달 열기
+    editMode = false;
+    document.getElementById('modalTitle').textContent = '새 업무 추가';
+    document.getElementById('deleteBtn').style.display = 'none';
+    document.getElementById('taskId').value = '';
+    document.getElementById('editIndex').value = '';
+    document.getElementById('taskModal').classList.add('show');
+    
+    document.getElementById('taskType').value = 'task';
+    updateModalFields();
+    
+    if (date) {
+        setTimeout(() => {
+            const dateField = document.getElementById('taskDate') || document.getElementById('startDate');
+            if (dateField) dateField.value = date;
+        }, 100);
+    }
+}
+// 수정된 코드 끝
 
         // 업무 수정 모달
         function openEditModal(task) {
