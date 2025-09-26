@@ -15,13 +15,12 @@ async function authorize() {
     return await auth.getClient();
 }
 
-
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { action, range, data, rowIndex } = req.body;
+    const { action, range, data, value, rowIndex } = req.body;
 
     try {
         const auth = await authorize();
@@ -39,8 +38,6 @@ export default async function handler(req, res) {
                 });
 
             case 'appendData':
-                // 데이터를 배열로 변환
-                const headers = Object.keys(data);
                 const values = [Object.values(data)];
                 
                 await sheets.spreadsheets.values.append({
@@ -54,43 +51,53 @@ export default async function handler(req, res) {
                 return res.json({ success: true });
 
             case 'updateData':
-                if (!rowIndex) {
-                    return res.json({ 
-                        success: false, 
-                        error: 'Row index is required for update' 
-                    });
-                }
-                
-                // 특정 행 업데이트
-                const updateRange = range.replace('!A:Z', `!A${rowIndex}:Z${rowIndex}`);
-                const updateValues = [Object.values(data)];
+                // data가 배열인지 확인
+                const updateValues = Array.isArray(data) ? data : [Object.values(data)];
                 
                 await sheets.spreadsheets.values.update({
                     spreadsheetId: SPREADSHEET_ID,
-                    range: updateRange,
+                    range: range,
                     valueInputOption: 'USER_ENTERED',
                     requestBody: { values: updateValues }
                 });
                 
                 return res.json({ success: true });
 
-            case 'deleteData':
-                if (!rowIndex) {
-                    return res.json({ 
-                        success: false, 
-                        error: 'Row index is required for delete' 
-                    });
-                }
+            case 'updateCell':
+                // 단일 셀 업데이트
+                await sheets.spreadsheets.values.update({
+                    spreadsheetId: SPREADSHEET_ID,
+                    range: range,
+                    valueInputOption: 'USER_ENTERED',
+                    requestBody: { 
+                        values: [[value]] 
+                    }
+                });
                 
-                // 행 삭제 (빈 값으로 덮어쓰기)
-                const deleteRange = range.replace('!A:Z', `!A${rowIndex}:Z${rowIndex}`);
-                const emptyRow = [Array(26).fill('')]; // 26 columns with empty values
+                return res.json({ success: true });
+
+            case 'deleteRow':
+                // 실제 행 삭제가 아닌 빈 값으로 덮어쓰기
+                const [sheetName, cellRange] = range.split('!');
+                const columns = cellRange.match(/[A-Z]+/g);
+                let emptyData = [];
+                
+                if (columns && columns.length === 2) {
+                    // 열 범위 계산 (예: A부터 K까지)
+                    const startCol = columns[0].charCodeAt(0);
+                    const endCol = columns[1].charCodeAt(columns[1].length - 1);
+                    const numCols = endCol - startCol + 1;
+                    emptyData = [Array(numCols).fill('')];
+                } else {
+                    // 기본값: 빈 배열 20개
+                    emptyData = [Array(20).fill('')];
+                }
                 
                 await sheets.spreadsheets.values.update({
                     spreadsheetId: SPREADSHEET_ID,
-                    range: deleteRange,
+                    range: range,
                     valueInputOption: 'USER_ENTERED',
-                    requestBody: { values: emptyRow }
+                    requestBody: { values: emptyData }
                 });
                 
                 return res.json({ success: true });
