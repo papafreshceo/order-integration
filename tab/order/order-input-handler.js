@@ -1243,8 +1243,9 @@ list.innerHTML = `
                 <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 90px;">발송요청일</th>
                 <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 80px;">금액</th>
                 <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 80px;">확인</th>
-                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 60px;">삭제</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 60px;">제외</th>
                 <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 100px;">비고</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 60px;">삭제</th>
             </tr>
         </thead>
         <tbody>
@@ -1314,13 +1315,31 @@ list.innerHTML = `
                                 ${order.비고}
                             </span>` : '-'}
                     </td>
+                    <td style="padding: 8px; text-align: center;">
+                        <button onclick="OrderInputHandler.deleteOrder(${index})" 
+                            style="padding: 4px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer; height: 24px;">
+                            삭제
+                        </button>
+                    </td>
                 </tr>`;
             }).join('')}
         </tbody>
     </table>
-
-        
-    `;
+    <div style="padding: 12px 16px; background: #f8f9fa; border-top: 1px solid #dee2e6; display: flex; align-items: center; gap: 20px; font-size: 12px; color: #6c757d;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <button style="padding: 4px 10px; background: #84cc16; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: default; height: 24px;">
+                제외
+            </button>
+            <span>금일 발송대상에서 제외</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <button style="padding: 4px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: default; height: 24px;">
+                삭제
+            </button>
+            <span>완전히 삭제</span>
+        </div>
+    </div>
+`;
 },
 
 async confirmPayment(index) {
@@ -1387,6 +1406,48 @@ async confirmPayment(index) {
     this.showMessage(`주문이 제외되었습니다. (남은 주문: ${this.manualOrders.length}건)`, 'lime');
 },
     
+
+
+async deleteOrder(index) {
+    if (!confirm('이 주문을 완전히 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.')) {
+        return;
+    }
+    
+    try {
+        const order = this.manualOrders[index];
+        const userEmail = window.currentUser?.email || localStorage.getItem('userEmail') || 'unknown';
+        
+        // API 호출로 시트에서 행 삭제
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'deleteOrderRow',
+                spreadsheetId: 'orders',
+                sheetName: '임시저장',
+                userEmail: userEmail,
+                orderIndex: index,
+                orderId: order.주문번호
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // 로컬 배열에서 삭제
+            this.manualOrders.splice(index, 1);
+            this.updateOrderList();
+            this.showMessage('주문이 완전히 삭제되었습니다.', 'error');
+        } else {
+            throw new Error(result.error || '삭제 실패');
+        }
+    } catch (error) {
+        console.error('주문 삭제 오류:', error);
+        this.showMessage('주문 삭제 중 오류가 발생했습니다.', 'error');
+    }
+},
+
+
     resetForm() {
         document.getElementById('inputOrderForm').reset();
         document.getElementById('inputQuantity').value = '1';
