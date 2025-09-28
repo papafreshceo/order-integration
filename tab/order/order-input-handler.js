@@ -1766,27 +1766,39 @@ async saveOrders() {
                          String(today.getDate()).padStart(2, '0');
         
 
-        // 매핑 데이터 확인
+        // 매핑 데이터 확인 - parent window에서 가져오기
         console.log('현재 window.mappingData 상태:', window.mappingData);
+        console.log('parent.window.mappingData 상태:', parent.window.mappingData);
         
-        // window.mappingData가 없으면 직접 로드
+        // parent window에서 매핑 데이터 가져오기
+        if (!window.mappingData) {
+            if (parent.window && parent.window.mappingData) {
+                window.mappingData = parent.window.mappingData;
+                console.log('parent window에서 매핑 데이터 가져옴');
+            }
+        }
+        
+        // 그래도 없으면 API로 로드
         if (!window.mappingData || !window.mappingData.standardFields) {
-            console.log('매핑 데이터 없음, 직접 로드 시도');
+            console.log('매핑 데이터 없음, getMappingData API 호출');
             try {
                 const mappingResponse = await fetch('/api/sheets', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'getMapping' })
+                    body: JSON.stringify({ 
+                        action: 'getMappingData',
+                        spreadsheetId: 'settings'  // 설정용 스프레드시트
+                    })
                 });
                 
                 const mappingResult = await mappingResponse.json();
                 console.log('매핑 데이터 로드 응답:', mappingResult);
                 
-                if (mappingResult.success) {
+                if (mappingResult.standardFields) {
                     window.mappingData = mappingResult;
                     console.log('매핑 데이터 설정 완료');
                 } else {
-                    throw new Error('매핑 데이터 로드 실패');
+                    throw new Error('매핑 데이터 형식 오류');
                 }
             } catch (error) {
                 console.error('매핑 데이터 로드 오류:', error);
