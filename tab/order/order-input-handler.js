@@ -1160,7 +1160,7 @@ async addOrder() {
     }
     
     const orderData = {
-        주문번호: this.generateOrderNumber(),  // 자동생성 주문번호
+        주문번호: this.generateOrderNumber(),
         마켓명: document.getElementById('inputOrderType').value,
         옵션명: document.getElementById('inputOptionName').value,
         단가: parseFloat(document.getElementById('inputUnitPrice').value.replace(/,/g, '')) || 0,
@@ -1173,11 +1173,10 @@ async addOrder() {
         주소: document.getElementById('inputAddress').value,
         배송메세지: document.getElementById('inputDeliveryMsg').value,
         발송요청일: document.getElementById('inputRequestDate').value,
-        비고: ''  // 건별입력은 비고 없음
+        비고: ''
     };
     
-   
-},
+    
         
         orderData['상품금액'] = (orderData.단가 * orderData.수량) + orderData.택배비;
         
