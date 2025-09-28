@@ -848,7 +848,7 @@ async saveTempOrder(orderData, isUnshipped = false) {
             body: JSON.stringify({
                 action: 'appendToSheet',
                 spreadsheetId: 'orders',
-                range: '임시저장!A:Z',  // T열까지 확장
+                range: '임시저장!A:X',  // X열까지 확장
                 values: [tempData]
             })
         });
@@ -1439,21 +1439,15 @@ async confirmPayment(index) {
     }
 },
     
-    async removeOrder(index) {  // async 추가
-    // 삭제할 주문 정보
-    const deletedOrder = this.manualOrders[index];
-    
-    this.manualOrders.splice(index, 1);
-    this.updateOrderList();
-    
-    // 임시저장 업데이트
-    await this.deleteTempOrders();  // 전체 삭제 후
-    for (const order of this.manualOrders) {
-        await this.saveTempOrder(order);  // 남은 것만 다시 저장
-    }
-    
-    this.showMessage(`주문이 제외되었습니다. (남은 주문: ${this.manualOrders.length}건)`, 'lime');
-},
+    removeOrder(index) {  // async 제거
+        // 테이블에서만 제외 (임시저장은 유지)
+        const removedOrder = this.manualOrders[index];
+        this.manualOrders.splice(index, 1);
+        this.updateOrderList();
+        
+        this.showMessage(`주문이 제외되었습니다. (남은 주문: ${this.manualOrders.length}건)`, 'lime');
+        // 페이지 새로고침하면 다시 나타남
+    },
     
 
 
