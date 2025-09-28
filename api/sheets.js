@@ -1565,28 +1565,56 @@ case 'deleteTempOrders':
 case 'updateTransferFlag':
         try {
           const { sheetName, userEmail, orderIds, transferFlag, transferTime } = req.body;
+          const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
           
-          console.log('updateTransferFlag 호출됨:', {
-            userEmail,
-            orderIds,
-            transferFlag,
-            transferTime
-          });
+          console.log('이관 플래그 업데이트 시작:', { userEmail, orderIds });
           
-          // 현재는 이관 플래그 업데이트를 스킵하고 성공 반환
-          // 추후 구현 예정
+          // 임시저장 시트 전체 데이터 가져오기
+          const allData = await getSheetData('임시저장', ordersSpreadsheetId);
+          
+          if (!allData || allData.length < 2) {
+            return res.status(200).json({ success: true, updatedCount: 0 });
+          }
+          
+          let updateCount = 0;
+          
+          // 각 행 검사하여 매칭되는 주문 찾기
+          for (let i = 1; i < allData.length; i++) {
+            const row = allData[i];
+            const rowEmail = row[0];
+            const rowOrderId = row[1];
+            
+            // 사용자 이메일과 주문번호가 일치하면
+            if (rowEmail === userEmail && orderIds.includes(rowOrderId)) {
+              // W열(인덱스 22)과 X열(인덱스 23) 업데이트
+              while (row.length < 24) {
+                row.push('');
+              }
+              row[22] = transferFlag;  // W열: 이관 플래그
+              row[23] = transferTime;  // X열: 이관 시간
+              
+              allData[i] = row;
+              updateCount++;
+            }
+          }
+          
+          if (updateCount > 0) {
+            // 전체 시트를 다시 쓰기
+            await clearSheet('임시저장', ordersSpreadsheetId);
+            await updateSheetData('임시저장!A1', allData, ordersSpreadsheetId);
+            console.log(`${updateCount}건 이관 플래그 업데이트 완료`);
+          }
+          
           return res.status(200).json({ 
             success: true, 
-            updatedCount: orderIds ? orderIds.length : 0,
-            message: '이관 플래그 업데이트 스킵 (임시)'
+            updatedCount: updateCount 
           });
           
         } catch (error) {
-          console.error('updateTransferFlag 오류:', error);
-          return res.status(200).json({ 
-            success: true,
-            updatedCount: 0,
-            message: '이관 플래그 업데이트 스킵'
+          console.error('이관 플래그 업데이트 실패:', error);
+          return res.status(500).json({ 
+            error: 'Failed to update transfer flag', 
+            details: error.message 
           });
         }
 
