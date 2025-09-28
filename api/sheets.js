@@ -1576,7 +1576,8 @@ case 'updateTransferFlag':
           const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
           
           // 전체 데이터 가져오기
-          const allData = await getSheetData('주문접수!A:X', ordersSpreadsheetId);
+          const { getOrderData } = require('../lib/google-sheets');
+          const allData = await getOrderData('주문접수!A:X', ordersSpreadsheetId);
           
           if (!allData || allData.length < 2) {
             return res.status(200).json({ 
@@ -1587,48 +1588,64 @@ case 'updateTransferFlag':
           
           let updateCount = 0;
           
-console.log('=== updateTransferFlag 디버깅 ===');
-console.log('요청 데이터:', {
-    userEmail: userEmail,
-    orderIds: orderIds,
-    totalRows: allData.length - 1
-});
+          console.log('=== updateTransferFlag 디버깅 ===');
+          console.log('요청 데이터:', {
+              userEmail: userEmail,
+              orderIds: orderIds,
+              totalRows: allData.length - 1
+          });
 
-// 각 행별로 개별 업데이트
-for (let i = 1; i < allData.length; i++) {
-    const rowEmail = allData[i][0];
-    const rowOrderId = allData[i][1];
-    
-    console.log(`행 ${i}:`, {
-        이메일: rowEmail,
-        주문번호: rowOrderId,
-        이메일일치: rowEmail === userEmail,
-        주문번호포함: orderIds.includes(rowOrderId)
-    });
-    
-    if (rowEmail === userEmail && orderIds.includes(rowOrderId)) {
-              const rowNumber = i + 1; // 시트는 1부터 시작
+          // 각 행별로 개별 업데이트
+          for (let i = 1; i < allData.length; i++) {
+              const rowEmail = allData[i][0];
+              const rowOrderId = allData[i][1];  // 접수번호
               
-              try {
-                // W열과 X열 업데이트 - 작은따옴표로 시트명 감싸기
-                await updateSheetData(
-                  `'주문접수'!W${rowNumber}:X${rowNumber}`, 
-                  [['Y', transferTime]], 
-                  ordersSpreadsheetId
-                );
-                
-                updateCount++;
-              } catch (updateError) {
-                console.log(`행 ${rowNumber} 업데이트 실패:`, updateError.message);
-                // 실패해도 계속 진행
+              console.log(`행 ${i}:`, {
+                  이메일: rowEmail,
+                  접수번호: rowOrderId,
+                  이메일일치: rowEmail === userEmail,
+                  접수번호포함: orderIds.includes(rowOrderId)
+              });
+              
+              if (rowEmail === userEmail && orderIds.includes(rowOrderId)) {
+                  const rowNumber = i + 1; // 시트는 1부터 시작
+                  
+                  try {
+                      // W열과 X열 업데이트
+                      const { updateOrderCell } = require('../lib/google-sheets');
+                      
+                      // W열: 이관 플래그
+                      await updateOrderCell(
+                          `주문접수!W${rowNumber}`, 
+                          'Y', 
+                          ordersSpreadsheetId
+                      );
+                      
+                      // X열: 이관 시간
+                      await updateOrderCell(
+                          `주문접수!X${rowNumber}`, 
+                          transferTime, 
+                          ordersSpreadsheetId
+                      );
+                      
+                      updateCount++;
+                      console.log(`행 ${rowNumber} 업데이트 성공`);
+                  } catch (updateError) {
+                      console.log(`행 ${rowNumber} 업데이트 실패:`, updateError.message);
+                      // 실패해도 계속 진행
+                  }
               }
-            }
           }
+          
+          console.log(`총 ${updateCount}개 행 업데이트 완료`);
           
           return res.status(200).json({ 
             success: true, 
             message: `${updateCount}개 주문 이관 플래그 업데이트됨`
-          });
+          });  ← 여기까지
+          
+        } catch (error) {
+          console.error('이관플래그 실제 오류:', error);
           
         } catch (error) {
           console.error('이관플래그 실제 오류:', error);
