@@ -1139,9 +1139,10 @@ if (saved) {
                         const tooltipText = `마켓: ${order.마켓명 || ''}\n옵션명: ${order.옵션명 || ''}\n주문자: ${order.주문자 || ''}\n금액: ${(order.상품금액 || 0).toLocaleString()}원`;
                         
                          return `
-                        <tr style="border-bottom: 1px solid #f1f3f5;" 
+                        <tr style="border-bottom: 1px solid #f1f3f5; cursor: pointer;" 
                             onmouseover="this.style.background='#b7f7bd'" 
-                            onmouseout="this.style.background=''">
+                            onmouseout="this.style.background=''"
+                            title="${tooltipText}">
                             <td style="padding: 6px; text-align: center; font-weight: 200;">${index + 1}</td>
                             <td style="padding: 6px; text-align: center;">
                                 <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
