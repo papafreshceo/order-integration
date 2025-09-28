@@ -755,15 +755,17 @@ async loadTempOrders() {
         console.log('result.orders?.length:', result.orders?.length);
         
         if (result.success && result.orders && result.orders.length > 0) {
-            // 필드 매핑 추가
-            this.manualOrders = result.orders.map(order => ({
-    ...order,
-    주문번호: order.주문번호 || order.접수번호 || order.orderNumber || '',  // 접수번호 매핑 추가
-    사용자이메일: order.사용자이메일 || order.userEmail,
-    저장시간: order.저장시간 || order.timestamp,
-    상품금액: order.상품금액 || order.totalPrice || 0,
-    입금확인: order.입금확인 || ''
-}));
+            // 필드 매핑 추가 및 삭제된 항목 필터링
+            this.manualOrders = result.orders
+                .filter(order => order.삭제플래그 !== 'Y' && order.deleted !== 'Y')  // 삭제된 항목 제외
+                .map(order => ({
+                    ...order,
+                    주문번호: order.접수번호 || order.주문번호 || '',
+                    사용자이메일: order.사용자이메일 || order.userEmail,
+                    저장시간: order.저장시간 || order.timestamp,
+                    상품금액: order.상품금액 || order.totalPrice || 0,
+                    입금확인: order.입금확인 || ''
+                }));
             this.updateOrderList();
             console.log(`임시저장된 ${this.manualOrders.length}건의 주문 자동 로드 완료`);
             this.showMessage(`임시저장된 ${this.manualOrders.length}건의 주문을 불러왔습니다.`, 'info');
@@ -833,7 +835,7 @@ async saveTempOrder(orderData, isUnshipped = false) {
             body: JSON.stringify({
                 action: 'appendToSheet',
                 spreadsheetId: 'orders',
-                range: '임시저장!A:T',  // T열까지 확장
+                range: '임시저장!A:Z',  // T열까지 확장
                 values: [tempData]
             })
         });
@@ -1540,12 +1542,12 @@ async confirmDelete(index) {
         const order = this.manualOrders[index];
         const userEmail = window.currentUser?.email || localStorage.getItem('userEmail') || 'unknown';
         
-        // API 호출로 시트에서 행 삭제
+        // API 호출로 시트에 삭제 플래그 설정
         const response = await fetch('/api/sheets', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                action: 'deleteOrderRow',
+                action: 'markAsDeleted',
                 spreadsheetId: 'orders',
                 sheetName: '임시저장',
                 userEmail: userEmail,
@@ -1557,11 +1559,11 @@ async confirmDelete(index) {
         const result = await response.json();
         
         if (result.success) {
-            // 로컬 배열에서 삭제
+            // 로컬 배열에서 제거
             this.manualOrders.splice(index, 1);
             this.updateOrderList();
             document.getElementById('deleteConfirmModal').remove();
-            this.showMessage('주문이 완전히 삭제되었습니다.', 'error');
+            this.showMessage('주문이 삭제되었습니다.', 'error');
         } else {
             throw new Error(result.error || '삭제 실패');
         }
@@ -1570,7 +1572,6 @@ async confirmDelete(index) {
         this.showMessage('주문 삭제 중 오류가 발생했습니다.', 'error');
     }
 },
-
 deleteOrder(index) {
     this.showDeleteModal(index);
 },
