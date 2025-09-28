@@ -521,25 +521,30 @@ input[type="number"] {
                     <div id="inputMessage" class="message-box"></div>
                 </div>
 
-                <div class="order-list-section">
+                <!-- 주문 접수 내역 헤더 섹션 -->
+                <div style="background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px 8px 0 0; margin-top: 24px;">
                     <div class="list-header">
-    <h3 class="list-title">주문 접수 내역</h3>
-    <div style="display: flex; gap: 12px; align-items: center;">
-        <button class="btn-load-unshipped" onclick="OrderInputHandler.loadUnshippedOrders()" style="padding: 6px 16px; background: #f59e0b; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 300; cursor: pointer;">
-            미발송주문 불러오기
-        </button>
-        <button class="btn-save" onclick="OrderInputHandler.saveOrders()" style="padding: 6px 16px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 300; cursor: pointer;">
-            저장
-        </button>
-        <span style="font-size: 14px; color: #6c757d;">
-            총 <span id="totalOrderCount" style="color: #2563eb; font-weight: 500;">0</span>건
-        </span>
-    </div>
-</div>
-                    <div class="list-body">
-                        <div id="inputOrderList">
-                            <div class="empty-message">추가된 주문이 없습니다</div>
+                        <h3 class="list-title">주문 접수 내역</h3>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <button class="btn-load-unshipped" onclick="OrderInputHandler.loadUnshippedOrders()" 
+                                style="padding: 6px 16px; background: #f59e0b; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 300; cursor: pointer;">
+                                미발송주문 불러오기
+                            </button>
+                            <button class="btn-save" onclick="OrderInputHandler.saveOrders()" 
+                                style="padding: 6px 16px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 300; cursor: pointer;">
+                                저장
+                            </button>
+                            <span style="font-size: 14px; color: #6c757d;">
+                                총 <span id="totalOrderCount" style="color: #2563eb; font-weight: 500;">0</span>건
+                            </span>
                         </div>
+                    </div>
+                </div>
+                
+                <!-- 주문 접수 내역 테이블 섹션 -->
+                <div style="background: #ffffff; border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 8px 8px; padding: 20px;">
+                    <div id="inputOrderList">
+                        <div class="empty-message">접수된 주문이 없습니다</div>
                     </div>
                 </div>
             </div>
