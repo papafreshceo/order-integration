@@ -1046,10 +1046,10 @@ case 'checkCsDuplicate':
     const csData = await getOrderData('CS기록!A:W', ordersSpreadsheetId);
     
     if (csData && csData.length > 1) {
-      // 주문번호로 찾기 (K열 = 10번 인덱스)
+      // 주문번호로 찾기 (L열 = 11번 인덱스) - CS구분 추가로 인해 한 칸 밀림
       for (let i = 1; i < csData.length; i++) {
         const row = csData[i];
-        if (row && row[10] === orderData.주문번호) {
+        if (row && row[11] === orderData.주문번호) {
           // CS 레코드 찾음
           const csRecord = {
             연번: row[0],
