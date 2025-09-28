@@ -1189,8 +1189,8 @@ if (saved) {
                         <th style="padding: 8px; text-align: center; width: 100px;">주문자전화</th>
                         <th style="padding: 8px; text-align: center; width: 70px;">수령인</th>
                         <th style="padding: 8px; text-align: center; width: 100px;">수령인전화</th>
-                        <th style="padding: 8px; text-align: center; width: 250px;">주소</th>
-                        <th style="padding: 8px; text-align: center; width: 120px;">배송메세지</th>
+                        <th style="padding: 8px; text-align: center; width: 200px;">주소</th>
+                        <th style="padding: 8px; text-align: center; width: 100px;">배송메세지</th>
                         <th style="padding: 8px; text-align: center; width: 140px;">옵션명</th>
                         <th style="padding: 8px; text-align: center; width: 50px;">수량</th>
                         <th style="padding: 8px; text-align: center; width: 70px;">마켓</th>
