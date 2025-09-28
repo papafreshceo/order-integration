@@ -1185,9 +1185,9 @@ if (saved) {
                         <th style="padding: 8px; text-align: center; width: 150px;">접수자</th>
                         <th style="padding: 8px; text-align: center; width: 140px;">접수일시</th>
                         <th style="padding: 8px; text-align: center; width: 100px;">접수번호</th>
-                        <th style="padding: 8px; text-align: center; width: 70px;">주문자</th>
+                        <th style="padding: 8px; text-align: center; width: 60px;">주문자</th>
                         <th style="padding: 8px; text-align: center; width: 100px;">주문자전화</th>
-                        <th style="padding: 8px; text-align: center; width: 70px;">수령인</th>
+                        <th style="padding: 8px; text-align: center; width: 60px;">수령인</th>
                         <th style="padding: 8px; text-align: center; width: 100px;">수령인전화</th>
                         <th style="padding: 8px; text-align: center; width: 200px;">주소</th>
                         <th style="padding: 8px; text-align: center; width: 100px;">배송메세지</th>
@@ -1196,7 +1196,7 @@ if (saved) {
                         <th style="padding: 8px; text-align: center; width: 70px;">마켓</th>
                         <th style="padding: 8px; text-align: center; width: 120px;">특이/요청</th>
                         <th style="padding: 8px; text-align: center; width: 70px;">발송요청일</th>
-                        <th style="padding: 8px; text-align: center; width: 50px;">금액</th>
+                        <th style="padding: 8px; text-align: center; width: 70px;">금액</th>
                         <th style="padding: 8px; text-align: center; width: 100px;">확인</th>
                         <th style="padding: 8px; text-align: center; width: 60px;">삭제</th>
                     </tr>
