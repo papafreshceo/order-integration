@@ -1931,24 +1931,30 @@ async saveOrders() {
                     second: '2-digit'
                 });
                 
-                const flagResult = await fetch('/api/sheets', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'updateTransferFlag',
-                        spreadsheetId: 'orders',
-                        sheetName: '임시저장',
-                        userEmail: userEmail,
-                        orderIds: ordersToSave.map(o => o.주문번호),
-                        transferFlag: 'Y',
-                        transferTime: transferTime,
-                        targetSheet: sheetName,
-                        flagColumns: {
-                            이관: 'W',
-                            이관일시: 'X'
-                        }
-                    })
-                });
+                // 각 주문별로 이관 플래그 업데이트
+                for (let i = 0; i < ordersToSave.length; i++) {
+                    const order = ordersToSave[i];
+                    try {
+                        const flagResult = await fetch('/api/sheets', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                action: 'markAsTransferred',
+                                spreadsheetId: 'orders',
+                                sheetName: '임시저장',
+                                userEmail: userEmail,
+                                orderId: order.주문번호,
+                                transferFlag: 'Y',
+                                transferTime: transferTime
+                            })
+                        });
+                        
+                        const flagResponse = await flagResult.json();
+                        console.log(`주문 ${order.주문번호} 이관플래그 업데이트:`, flagResponse);
+                    } catch (flagError) {
+                        console.error(`주문 ${order.주문번호} 이관플래그 업데이트 실패:`, flagError);
+                    }
+                }
                 
                 const flagResponse = await flagResult.json();
                 

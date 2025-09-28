@@ -1602,3 +1602,55 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
+
+
+
+case 'updateTransferFlag':
+  try {
+    const { sheetName, userEmail, orderIds, transferFlag, transferTime } = body;
+    
+    // 임시저장 시트의 모든 데이터 가져오기
+    const range = `${sheetName}!A:X`;
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_IDS.orders,
+      range: range
+    });
+    
+    const rows = response.data.values || [];
+    const updates = [];
+    
+    // 해당 사용자의 주문들 찾아서 업데이트
+    rows.forEach((row, index) => {
+      if (index === 0) return; // 헤더 스킵
+      
+      if (row[0] === userEmail && orderIds.includes(row[1])) {
+        // W열(22): 이관 플래그, X열(23): 이관일시
+        updates.push({
+          range: `${sheetName}!W${index + 1}:X${index + 1}`,
+          values: [[transferFlag, transferTime]]
+        });
+      }
+    });
+    
+    // 배치 업데이트
+    if (updates.length > 0) {
+      await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId: SPREADSHEET_IDS.orders,
+        resource: {
+          data: updates,
+          valueInputOption: 'USER_ENTERED'
+        }
+      });
+    }
+    
+    return NextResponse.json({ 
+      success: true, 
+      updatedCount: updates.length 
+    });
+  } catch (error) {
+    console.error('updateTransferFlag 에러:', error);
+    return NextResponse.json({ 
+      error: 'Failed to update transfer flag', 
+      details: error.message 
+    }, { status: 500 });
+  }
