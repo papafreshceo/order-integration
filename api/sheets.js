@@ -141,6 +141,7 @@ case 'saveCsRecord':
         receiptNumber,
         koreaTime,
         'CS발송',
+        data['CS구분'] || '',  // CS구분 추가
         data['재발송상품'] || data['옵션명'] || '',
         data['재발송수량'] || data['수량'] || '1',
         '', '', '',
@@ -154,7 +155,7 @@ case 'saveCsRecord':
         data['발송요청일'] || ''
       ]];
       
-      await appendSheetData('임시저장!A:Q', tempRowData, ordersSpreadsheetId);
+      await appendSheetData('임시저장!A:R', tempRowData, ordersSpreadsheetId);
       console.log('임시저장 완료');
     }
     
