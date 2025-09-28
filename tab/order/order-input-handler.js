@@ -1196,7 +1196,7 @@ if (saved) {
                         <th style="padding: 8px; text-align: center; width: 120px; min-width: 120px;">특이/요청</th>
                         <th style="padding: 8px; text-align: center; width: 90px; min-width: 80px;">발송요청일</th>
                         <th style="padding: 8px; text-align: center; width: 80px; min-width: 80px;">금액</th>
-                        <th style="padding: 8px; text-align: center; width: 80px; min-width: 120px;">확인</th>
+                        <th style="padding: 8px; text-align: center; width: 80px; min-width: 150px;">확인</th>
                         <th style="padding: 8px; text-align: center; width: 60px; min-width: 60px;">삭제</th>
                     </tr>
                 </thead>
