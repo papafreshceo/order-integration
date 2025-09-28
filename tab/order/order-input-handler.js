@@ -1918,60 +1918,16 @@ async saveOrders() {
             
             // 바로 성공으로 처리
             if (result.success) {
-                console.log('2차 확인: 실제 저장 확인됨');
+console.log('2차 확인: 실제 저장 확인됨');
                 
-                const userEmail = window.currentUser?.email || localStorage.getItem('userEmail') || 'unknown';
-                const transferTime = new Date().toLocaleString('ko-KR', {
-                    timeZone: 'Asia/Seoul',
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit'
-                });
+                // 저장된 주문만 테이블에서 제거
+                this.manualOrders = this.manualOrders.filter(order => 
+                    !ordersToSave.find(saved => saved.주문번호 === order.주문번호)
+                );
                 
-                // 각 주문별로 이관 플래그 업데이트
-                for (let i = 0; i < ordersToSave.length; i++) {
-                    const order = ordersToSave[i];
-                    try {
-                        const flagResult = await fetch('/api/sheets', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                action: 'markAsTransferred',
-                                spreadsheetId: 'orders',
-                                sheetName: '임시저장',
-                                userEmail: userEmail,
-                                orderId: order.주문번호,
-                                transferFlag: 'Y',
-                                transferTime: transferTime
-                            })
-                        });
-                        
-                        const flagResponse = await flagResult.json();
-                        console.log(`주문 ${order.주문번호} 이관플래그 업데이트:`, flagResponse);
-                    } catch (flagError) {
-                        console.error(`주문 ${order.주문번호} 이관플래그 업데이트 실패:`, flagError);
-                    }
-                }
-                
-                const flagResponse = await flagResult.json();
-                
-                if (flagResponse.success) {
-                    console.log('3차 확인: 이관플래그 업데이트 완료');
-                    
-                    // 저장된 주문만 테이블에서 제거
-                    this.manualOrders = this.manualOrders.filter(order => 
-                        !ordersToSave.find(saved => saved.주문번호 === order.주문번호)
-                    );
-                    
-                    this.updateOrderList();
-                    this.resetForm();
-                    this.showMessage(`${ordersToSave.length}건의 주문이 확정 등록되었습니다.`, 'success');
-                } else {
-                    this.showMessage(`주문은 저장되었지만 이관플래그 업데이트 실패. 수동으로 확인 필요.`, 'warning');
-                }
+                this.updateOrderList();
+                this.resetForm();
+                this.showMessage(`${ordersToSave.length}건의 주문이 확정 등록되었습니다.`, 'success');
             }
         } else {
             throw new Error(result.error || '저장 실패');
