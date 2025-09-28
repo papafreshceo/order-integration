@@ -592,6 +592,17 @@ input[type="number"] {
 // loadProductData 함수 끝나는 부분 뒤에 추가
 async loadTempOrders() {
     try {
+        console.log('loadTempOrders 시작');
+        
+        // 사용자 이메일 확인
+        const userEmail = window.currentUser?.email || localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail');
+        console.log('사용자 이메일:', userEmail);
+        
+        if (!userEmail || userEmail === 'unknown') {
+            console.log('유효한 이메일 없음');
+            return;
+        }
+        
         // 로딩 표시
         const list = document.getElementById('inputOrderList');
         if (list) {
@@ -603,9 +614,11 @@ async loadTempOrders() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 action: 'getTempOrders',
-                userEmail: window.currentUser?.email || 'unknown'
+                userEmail: userEmail
             })
         });
+        
+        console.log('응답 상태:', response.status);
         
         if (!response.ok) {
             console.error('임시저장 로드 실패: HTTP', response.status);
