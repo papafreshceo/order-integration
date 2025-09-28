@@ -776,12 +776,12 @@ async loadTempOrders() {
                     입금확인: order.입금확인 || ''
                 }));
             this.updateOrderList();
-            console.log(`임시저장된 ${this.manualOrders.length}건의 주문 자동 로드 완료`);
-            this.showMessage(`임시저장된 ${this.manualOrders.length}건의 주문을 불러왔습니다.`, 'info');
+            console.log(`접수된 ${this.manualOrders.length}건의 주문 자동 로드 완료`);
+            this.showMessage(`접수된 ${this.manualOrders.length}건의 주문을 불러왔습니다.`, 'info');
         } else {
             this.manualOrders = [];
             this.updateOrderList();
-            console.log('임시저장된 주문 없음 - result:', result);
+            console.log('접수된 주문 없음 - result:', result);
         }
     } catch (error) {
         console.error('임시저장 로드 오류:', error);
@@ -2124,53 +2124,7 @@ confirmSaveOrders() {
     this.saveResolve(ordersToSave);
 },
 
-toggleOrderGroup(group, checked) {
-    const listElement = document.getElementById(group + 'List');
-    if (listElement) {
-        listElement.style.display = checked ? 'block' : 'none';
-    }
-    
-    // 선택 건수 업데이트
-    this.updateSelectedCount();
-},
 
-updateSelectedCount() {
-    let count = 0;
-    
-    if (document.getElementById('todayCheck')?.checked) {
-        count += this.tempSaveData.todayOrders.length;
-    }
-    if (document.getElementById('noDateCheck')?.checked) {
-        count += this.tempSaveData.noDateOrders.length;
-    }
-    if (document.getElementById('futureCheck')?.checked) {
-        count += this.tempSaveData.futureOrders.length;
-    }
-    
-    const countElement = document.getElementById('selectedCount');
-    if (countElement) {
-        countElement.innerHTML = `
-            선택된 주문: <span style="color: #111827; font-weight: 600;">${count}건</span>
-        `;
-    }
-},
-
-confirmSaveOrders() {
-    const ordersToSave = [];
-    
-    if (document.getElementById('todayCheck')?.checked) {
-        ordersToSave.push(...this.tempSaveData.todayOrders);
-    }
-    if (document.getElementById('noDateCheck')?.checked) {
-        ordersToSave.push(...this.tempSaveData.noDateOrders);
-    }
-    if (document.getElementById('futureCheck')?.checked) {
-        ordersToSave.push(...this.tempSaveData.futureOrders);
-    }
-    
-    document.getElementById('saveConfirmModal').remove();
-    this.saveResolve(ordersToSave);
-},
 
 
 
