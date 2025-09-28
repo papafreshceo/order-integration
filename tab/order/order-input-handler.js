@@ -1175,12 +1175,34 @@ if (saved) {
     };
     
     // 테이블 HTML 생성 (주문조회 스타일)
+    // 테이블 HTML 생성 (주문조회 스타일)
     list.innerHTML = `
-        <table class="search-table" style="width: 100%; border-collapse: collapse; min-width: 1800px;">
+        <table class="search-table" style="width: 100%; border-collapse: collapse;">
+                <colgroup>
+                    <col style="width: 30px;">
+                    <col style="width: 80px;">
+                    <col style="width: 120px;">
+                    <col style="width: 140px;">
+                    <col style="width: 100px;">
+                    <col style="width: 70px;">
+                    <col style="width: 110px;">
+                    <col style="width: 70px;">
+                    <col style="width: 110px;">
+                    <col style="width: 2500px;">
+                    <col style="width: 80px;">
+                    <col style="width: 150px;">
+                    <col style="width: 40px;">
+                    <col style="width: 60px;">
+                    <col style="width: 100px;">
+                    <col style="width: 90px;">
+                    <col style="width: 80px;">
+                    <col style="width: 120px;">
+                    <col style="width: 60px;">
+                </colgroup>
                 <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
                     <tr>
-                        <th style="padding: 12px 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; white-space: nowrap; width: 30px;">번호</th>
-                        <th style="padding: 8px; text-align: center; width: 80px; min-width: 80px;">마켓명</th>
+                        <th style="padding: 12px 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; white-space: nowrap;">번호</th>
+                        <th style="padding: 8px; text-align: center;">마켓명</th>
                         <th style="padding: 8px; text-align: center; width: 150px; min-width: 150px;">접수자</th>
                         <th style="padding: 8px; text-align: center; width: 140px; min-width: 140px;">접수일시</th>
                         <th style="padding: 8px; text-align: center; width: 100px; min-width: 100px;">접수번호</th>
