@@ -1286,7 +1286,7 @@ list.innerHTML = `
                     <td style="padding: 8px; text-align: center;">
                         ${order.입금확인 ? 
                             `<span style="padding: 3px 8px; background: #e0e7ff; color: #4f46e5; border-radius: 4px; font-size: 11px; font-weight: 500;">
-                                입금확인완료
+                                입금완료
                             </span>` : 
                             (order.상품금액 > 0 ? 
                                 `<button onclick="OrderInputHandler.confirmPayment(${index})" 
