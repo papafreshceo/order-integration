@@ -751,12 +751,13 @@ async loadTempOrders() {
         if (result.success && result.orders && result.orders.length > 0) {
             // 필드 매핑 추가
             this.manualOrders = result.orders.map(order => ({
-                ...order,
-                사용자이메일: order.사용자이메일 || order.userEmail,
-                저장시간: order.저장시간 || order.timestamp,
-                상품금액: order.상품금액 || order.totalPrice || 0,
-                입금확인: order.입금확인 || ''
-            }));
+    ...order,
+    주문번호: order.주문번호 || order.접수번호 || order.orderNumber || '',  // 접수번호 매핑 추가
+    사용자이메일: order.사용자이메일 || order.userEmail,
+    저장시간: order.저장시간 || order.timestamp,
+    상품금액: order.상품금액 || order.totalPrice || 0,
+    입금확인: order.입금확인 || ''
+}));
             this.updateOrderList();
             console.log(`임시저장된 ${this.manualOrders.length}건의 주문 자동 로드 완료`);
             this.showMessage(`임시저장된 ${this.manualOrders.length}건의 주문을 불러왔습니다.`, 'info');
@@ -1285,12 +1286,12 @@ list.innerHTML = `
                     <td style="padding: 8px; text-align: center;">
                         ${order.입금확인 ? 
                             `<span style="padding: 3px 8px; background: #e0e7ff; color: #4f46e5; border-radius: 4px; font-size: 11px; font-weight: 500;">
-                                완료
+                                입금확인완료
                             </span>` : 
                             (order.상품금액 > 0 ? 
                                 `<button onclick="OrderInputHandler.confirmPayment(${index})" 
                                     style="padding: 4px 10px; background: #10b981; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer; height: 24px;">
-                                    확인
+                                    입금확인
                                 </button>` : '-')}
                     </td>
                     <td style="padding: 8px; text-align: center;">
