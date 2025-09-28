@@ -1337,17 +1337,17 @@ showTooltip(event, index) {
     tooltip.innerHTML = tooltipHTML;
     tooltip.classList.add('show');
     
-    // 툴팁 위치 계산
+    // 툴팁 위치 계산 - 기본값: 마우스 아래 왼쪽
     const rect = event.target.closest('tr').getBoundingClientRect();
-    let left = event.clientX + 15;
-    let top = event.clientY - 100;
+    let left = event.clientX - 335;  // 마우스 왼쪽
+    let top = event.clientY + 15;    // 마우스 아래
     
     // 화면 경계 체크
-    if (left + 320 > window.innerWidth) {
-        left = event.clientX - 335;
+    if (left < 10) {  // 왼쪽 화면 밖으로 나가면
+        left = event.clientX + 15;  // 오른쪽으로 표시
     }
-    if (top < 10) {
-        top = 10;
+    if (top + 250 > window.innerHeight) {  // 아래 화면 밖으로 나가면
+        top = event.clientY - 250;  // 위로 표시
     }
     
     tooltip.style.left = left + 'px';
