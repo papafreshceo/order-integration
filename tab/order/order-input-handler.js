@@ -1850,19 +1850,41 @@ async saveOrders() {
             });
         }
         
+        // 디버깅: 요청 데이터 확인
+        console.log('=== saveToSheet 요청 디버깅 ===');
+        console.log('sheetName:', sheetName);
+        console.log('values 길이:', values.length);
+        console.log('헤더:', values[0]);
+        console.log('첫 번째 데이터 행:', values[1]);
+        console.log('marketColors:', marketColors);
+        console.log('spreadsheetId:', 'orders');
+        
+        const requestBody = {
+            action: 'saveToSheet',
+            sheetName: sheetName,
+            values: values,
+            marketColors: marketColors,
+            spreadsheetId: 'orders'
+        };
+        
+        console.log('전체 요청 본문:', JSON.stringify(requestBody, null, 2));
+        
         const response = await fetch('/api/sheets', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'saveToSheet',
-                sheetName: sheetName,
-                values: values,
-                marketColors: marketColors,
-                spreadsheetId: 'orders'
-            })
+            body: JSON.stringify(requestBody)
         });
         
+        console.log('응답 상태:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API 에러 응답:', errorText);
+            throw new Error(`API 오류: ${response.status} - ${errorText}`);
+        }
+        
         const result = await response.json();
+        console.log('API 성공 응답:', result);
         
         if (result.success) {
             console.log('1차 확인: 저장 API 성공');
