@@ -528,30 +528,42 @@ input[type="number"] {
                     <div id="inputMessage" class="message-box"></div>
                 </div>
 
-                <!-- 주문 접수 내역 헤더 섹션 -->
-                <div style="background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px 8px 0 0; margin-top: 24px;">
-                    <div class="list-header">
-                        <h3 class="list-title">주문 접수 내역</h3>
-                        <div style="display: flex; gap: 12px; align-items: center;">
-                            <button class="btn-load-unshipped" onclick="OrderInputHandler.loadUnshippedOrders()" 
-                                style="padding: 6px 16px; background: #f59e0b; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 300; cursor: pointer;">
+                <!-- 주문 접수 내역 테이블 섹션 (주문조회 스타일) -->
+                <div class="table-section" style="background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; margin-top: 24px;">
+                    <div class="table-header" style="padding: 16px 24px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa;">
+                        <div class="table-header-left" style="display: flex; align-items: center; gap: 20px;">
+                            <h3 class="table-title" style="font-size: 16px; font-weight: 500; color: #042848; margin: 0;">주문 접수 내역</h3>
+                            <div class="result-info" style="display: flex; align-items: center; gap: 20px; font-size: 13px; color: #6c757d;">
+                                <span>총 <span class="result-count" id="totalOrderCount" style="color: #2563eb; font-weight: 500;">0</span>건</span>
+                            </div>
+                        </div>
+                        <div class="table-actions" style="display: flex; gap: 8px;">
+                            <button class="btn-action" onclick="OrderInputHandler.loadUnshippedOrders()" 
+                                style="padding: 6px 12px; border: 1px solid #dee2e6; border-radius: 6px; background: #ffffff; color: #042848; font-size: 12px; font-weight: 300; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <path d="m21 21-4.35-4.35"></path>
+                                </svg>
                                 미발송주문 불러오기
                             </button>
-                            <button class="btn-save" onclick="OrderInputHandler.saveOrders()" 
-                                style="padding: 6px 16px; background: #10b981; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 300; cursor: pointer;">
+                            <button class="btn-action" onclick="OrderInputHandler.saveOrders()" 
+                                style="padding: 6px 12px; border: 1px solid #dee2e6; border-radius: 6px; background: #10b981; color: white; font-size: 12px; font-weight: 300; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                    <polyline points="7 3 7 8 15 8"></polyline>
+                                </svg>
                                 저장
                             </button>
-                            <span style="font-size: 14px; color: #6c757d;">
-                                총 <span id="totalOrderCount" style="color: #2563eb; font-weight: 500;">0</span>건
-                            </span>
                         </div>
                     </div>
-                </div>
-                
-                <!-- 주문 접수 내역 테이블 섹션 -->
-                <div style="background: #ffffff; border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 8px 8px; padding: 20px;">
-                    <div id="inputOrderList">
-                        <div class="empty-message">접수된 주문이 없습니다</div>
+                    
+                    <div class="table-wrapper" style="overflow-x: auto; overflow-y: auto; height: calc(100vh - 500px); min-height: 300px; max-height: 500px;">
+                        <div id="inputOrderList">
+                            <div class="empty-message" style="padding: 40px; text-align: center; color: #6c757d; font-size: 14px;">
+                                접수된 주문이 없습니다
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1072,11 +1084,12 @@ if (saved) {
     };
     
     // 테이블 HTML 생성
+    / 테이블 HTML 생성 (주문조회 스타일)
     list.innerHTML = `
-        <table class="order-table" style="width: 1800px; border-collapse: collapse; font-size: 12px;">
+        <table class="search-table" style="width: 100%; border-collapse: collapse; min-width: 1600px; table-layout: fixed;">
                 <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
-                    <tr style="border-bottom: 2px solid #dee2e6; text-align: center;">
-                        <th style="padding: 8px; text-align: center; width: 40px; min-width: 40px;">번호</th>
+                    <tr>
+                        <th style="padding: 12px 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; white-space: nowrap; width: 50px;">번호</th>
                         <th style="padding: 8px; text-align: center; width: 80px; min-width: 80px;">마켓명</th>
                         <th style="padding: 8px; text-align: left; width: 150px; min-width: 150px;">접수자</th>
                         <th style="padding: 8px; text-align: center; width: 140px; min-width: 140px;">접수일시</th>
@@ -1108,10 +1121,9 @@ if (saved) {
                        // 툴팁 텍스트 생성
                         const tooltipText = `마켓: ${order.마켓명 || ''}\n옵션명: ${order.옵션명 || ''}\n주문자: ${order.주문자 || ''}\n금액: ${(order.상품금액 || 0).toLocaleString()}원`;
                         
-                        return `
-                        <tr style="border-bottom: 1px solid #f1f3f5; font-weight: 200; cursor: pointer; transition: background 0.2s;" 
-                            title="${tooltipText}"
-                            onmouseover="this.style.background='#f0f8ff'" 
+                         return `
+                        <tr style="border-bottom: 1px solid #f1f3f5;" 
+                            onmouseover="this.style.background='#b7f7bd'" 
                             onmouseout="this.style.background=''">
                             <td style="padding: 6px; text-align: center; font-weight: 200;">${index + 1}</td>
                             <td style="padding: 6px; text-align: center;">
