@@ -1564,47 +1564,49 @@ case 'deleteTempOrders':
 
 case 'updateTransferFlag':
         try {
-          const { userEmail, orderIds, transferTime } = req.body;
+          const { userEmail, orderIds, transferFlag, transferTime } = req.body;
           const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
           
-          // 임시저장 시트 데이터 가져오기
-          const data = await getSheetData('임시저장!A:X', ordersSpreadsheetId);
+          // 전체 데이터 가져오기
+          const allData = await getSheetData('임시저장', ordersSpreadsheetId);
           
-          let updateCount = 0;
+          if (!allData || allData.length < 2) {
+            throw new Error('임시저장 데이터가 없습니다');
+          }
           
-          // 각 주문번호에 대해 Y와 시간 입력
-          for (let i = 1; i < data.length; i++) {
-            if (data[i][0] === userEmail && orderIds.includes(data[i][1])) {
-              // W열과 X열에 한번에 업데이트
-              const range = `임시저장!W${i + 1}:X${i + 1}`;
-              await updateSheetData(range, [['Y', transferTime]], ordersSpreadsheetId);
-              updateCount++;
+          let updated = false;
+          
+          // 데이터 수정
+          for (let i = 1; i < allData.length; i++) {
+            if (allData[i][0] === userEmail && orderIds.includes(allData[i][1])) {
+              // 행 데이터가 24열까지 없으면 빈 값으로 채우기
+              while (allData[i].length < 24) {
+                allData[i].push('');
+              }
+              allData[i][22] = 'Y';  // W열
+              allData[i][23] = transferTime;  // X열
+              updated = true;
             }
+          }
+          
+          if (updated) {
+            // 전체 시트 다시 쓰기
+            await clearSheet('임시저장', ordersSpreadsheetId);
+            await updateSheetData('임시저장', allData, ordersSpreadsheetId);
           }
           
           return res.status(200).json({ 
             success: true, 
-            updatedCount: updateCount 
+            message: updated ? '이관 플래그 업데이트됨' : '업데이트 대상 없음'
           });
           
         } catch (error) {
-          console.error('이관 플래그 오류:', error);
-          return res.status(200).json({ success: true });
+          console.error('이관플래그 실제 오류:', error);
+          return res.status(500).json({ 
+            success: false, 
+            error: error.message 
+          });
         }
-
-      default:
-        return res.status(400).json({ 
-          error: '알 수 없는 액션입니다.' 
-        });
-    }
-  } catch (error) {
-    console.error('Sheets API 오류:', error);
-    return res.status(500).json({ 
-      success: false,
-      error: error.message || '서버 오류가 발생했습니다.'
-    });
-  }
-}
 
 // 컬럼 번호를 알파벳으로 변환하는 헬퍼 함수
 function columnToLetter(column) {
