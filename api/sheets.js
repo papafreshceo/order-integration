@@ -1576,7 +1576,6 @@ case 'updateTransferFlag':
           const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
           
           // 전체 데이터 가져오기
-          const { getOrderData } = require('../lib/google-sheets');
           const allData = await getOrderData('주문접수!A:X', ordersSpreadsheetId);
           
           if (!allData || allData.length < 2) {
@@ -1611,10 +1610,7 @@ case 'updateTransferFlag':
                   const rowNumber = i + 1; // 시트는 1부터 시작
                   
                   try {
-                      // W열과 X열 업데이트
-                      const { updateOrderCell } = require('../lib/google-sheets');
-                      
-                      // W열: 이관 플래그
+                      // W열: 이관 플래그 (updateOrderCell 이미 import됨)
                       await updateOrderCell(
                           `주문접수!W${rowNumber}`, 
                           'Y', 
@@ -1642,13 +1638,10 @@ case 'updateTransferFlag':
           return res.status(200).json({ 
             success: true, 
             message: `${updateCount}개 주문 이관 플래그 업데이트됨`
-          });  ← 여기까지
+          });
           
         } catch (error) {
-          console.error('이관플래그 실제 오류:', error);
-          
-        } catch (error) {
-          console.error('이관플래그 실제 오류:', error);
+          console.error('이관플래그 오류:', error);
           return res.status(500).json({ 
             success: false, 
             error: error.message 
