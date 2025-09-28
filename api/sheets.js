@@ -152,35 +152,37 @@ case 'saveCsRecord':
         second: '2-digit'
       });
       
-      // 임시저장 헤더 확인 (CS구분 칼럼 추가)
-      try {
-        const tempHeaders = await getOrderData('임시저장!1:1', ordersSpreadsheetId);
-        if (!tempHeaders || tempHeaders.length === 0) {
-          // 헤더가 없으면 생성
-          const newHeaders = [['사용자이메일', '접수번호', '저장시간', '마켓명', 'CS구분', '옵션명', '수량', '단가', '택배비', '상품금액', '주문자', '주문자 전화번호', '수령인', '수령인 전화번호', '주소', '배송메세지', '특이/요청사항', '발송요청일']];
-          await saveOrderData('임시저장!A1', newHeaders, ordersSpreadsheetId);
+      // 전화번호 형식 유지 함수 (위에서 정의된 것 재사용)
+      const formatPhone = (phone) => {
+        if (!phone) return '';
+        let phoneStr = String(phone).replace(/[^0-9]/g, '');
+        if (phoneStr && !phoneStr.startsWith('0')) {
+          phoneStr = '0' + phoneStr;
         }
-      } catch (err) {
-        console.log('임시저장 헤더 확인 실패:', err);
-      }
+        return phoneStr ? `'${phoneStr}` : '';
+      };
+      
+      // 임시저장 헤더는 이미 고정되어 있음
+      // 사용자이메일,접수번호,저장시간,마켓명,옵션명,수량,단가,택배비,상품금액,주문자,주문자 전화번호,수령인,수령인 전화번호,주소,배송메세지,특이/요청사항,발송요청일
       
       const tempRowData = [[
-        data['userEmail'] || 'CS',
-        receiptNumber,
-        koreaTime,
-        'CS발송',
-        data['CS구분'] || '',  // CS구분 추가 (5번째 칼럼)
-        data['재발송상품'] || data['옵션명'] || '',
-        data['재발송수량'] || data['수량'] || '1',
-        '', '', '',
-        data['주문자'] || '',
-        data['주문자 전화번호'] || '',
-        data['수령인'] || '',
-        data['수령인 전화번호'] || '',
-        data['주소'] || '',
-        data['배송메세지'] || '',
-        data['특이/요청사항'] || '',
-        data['발송요청일'] || ''
+        data['userEmail'] || 'CS',           // 사용자이메일
+        receiptNumber,                        // 접수번호
+        koreaTime,                           // 저장시간
+        'CS발송',                            // 마켓명
+        data['재발송상품'] || data['옵션명'] || '',  // 옵션명
+        data['재발송수량'] || data['수량'] || '1',   // 수량
+        '',                                   // 단가
+        '',                                   // 택배비
+        '',                                   // 상품금액
+        data['주문자'] || '',                // 주문자
+        formatPhone(data['주문자 전화번호']), // 주문자 전화번호
+        data['수령인'] || '',                // 수령인
+        formatPhone(data['수령인 전화번호']), // 수령인 전화번호
+        data['주소'] || '',                  // 주소
+        data['배송메세지'] || '',            // 배송메세지
+        data['특이/요청사항'] || '',         // 특이/요청사항
+        data['발송요청일'] || ''             // 발송요청일
       ]];
       
       await appendSheetData('임시저장!A:R', tempRowData, ordersSpreadsheetId);
