@@ -1345,7 +1345,7 @@ case 'getCsRecords':
                 userOrders.push({
                     사용자이메일: tempData[i][0],
                     접수번호: tempData[i][1],
-                    저장시간: tempData[i][2],
+                    주문번호: tempData[i][2],
                     마켓명: tempData[i][3],
                     옵션명: tempData[i][4],
                     수량: parseInt(tempData[i][5]) || 1,
