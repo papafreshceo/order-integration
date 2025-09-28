@@ -1567,37 +1567,66 @@ case 'updateTransferFlag':
           const { sheetName, userEmail, orderIds, transferFlag, transferTime } = req.body;
           const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
           
+          console.log('updateTransferFlag 시작:', { sheetName, userEmail, orderIds });
+          
           // 임시저장 시트의 모든 데이터 가져오기
-          const tempData = await getOrderData(`${sheetName}!A:X`, ordersSpreadsheetId);
+          const tempData = await getOrderData('임시저장!A:X', ordersSpreadsheetId);
           
           if (!tempData || tempData.length < 2) {
+            console.log('임시저장 데이터 없음');
             return res.status(200).json({ 
               success: true, 
               updatedCount: 0 
             });
           }
           
-          let updateCount = 0;
+          console.log('임시저장 데이터 행 수:', tempData.length);
           
-          // 해당 사용자의 주문들 찾아서 업데이트
+          let updateCount = 0;
+          const updates = [];
+          
+          // 해당 사용자의 주문들 찾기
           for (let i = 1; i < tempData.length; i++) {
-            if (tempData[i][0] === userEmail && orderIds.includes(tempData[i][1])) {
+            const rowEmail = tempData[i][0];
+            const rowOrderId = tempData[i][1];
+            
+            console.log(`행 ${i}: email=${rowEmail}, orderId=${rowOrderId}`);
+            
+            if (rowEmail === userEmail && orderIds.includes(rowOrderId)) {
+              console.log(`매칭된 행 발견: ${i + 1}`);
+              
+              // 전체 행 데이터 복사하고 W, X 열만 업데이트
+              const updatedRow = [...tempData[i]];
+              
               // W열(22): 이관 플래그, X열(23): 이관일시
-              await updateSheetData(
-                `${sheetName}!W${i + 1}:X${i + 1}`, 
-                [[transferFlag, transferTime]], 
-                ordersSpreadsheetId
-              );
+              while (updatedRow.length < 24) {
+                updatedRow.push('');
+              }
+              updatedRow[22] = transferFlag;
+              updatedRow[23] = transferTime;
+              
+              tempData[i] = updatedRow;
               updateCount++;
             }
+          }
+          
+          if (updateCount > 0) {
+            console.log(`${updateCount}건 업데이트 예정`);
+            
+            // 전체 시트 덮어쓰기
+            await clearOrderSheet('임시저장!A:X', ordersSpreadsheetId);
+            await saveOrderData('임시저장!A1', tempData, ordersSpreadsheetId);
+            
+            console.log('이관 플래그 업데이트 완료');
           }
           
           return res.status(200).json({ 
             success: true, 
             updatedCount: updateCount 
           });
+          
         } catch (error) {
-          console.error('updateTransferFlag 에러:', error);
+          console.error('updateTransferFlag 전체 오류:', error);
           return res.status(500).json({ 
             error: 'Failed to update transfer flag', 
             details: error.message 
