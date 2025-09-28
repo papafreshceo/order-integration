@@ -118,8 +118,8 @@ case 'saveCsRecord':
       data['해결방법'] || '',
       data['재발송상품'] || '',
       data['재발송수량'] || '',
-      data['CS구분'] || '',  // CS구분 추가 (8번째 칼럼)
-      data['CS 내용'] || '',  // CS내용이 9번째로 이동
+      data['CS구분'] || '',
+      data['CS 내용'] || '',
       data['부분환불금액'] || '',
       data['결제일'] || '',
       data['주문번호'] || '',
@@ -133,10 +133,11 @@ case 'saveCsRecord':
       data['수량'] || '',
       data['특이/요청사항'] || '',
       data['발송요청일'] || '',
-      '접수'
+      '접수',
+      data['상품금액'] || data['추가금액'] || 0  // 24번째 칼럼: 상품금액
     ]];
     
-    await appendSheetData('CS기록!A:W', csRowData, ordersSpreadsheetId);
+    await appendSheetData('CS기록!A:X', csRowData, ordersSpreadsheetId);  // X까지 확장
   
     console.log('CS기록 저장 완료');
     

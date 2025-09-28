@@ -876,40 +876,48 @@ input[type="date"]::-webkit-datetime-edit-day-field {
                         </div>
                         
                         <div class="cs-resend-options" id="csResendOptions">
-    <div class="cs-resend-grid">
-        <div class="cs-form-group" style="margin-bottom: 0;">
+    <!-- 첫째 줄: 재발송상품, 수량, 추가금액, 특이사항 -->
+    <div style="display: flex; gap: 8px; align-items: flex-end; margin-bottom: 12px;">
+        <div class="cs-form-group" style="margin-bottom: 0; flex: 2;">
             <label class="cs-form-label">재발송 상품</label>
             <input type="text" class="cs-input" id="csResendOption" placeholder="옵션명">
         </div>
-        <div class="cs-form-group" style="margin-bottom: 0;">
+        <div class="cs-form-group" style="margin-bottom: 0; width: 60px;">
             <label class="cs-form-label">수량</label>
-            <input type="number" class="cs-input-small" id="csResendQty" min="1" value="1" placeholder="1">
+            <input type="number" class="cs-input" id="csResendQty" min="1" value="1">
         </div>
-        <div class="cs-form-group" style="margin-bottom: 0;">
+        <div class="cs-form-group" style="margin-bottom: 0; width: 100px;">
+            <label class="cs-form-label">추가금액</label>
+            <input type="number" class="cs-input" id="csAdditionalAmount" placeholder="0">
+        </div>
+        <div class="cs-form-group" style="margin-bottom: 0; flex: 2;">
             <label class="cs-form-label">특이/요청사항</label>
             <input type="text" class="cs-input" id="csResendNote" value="CS재발송, 싱싱하고 맛있는 것">
         </div>
     </div>
     
-    <div style="margin-top: 12px;">
-        <div class="cs-form-group">
-            <label class="cs-form-label">발송요청일</label>
-            <input type="date" class="cs-input" id="csRequestDate" value="">
+    <!-- 둘째 줄: 수령인, 수령인 전화번호 -->
+    <div style="display: flex; gap: 8px; align-items: flex-end; margin-bottom: 12px;">
+        <div class="cs-form-group" style="margin-bottom: 0; flex: 1;">
+            <label class="cs-form-label">수령인</label>
+            <input type="text" class="cs-input" id="csResendReceiver" placeholder="수령인">
+        </div>
+        <div class="cs-form-group" style="margin-bottom: 0; flex: 1;">
+            <label class="cs-form-label">수령인 전화번호</label>
+            <input type="text" class="cs-input" id="csResendPhone" placeholder="수령인 전화번호">
         </div>
     </div>
-                            
-                            <div class="cs-delivery-info" style="margin-top: 12px;">
-        <div class="cs-form-group">
-        <label class="cs-form-label">수령인</label>
-        <input type="text" class="cs-input" id="csResendReceiver" placeholder="수령인">
-    </div>
-    <div class="cs-form-group">
-        <label class="cs-form-label">수령인 전화번호</label>
-        <input type="text" class="cs-input" id="csResendPhone" placeholder="수령인 전화번호">
-    </div>
-    <div class="cs-form-group">
-        <label class="cs-form-label">주소</label>
-        <input type="text" class="cs-input" id="csResendAddress" placeholder="배송 주소">
+    
+    <!-- 셋째 줄: 주소, 발송요청일 -->
+    <div style="display: flex; gap: 8px; align-items: flex-end;">
+        <div class="cs-form-group" style="margin-bottom: 0; flex: 3;">
+            <label class="cs-form-label">주소</label>
+            <input type="text" class="cs-input" id="csResendAddress" placeholder="배송 주소">
+        </div>
+        <div class="cs-form-group" style="margin-bottom: 0; width: 120px;">
+            <label class="cs-form-label">발송요청일</label>
+            <input type="date" class="cs-input" id="csRequestDate">
+        </div>
     </div>
 </div>
                         </div>

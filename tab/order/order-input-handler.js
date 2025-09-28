@@ -1025,7 +1025,7 @@ if (saved) {
 }
     },
     
-    updateOrderList() {
+        updateOrderList() {
     const list = document.getElementById('inputOrderList');
     const count = document.getElementById('totalOrderCount');
     
@@ -1037,25 +1037,101 @@ if (saved) {
         list.innerHTML = '<div class="empty-message">접수된 주문이 없습니다</div>';
         return;
     }
-
     
-    list.innerHTML = this.manualOrders.map((order, index) => `
-        <div class="order-item">
-            <div class="order-info">
-                <div><span class="order-label">구분:</span> <span class="order-value">${order.마켓명}</span></div>
-                <div><span class="order-label">상품:</span> <span class="order-value">${order.옵션명}</span></div>
-                <div><span class="order-label">수량:</span> <span class="order-value">${order.수량}</span></div>
-                <div><span class="order-label">판매가:</span> <span class="order-value">${order.상품금액.toLocaleString('ko-KR')}원</span></div>
-                <div><span class="order-label">주문자:</span> <span class="order-value">${order.주문자}</span></div>
-                <div><span class="order-label">주문자전화:</span> <span class="order-value">${order['주문자 전화번호']}</span></div>
-                <div><span class="order-label">수령인:</span> <span class="order-value">${order.수령인}</span></div>
-                <div><span class="order-label">수령인전화:</span> <span class="order-value">${order['수령인 전화번호']}</span></div>
-                <div><span class="order-label">주소:</span> <span class="order-value" style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${order.주소}">${order.주소}</span></div>
-                ${order.발송요청일 ? `<div><span class="order-label">발송요청일:</span> <span class="order-value">${order.발송요청일}</span></div>` : ''}
-            </div>
-            <button class="btn-remove" onclick="OrderInputHandler.removeOrder(${index})">삭제</button>
+    // 마켓 색상 가져오기
+    const getMarketColor = (market) => {
+        const colors = {
+            'CS발송': 'rgb(255, 0, 0)',
+            '전화주문': 'rgb(0, 0, 255)'
+        };
+        return colors[market] || 'rgb(128, 128, 128)';
+    };
+    
+    // 테이블 HTML 생성
+    list.innerHTML = `
+        <div style="overflow-x: auto; max-height: 350px; overflow-y: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1400px;">
+                <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
+                    <tr style="border-bottom: 2px solid #dee2e6;">
+                        <th style="padding: 8px; text-align: center; width: 30px;">번호</th>
+                        <th style="padding: 8px; text-align: center; width: 70px;">마켓명</th>
+                        <th style="padding: 8px; text-align: left; width: 100px;">접수자</th>
+                        <th style="padding: 8px; text-align: center; width: 120px;">접수일시</th>
+                        <th style="padding: 8px; text-align: center; width: 80px;">접수번호</th>
+                        <th style="padding: 8px; text-align: left; width: 60px;">주문자</th>
+                        <th style="padding: 8px; text-align: left; width: 100px;">주문자전화</th>
+                        <th style="padding: 8px; text-align: left; width: 60px;">수령인</th>
+                        <th style="padding: 8px; text-align: left; width: 100px;">수령인전화</th>
+                        <th style="padding: 8px; text-align: left; width: 200px;">주소</th>
+                        <th style="padding: 8px; text-align: left; width: 100px;">배송메세지</th>
+                        <th style="padding: 8px; text-align: left; width: 150px;">옵션명</th>
+                        <th style="padding: 8px; text-align: center; width: 40px;">수량</th>
+                        <th style="padding: 8px; text-align: center; width: 60px;">마켓</th>
+                        <th style="padding: 8px; text-align: left; width: 100px;">특이/요청</th>
+                        <th style="padding: 8px; text-align: center; width: 80px;">발송요청일</th>
+                        <th style="padding: 8px; text-align: right; width: 80px;">금액</th>
+                        <th style="padding: 8px; text-align: center; width: 80px;">확인</th>
+                        <th style="padding: 8px; text-align: center; width: 50px;">삭제</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${this.manualOrders.map((order, index) => {
+                        const marketColor = getMarketColor(order.마켓명);
+                        const marketInitial = order.마켓명 === 'CS발송' ? 'C' : 
+                                            order.마켓명 === '전화주문' ? '전' : 
+                                            order.마켓명.charAt(0);
+                        const marketNumber = String(index + 1).padStart(3, '0');
+                        
+                        return `
+                        <tr style="border-bottom: 1px solid #f1f3f5;">
+                            <td style="padding: 6px; text-align: center;">${index + 1}</td>
+                            <td style="padding: 6px; text-align: center;">
+                                <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
+                                     color: white; border-radius: 4px; font-size: 11px; font-weight: 600;">
+                                    ${order.마켓명}
+                                </span>
+                            </td>
+                            <td style="padding: 6px; font-size: 11px;">${window.currentUser?.email?.split('@')[0] || 'user'}</td>
+                            <td style="padding: 6px; text-align: center; font-size: 11px;">${order.저장시간 || new Date().toLocaleString('ko-KR')}</td>
+                            <td style="padding: 6px; text-align: center; font-family: monospace; font-size: 11px;">${order.접수번호 || ''}</td>
+                            <td style="padding: 6px;">${order.주문자}</td>
+                            <td style="padding: 6px; font-size: 11px;">${order['주문자 전화번호']}</td>
+                            <td style="padding: 6px;">${order.수령인}</td>
+                            <td style="padding: 6px; font-size: 11px;">${order['수령인 전화번호']}</td>
+                            <td style="padding: 6px; font-size: 11px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" 
+                                title="${order.주소}">${order.주소}</td>
+                            <td style="padding: 6px; font-size: 11px;">${order.배송메세지 || ''}</td>
+                            <td style="padding: 6px; font-size: 11px;">${order.옵션명}</td>
+                            <td style="padding: 6px; text-align: center;">${order.수량}</td>
+                            <td style="padding: 6px; text-align: center; font-weight: 600;">${marketInitial}${marketNumber}</td>
+                            <td style="padding: 6px; font-size: 11px;">${order['특이/요청사항'] || ''}</td>
+                            <td style="padding: 6px; text-align: center; font-size: 11px;">${order.발송요청일 || ''}</td>
+                            <td style="padding: 6px; text-align: right; font-weight: 500;">${order.상품금액.toLocaleString()}원</td>
+                            <td style="padding: 6px; text-align: center;">
+                                ${order.상품금액 > 0 ? 
+                                    `<button onclick="OrderInputHandler.confirmPayment(${index})" 
+                                        style="padding: 2px 8px; background: #10b981; color: white; border: none; 
+                                               border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                        입금확인
+                                    </button>` : '-'}
+                            </td>
+                            <td style="padding: 6px; text-align: center;">
+                                <button onclick="OrderInputHandler.removeOrder(${index})" 
+                                    style="padding: 2px 8px; background: #dc3545; color: white; border: none; 
+                                           border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                    삭제
+                                </button>
+                            </td>
+                        </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>
         </div>
-    `).join('');
+    `;
+},
+
+confirmPayment(index) {
+    this.showMessage(`${index + 1}번 주문 입금 확인되었습니다.`, 'success');
 },
     
     async removeOrder(index) {  // async 추가
