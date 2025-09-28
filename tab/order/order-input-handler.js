@@ -1352,47 +1352,70 @@ async confirmPayment(index) {
     try {
         const order = this.manualOrders[index];
         const userEmail = window.currentUser?.email || localStorage.getItem('userEmail') || 'unknown';
-        const confirmTime = new Date().toLocaleString('ko-KR');
         
-        console.log('입금확인 시작:', {
-            index: index,
-            userEmail: userEmail,
-            confirmTime: confirmTime,
-            order: order
-        });
-        
-        // 입금확인 시간 업데이트
-        const response = await fetch('/api/sheets', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'updatePaymentConfirmation',
-                userEmail: userEmail,
-                orderIndex: index,
-                confirmTime: confirmTime
-            })
-        });
-        
-        console.log('API 응답 상태:', response.status);
-        
-        const result = await response.json();
-        console.log('API 응답 결과:', result);
-        
-        if (result.success) {
-            // 로컬 데이터 업데이트
-            this.manualOrders[index].입금확인 = confirmTime;
-            this.updateOrderList();
-            this.showMessage(`${index + 1}번 주문 입금 확인되었습니다.`, 'success');
+        // 토글: 이미 입금확인이 되어있으면 취소, 아니면 확인
+        if (order.입금확인) {
+            // 입금확인 취소
+            console.log('입금확인 취소:', index);
+            
+            const response = await fetch('/api/sheets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'updatePaymentConfirmation',
+                    userEmail: userEmail,
+                    orderIndex: index,
+                    confirmTime: ''  // 빈 값으로 설정하여 취소
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // 로컬 데이터 업데이트
+                this.manualOrders[index].입금확인 = '';
+                this.updateOrderList();
+                this.showMessage(`${index + 1}번 주문 입금확인이 취소되었습니다.`, 'info');
+            } else {
+                throw new Error(result.error || '입금확인 취소 실패');
+            }
         } else {
-            console.error('API 에러 메시지:', result.error);
-            throw new Error(result.error || '입금확인 업데이트 실패');
+            // 입금확인 설정
+            const confirmTime = new Date().toLocaleString('ko-KR');
+            console.log('입금확인 설정:', {
+                index: index,
+                userEmail: userEmail,
+                confirmTime: confirmTime
+            });
+            
+            const response = await fetch('/api/sheets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'updatePaymentConfirmation',
+                    userEmail: userEmail,
+                    orderIndex: index,
+                    confirmTime: confirmTime
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // 로컬 데이터 업데이트
+                this.manualOrders[index].입금확인 = confirmTime;
+                this.updateOrderList();
+                this.showMessage(`${index + 1}번 주문 입금이 확인되었습니다.`, 'success');
+            } else {
+                throw new Error(result.error || '입금확인 설정 실패');
+            }
         }
     } catch (error) {
-        console.error('입금확인 처리 상세 오류:', {
+        console.error('입금확인 처리 오류:', {
             message: error.message,
             stack: error.stack
         });
-        this.showMessage(`입금확인 실패: ${error.message}`, 'error');
+        this.showMessage(`입금확인 처리 실패: ${error.message}`, 'error');
     }
 },
     
