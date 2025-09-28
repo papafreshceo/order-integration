@@ -1379,6 +1379,13 @@ case 'getCsRecords':
     const { userEmail, orderIndex, confirmTime } = req.body;
     const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
     
+    // Google Sheets 클라이언트 초기화
+    const auth = new google.auth.GoogleAuth({
+      credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY),
+      scopes: ['https://www.googleapis.com/auth/spreadsheets']
+    });
+    const sheets = google.sheets({ version: 'v4', auth });
+    
     // 임시저장 시트의 데이터 가져오기
     const range = '임시저장!A:S';
     const response = await sheets.spreadsheets.values.get({
