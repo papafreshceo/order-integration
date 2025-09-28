@@ -1333,12 +1333,15 @@ case 'getCsRecords':
         }
         
         const userOrders = [];
+        console.log(`getTempOrders: 전체 ${tempData.length}행 중 ${userEmail} 검색`);
+        
         for (let i = 1; i < tempData.length; i++) {
+            console.log(`행 ${i}: 이메일="${tempData[i][0]}", 일치=${tempData[i][0] === userEmail}`);
             if (tempData[i][0] === userEmail) {
                 userOrders.push({
-                    마켓명: tempData[i][2],
-                    옵션명: tempData[i][3],
-                    수량: parseInt(tempData[i][4]) || 1,
+                    마켓명: tempData[i][3],    // 4번째 칼럼
+                    옵션명: tempData[i][4],    // 5번째 칼럼  
+                    수량: parseInt(tempData[i][5]) || 1,  // 6번째 칼럼
                     단가: parseFloat(tempData[i][5]) || 0,
                     택배비: parseFloat(tempData[i][6]) || 0,
                     상품금액: parseFloat(tempData[i][7]) || 0,
@@ -1415,7 +1418,7 @@ case 'getCsRecords':
 
 
 
-    
+
 case 'deleteTempOrders':
     try {
         const { userEmail } = req.body;
