@@ -132,10 +132,9 @@ case 'saveCsRecord':
       data['옵션명'] || '',
       data['수량'] || '',
       data['특이/요청사항'] || '',
-      data['발송요청일'] || '',
-      '접수',  // 상태
-      '',  // 입금확인 (빈값)
-      data['추가금액'] || data['상품금액'] || 0  // 26번째 칼럼: 추가금액 우선
+      data['발송요청일'] || '',     // V열: 발송요청일
+      '접수',                       // W열: 상태
+      parseFloat(String(data['추가금액'] || 0).replace(/,/g, '')) || 0  // X열: 상품금액 (천단위 쉼표 제거)
     ]];
     
     await appendSheetData('CS기록!A:X', csRowData, ordersSpreadsheetId);  // X까지 확장
@@ -189,7 +188,7 @@ case 'saveCsRecord':
         ''                               // 입금확인
       ]];
       
-      await appendSheetData('임시저장!A:R', tempRowData, ordersSpreadsheetId);
+      await appendSheetData('임시저장!A:x', tempRowData, ordersSpreadsheetId);
       console.log('임시저장 완료');
     }
     
@@ -301,7 +300,7 @@ case 'addCsOrder':
               data['발송요청일'] || ''                   // 발송요청일
           ]];
           
-          await appendSheetData('임시저장!A:Q', tempRowData, ordersSpreadsheetId);
+          await appendSheetData('임시저장!A:x', tempRowData, ordersSpreadsheetId);
           
           console.log('CS 재발송 임시저장 완료:', csOrderNumber);
           
@@ -1485,7 +1484,7 @@ case 'getCsRecords':
             ''   // 입금확인
         ]];
         
-        await appendSheetData('임시저장!A:R', tempData, ordersSpreadsheetId);
+        await appendSheetData('임시저장!A:x', tempData, ordersSpreadsheetId);
         
         return res.status(200).json({ success: true });
     } catch (error) {

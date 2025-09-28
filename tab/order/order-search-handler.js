@@ -2057,7 +2057,9 @@ async submitCs() {
             csData.주소 = document.getElementById('csResendAddress').value;
             csData['특이/요청사항'] = document.getElementById('csResendNote').value || '';
             csData.발송요청일 = document.getElementById('csRequestDate').value || '';
-            csData.추가금액 = parseFloat(document.getElementById('csAdditionalAmount').value) || 0;  // 추가금액을 올바른 필드명으로
+            // 천단위 쉼표 제거 후 파싱
+            const additionalAmountStr = document.getElementById('csAdditionalAmount').value;
+            csData.추가금액 = parseFloat(String(additionalAmountStr).replace(/,/g, '')) || 0;
         }
             
             const response = await fetch('/api/sheets', {
@@ -2144,7 +2146,9 @@ async submitCs() {
             csData.주소 = document.getElementById('csResendAddress').value;
             csData['특이/요청사항'] = document.getElementById('csResendNote').value || '';
             csData.발송요청일 = document.getElementById('csRequestDate').value || '';
-            csData.추가금액 = parseFloat(document.getElementById('csAdditionalAmount').value) || 0;  // 추가금액을 올바른 필드명으로
+            // 천단위 쉼표 제거 후 파싱
+            const additionalAmountStr = document.getElementById('csAdditionalAmount').value;
+            csData.추가금액 = parseFloat(String(additionalAmountStr).replace(/,/g, '')) || 0;
         }
 
         // CS기록 저장
