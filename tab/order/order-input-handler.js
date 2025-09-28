@@ -1196,7 +1196,7 @@ if (saved) {
                         <th style="padding: 8px; text-align: center; width: 70px;">마켓</th>
                         <th style="padding: 8px; text-align: center; width: 120px;">특이/요청</th>
                         <th style="padding: 8px; text-align: center; width: 70px;">발송요청일</th>
-                        <th style="padding: 8px; text-align: center; width: 80px;">금액</th>
+                        <th style="padding: 8px; text-align: center; width: 70px;">금액</th>
                         <th style="padding: 8px; text-align: center; width: 100px;">확인</th>
                         <th style="padding: 8px; text-align: center; width: 60px;">삭제</th>
                     </tr>
@@ -1214,8 +1214,8 @@ if (saved) {
                             onmouseover="this.style.background='#b7f7bd'; OrderInputHandler.showTooltip(event, ${index})" 
                             onmouseout="this.style.background=''; OrderInputHandler.hideTooltip()"
                             data-order='${JSON.stringify(order).replace(/'/g, "&apos;")}'>
-                           <td style="padding: 8px 6px; text-align: center; font-weight: 200; height: 40px;">${index + 1}</td>
-                            <td style="padding: 8px 6px; text-align: center; height: 40px;">
+                           <td style="padding: 8px 6px; text-align: center; font-weight: 200; height: 44px;">${index + 1}</td>
+                            <td style="padding: 8px 6px; text-align: center; height: 44px;">
 
                                 <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
                                      color: white; border-radius: 4px; font-size: 11px; font-weight: 600;">
@@ -1236,7 +1236,13 @@ if (saved) {
                             <td style="padding: 6px; text-align: center; font-weight: 200;">${order.수량 || 1}</td>
                             <td style="padding: 6px; text-align: center; font-weight: 400;">${marketInitial}${marketNumber}</td>
                             <td style="padding: 6px; font-size: 11px; font-weight: 200;">${order['특이/요청사항'] || ''}</td>
-                            <td style="padding: 6px; text-align: center; font-size: 11px; font-weight: 200;">${order.발송요청일 || ''}</td>
+                            <td style="padding: 6px; text-align: center; font-size: 11px; font-weight: 200;">
+                                ${order.발송요청일 ? 
+                                    `<span style="background: #e9d5ff; padding: 2px 6px; border-radius: 4px; display: inline-block;">
+                                        ${order.발송요청일}
+                                    </span>` : 
+                                    ''}
+                            </td>
                             <td style="padding: 6px; text-align: right; font-weight: 300;">${(order.상품금액 || 0).toLocaleString()}원</td>
                             <td style="padding: 6px; text-align: center;">
                                 ${order.입금확인 ? 
