@@ -499,10 +499,9 @@ input[type="number"] {
     <div class="form-group" style="width: 120px;">
         <label class="form-label">구분 <span class="required">*</span></label>
         <select class="form-input" id="inputOrderType">
-            <option value="">선택</option>
-            <option value="CS발송">CS발송</option>
-            <option value="전화주문">전화주문</option>
-        </select>
+    <option value="전화주문" selected>전화주문</option>
+    <option value="기타">기타</option>
+</select>
     </div>
     
     <div class="form-group" style="width: 200px;">
@@ -689,6 +688,23 @@ input[type="number"] {
     },
     
 
+    generateOrderNumber() {
+        const today = new Date();
+        const dateStr = today.getFullYear() + 
+            String(today.getMonth() + 1).padStart(2, '0') + 
+            String(today.getDate()).padStart(2, '0');
+        
+        // 로컬스토리지에서 오늘 날짜의 카운터 가져오기
+        const counterKey = `orderCounter_${dateStr}`;
+        let counter = parseInt(localStorage.getItem(counterKey) || '0') + 1;
+        localStorage.setItem(counterKey, counter.toString());
+        
+        return `PH${dateStr}${String(counter).padStart(3, '0')}`;
+    },
+
+
+
+
 // loadProductData 함수 끝나는 부분 뒤에 추가
 async loadTempOrders() {
     try {
@@ -756,32 +772,53 @@ async loadTempOrders() {
     }
 },
 
-async saveTempOrder(orderData) {
+async saveTempOrder(orderData, isUnshipped = false) {
     try {
         const userEmail = window.currentUser?.email || localStorage.getItem('userEmail') || 'unknown';
         console.log('saveTempOrder - 사용자:', userEmail);
         
-        const tempData = [
+        const koreaTime = new Date().toLocaleString('ko-KR', {
+            timeZone: 'Asia/Seoul',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        
+        // 전화번호 형식 보존
+        const formatPhone = (phone) => {
+            if (!phone) return '';
+            let phoneStr = String(phone).replace(/[^0-9]/g, '');
+            if (phoneStr && !phoneStr.startsWith('0')) {
+                phoneStr = '0' + phoneStr;
+            }
+            return phoneStr ? `'${phoneStr}` : '';
+        };
+        
+        const tempData = [[
             userEmail,
-            '',  // 접수번호
-            new Date().toLocaleString('ko-KR'),  // 저장시간
+            orderData.주문번호 || this.generateOrderNumber(),  // 주문번호
+            koreaTime,  // 주문일시
             orderData.마켓명,
             orderData.옵션명,
             orderData.수량,
-            orderData.단가,
-            orderData.택배비 || 0,
-            orderData.상품금액,
+            isUnshipped ? '' : orderData.단가,  // 미발송주문은 단가 없음
+            isUnshipped ? '' : (orderData.택배비 || 0),  // 미발송주문은 택배비 없음
+            isUnshipped ? (orderData.최종결제금액 || orderData.상품금액) : orderData.상품금액,  // 미발송은 최종결제금액 사용
             orderData.주문자,
-            orderData['주문자 전화번호'],
+            formatPhone(orderData['주문자 전화번호']),
             orderData.수령인,
-            orderData['수령인 전화번호'],
+            formatPhone(orderData['수령인 전화번호']),
             orderData.주소,
             orderData.배송메세지 || '',
             orderData['특이/요청사항'] || '',
             orderData.발송요청일 || '',
-            '',  // 상태 (새 칼럼)
-            ''   // 입금확인 (새 칼럼)
-        ];
+            '',  // 상태
+            '',  // 입금확인
+            isUnshipped ? '미발송주문' : ''  // 비고
+        ]];
         
         const response = await fetch('/api/sheets', {
             method: 'POST',
@@ -789,7 +826,7 @@ async saveTempOrder(orderData) {
             body: JSON.stringify({
                 action: 'appendToSheet',
                 spreadsheetId: 'orders',
-                range: '임시저장!A:S',  // Q에서 S로 변경
+                range: '임시저장!A:T',  // T열까지 확장
                 values: [tempData]
             })
         });
@@ -797,7 +834,6 @@ async saveTempOrder(orderData) {
         const result = await response.json();
         console.log('임시저장 결과:', result);
         return result.success;
-
 
     } catch (error) {
         console.error('임시저장 실패:', error);
@@ -1114,28 +1150,46 @@ searchProduct() {
         this.tempAddressData = {};
     },
     
-    async addOrder() {
-        const required = ['inputOrderType', 'inputOptionName', 'inputUnitPrice', 'inputReceiver', 'inputReceiverPhone', 'inputAddress'];
-        for (const id of required) {
-            if (!document.getElementById(id).value) {
-                this.showMessage('필수 항목을 모두 입력하세요.', 'error');
-                return;
-            }
+async addOrder() {
+    const required = ['inputOrderType', 'inputOptionName', 'inputUnitPrice', 'inputReceiver', 'inputReceiverPhone', 'inputAddress'];
+    for (const id of required) {
+        if (!document.getElementById(id).value) {
+            this.showMessage('필수 항목을 모두 입력하세요.', 'error');
+            return;
         }
-       const orderData = {
-    마켓명: document.getElementById('inputOrderType').value,
-    옵션명: document.getElementById('inputOptionName').value,
-    단가: parseFloat(document.getElementById('inputUnitPrice').value.replace(/,/g, '')) || 0,
-    수량: parseInt(document.getElementById('inputQuantity').value) || 1,
-    택배비: parseFloat(document.getElementById('inputShipping').value.replace(/,/g, '')) || 0,
-    주문자: document.getElementById('inputOrderer').value || document.getElementById('inputReceiver').value,
-    '주문자 전화번호': document.getElementById('inputOrdererPhone').value || document.getElementById('inputReceiverPhone').value,
-    수령인: document.getElementById('inputReceiver').value,
-    '수령인 전화번호': document.getElementById('inputReceiverPhone').value,
-    주소: document.getElementById('inputAddress').value,
-    배송메세지: document.getElementById('inputDeliveryMsg').value,
-    발송요청일: document.getElementById('inputRequestDate').value
-};
+    }
+    
+    const orderData = {
+        주문번호: this.generateOrderNumber(),  // 자동생성 주문번호
+        마켓명: document.getElementById('inputOrderType').value,
+        옵션명: document.getElementById('inputOptionName').value,
+        단가: parseFloat(document.getElementById('inputUnitPrice').value.replace(/,/g, '')) || 0,
+        수량: parseInt(document.getElementById('inputQuantity').value) || 1,
+        택배비: parseFloat(document.getElementById('inputShipping').value.replace(/,/g, '')) || 0,
+        주문자: document.getElementById('inputOrderer').value || document.getElementById('inputReceiver').value,
+        '주문자 전화번호': document.getElementById('inputOrdererPhone').value || document.getElementById('inputReceiverPhone').value,
+        수령인: document.getElementById('inputReceiver').value,
+        '수령인 전화번호': document.getElementById('inputReceiverPhone').value,
+        주소: document.getElementById('inputAddress').value,
+        배송메세지: document.getElementById('inputDeliveryMsg').value,
+        발송요청일: document.getElementById('inputRequestDate').value,
+        비고: ''  // 건별입력은 비고 없음
+    };
+    
+    orderData['상품금액'] = (orderData.단가 * orderData.수량) + orderData.택배비;
+    
+    // 임시저장에 추가
+    const saved = await this.saveTempOrder(orderData, false);  // isUnshipped = false
+    
+    if (saved) {
+        this.manualOrders.push(orderData);
+        this.updateOrderList();
+        this.resetForm();
+        this.showMessage(`주문이 추가되었습니다. (총 ${this.manualOrders.length}건)`, 'success');
+    } else {
+        this.showMessage('주문 추가 중 오류가 발생했습니다.', 'error');
+    }
+},
         
         orderData['상품금액'] = (orderData.단가 * orderData.수량) + orderData.택배비;
         
@@ -1195,10 +1249,11 @@ if (saved) {
                         <th style="padding: 8px; text-align: center; width: 50px;">수량</th>
                         <th style="padding: 8px; text-align: center; width: 70px;">마켓</th>
                         <th style="padding: 8px; text-align: center; width: 120px;">특이/요청</th>
-                        <th style="padding: 8px; text-align: center; width: 70px;">발송요청일</th>
+                        <th style="padding: 8px; text-align: center; width: 80px;">발송요청일</th>
                         <th style="padding: 8px; text-align: center; width: 70px;">금액</th>
                         <th style="padding: 8px; text-align: center; width: 100px;">확인</th>
                         <th style="padding: 8px; text-align: center; width: 60px;">삭제</th>
+                        <th style="padding: 8px; text-align: center; width: 100px;">비고</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1760,7 +1815,7 @@ selectAllUnshipped(checked) {
     if (selectAllCheckbox) selectAllCheckbox.checked = checked;
 },
 
-addSelectedOrders(orders) {
+async addSelectedOrders(orders) {
     const checkboxes = document.querySelectorAll('.order-checkbox:checked');
     const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
     
@@ -1769,14 +1824,16 @@ addSelectedOrders(orders) {
         return;
     }
     
-    selectedIndices.forEach(index => {
+    // 선택한 주문들을 임시저장 및 로컬 배열에 추가
+    for (const index of selectedIndices) {
         const order = orders[index];
         const orderData = {
+            주문번호: order['주문번호'],  // 원본 주문번호 사용
             마켓명: order['마켓명'],
             옵션명: order['옵션명'] || '',
-            단가: parseFloat(order['상품금액'] || 0) / parseInt(order['수량'] || 1),
+            단가: '',  // 미발송은 단가 없음
             수량: parseInt(order['수량'] || 1),
-            택배비: parseFloat(order['택배비'] || 0),
+            택배비: '',  // 미발송은 택배비 없음
             주문자: order['주문자'] || '',
             '주문자 전화번호': order['주문자 전화번호'] || order['주문자전화번호'] || '',
             수령인: order['수령인'] || order['수취인'] || '',
@@ -1784,16 +1841,21 @@ addSelectedOrders(orders) {
             주소: order['수령인주소'] || order['수취인주소'] || order['주소'] || '',
             배송메세지: order['배송메세지'] || order['배송메시지'] || '',
             발송요청일: order['발송요청일'] || '',
-            상품금액: parseFloat(order['상품금액'] || 0),
-            _원본주문번호: order['주문번호'] // 참조용
+            최종결제금액: parseFloat(order['최종결제금액'] || order['상품금액'] || 0),
+            상품금액: parseFloat(order['최종결제금액'] || order['상품금액'] || 0),
+            비고: '미발송주문',
+            _원본주문번호: order['주문번호']
         };
         
+        // 임시저장 시트에 저장
+        await this.saveTempOrder(orderData, true);  // isUnshipped = true
+        
+        // 로컬 배열에 추가
         this.manualOrders.push(orderData);
-    });
+    }
     
     this.updateOrderList();
-    this.saveToCache();
-    this.showMessage(`${selectedIndices.length}건의 주문을 추가했습니다.`, 'success');
+    this.showMessage(`${selectedIndices.length}건의 미발송 주문을 추가했습니다.`, 'success');
     
     // 모달 닫기
     document.getElementById('unshippedOrdersModal').remove();
