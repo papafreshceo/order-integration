@@ -4,12 +4,12 @@ window.OrderInputHandler = {
     productData: {},
     
     async init() {
-    this.render();
-    await this.loadProductData();
-    this.setupEventListeners();
-    await this.loadTempOrders(); // 임시저장 불러오기로 변경
-    console.log('OrderInputHandler 초기화 완료');
-},
+        this.render();
+        await this.loadProductData();
+        this.setupEventListeners();
+        await this.loadTempOrders(); // 임시저장 자동 불러오기
+        console.log('OrderInputHandler 초기화 완료');
+    },
     
     render() {
         const container = document.getElementById('om-panel-input');
@@ -285,11 +285,24 @@ input[type="number"] {
                 }
 
                 .empty-message {
-                    text-align: center;
                     padding: 40px;
+                    text-align: center;
                     color: #6c757d;
                     font-size: 14px;
-                    font-weight: 300;
+                }
+                
+                .loading-message {
+                    padding: 40px;
+                    text-align: center;
+                    color: #2563eb;
+                    font-size: 14px;
+                    animation: pulse 2s infinite;
+                }
+                
+                @keyframes pulse {
+                    0% { opacity: 1; }
+                    50% { opacity: 0.5; }
+                    100% { opacity: 1; }
                 }
 
                 .message-box {
@@ -498,7 +511,7 @@ input[type="number"] {
 
                 <div class="order-list-section">
                     <div class="list-header">
-    <h3 class="list-title">추가된 주문 목록</h3>
+    <h3 class="list-title">주문 접수 내역</h3>
     <div style="display: flex; gap: 12px; align-items: center;">
         <button class="btn-load-unshipped" onclick="OrderInputHandler.loadUnshippedOrders()" style="padding: 6px 16px; background: #f59e0b; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 300; cursor: pointer;">
             미발송주문 불러오기
@@ -573,6 +586,12 @@ input[type="number"] {
 // loadProductData 함수 끝나는 부분 뒤에 추가
 async loadTempOrders() {
     try {
+        // 로딩 표시
+        const list = document.getElementById('inputOrderList');
+        if (list) {
+            list.innerHTML = '<div class="loading-message">임시저장 주문 불러오는 중...</div>';
+        }
+        
         const response = await fetch('/api/sheets', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -582,14 +601,27 @@ async loadTempOrders() {
             })
         });
         
+        if (!response.ok) {
+            console.error('임시저장 로드 실패: HTTP', response.status);
+            this.updateOrderList();
+            return;
+        }
+        
         const result = await response.json();
-        if (result.success && result.orders) {
+        if (result.success && result.orders && result.orders.length > 0) {
             this.manualOrders = result.orders;
             this.updateOrderList();
-            console.log(`임시저장된 ${this.manualOrders.length}건의 주문 로드됨`);
+            console.log(`임시저장된 ${this.manualOrders.length}건의 주문 자동 로드 완료`);
+            this.showMessage(`임시저장된 ${this.manualOrders.length}건의 주문을 불러왔습니다.`, 'info');
+        } else {
+            this.manualOrders = [];
+            this.updateOrderList();
+            console.log('임시저장된 주문 없음');
         }
     } catch (error) {
-        console.error('임시저장 로드 실패:', error);
+        console.error('임시저장 로드 오류:', error);
+        this.manualOrders = [];
+        this.updateOrderList();
     }
 },
 
@@ -988,9 +1020,10 @@ if (saved) {
     }
     
     if (this.manualOrders.length === 0) {
-        list.innerHTML = '<div class="empty-message">추가된 주문이 없습니다</div>';
+        list.innerHTML = '<div class="empty-message">접수된 주문이 없습니다</div>';
         return;
     }
+
     
     list.innerHTML = this.manualOrders.map((order, index) => `
         <div class="order-item">
