@@ -660,27 +660,13 @@ async saveTempOrder(orderData) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                action: 'appendTempOrder',
-                userEmail: window.currentUser?.email || 'unknown',
+                action: 'saveTempOrder',
+                userEmail: window.currentUser?.email || localStorage.getItem('userEmail') || 'unknown',
                 orderData: {
                     ...orderData,
                     '주문자 전화번호': formatPhone(orderData['주문자 전화번호']),
                     '수령인 전화번호': formatPhone(orderData['수령인 전화번호'])
                 }
-            })
-        });
-        
-        const result = await response.json();
-        return result.success;
-        
-        const response = await fetch('/api/sheets', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'appendToSheet',
-                spreadsheetId: 'orders',
-                sheetName: '임시저장',
-                values: [tempData]
             })
         });
         
