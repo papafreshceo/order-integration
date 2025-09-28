@@ -1059,21 +1059,22 @@ case 'checkCsDuplicate':
             해결방법: row[4],
             재발송상품: row[5],
             재발송수량: row[6],
-            'CS 내용': row[7],
-            부분환불금액: row[8],
-            결제일: row[9],
-            주문번호: row[10],
-            주문자: row[11],
-            '주문자 전화번호': row[12],
-            수령인: row[13],
-            '수령인 전화번호': row[14],
-            주소: row[15],
-            배송메세지: row[16],
-            옵션명: row[17],
-            수량: row[18],
-            '특이/요청사항': row[19],
-            발송요청일: row[20],
-            상태: row[21] || '접수',
+            'CS구분': row[7],  // CS구분 추가
+            'CS 내용': row[8],  // 인덱스 조정
+            부분환불금액: row[9],
+            결제일: row[10],
+            주문번호: row[11],
+            주문자: row[12],
+            '주문자 전화번호': row[13],
+            수령인: row[14],
+            '수령인 전화번호': row[15],
+            주소: row[16],
+            배송메세지: row[17],
+            옵션명: row[18],
+            수량: row[19],
+            '특이/요청사항': row[20],
+            발송요청일: row[21],
+            상태: row[22] || '접수',
             rowIndex: i + 1  // 시트 행 번호 (수정용)
           };
           
@@ -1112,6 +1113,7 @@ case 'updateCsRecord':
       data['해결방법'] || '',
       data['재발송상품'] || '',
       data['재발송수량'] || '',
+      data['CS구분'] || '',  // CS구분 추가
       data['CS 내용'] || '',
       data['부분환불금액'] || '',
       data['결제일'] || '',
@@ -1129,7 +1131,7 @@ case 'updateCsRecord':
       '수정'
     ]];
     
-    await updateSheetData(`CS기록!A${rowIndex}:V${rowIndex}`, updateData, ordersSpreadsheetId);
+    await updateSheetData(`CS기록!A${rowIndex}:W${rowIndex}`, updateData, ordersSpreadsheetId);
     
     return res.status(200).json({
       success: true,
