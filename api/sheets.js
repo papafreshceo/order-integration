@@ -1360,7 +1360,9 @@ case 'getCsRecords':
                     주소: tempData[i][13],
                     배송메세지: tempData[i][14],
                     '특이/요청사항': tempData[i][15],
-                    발송요청일: tempData[i][16] || ''
+                    발송요청일: tempData[i][16] || '',
+                    상태: tempData[i][17] || '',
+                    입금확인: tempData[i][18] || ''
                 });
             }
         }
@@ -1476,9 +1478,11 @@ case 'getCsRecords':
             orderData.수령인,
             formatPhone(orderData['수령인 전화번호']),
             orderData.주소,
-            orderData.배송메세지,
+             orderData.배송메세지,
             '',  // 특이/요청사항
-            orderData.발송요청일 || ''
+            orderData.발송요청일 || '',
+            '',  // 상태
+            ''   // 입금확인
         ]];
         
         await appendSheetData('임시저장!A:R', tempData, ordersSpreadsheetId);
@@ -1496,7 +1500,7 @@ case 'deleteTempOrders':
     try {
         const { userEmail } = req.body;
         const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
-        const tempData = await getOrderData('임시저장!A:O', ordersSpreadsheetId);
+        const tempData = await getOrderData('임시저장!A:S', ordersSpreadsheetId);
         
         if (!tempData || tempData.length < 2) {
             return res.status(200).json({ success: true });
@@ -1510,7 +1514,7 @@ case 'deleteTempOrders':
             }
         }
         
-        await clearOrderSheet('임시저장!A:O');
+        await clearOrderSheet('임시저장!A:S');
         if (newData.length > 0) {
             await saveOrderData('임시저장!A1', newData);
         }
