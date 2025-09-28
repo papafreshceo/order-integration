@@ -762,6 +762,14 @@ async loadTempOrders() {
         
         if (result.success && result.orders && result.orders.length > 0) {
             // 필드 매핑 추가 및 삭제된 항목 필터링
+            // 디버깅: 첫 번째 주문의 접수번호 확인
+            console.log('임시저장 첫 번째 주문:', {
+                접수번호: result.orders[0].접수번호,
+                주문번호: result.orders[0].주문번호,
+                전체: result.orders[0]
+            });
+            
+            // 필드 매핑 추가 및 삭제된 항목 필터링
             this.manualOrders = result.orders
                 .filter(order => 
                     order.삭제 !== 'Y' && 
@@ -769,7 +777,8 @@ async loadTempOrders() {
                 )
                 .map(order => ({
                     ...order,
-                    주문번호: order.접수번호 || order.주문번호 || '',
+                    주문번호: order.주문번호 || order.접수번호 || '',  // 주문번호를 우선 사용
+                    접수번호: order.접수번호 || order.주문번호 || '',  // 접수번호 필드 추가
                     사용자이메일: order.사용자이메일 || order.userEmail,
                     저장시간: order.저장시간 || order.timestamp,
                     상품금액: order.상품금액 || order.totalPrice || 0,
