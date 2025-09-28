@@ -1716,6 +1716,216 @@ hideTooltip() {
     }
 },
 
+async saveOrders() {
+    if (this.manualOrders.length === 0) {
+        this.showMessage('저장할 주문이 없습니다.', 'error');
+        return;
+    }
+    
+    // 오늘 날짜 (YYYY-MM-DD 형식)
+    const today = new Date().toISOString().split('T')[0];
+    
+    // 발송요청일별 주문 분류
+    const todayOrders = [];
+    const futureOrders = [];
+    const noDateOrders = [];
+    
+    this.manualOrders.forEach(order => {
+        if (!order.발송요청일) {
+            noDateOrders.push(order);
+        } else if (order.발송요청일 === today) {
+            todayOrders.push(order);
+        } else {
+            futureOrders.push(order);
+        }
+    });
+    
+    // 확인 모달 표시
+    const ordersToSave = await this.showSaveConfirmModal(todayOrders, futureOrders, noDateOrders);
+    
+    if (!ordersToSave || ordersToSave.length === 0) {
+        return; // 취소됨
+    }
+    
+    // 저장 진행
+    const saveButton = document.querySelector('.btn-action[onclick*="saveOrders"]');
+    if (saveButton) {
+        saveButton.textContent = '저장 중...';
+        saveButton.disabled = true;
+    }
+    
+    try {
+        const today = new Date();
+        const sheetName = today.getFullYear() + 
+                         String(today.getMonth() + 1).padStart(2, '0') + 
+                         String(today.getDate()).padStart(2, '0');
+        
+        const headers = window.mappingData?.standardFields;
+        if (!headers) {
+            this.showMessage('매핑 데이터를 찾을 수 없습니다.', 'error');
+            return;
+        }
+        
+        // 제품 정보로 주문 데이터 보강 (선택된 주문만)
+        const enrichedOrders = ordersToSave.map(order => {
+            const productInfo = this.productData[order.옵션명];
+            if (productInfo) {
+                return {
+                    ...order,
+                    출고처: productInfo['출고처'] || '',
+                    송장주체: productInfo['송장주체'] || '',
+                    벤더사: productInfo['벤더사'] || '',
+                    발송지명: productInfo['발송지명'] || '',
+                    발송지주소: productInfo['발송지주소'] || '',
+                    발송지연락처: productInfo['발송지연락처'] || '',
+                    출고비용: productInfo['출고비용'] || 0
+                };
+            }
+            return order;
+        });
+        
+        const values = [headers];
+        const marketCounters = {};
+        
+        enrichedOrders.forEach((order, index) => {
+            const marketName = order.마켓명;
+            
+            if (!marketCounters[marketName]) {
+                marketCounters[marketName] = 0;
+            }
+            marketCounters[marketName]++;
+            
+            const row = headers.map(header => {
+                if (header === '연번') return index + 1;
+                
+                if (header === '마켓') {
+                    let initial = window.mappingData?.markets?.[marketName]?.initial || marketName.charAt(0);
+                    return initial + String(marketCounters[marketName]).padStart(3, '0');
+                }
+                
+                if (header === '결제일') return new Date().toISOString().split('T')[0] + ' 00:00:00';
+                if (header === '주문번호') return 'M' + Date.now() + index;
+                if (header === '상품주문번호') return 'M' + Date.now() + index;
+                
+                const value = order[header];
+                return value !== undefined && value !== null ? String(value) : '';
+            });
+            values.push(row);
+        });
+        
+        const marketColors = {};
+        if (window.mappingData?.markets) {
+            Object.entries(window.mappingData.markets).forEach(([marketName, market]) => {
+                if (market.color) {
+                    const rgb = market.color.split(',').map(Number);
+                    const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+                    marketColors[marketName] = {
+                        color: market.color,
+                        textColor: brightness > 128 ? '#000' : '#fff'
+                    };
+                }
+            });
+        }
+        
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'saveToSheet',
+                sheetName: sheetName,
+                values: values,
+                marketColors: marketColors,
+                spreadsheetId: 'orders'
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            console.log('1차 확인: 저장 API 성공');
+            
+            const verifyResponse = await fetch('/api/sheets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'verifyOrdersSaved',
+                    sheetName: sheetName,
+                    spreadsheetId: 'orders',
+                    orderCount: ordersToSave.length,
+                    firstOrderId: ordersToSave[0]?.주문번호
+                })
+            });
+            
+            const verifyResult = await verifyResponse.json();
+            
+            if (verifyResult.success && verifyResult.verified) {
+                console.log('2차 확인: 실제 저장 확인됨');
+                
+                const userEmail = window.currentUser?.email || localStorage.getItem('userEmail') || 'unknown';
+                const transferTime = new Date().toLocaleString('ko-KR', {
+                    timeZone: 'Asia/Seoul',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                
+                const flagResult = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'updateTransferFlag',
+                        spreadsheetId: 'orders',
+                        sheetName: '임시저장',
+                        userEmail: userEmail,
+                        orderIds: ordersToSave.map(o => o.주문번호),
+                        transferFlag: 'Y',
+                        transferTime: transferTime,
+                        targetSheet: sheetName,
+                        flagColumns: {
+                            이관: 'W',
+                            이관일시: 'X'
+                        }
+                    })
+                });
+                
+                const flagResponse = await flagResult.json();
+                
+                if (flagResponse.success) {
+                    console.log('3차 확인: 이관플래그 업데이트 완료');
+                    
+                    // 저장된 주문만 테이블에서 제거
+                    this.manualOrders = this.manualOrders.filter(order => 
+                        !ordersToSave.find(saved => saved.주문번호 === order.주문번호)
+                    );
+                    
+                    this.updateOrderList();
+                    this.resetForm();
+                    this.showMessage(`${ordersToSave.length}건의 주문이 확정 등록되었습니다.`, 'success');
+                } else {
+                    this.showMessage(`주문은 저장되었지만 이관플래그 업데이트 실패. 수동으로 확인 필요.`, 'warning');
+                }
+            } else {
+                throw new Error('주문 저장을 확인할 수 없습니다. 다시 시도해주세요.');
+            }
+        } else {
+            throw new Error(result.error || '저장 실패');
+        }
+        
+    } catch (error) {
+        console.error('저장 오류:', error);
+        this.showMessage('저장 중 오류가 발생했습니다: ' + error.message, 'error');
+    } finally {
+        const saveButton = document.querySelector('.btn-action[onclick*="saveOrders"]');
+        if (saveButton) {
+            saveButton.textContent = '주문확정등록';
+            saveButton.disabled = false;
+        }
+    }
+},
+
 async showSaveConfirmModal(todayOrders, futureOrders, noDateOrders) {
     return new Promise((resolve) => {
         // 기존 모달 제거
@@ -1912,6 +2122,16 @@ confirmSaveOrders() {
     
     document.getElementById('saveConfirmModal').remove();
     this.saveResolve(ordersToSave);
+},
+
+toggleOrderGroup(group, checked) {
+    const listElement = document.getElementById(group + 'List');
+    if (listElement) {
+        listElement.style.display = checked ? 'block' : 'none';
+    }
+    
+    // 선택 건수 업데이트
+    this.updateSelectedCount();
 },
 
 updateSelectedCount() {
