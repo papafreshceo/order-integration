@@ -657,6 +657,11 @@ async loadTempOrders() {
         }
         
         const result = await response.json();
+        console.log('getTempOrders API 응답:', result);
+        console.log('result.success:', result.success);
+        console.log('result.orders:', result.orders);
+        console.log('result.orders?.length:', result.orders?.length);
+        
         if (result.success && result.orders && result.orders.length > 0) {
             // 필드 매핑 추가
             this.manualOrders = result.orders.map(order => ({
@@ -671,7 +676,7 @@ async loadTempOrders() {
         } else {
             this.manualOrders = [];
             this.updateOrderList();
-            console.log('임시저장된 주문 없음');
+            console.log('임시저장된 주문 없음 - result:', result);
         }
     } catch (error) {
         console.error('임시저장 로드 오류:', error);
