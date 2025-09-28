@@ -777,7 +777,9 @@ async saveTempOrder(orderData) {
             orderData.주소,
             orderData.배송메세지 || '',
             orderData['특이/요청사항'] || '',
-            orderData.발송요청일 || ''
+            orderData.발송요청일 || '',
+            '',  // 상태 (새 칼럼)
+            ''   // 입금확인 (새 칼럼)
         ];
         
         const response = await fetch('/api/sheets', {
@@ -786,7 +788,7 @@ async saveTempOrder(orderData) {
             body: JSON.stringify({
                 action: 'appendToSheet',
                 spreadsheetId: 'orders',
-                range: '임시저장!A:Q',  // range 추가
+                range: '임시저장!A:S',  // Q에서 S로 변경
                 values: [tempData]
             })
         });
