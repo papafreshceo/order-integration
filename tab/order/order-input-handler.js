@@ -1913,22 +1913,50 @@ async saveOrders() {
         if (result.success) {
             console.log('1차 확인: 저장 API 성공');
             
-            // 검증 스킵 - 이미 저장 성공했으므로
-            console.log('저장 성공, 검증 단계 스킵');
-            
-            // 바로 성공으로 처리
-            if (result.success) {
-console.log('2차 확인: 실제 저장 확인됨');
+            // 임시저장에 이관 플래그 업데이트
+            try {
+                const userEmail = window.currentUser?.email || localStorage.getItem('userEmail') || 'unknown';
+                const orderNumbers = ordersToSave.map(order => order.주문번호);
+                const transferTime = new Date().toLocaleString('ko-KR', {
+                    timeZone: 'Asia/Seoul',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
                 
-                // 저장된 주문만 테이블에서 제거
-                this.manualOrders = this.manualOrders.filter(order => 
-                    !ordersToSave.find(saved => saved.주문번호 === order.주문번호)
-                );
+                const flagResponse = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'updateTransferFlag',
+                        sheetName: '임시저장',
+                        userEmail: userEmail,
+                        orderIds: orderNumbers,
+                        transferFlag: 'Y',
+                        transferTime: transferTime
+                    })
+                });
                 
-                this.updateOrderList();
-                this.resetForm();
-                this.showMessage(`${ordersToSave.length}건의 주문이 확정 등록되었습니다.`, 'success');
+                const flagResult = await flagResponse.json();
+                console.log('이관 플래그 업데이트:', flagResult);
+                
+            } catch (flagError) {
+                console.error('이관 플래그 업데이트 실패:', flagError);
+                // 플래그 실패해도 계속 진행
             }
+            
+            // 저장된 주문만 테이블에서 제거
+            this.manualOrders = this.manualOrders.filter(order => 
+                !ordersToSave.find(saved => saved.주문번호 === order.주문번호)
+            );
+            
+            this.updateOrderList();
+            this.resetForm();
+            this.showMessage(`${ordersToSave.length}건의 주문이 확정 등록되었습니다.`, 'success');
+            
         } else {
             throw new Error(result.error || '저장 실패');
         }
