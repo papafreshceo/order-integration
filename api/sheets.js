@@ -1405,10 +1405,15 @@ case 'getCsRecords':
       return res.json({ success: false, error: '주문을 찾을 수 없습니다' });
     }
     
-    // updateSheetData 함수 사용 (S열 = 입금확인)
-    const updateRange = `임시저장!S${targetRowIndex}`;
-    await updateSheetData(updateRange, [[confirmTime]], ordersSpreadsheetId);
+    // 전체 행 데이터 가져오기
+    const rowData = tempData[targetRowIndex - 1];
     
+    // S열(18번 인덱스)에 입금확인 시간 추가
+    rowData[18] = confirmTime;
+    
+    // 전체 행 업데이트
+    const updateRange = `임시저장!A${targetRowIndex}:S${targetRowIndex}`;
+    await updateSheetData(updateRange, [rowData], ordersSpreadsheetId);
     res.json({ success: true });
     
   } catch (error) {
