@@ -1375,13 +1375,15 @@ case 'getCsRecords':
     }
 
 
- case 'updatePaymentConfirmation':
+    case 'updatePaymentConfirmation':
   try {
     const { userEmail, orderIndex, confirmTime } = req.body;
     const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
     
-    // 기존 getSheetData 함수 사용
-    const tempData = await getSheetData('임시저장!A:S', ordersSpreadsheetId);
+    console.log('updatePaymentConfirmation 시작:', { userEmail, orderIndex, confirmTime });
+    
+    // 기존 getOrderData 함수 사용 (주문 시트 전용 함수)
+    const tempData = await getOrderData('임시저장!A:S', ordersSpreadsheetId);
     
     if (!tempData || tempData.length === 0) {
       return res.json({ success: false, error: '데이터 없음' });
@@ -1394,7 +1396,7 @@ case 'getCsRecords':
     for (let i = 1; i < tempData.length; i++) {
       if (tempData[i][0] === userEmail) {
         if (currentUserOrderIndex === orderIndex) {
-          targetRowIndex = i + 1; // 시트는 1부터 시작
+          targetRowIndex = i;
           break;
         }
         currentUserOrderIndex++;
@@ -1405,15 +1407,29 @@ case 'getCsRecords':
       return res.json({ success: false, error: '주문을 찾을 수 없습니다' });
     }
     
-    // 전체 행 데이터 가져오기
-    const rowData = tempData[targetRowIndex - 1];
+    console.log('대상 행 찾음:', targetRowIndex + 1);
     
-    // S열(18번 인덱스)에 입금확인 시간 추가
-    rowData[18] = confirmTime;
+    // 전체 데이터 복사
+    const allData = [...tempData];
     
-    // 전체 행 업데이트
-    const updateRange = `임시저장!A${targetRowIndex}:S${targetRowIndex}`;
-    await updateSheetData(updateRange, [rowData], ordersSpreadsheetId);
+    // 해당 행의 S열(18번 인덱스)에 입금확인 시간 추가
+    if (!allData[targetRowIndex]) {
+      allData[targetRowIndex] = [];
+    }
+    
+    // S열까지 채우기
+    while (allData[targetRowIndex].length < 19) {
+      allData[targetRowIndex].push('');
+    }
+    
+    allData[targetRowIndex][18] = confirmTime;
+    
+    // 전체 시트 덮어쓰기
+    await clearOrderSheet('임시저장!A:S', ordersSpreadsheetId);
+    await saveOrderData('임시저장!A1', allData, ordersSpreadsheetId);
+    
+    console.log('입금확인 업데이트 완료');
+    
     res.json({ success: true });
     
   } catch (error) {
