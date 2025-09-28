@@ -423,11 +423,12 @@ input[type="number"] {
                 /* 커스텀 툴팁 스타일 */
                 .custom-tooltip {
                     position: fixed;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
+                    background: linear-gradient(135deg, #ffffff 0%, #f3f4f6 50%, #e5e7eb 100%);
+                    color: #1f2937;
                     padding: 20px;
                     border-radius: 12px;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+                    border: 1px solid #d1d5db;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
                     z-index: 10000;
                     display: none;
                     min-width: 320px;
