@@ -961,10 +961,10 @@ case 'checkCsDuplicate':
       if (csData && csData.length > 1) {
         // 헤더 인덱스 찾기 (첫 번째 행이 헤더)
         const headers = csData[0];
-        const orderNoIdx = 10;  // K열: 주문번호
-        const ordererIdx = 11;  // L열: 주문자
-        const receiverIdx = 13; // N열: 수령인
-        const optionIdx = 17;   // R열: 옵션명
+        const orderNoIdx = 11;  // L열: 주문번호 (CS구분 추가로 +1)
+        const ordererIdx = 12;  // M열: 주문자
+        const receiverIdx = 14; // O열: 수령인
+        const optionIdx = 18;   // S열: 옵션명
         
         // 2행부터 데이터 검사
         for (let i = 1; i < csData.length; i++) {
