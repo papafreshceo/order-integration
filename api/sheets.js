@@ -1359,6 +1359,63 @@ case 'getCsRecords':
         return res.status(500).json({ success: false, error: error.message });
     }
 
+
+    case 'appendTempOrder':
+    try {
+        const { userEmail, orderData } = req.body;
+        const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
+        
+        // 전화번호 형식 보존
+        const formatPhone = (phone) => {
+            if (!phone) return '';
+            let phoneStr = String(phone).replace(/[^0-9]/g, '');
+            if (phoneStr && !phoneStr.startsWith('0')) {
+                phoneStr = '0' + phoneStr;
+            }
+            return phoneStr ? `'${phoneStr}` : '';
+        };
+        
+        const koreaTime = new Date().toLocaleString('ko-KR', {
+            timeZone: 'Asia/Seoul',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        
+        const tempData = [[
+            userEmail,
+            '',  // 접수번호
+            koreaTime,
+            orderData.마켓명,
+            orderData.옵션명,
+            orderData.수량,
+            orderData.단가,
+            orderData.택배비,
+            orderData.상품금액,
+            orderData.주문자,
+            formatPhone(orderData['주문자 전화번호']),
+            orderData.수령인,
+            formatPhone(orderData['수령인 전화번호']),
+            orderData.주소,
+            orderData.배송메세지,
+            '',  // 특이/요청사항
+            orderData.발송요청일 || ''
+        ]];
+        
+        await appendSheetData('임시저장!A:R', tempData, ordersSpreadsheetId);
+        
+        return res.status(200).json({ success: true });
+    } catch (error) {
+        console.error('appendTempOrder 오류:', error);
+        return res.status(500).json({ success: false, error: error.message });
+    }
+
+
+
+    
 case 'deleteTempOrders':
     try {
         const { userEmail } = req.body;

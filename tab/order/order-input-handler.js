@@ -329,6 +329,12 @@ input[type="number"] {
                 .message-box.show {
                     display: block;
                 }
+                
+                .message-box.info {
+                    background: #dbeafe;
+                    color: #2563eb;
+                    border: 1px solid #93c5fd;
+                }
 
                 .address-modal {
                     display: none;
@@ -627,23 +633,32 @@ async loadTempOrders() {
 
 async saveTempOrder(orderData) {
     try {
-        const tempData = [
-            window.currentUser?.email || 'unknown',
-            new Date().toISOString(),
-            orderData.마켓명,
-            orderData.옵션명,
-            orderData.수량,
-            orderData.단가,
-            orderData.택배비,
-            orderData.상품금액,
-            orderData.주문자,
-            orderData['주문자 전화번호'],
-            orderData.수령인,
-            orderData['수령인 전화번호'],
-            orderData.주소,
-            orderData.배송메세지,
-            orderData.발송요청일 || ''
-        ];
+        // 전화번호 앞 0 유지
+        const formatPhone = (phone) => {
+            if (!phone) return '';
+            let phoneStr = String(phone).replace(/[^0-9]/g, '');
+            if (phoneStr && !phoneStr.startsWith('0')) {
+                phoneStr = '0' + phoneStr;
+            }
+            return phoneStr;
+        };
+        
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'appendTempOrder',
+                userEmail: window.currentUser?.email || 'unknown',
+                orderData: {
+                    ...orderData,
+                    '주문자 전화번호': formatPhone(orderData['주문자 전화번호']),
+                    '수령인 전화번호': formatPhone(orderData['수령인 전화번호'])
+                }
+            })
+        });
+        
+        const result = await response.json();
+        return result.success;
         
         const response = await fetch('/api/sheets', {
             method: 'POST',
@@ -1464,6 +1479,22 @@ addSelectedOrders(orders) {
     
     // 모달 닫기
     document.getElementById('unshippedOrdersModal').remove();
+},
+
+saveToCache() {
+    try {
+        localStorage.setItem('orderInputCache', JSON.stringify(this.manualOrders));
+    } catch (error) {
+        console.error('캐시 저장 실패:', error);
+    }
+},
+
+clearCache() {
+    try {
+        localStorage.removeItem('orderInputCache');
+    } catch (error) {
+        console.error('캐시 삭제 실패:', error);
+    }
 },
 
 fullReset() {
