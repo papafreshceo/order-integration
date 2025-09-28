@@ -1185,15 +1185,15 @@ if (saved) {
                         <th style="padding: 8px; text-align: center; width: 110px; min-width: 110px;">주문자전화</th>
                         <th style="padding: 8px; text-align: center; width: 70px; min-width: 70px;">수령인</th>
                         <th style="padding: 8px; text-align: center; width: 110px; min-width: 110px;">수령인전화</th>
-                        <th style="padding: 8px; text-align: center; width: 250px; min-width: 250px;">주소</th>
+                        <th style="padding: 8px; text-align: center; width: 250px; min-width: 200px;">주소</th>
                         <th style="padding: 8px; text-align: center; width: 120px; min-width: 120px;">배송메세지</th>
                         <th style="padding: 8px; text-align: center; width: 180px; min-width: 180px;">옵션명</th>
-                        <th style="padding: 8px; text-align: center; width: 50px; min-width: 50px;">수량</th>
+                        <th style="padding: 8px; text-align: center; width: 50px; min-width: 30px;">수량</th>
                         <th style="padding: 8px; text-align: center; width: 70px; min-width: 70px;">마켓</th>
                         <th style="padding: 8px; text-align: center; width: 120px; min-width: 120px;">특이/요청</th>
-                        <th style="padding: 8px; text-align: center; width: 90px; min-width: 90px;">발송요청일</th>
+                        <th style="padding: 8px; text-align: center; width: 90px; min-width: 80px;">발송요청일</th>
                         <th style="padding: 8px; text-align: center; width: 80px; min-width: 80px;">금액</th>
-                        <th style="padding: 8px; text-align: center; width: 80px; min-width: 80px;">확인</th>
+                        <th style="padding: 8px; text-align: center; width: 80px; min-width: 100px;">확인</th>
                         <th style="padding: 8px; text-align: center; width: 60px; min-width: 60px;">삭제</th>
                     </tr>
                 </thead>
