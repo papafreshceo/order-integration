@@ -1580,7 +1580,16 @@ case 'updateTransferFlag':
           let updateCount = 0;
           
           // 각 행별로 개별 업데이트
+          console.log('updateTransferFlag 디버깅:', {
+            userEmail: userEmail,
+            orderIds: orderIds,
+            totalRows: allData.length
+          });
+          
+          // 각 행별로 개별 업데이트
           for (let i = 1; i < allData.length; i++) {
+            console.log(`행 ${i}: 이메일="${allData[i][0]}", 접수번호="${allData[i][1]}"`);
+            
             if (allData[i][0] === userEmail && orderIds.includes(allData[i][1])) {
               const rowNumber = i + 1; // 시트는 1부터 시작
               
