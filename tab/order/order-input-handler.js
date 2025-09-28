@@ -597,7 +597,7 @@ input[type="number"] {
 
                 <!-- 주문 접수 내역 테이블 섹션 (주문조회 스타일) -->
                 <div class="table-section" style="background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; margin-top: 24px;">
-                    // ===== 대체 시작 =====
+
                 <div class="table-header" style="padding: 16px 24px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa;">
                         <div class="table-header-left" style="display: flex; align-items: center; gap: 20px;">
                             <h3 class="table-title" style="font-size: 16px; font-weight: 500; color: #042848; margin: 0;">주문 접수 내역</h3>
@@ -625,7 +625,7 @@ input[type="number"] {
                             </button>
                         </div>
                     </div>
-// ===== 대체 끝 =====
+
                     
                     <div class="table-wrapper" style="overflow-x: auto; overflow-y: auto; height: calc(100vh - 500px); min-height: 300px; max-height: 500px;">
                         <div id="inputOrderList">
