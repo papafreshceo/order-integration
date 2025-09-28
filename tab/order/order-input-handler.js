@@ -1761,24 +1761,42 @@ async saveOrders() {
                          String(today.getDate()).padStart(2, '0');
         
 
-        // 매핑 데이터 확인 (주문통합과 동일한 방식)
-        if (!window.mappingData) {
-            console.log('window.mappingData 없음, script.js에서 로드 대기');
-            // 최대 3초 대기
-            let waitCount = 0;
-            while (!window.mappingData && waitCount < 30) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                waitCount++;
+        // 매핑 데이터 확인
+        console.log('현재 window.mappingData 상태:', window.mappingData);
+        
+        // window.mappingData가 없으면 직접 로드
+        if (!window.mappingData || !window.mappingData.standardFields) {
+            console.log('매핑 데이터 없음, 직접 로드 시도');
+            try {
+                const mappingResponse = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'getMapping' })
+                });
+                
+                const mappingResult = await mappingResponse.json();
+                console.log('매핑 데이터 로드 응답:', mappingResult);
+                
+                if (mappingResult.success) {
+                    window.mappingData = mappingResult;
+                    console.log('매핑 데이터 설정 완료');
+                } else {
+                    throw new Error('매핑 데이터 로드 실패');
+                }
+            } catch (error) {
+                console.error('매핑 데이터 로드 오류:', error);
+                this.showMessage('매핑 데이터를 불러올 수 없습니다.', 'error');
+                return;
             }
         }
         
-        if (!window.mappingData || !window.mappingData.standardFields) {
-            console.error('매핑 데이터 로드 실패');
-            this.showMessage('매핑 데이터를 불러올 수 없습니다. 페이지를 새로고침하세요.', 'error');
+        const headers = window.mappingData.standardFields;
+        if (!headers || headers.length === 0) {
+            console.error('표준 필드가 비어있음');
+            this.showMessage('표준 필드를 찾을 수 없습니다.', 'error');
             return;
         }
         
-        const headers = window.mappingData.standardFields;
         console.log('매핑 데이터 사용:', {
             markets: Object.keys(window.mappingData.markets || {}),
             headerCount: headers.length,
