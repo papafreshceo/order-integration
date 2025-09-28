@@ -133,8 +133,9 @@ case 'saveCsRecord':
       data['수량'] || '',
       data['특이/요청사항'] || '',
       data['발송요청일'] || '',
-      '접수',
-      data['추가금액'] || data['상품금액'] || 0  // 24번째 칼럼: 추가금액 우선
+      '접수',  // 상태
+      '',  // 입금확인 (빈값)
+      data['추가금액'] || data['상품금액'] || 0  // 26번째 칼럼: 추가금액 우선
     ]];
     
     await appendSheetData('CS기록!A:X', csRowData, ordersSpreadsheetId);  // X까지 확장
@@ -182,8 +183,10 @@ case 'saveCsRecord':
         formatPhone(data['수령인 전화번호']), // 수령인 전화번호
         data['주소'] || '',                  // 주소
         data['배송메세지'] || '',            // 배송메세지
-        data['특이/요청사항'] || '',         // 특이/요청사항
-        data['발송요청일'] || ''             // 발송요청일
+        data['특이/요청사항'] || '',    // 특이/요청사항
+        data['발송요청일'] || '',        // 발송요청일
+        '접수',                          // 상태
+        ''                               // 입금확인
       ]];
       
       await appendSheetData('임시저장!A:R', tempRowData, ordersSpreadsheetId);
