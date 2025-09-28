@@ -595,40 +595,35 @@ input[type="number"] {
                     <div id="inputMessage" class="message-box"></div>
                 </div>
 
-                <!-- 주문 접수 내역 테이블 섹션 (주문조회 스타일) -->
-                <div class="table-section" style="background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; margin-top: 24px;">
-
-                <div class="table-header" style="padding: 16px 24px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa;">
-                        <div class="table-header-left" style="display: flex; align-items: center; gap: 12px;">
-                            <h3 class="table-title" style="font-size: 16px; font-weight: 500; color: #042848; margin: 0;">주문 접수 내역</h3>
-                            <div class="result-info" style="display: flex; align-items: center; gap: 20px; font-size: 13px; color: #6c757d; margin-right: 8px;">
-                                <span>총 <span class="result-count" id="totalOrderCount" style="color: #2563eb; font-weight: 500;">0</span>건</span>
-                            </div>
-                            <button class="btn-action" onclick="OrderInputHandler.loadUnshippedOrders()" 
-                                style="padding: 6px 12px; border: 1px solid #ffb3ba; border-radius: 6px; background: #ffffff; color: #042848; font-size: 12px; font-weight: 300; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="11" cy="11" r="8"></circle>
-                                    <path d="m21 21-4.35-4.35"></path>
-                                </svg>
-                                미발송주문 불러오기
-                            </button>
-                        </div>
-                            <div class="result-info" style="display: flex; align-items: center; gap: 20px; font-size: 13px; color: #6c757d;">
-                                <span>총 <span class="result-count" id="totalOrderCount" style="color: #2563eb; font-weight: 500;">0</span>건</span>
-                            </div>
-                        </div>
-                        <div class="table-actions" style="display: flex; gap: 8px;">
-                            <button class="btn-action" onclick="OrderInputHandler.saveOrders()" 
-                                style="padding: 6px 12px; border: 1px solid #dee2e6; border-radius: 6px; background: #10b981; color: white; font-size: 12px; font-weight: 300; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                                    <polyline points="7 3 7 8 15 8"></polyline>
-                                </svg>
-                                저장
-                            </button>
-                        </div>
-                    </div>
+ <!-- 주문 접수 내역 테이블 섹션 (주문조회 스타일) -->
+<div class="table-section" style="background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; margin-top: 24px;">
+    <div class="table-header" style="padding: 16px 24px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa;">
+        <div class="table-header-left" style="display: flex; align-items: center; gap: 12px;">
+            <h3 class="table-title" style="font-size: 16px; font-weight: 500; color: #042848; margin: 0;">주문 접수 내역</h3>
+            <div class="result-info" style="display: flex; align-items: center; gap: 20px; font-size: 13px; color: #6c757d; margin-right: 8px;">
+                <span>총 <span class="result-count" id="totalOrderCount" style="color: #2563eb; font-weight: 500;">0</span>건</span>
+            </div>
+            <button class="btn-action" onclick="OrderInputHandler.loadUnshippedOrders()" 
+                style="padding: 6px 12px; border: 1px solid #ffb3ba; border-radius: 6px; background: #ffffff; color: #042848; font-size: 12px; font-weight: 300; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                미발송주문 불러오기
+            </button>
+        </div>
+        <div class="table-actions" style="display: flex; gap: 8px;">
+            <button class="btn-action" onclick="OrderInputHandler.saveOrders()" 
+                style="padding: 6px 12px; border: 1px solid #dee2e6; border-radius: 6px; background: #10b981; color: white; font-size: 12px; font-weight: 300; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                저장
+            </button>
+        </div>
+    </div>
 
                     
                     <div class="table-wrapper" style="overflow-x: auto; overflow-y: auto; height: calc(100vh - 500px); min-height: 300px; max-height: 500px;">
