@@ -1865,11 +1865,17 @@ async saveOrders() {
         
         console.log('전체 요청 본문:', JSON.stringify(requestBody, null, 2));
         
-        const response = await fetch('/api/sheets', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
-        });
+        let response;
+        try {
+            response = await fetch('/api/sheets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+        } catch (fetchError) {
+            console.error('Fetch 자체 실패:', fetchError);
+            throw new Error(`네트워크 오류: ${fetchError.message}`);
+        }
         
         console.log('응답 상태:', response.status);
         
