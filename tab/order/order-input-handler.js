@@ -245,6 +245,14 @@ input[type="number"] {
                     width: 1800px !important;
                     min-width: 1800px !important;
                 }
+                
+                .order-table tbody tr {
+                    position: relative;
+                }
+                
+                .order-table tbody tr:hover {
+                    background: #f0f8ff !important;
+                }
 
                 .order-item {
                     display: flex;
@@ -1097,8 +1105,14 @@ if (saved) {
                                             order.마켓명.charAt(0);
                         const marketNumber = String(index + 1).padStart(3, '0');
                         
-                       return `
-                        <tr style="border-bottom: 1px solid #f1f3f5; font-weight: 200;">
+                       // 툴팁 텍스트 생성
+                        const tooltipText = `마켓: ${order.마켓명 || ''}\n옵션명: ${order.옵션명 || ''}\n주문자: ${order.주문자 || ''}\n금액: ${(order.상품금액 || 0).toLocaleString()}원`;
+                        
+                        return `
+                        <tr style="border-bottom: 1px solid #f1f3f5; font-weight: 200; cursor: pointer; transition: background 0.2s;" 
+                            title="${tooltipText}"
+                            onmouseover="this.style.background='#f0f8ff'" 
+                            onmouseout="this.style.background=''">
                             <td style="padding: 6px; text-align: center; font-weight: 200;">${index + 1}</td>
                             <td style="padding: 6px; text-align: center;">
                                 <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
