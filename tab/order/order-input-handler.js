@@ -1230,6 +1230,7 @@ list.innerHTML = `
             <tr>
                 <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 40px;">번호</th>
                 <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 80px;">마켓명</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 120px;">접수자</th>
                 <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 120px;">주문번호</th>
                 <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 140px;">주문일시</th>
                 <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 80px;">주문자</th>
@@ -1237,9 +1238,9 @@ list.innerHTML = `
                 <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 80px;">수령인</th>
                 <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 100px;">수령인전화</th>
                 <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 200px;">주소</th>
-                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 120px;">배송메세지</th>
-                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 180px;">옵션명</th>
-                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 50px;">수량</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 100px;">배송메세지</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 120px;">옵션명</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 40px;">수량</th>
                 <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 90px;">발송요청일</th>
                 <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 80px;">금액</th>
                 <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 80px;">확인</th>
@@ -1264,6 +1265,9 @@ list.innerHTML = `
                         <span style="display: inline-block; padding: 3px 8px; background: ${marketColor}; color: white; border-radius: 4px; font-size: 11px; font-weight: 500;">
                             ${order.마켓명 || '-'}
                         </span>
+                    </td>
+                    <td style="padding: 8px; font-size: 11px; font-weight: 300;">
+                        ${order.사용자이메일 || window.currentUser?.email || '-'}
                     </td>
                     <td style="padding: 8px; text-align: center; font-size: 11px; font-weight: 300; font-family: monospace;">
                         ${order.주문번호 || '-'}
