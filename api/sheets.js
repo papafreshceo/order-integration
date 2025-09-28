@@ -149,6 +149,7 @@ case 'saveCsRecord':
     console.log('CS기록 저장 완료');
     
     // 재발송/부분재발송인 경우 주문접수
+
     if (data['해결방법'] === '재발송' || data['해결방법'] === '부분재발송') {
       const koreaTime = new Date().toLocaleString('ko-KR', {
         timeZone: 'Asia/Seoul',
@@ -175,14 +176,14 @@ case 'saveCsRecord':
       
       const tempRowData = [[
         data['userEmail'] || 'CS',           // 사용자이메일
-        receiptNumber,                        // 접수번호
+        receiptNumber,                        // 접수번호  
         koreaTime,                           // 저장시간
         'CS발송',                            // 마켓명
         data['재발송상품'] || data['옵션명'] || '',  // 옵션명
         data['재발송수량'] || data['수량'] || '1',   // 수량
         '',                                   // 단가
         '',                                   // 택배비
-        data['추가금액'] || data['상품금액'] || 0,   // 추가금액 우선
+        parseFloat(String(data['추가금액'] || 0).replace(/,/g, '')) || 0,   // 추가금액 (천단위 쉼표 제거)
         data['주문자'] || '',                // 주문자
         formatPhone(data['주문자 전화번호']), // 주문자 전화번호
         data['수령인'] || '',                // 수령인
@@ -195,7 +196,7 @@ case 'saveCsRecord':
         ''                               // 입금확인
       ]];
       
-      await appendSheetData('주문접수!A:x', tempRowData, ordersSpreadsheetId);
+      await appendSheetData('주문접수!A:S', tempRowData, ordersSpreadsheetId);
       console.log('주문접수 완료');
     }
     
