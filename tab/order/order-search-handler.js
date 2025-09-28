@@ -411,8 +411,10 @@ window.OrderSearchHandler = {
                     width: 90%;
                     max-width: 900px;
                     max-height: 90vh;
-                    overflow-y: auto;
                     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                    display: flex;
+                    flex-direction: column;
+                    overflow: hidden;
                 }
 
                 .cs-modal-header {
@@ -449,6 +451,8 @@ window.OrderSearchHandler = {
 
                 .cs-modal-body {
                     padding: 20px;
+                    flex: 1;
+                    overflow-y: auto;
                 }
 
                 .cs-order-info {
