@@ -1412,11 +1412,130 @@ async confirmPayment(index) {
     
 
 
-async deleteOrder(index) {
-    if (!confirm('이 주문을 완전히 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.')) {
-        return;
-    }
+showDeleteModal(index) {
+    const order = this.manualOrders[index];
     
+    // 기존 모달 제거
+    const existingModal = document.getElementById('deleteConfirmModal');
+    if (existingModal) existingModal.remove();
+    
+    const modal = document.createElement('div');
+    modal.id = 'deleteConfirmModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        animation: fadeIn 0.2s ease;
+    `;
+    
+    modal.innerHTML = `
+        <style>
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes slideUp {
+                from { transform: translateY(20px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+        </style>
+        <div style="background: white; border-radius: 16px; width: 90%; max-width: 500px; 
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: slideUp 0.3s ease;">
+            <div style="padding: 24px; border-bottom: 1px solid #e5e7eb;">
+                <h3 style="margin: 0; font-size: 20px; font-weight: 600; color: #111827; display: flex; align-items: center; gap: 8px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                    주문 삭제 확인
+                </h3>
+            </div>
+            
+            <div style="padding: 24px;">
+                <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                        <div style="width: 40px; height: 40px; background: #dc3545; border-radius: 50%; 
+                                    display: flex; align-items: center; justify-content: center;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                        </div>
+                        <div style="flex: 1;">
+                            <p style="margin: 0; font-size: 14px; color: #dc3545; font-weight: 600;">
+                                이 작업은 되돌릴 수 없습니다
+                            </p>
+                            <p style="margin: 4px 0 0 0; font-size: 13px; color: #7f1d1d;">
+                                삭제된 데이터는 복구할 수 없으니 신중하게 결정하세요.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="background: #f9fafb; border-radius: 12px; padding: 16px;">
+                    <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #6b7280;">
+                        삭제할 주문 정보
+                    </h4>
+                    <div style="display: grid; gap: 8px; font-size: 13px;">
+                        <div style="display: flex; justify-content: space-between; padding: 8px; background: white; border-radius: 8px;">
+                            <span style="color: #6b7280;">마켓명</span>
+                            <span style="font-weight: 600; color: #111827;">${order.마켓명 || '-'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 8px; background: white; border-radius: 8px;">
+                            <span style="color: #6b7280;">주문자</span>
+                            <span style="font-weight: 600; color: #111827;">${order.주문자 || '-'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 8px; background: white; border-radius: 8px;">
+                            <span style="color: #6b7280;">옵션명</span>
+                            <span style="font-weight: 600; color: #111827;">${order.옵션명 || '-'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 8px; background: white; border-radius: 8px;">
+                            <span style="color: #6b7280;">수량</span>
+                            <span style="font-weight: 600; color: #111827;">${order.수량 || 1}개</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 8px; background: #fee2e2; border-radius: 8px;">
+                            <span style="color: #dc3545;">금액</span>
+                            <span style="font-weight: 600; color: #dc3545; font-size: 14px;">
+                                ${(order.상품금액 || 0).toLocaleString()}원
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="padding: 16px 24px; background: #f9fafb; border-top: 1px solid #e5e7eb; 
+                        display: flex; justify-content: flex-end; gap: 12px; border-radius: 0 0 16px 16px;">
+                <button onclick="document.getElementById('deleteConfirmModal').remove()" 
+                        style="padding: 10px 24px; background: white; color: #374151; border: 1px solid #d1d5db; 
+                               border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; 
+                               transition: all 0.2s;">
+                    취소
+                </button>
+                <button onclick="OrderInputHandler.confirmDelete(${index})" 
+                        style="padding: 10px 24px; background: #dc3545; color: white; border: none; 
+                               border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; 
+                               transition: all 0.2s;">
+                    삭제하기
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+},
+
+async confirmDelete(index) {
     try {
         const order = this.manualOrders[index];
         const userEmail = window.currentUser?.email || localStorage.getItem('userEmail') || 'unknown';
@@ -1441,6 +1560,7 @@ async deleteOrder(index) {
             // 로컬 배열에서 삭제
             this.manualOrders.splice(index, 1);
             this.updateOrderList();
+            document.getElementById('deleteConfirmModal').remove();
             this.showMessage('주문이 완전히 삭제되었습니다.', 'error');
         } else {
             throw new Error(result.error || '삭제 실패');
@@ -1449,6 +1569,10 @@ async deleteOrder(index) {
         console.error('주문 삭제 오류:', error);
         this.showMessage('주문 삭제 중 오류가 발생했습니다.', 'error');
     }
+},
+
+deleteOrder(index) {
+    this.showDeleteModal(index);
 },
 
 
