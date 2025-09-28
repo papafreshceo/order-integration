@@ -1562,7 +1562,7 @@ case 'deleteTempOrders':
           result: appendResult 
         });
 
-case 'updateTransferFlag':
+      case 'updateTransferFlag':
         try {
           const { userEmail, orderIds, transferFlag, transferTime } = req.body;
           const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
@@ -1607,6 +1607,20 @@ case 'updateTransferFlag':
             error: error.message 
           });
         }
+
+      default:
+        return res.status(400).json({ 
+          error: '알 수 없는 액션입니다.' 
+        });
+    }
+  } catch (error) {
+    console.error('Sheets API 오류:', error);
+    return res.status(500).json({ 
+      success: false,
+      error: error.message || '서버 오류가 발생했습니다.'
+    });
+  }
+}
 
 // 컬럼 번호를 알파벳으로 변환하는 헬퍼 함수
 function columnToLetter(column) {
