@@ -1579,18 +1579,26 @@ case 'updateTransferFlag':
           
           let updateCount = 0;
           
-          // 각 행별로 개별 업데이트
-          console.log('updateTransferFlag 디버깅:', {
-            userEmail: userEmail,
-            orderIds: orderIds,
-            totalRows: allData.length
-          });
-          
-          // 각 행별로 개별 업데이트
-          for (let i = 1; i < allData.length; i++) {
-            console.log(`행 ${i}: 이메일="${allData[i][0]}", 접수번호="${allData[i][1]}"`);
-            
-            if (allData[i][0] === userEmail && orderIds.includes(allData[i][1])) {
+console.log('=== updateTransferFlag 디버깅 ===');
+console.log('요청 데이터:', {
+    userEmail: userEmail,
+    orderIds: orderIds,
+    totalRows: allData.length - 1
+});
+
+// 각 행별로 개별 업데이트
+for (let i = 1; i < allData.length; i++) {
+    const rowEmail = allData[i][0];
+    const rowOrderId = allData[i][1];
+    
+    console.log(`행 ${i}:`, {
+        이메일: rowEmail,
+        주문번호: rowOrderId,
+        이메일일치: rowEmail === userEmail,
+        주문번호포함: orderIds.includes(rowOrderId)
+    });
+    
+    if (rowEmail === userEmail && orderIds.includes(rowOrderId)) {
               const rowNumber = i + 1; // 시트는 1부터 시작
               
               try {
