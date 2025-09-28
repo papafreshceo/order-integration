@@ -1208,8 +1208,6 @@ if (saved) {
                             onmouseover="this.style.background='#b7f7bd'; OrderInputHandler.showTooltip(event, ${index})" 
                             onmouseout="this.style.background=''; OrderInputHandler.hideTooltip()"
                             data-order='${JSON.stringify(order).replace(/'/g, "&apos;")}'>
-// ===== 대체 끝 =====
-                            title="${tooltipText}">
                             <td style="padding: 6px; text-align: center; font-weight: 200;">${index + 1}</td>
                             <td style="padding: 6px; text-align: center;">
                                 <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
