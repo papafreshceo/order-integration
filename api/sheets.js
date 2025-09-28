@@ -96,6 +96,7 @@ case 'saveCsRecord':
     console.log(`최종 - 연번: ${newRowNumber}, 접수번호: ${receiptNumber}`);
     
     // CS기록 저장
+        // CS기록 저장 (CS구분 추가로 인한 칼럼 순서 변경)
     const csRowData = [[
       newRowNumber,
       receiptNumber,
@@ -104,7 +105,8 @@ case 'saveCsRecord':
       data['해결방법'] || '',
       data['재발송상품'] || '',
       data['재발송수량'] || '',
-      data['CS 내용'] || '',
+      data['CS구분'] || '',  // CS구분 추가 (8번째 칼럼)
+      data['CS 내용'] || '',  // CS내용이 9번째로 이동
       data['부분환불금액'] || '',
       data['결제일'] || '',
       data['주문번호'] || '',
@@ -121,7 +123,8 @@ case 'saveCsRecord':
       '접수'
     ]];
     
-    await appendSheetData('CS기록!A:V', csRowData, ordersSpreadsheetId);
+    await appendSheetData('CS기록!A:W', csRowData, ordersSpreadsheetId);
+  
     console.log('CS기록 저장 완료');
     
     // 재발송/부분재발송인 경우 임시저장
@@ -1091,7 +1094,7 @@ case 'updateCsRecord':
     // 업데이트할 데이터 준비 (접수번호는 유지)
     const updateData = [[
       data.연번,
-      data.접수번호,  // 기존 접수번호 유지
+      data.접수번호,
       data['마켓명'] || '',
       data.접수일,
       data['해결방법'] || '',
