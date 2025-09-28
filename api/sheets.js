@@ -97,6 +97,19 @@ case 'saveCsRecord':
     
     // CS기록 저장
         // CS기록 저장 (CS구분 추가로 인한 칼럼 순서 변경)
+    // 전화번호 형식 유지 함수
+    const formatPhoneNumber = (phone) => {
+      if (!phone) return '';
+      // 숫자만 추출
+      let phoneStr = String(phone).replace(/[^0-9]/g, '');
+      // 앞에 0이 없으면 추가
+      if (phoneStr && !phoneStr.startsWith('0')) {
+        phoneStr = '0' + phoneStr;
+      }
+      // 작은따옴표를 앞에 붙여 문자열로 저장
+      return phoneStr ? `'${phoneStr}` : '';
+    };
+    
     const csRowData = [[
       newRowNumber,
       receiptNumber,
@@ -111,9 +124,9 @@ case 'saveCsRecord':
       data['결제일'] || '',
       data['주문번호'] || '',
       data['주문자'] || '',
-      data['주문자 전화번호'] || '',
+      formatPhoneNumber(data['주문자 전화번호']),
       data['수령인'] || '',
-      data['수령인 전화번호'] || '',
+      formatPhoneNumber(data['수령인 전화번호']),
       data['주소'] || '',
       data['배송메세지'] || '',
       data['옵션명'] || '',
