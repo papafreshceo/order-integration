@@ -1374,6 +1374,61 @@ case 'getCsRecords':
     }
 
 
+    case 'updatePaymentConfirmation':
+  try {
+    const { userEmail, orderIndex, confirmTime } = req.body;
+    const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
+    
+    // 임시저장 시트의 데이터 가져오기
+    const range = '임시저장!A:S';
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: ordersSpreadsheetId,
+      range: range
+    });
+    
+    const rows = response.data.values || [];
+    if (rows.length === 0) {
+      return res.json({ success: false, error: '데이터 없음' });
+    }
+    
+    // 사용자 이메일로 필터링하고 해당 인덱스 찾기
+    let targetRowIndex = -1;
+    let currentUserOrderIndex = 0;
+    
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][0] === userEmail) {
+        if (currentUserOrderIndex === orderIndex) {
+          targetRowIndex = i;
+          break;
+        }
+        currentUserOrderIndex++;
+      }
+    }
+    
+    if (targetRowIndex === -1) {
+      return res.json({ success: false, error: '주문을 찾을 수 없습니다' });
+    }
+    
+    // 입금확인 칼럼 업데이트 (S열 = 19번째 칼럼)
+    const updateRange = `임시저장!S${targetRowIndex + 1}`;
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: ordersSpreadsheetId,
+      range: updateRange,
+      valueInputOption: 'RAW',
+      resource: {
+        values: [[confirmTime]]
+      }
+    });
+    
+    res.json({ success: true });
+    
+  } catch (error) {
+    console.error('입금확인 업데이트 오류:', error);
+    res.json({ success: false, error: error.message });
+  }
+  break;
+  
+
     case 'appendTempOrder':
     try {
         const { userEmail, orderData } = req.body;

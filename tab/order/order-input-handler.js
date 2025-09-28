@@ -737,7 +737,8 @@ async loadTempOrders() {
                 ...order,
                 사용자이메일: order.사용자이메일 || order.userEmail,
                 저장시간: order.저장시간 || order.timestamp,
-                상품금액: order.상품금액 || order.totalPrice || 0
+                상품금액: order.상품금액 || order.totalPrice || 0,
+                입금확인: order.입금확인 || ''
             }));
             this.updateOrderList();
             console.log(`임시저장된 ${this.manualOrders.length}건의 주문 자동 로드 완료`);
@@ -1233,12 +1234,17 @@ if (saved) {
                             <td style="padding: 6px; text-align: center; font-size: 11px; font-weight: 200;">${order.발송요청일 || ''}</td>
                             <td style="padding: 6px; text-align: right; font-weight: 300;">${(order.상품금액 || 0).toLocaleString()}원</td>
                             <td style="padding: 6px; text-align: center;">
-                                ${order.상품금액 > 0 ? 
-                                    `<button onclick="OrderInputHandler.confirmPayment(${index})" 
-                                        style="padding: 2px 8px; background: #10b981; color: white; border: none; 
-                                               border-radius: 4px; font-size: 11px; cursor: pointer;">
-                                        입금확인
-                                    </button>` : '-'}
+                                ${order.입금확인 ? 
+                                    `<span style="padding: 2px 8px; background: #e0e7ff; color: #4f46e5; 
+                                           border-radius: 4px; font-size: 11px; font-weight: 500;">
+                                        입금확인완료
+                                    </span>` : 
+                                    (order.상품금액 > 0 ? 
+                                        `<button onclick="OrderInputHandler.confirmPayment(${index})" 
+                                            style="padding: 2px 8px; background: #10b981; color: white; border: none; 
+                                                   border-radius: 4px; font-size: 11px; cursor: pointer;">
+                                            입금확인
+                                        </button>` : '-')}
                             </td>
                             <td style="padding: 6px; text-align: center;">
                                 <button onclick="OrderInputHandler.removeOrder(${index})" 
@@ -1255,8 +1261,38 @@ if (saved) {
     `;
 },
 
-confirmPayment(index) {
-    this.showMessage(`${index + 1}번 주문 입금 확인되었습니다.`, 'success');
+async confirmPayment(index) {
+    try {
+        const order = this.manualOrders[index];
+        const userEmail = window.currentUser?.email || localStorage.getItem('userEmail') || 'unknown';
+        const confirmTime = new Date().toLocaleString('ko-KR');
+        
+        // 입금확인 시간 업데이트
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'updatePaymentConfirmation',
+                userEmail: userEmail,
+                orderIndex: index,
+                confirmTime: confirmTime
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // 로컬 데이터 업데이트
+            this.manualOrders[index].입금확인 = confirmTime;
+            this.updateOrderList();
+            this.showMessage(`${index + 1}번 주문 입금 확인되었습니다.`, 'success');
+        } else {
+            throw new Error('입금확인 업데이트 실패');
+        }
+    } catch (error) {
+        console.error('입금확인 처리 오류:', error);
+        this.showMessage('입금확인 처리 중 오류가 발생했습니다.', 'error');
+    }
 },
     
     async removeOrder(index) {  // async 추가
