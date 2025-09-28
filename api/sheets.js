@@ -1584,14 +1584,19 @@ case 'updateTransferFlag':
             if (allData[i][0] === userEmail && orderIds.includes(allData[i][1])) {
               const rowNumber = i + 1; // 시트는 1부터 시작
               
-              // W열과 X열 업데이트
-              await updateSheetData(
-                `임시저장!W${rowNumber}:X${rowNumber}`, 
-                [['Y', transferTime]], 
-                ordersSpreadsheetId
-              );
-              
-              updateCount++;
+              try {
+                // W열과 X열 업데이트 - 작은따옴표로 시트명 감싸기
+                await updateSheetData(
+                  `'임시저장'!W${rowNumber}:X${rowNumber}`, 
+                  [['Y', transferTime]], 
+                  ordersSpreadsheetId
+                );
+                
+                updateCount++;
+              } catch (updateError) {
+                console.log(`행 ${rowNumber} 업데이트 실패:`, updateError.message);
+                // 실패해도 계속 진행
+              }
             }
           }
           
