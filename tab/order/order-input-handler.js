@@ -1717,6 +1717,11 @@ hideTooltip() {
 },
 
 async saveOrders() {
+    console.log('===== saveOrders 시작 =====');
+    console.log('1. manualOrders 개수:', this.manualOrders.length);
+    console.log('2. window.mappingData 존재:', !!window.mappingData);
+    console.log('3. window.mappingData 내용:', window.mappingData);
+    
     if (this.manualOrders.length === 0) {
         this.showMessage('저장할 주문이 없습니다.', 'error');
         return;
