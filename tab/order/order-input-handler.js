@@ -716,7 +716,7 @@ async saveTempOrder(orderData) {
             body: JSON.stringify({
                 action: 'appendToSheet',
                 spreadsheetId: 'orders',
-                sheetName: '임시저장',
+                range: '임시저장!A:Q',  // range 추가
                 values: [tempData]
             })
         });
@@ -725,7 +725,7 @@ async saveTempOrder(orderData) {
         console.log('임시저장 결과:', result);
         return result.success;
 
-        
+
     } catch (error) {
         console.error('임시저장 실패:', error);
         return false;
