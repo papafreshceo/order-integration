@@ -892,7 +892,8 @@ input[type="date"]::-webkit-datetime-edit-day-field {
         </div>
         <div class="cs-form-group" style="margin-bottom: 0; width: 100px;">
             <label class="cs-form-label">추가금액</label>
-            <input type="number" class="cs-input" id="csAdditionalAmount" placeholder="0">
+            <input type="text" class="cs-input amount" id="csAdditionalAmount" placeholder="0" 
+                   oninput="OrderSearchHandler.formatAmountInput(this)">
         </div>
         <div class="cs-form-group" style="margin-bottom: 0; flex: 2;">
             <label class="cs-form-label">특이/요청사항</label>
@@ -1494,6 +1495,21 @@ fixDateInputDisplay() {
             div.remove();
         }, 3000);
     },
+
+
+
+    formatAmountInput(input) {
+    // 숫자만 추출
+    let value = input.value.replace(/[^0-9]/g, '');
+    
+    // 천단위 쉼표 추가
+    if (value) {
+        value = parseInt(value).toLocaleString('ko-KR');
+    }
+    
+    input.value = value;
+},
+
 
 // CS 모달 열기
 async openCsModal() {
