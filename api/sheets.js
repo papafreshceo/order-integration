@@ -1375,27 +1375,15 @@ case 'getCsRecords':
     }
 
 
-    case 'updatePaymentConfirmation':
+ case 'updatePaymentConfirmation':
   try {
     const { userEmail, orderIndex, confirmTime } = req.body;
     const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
     
-    // Google Sheets 클라이언트 초기화
-    const auth = new google.auth.GoogleAuth({
-      credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY),
-      scopes: ['https://www.googleapis.com/auth/spreadsheets']
-    });
-    const sheets = google.sheets({ version: 'v4', auth });
+    // 기존 getSheetData 함수 사용
+    const tempData = await getSheetData('임시저장!A:S', ordersSpreadsheetId);
     
-    // 임시저장 시트의 데이터 가져오기
-    const range = '임시저장!A:S';
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: ordersSpreadsheetId,
-      range: range
-    });
-    
-    const rows = response.data.values || [];
-    if (rows.length === 0) {
+    if (!tempData || tempData.length === 0) {
       return res.json({ success: false, error: '데이터 없음' });
     }
     
@@ -1403,10 +1391,10 @@ case 'getCsRecords':
     let targetRowIndex = -1;
     let currentUserOrderIndex = 0;
     
-    for (let i = 1; i < rows.length; i++) {
-      if (rows[i][0] === userEmail) {
+    for (let i = 1; i < tempData.length; i++) {
+      if (tempData[i][0] === userEmail) {
         if (currentUserOrderIndex === orderIndex) {
-          targetRowIndex = i;
+          targetRowIndex = i + 1; // 시트는 1부터 시작
           break;
         }
         currentUserOrderIndex++;
@@ -1417,16 +1405,9 @@ case 'getCsRecords':
       return res.json({ success: false, error: '주문을 찾을 수 없습니다' });
     }
     
-    // 입금확인 칼럼 업데이트 (S열 = 19번째 칼럼)
-    const updateRange = `임시저장!S${targetRowIndex + 1}`;
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: ordersSpreadsheetId,
-      range: updateRange,
-      valueInputOption: 'RAW',
-      resource: {
-        values: [[confirmTime]]
-      }
-    });
+    // updateSheetData 함수 사용 (S열 = 입금확인)
+    const updateRange = `임시저장!S${targetRowIndex}`;
+    await updateSheetData(updateRange, [[confirmTime]], ordersSpreadsheetId);
     
     res.json({ success: true });
     
