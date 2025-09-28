@@ -1213,8 +1213,9 @@ if (saved) {
                             onmouseover="this.style.background='#b7f7bd'; OrderInputHandler.showTooltip(event, ${index})" 
                             onmouseout="this.style.background=''; OrderInputHandler.hideTooltip()"
                             data-order='${JSON.stringify(order).replace(/'/g, "&apos;")}'>
-                            <td style="padding: 6px; text-align: center; font-weight: 200;">${index + 1}</td>
-                            <td style="padding: 6px; text-align: center;">
+                           <td style="padding: 8px 6px; text-align: center; font-weight: 200; height: 40px;">${index + 1}</td>
+                            <td style="padding: 8px 6px; text-align: center; height: 40px;">
+
                                 <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
                                      color: white; border-radius: 4px; font-size: 11px; font-weight: 600;">
                                     ${order.마켓명 || ''}
