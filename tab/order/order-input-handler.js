@@ -1058,7 +1058,7 @@ if (saved) {
         <div style="overflow-x: auto; max-height: 350px; overflow-y: auto;">
             <table class="order-table" style="width: 1800px; border-collapse: collapse; font-size: 12px;">
                 <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
-                    <tr style="border-bottom: 2px solid #dee2e6;">
+                    <tr style="border-bottom: 2px solid #dee2e6; text-align: center;">
                         <th style="padding: 8px; text-align: center; width: 40px; min-width: 40px;">번호</th>
                         <th style="padding: 8px; text-align: center; width: 80px; min-width: 80px;">마켓명</th>
                         <th style="padding: 8px; text-align: left; width: 150px; min-width: 150px;">접수자</th>
@@ -1088,9 +1088,9 @@ if (saved) {
                                             order.마켓명.charAt(0);
                         const marketNumber = String(index + 1).padStart(3, '0');
                         
-                        return `
-                        <tr style="border-bottom: 1px solid #f1f3f5;">
-                            <td style="padding: 6px; text-align: center;">${index + 1}</td>
+                       return `
+                        <tr style="border-bottom: 1px solid #f1f3f5; font-weight: 200;">
+                            <td style="padding: 6px; text-align: center; font-weight: 200;">${index + 1}</td>
                             <td style="padding: 6px; text-align: center;">
                                 <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
                                      color: white; border-radius: 4px; font-size: 11px; font-weight: 600;">
@@ -1109,10 +1109,10 @@ if (saved) {
                             <td style="padding: 6px; font-size: 11px;">${order.배송메세지 || ''}</td>
                             <td style="padding: 6px; font-size: 11px;">${order.옵션명}</td>
                             <td style="padding: 6px; text-align: center;">${order.수량}</td>
-                            <td style="padding: 6px; text-align: center; font-weight: 600;">${marketInitial}${marketNumber}</td>
+                            <td style="padding: 6px; text-align: center; font-weight: 400;">${marketInitial}${marketNumber}</td>
                             <td style="padding: 6px; font-size: 11px;">${order['특이/요청사항'] || ''}</td>
                             <td style="padding: 6px; text-align: center; font-size: 11px;">${order.발송요청일 || ''}</td>
-                            <td style="padding: 6px; text-align: right; font-weight: 500;">${order.상품금액.toLocaleString()}원</td>
+                            <td style="padding: 6px; text-align: right; font-weight: 300;">${order.상품금액.toLocaleString()}원</td>
                             <td style="padding: 6px; text-align: center;">
                                 ${order.상품금액 > 0 ? 
                                     `<button onclick="OrderInputHandler.confirmPayment(${index})" 
