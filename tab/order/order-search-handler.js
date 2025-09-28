@@ -526,6 +526,10 @@ window.OrderSearchHandler = {
     font-weight: 300;
 }
 
+.cs-input.amount {
+    text-align: right;
+}
+
 /* date input 스타일 수정 - 날짜가 항상 보이도록 */
 .filter-input.date-input {
     color: #212529 !important;
