@@ -1984,6 +1984,7 @@ async submitCs() {
         // CS 수정 처리
         this.showLoading();
         try {
+            const userEmail = localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail') || 'CS';
             const csData = {
             userEmail: userEmail,
             마켓명: this.currentCsOrder['마켓명'] || '',
@@ -2073,6 +2074,7 @@ async submitCs() {
         const csData = {
             userEmail: userEmail,
             마켓명: this.currentCsOrder['마켓명'] || '',
+            'CS구분': csCategory,
             해결방법: this.getSolutionText(solution),
             'CS 내용': customerRequest,
             결제일: this.currentCsOrder['결제일'] || '',
