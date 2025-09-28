@@ -7,7 +7,7 @@ window.OrderInputHandler = {
         this.render();
         await this.loadProductData();
         this.setupEventListeners();
-        await this.loadTempOrders(); // 임시저장 자동 불러오기
+        await this.loadTempOrders(); // 주문접수 자동 불러오기
         console.log('OrderInputHandler 초기화 완료');
     },
     
@@ -734,7 +734,7 @@ async loadTempOrders() {
         // 로딩 표시
         const list = document.getElementById('inputOrderList');
         if (list) {
-            list.innerHTML = '<div class="loading-message">임시저장 주문 불러오는 중...</div>';
+            list.innerHTML = '<div class="loading-message">주문접수 주문 불러오는 중...</div>';
         }
         
         const response = await fetch('/api/sheets', {
@@ -749,7 +749,7 @@ async loadTempOrders() {
         console.log('응답 상태:', response.status);
         
         if (!response.ok) {
-            console.error('임시저장 로드 실패: HTTP', response.status);
+            console.error('주문접수 로드 실패: HTTP', response.status);
             this.updateOrderList();
             return;
         }
@@ -763,7 +763,7 @@ async loadTempOrders() {
         if (result.success && result.orders && result.orders.length > 0) {
             // 필드 매핑 추가 및 삭제된 항목 필터링
             // 디버깅: 첫 번째 주문의 접수번호 확인
-            console.log('임시저장 첫 번째 주문:', {
+            console.log('주문접수 첫 번째 주문:', {
                 접수번호: result.orders[0].접수번호,
                 주문번호: result.orders[0].주문번호,
                 전체: result.orders[0]
@@ -793,7 +793,7 @@ async loadTempOrders() {
             console.log('접수된 주문 없음 - result:', result);
         }
     } catch (error) {
-        console.error('임시저장 로드 오류:', error);
+        console.error('주문접수 로드 오류:', error);
         this.manualOrders = [];
         this.updateOrderList();
     }
@@ -857,17 +857,17 @@ async saveTempOrder(orderData, isUnshipped = false) {
             body: JSON.stringify({
                 action: 'appendToSheet',
                 spreadsheetId: 'orders',
-                range: '임시저장!A:X',  // X열까지 확장
+                range: '주문접수!A:X',  // X열까지 확장
                 values: [tempData]
             })
         });
         
         const result = await response.json();
-        console.log('임시저장 결과:', result);
+        console.log('주문접수 결과:', result);
         return result.success;
 
     } catch (error) {
-        console.error('임시저장 실패:', error);
+        console.error('주문접수 실패:', error);
         return false;
     }
 },
@@ -886,7 +886,7 @@ async deleteTempOrders() {
         const result = await response.json();
         return result.success;
     } catch (error) {
-        console.error('임시저장 삭제 실패:', error);
+        console.error('주문접수 삭제 실패:', error);
         return false;
     }
 },
@@ -1211,7 +1211,7 @@ async addOrder() {
         
         orderData['상품금액'] = (orderData.단가 * orderData.수량) + orderData.택배비;
         
-        // 임시저장에 추가
+        // 주문접수에 추가
 const saved = await this.saveTempOrder(orderData);
 
 if (saved) {
@@ -1449,7 +1449,7 @@ async confirmPayment(index) {
 },
     
     removeOrder(index) {  // async 제거
-        // 테이블에서만 제외 (임시저장은 유지)
+        // 테이블에서만 제외 (주문접수은 유지)
         const removedOrder = this.manualOrders[index];
         this.manualOrders.splice(index, 1);
         this.updateOrderList();
@@ -1605,7 +1605,7 @@ async confirmDelete(index) {
             body: JSON.stringify({
                 action: 'markAsDeleted',
                 spreadsheetId: 'orders',
-                sheetName: '임시저장',
+                sheetName: '주문접수',
                 userEmail: userEmail,
                 orderIndex: index,
                 orderId: order.주문번호,
@@ -1922,10 +1922,10 @@ async saveOrders() {
         if (result.success) {
             console.log('1차 확인: 저장 API 성공');
             
-            // 임시저장에 이관 플래그 업데이트
+            // 주문접수에 이관 플래그 업데이트
             try {
                 const userEmail = window.currentUser?.email || localStorage.getItem('userEmail') || 'unknown';
-                // 실제 임시저장에 있는 접수번호 사용
+                // 실제 주문접수에 있는 접수번호 사용
                 const orderNumbers = ordersToSave.map(order => order.접수번호 || order.주문번호);
                 const transferTime = new Date().toLocaleString('ko-KR', {
                     timeZone: 'Asia/Seoul',
@@ -1944,7 +1944,7 @@ async saveOrders() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         action: 'updateTransferFlag',
-                        sheetName: '임시저장',
+                        sheetName: '주문접수',
                         userEmail: userEmail,
                         orderIds: orderNumbers,
                         transferFlag: 'Y',
@@ -2408,7 +2408,7 @@ async addSelectedOrders(orders) {
         return;
     }
     
-    // 선택한 주문들을 임시저장 및 로컬 배열에 추가
+    // 선택한 주문들을 주문접수 및 로컬 배열에 추가
     for (const index of selectedIndices) {
         const order = orders[index];
         const orderData = {
@@ -2431,7 +2431,7 @@ async addSelectedOrders(orders) {
             _원본주문번호: order['주문번호']
         };
         
-        // 임시저장 시트에 저장
+        // 주문접수 시트에 저장
         await this.saveTempOrder(orderData, true);  // isUnshipped = true
         
         // 로컬 배열에 추가
