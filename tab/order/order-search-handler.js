@@ -1065,6 +1065,12 @@ fixDateInputDisplay() {
                     useMainSpreadsheet: false
                 })
             });
+            
+            if (!response.ok) {
+                console.error('마켓 목록 로드 실패: HTTP', response.status);
+                return;
+            }
+            
             const data = await response.json();
             
             if (data.success) {

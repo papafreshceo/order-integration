@@ -1392,8 +1392,9 @@ case 'deleteTempOrders':
     }
   } catch (error) {
     console.error('Sheets API 오류:', error);
-    res.status(500).json({ 
-      error: error.message || '서버 오류가 발생했습니다.' 
+    return res.status(500).json({ 
+      success: false,
+      error: error.message || '서버 오류가 발생했습니다.'
     });
   }
 }
