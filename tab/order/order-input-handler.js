@@ -1722,7 +1722,33 @@ async saveOrders() {
         return;
     }
     
-    const saveButton = document.querySelector('.btn-save');
+    // 오늘 날짜 (YYYY-MM-DD 형식)
+    const today = new Date().toISOString().split('T')[0];
+    
+    // 발송요청일별 주문 분류
+    const todayOrders = [];
+    const futureOrders = [];
+    const noDateOrders = [];
+    
+    this.manualOrders.forEach(order => {
+        if (!order.발송요청일) {
+            noDateOrders.push(order);
+        } else if (order.발송요청일 === today) {
+            todayOrders.push(order);
+        } else {
+            futureOrders.push(order);
+        }
+    });
+    
+    // 확인 모달 표시
+    const ordersToSave = await this.showSaveConfirmModal(todayOrders, futureOrders, noDateOrders);
+    
+    if (!ordersToSave || ordersToSave.length === 0) {
+        return; // 취소됨
+    }
+    
+    // 저장 진행
+    const saveButton = document.querySelector('.btn-action[onclick*="saveOrders"]');
     if (saveButton) {
         saveButton.textContent = '저장 중...';
         saveButton.disabled = true;
@@ -1740,8 +1766,8 @@ async saveOrders() {
             return;
         }
         
-        // 제품 정보로 주문 데이터 보강
-        const enrichedOrders = this.manualOrders.map(order => {
+        // 제품 정보로 주문 데이터 보강 (선택된 주문만)
+        const enrichedOrders = ordersToSave.map(order => {
             const productInfo = this.productData[order.옵션명];
             if (productInfo) {
                 return {
@@ -1773,7 +1799,6 @@ async saveOrders() {
                 if (header === '연번') return index + 1;
                 
                 if (header === '마켓') {
-                    // 매핑 데이터에서 이니셜 가져오기
                     let initial = window.mappingData?.markets?.[marketName]?.initial || marketName.charAt(0);
                     return initial + String(marketCounters[marketName]).padStart(3, '0');
                 }
@@ -1817,10 +1842,8 @@ async saveOrders() {
         const result = await response.json();
         
         if (result.success) {
-            // 1차 확인: 저장 성공 응답
             console.log('1차 확인: 저장 API 성공');
             
-            // 2차 확인: 실제 저장 검증
             const verifyResponse = await fetch('/api/sheets', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1828,8 +1851,8 @@ async saveOrders() {
                     action: 'verifyOrdersSaved',
                     sheetName: sheetName,
                     spreadsheetId: 'orders',
-                    orderCount: this.manualOrders.length,
-                    firstOrderId: this.manualOrders[0]?.주문번호
+                    orderCount: ordersToSave.length,
+                    firstOrderId: ordersToSave[0]?.주문번호
                 })
             });
             
@@ -1838,7 +1861,6 @@ async saveOrders() {
             if (verifyResult.success && verifyResult.verified) {
                 console.log('2차 확인: 실제 저장 확인됨');
                 
-                // 3차: 임시저장 시트에 이관플래그 업데이트
                 const userEmail = window.currentUser?.email || localStorage.getItem('userEmail') || 'unknown';
                 const transferTime = new Date().toLocaleString('ko-KR', {
                     timeZone: 'Asia/Seoul',
@@ -1858,10 +1880,10 @@ async saveOrders() {
                         spreadsheetId: 'orders',
                         sheetName: '임시저장',
                         userEmail: userEmail,
-                        orderIds: this.manualOrders.map(o => o.주문번호),
+                        orderIds: ordersToSave.map(o => o.주문번호),
                         transferFlag: 'Y',
                         transferTime: transferTime,
-                        targetSheet: sheetName,  // 어느 시트로 이관했는지 기록
+                        targetSheet: sheetName,
                         flagColumns: {
                             이관: 'W',
                             이관일시: 'X'
@@ -1873,16 +1895,19 @@ async saveOrders() {
                 
                 if (flagResponse.success) {
                     console.log('3차 확인: 이관플래그 업데이트 완료');
-                    this.showMessage(`${this.manualOrders.length}건의 주문이 확정 등록되었습니다.`, 'success');
-                    this.manualOrders = [];
+                    
+                    // 저장된 주문만 테이블에서 제거
+                    this.manualOrders = this.manualOrders.filter(order => 
+                        !ordersToSave.find(saved => saved.주문번호 === order.주문번호)
+                    );
+                    
                     this.updateOrderList();
                     this.resetForm();
+                    this.showMessage(`${ordersToSave.length}건의 주문이 확정 등록되었습니다.`, 'success');
                 } else {
-                    // 이관플래그 업데이트 실패 시 경고
                     this.showMessage(`주문은 저장되었지만 이관플래그 업데이트 실패. 수동으로 확인 필요.`, 'warning');
                 }
             } else {
-                // 저장 검증 실패
                 throw new Error('주문 저장을 확인할 수 없습니다. 다시 시도해주세요.');
             }
         } else {
@@ -1893,13 +1918,239 @@ async saveOrders() {
         console.error('저장 오류:', error);
         this.showMessage('저장 중 오류가 발생했습니다: ' + error.message, 'error');
     } finally {
-        const saveButton = document.querySelector('.btn-save');
+        const saveButton = document.querySelector('.btn-action[onclick*="saveOrders"]');
         if (saveButton) {
-            saveButton.textContent = '저장';
+            saveButton.textContent = '주문확정등록';
             saveButton.disabled = false;
         }
     }
-}, // 콤마 유지
+},
+
+async showSaveConfirmModal(todayOrders, futureOrders, noDateOrders) {
+    return new Promise((resolve) => {
+        // 기존 모달 제거
+        const existingModal = document.getElementById('saveConfirmModal');
+        if (existingModal) existingModal.remove();
+        
+        // 마켓별 통계 계산
+        const getMarketStats = (orders) => {
+            const stats = {};
+            orders.forEach(order => {
+                const market = order.마켓명 || '기타';
+                stats[market] = (stats[market] || 0) + 1;
+            });
+            return stats;
+        };
+        
+        const allOrders = [...todayOrders, ...futureOrders, ...noDateOrders];
+        const marketStats = getMarketStats(allOrders);
+        
+        const modal = document.createElement('div');
+        modal.id = 'saveConfirmModal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: fadeIn 0.2s ease;
+        `;
+        
+        modal.innerHTML = `
+            <style>
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+                .order-group { margin-bottom: 16px; }
+                .group-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; }
+                .group-header input[type="checkbox"] { width: 18px; height: 18px; }
+                .group-title { font-size: 14px; font-weight: 600; flex: 1; }
+                .group-count { font-size: 13px; color: #6b7280; }
+                .order-list { margin-left: 26px; font-size: 12px; color: #6b7280; }
+            </style>
+            
+            <div style="background: white; border-radius: 16px; width: 90%; max-width: 600px; 
+                        max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); 
+                        animation: slideUp 0.3s ease;">
+                <div style="padding: 24px; border-bottom: 1px solid #e5e7eb;">
+                    <h3 style="margin: 0; font-size: 20px; font-weight: 600; color: #111827;">
+                        주문확정등록 확인
+                    </h3>
+                </div>
+                
+                <div style="padding: 24px;">
+                    <!-- 마켓별 통계 -->
+                    <div style="background: #f9fafb; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #374151;">
+                            마켓별 주문 통계
+                        </h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px;">
+                            ${Object.entries(marketStats).map(([market, count]) => `
+                                <div style="display: flex; justify-content: space-between; padding: 8px 12px; 
+                                            background: white; border-radius: 8px; border: 1px solid #e5e7eb;">
+                                    <span style="font-weight: 500; color: #111827;">${market}</span>
+                                    <span style="color: #2563eb; font-weight: 600;">${count}건</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb; text-align: right;">
+                            <span style="font-size: 14px; color: #6b7280;">총 주문: </span>
+                            <span style="font-size: 16px; color: #111827; font-weight: 600;">
+                                ${allOrders.length}건
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- 발송요청일별 주문 그룹 -->
+                    <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px;">
+                        <h4 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 600; color: #374151;">
+                            발송요청일별 주문 선택
+                        </h4>
+                        
+                        <!-- 오늘 발송 -->
+                        ${todayOrders.length > 0 ? `
+                        <div class="order-group">
+                            <div class="group-header">
+                                <input type="checkbox" id="todayCheck" checked onchange="OrderInputHandler.toggleOrderGroup('today', this.checked)">
+                                <label for="todayCheck" class="group-title" style="color: #10b981;">
+                                    오늘 발송 (${new Date().toLocaleDateString('ko-KR')})
+                                </label>
+                                <span class="group-count">${todayOrders.length}건</span>
+                            </div>
+                            <div class="order-list" id="todayList" style="display: block;">
+                                ${todayOrders.slice(0, 3).map(o => `• ${o.수령인} - ${o.옵션명}`).join('<br>')}
+                                ${todayOrders.length > 3 ? `<br>• 외 ${todayOrders.length - 3}건` : ''}
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        <!-- 날짜 미지정 -->
+                        ${noDateOrders.length > 0 ? `
+                        <div class="order-group">
+                            <div class="group-header">
+                                <input type="checkbox" id="noDateCheck" checked onchange="OrderInputHandler.toggleOrderGroup('noDate', this.checked)">
+                                <label for="noDateCheck" class="group-title" style="color: #6b7280;">
+                                    발송요청일 미지정
+                                </label>
+                                <span class="group-count">${noDateOrders.length}건</span>
+                            </div>
+                            <div class="order-list" id="noDateList" style="display: block;">
+                                ${noDateOrders.slice(0, 3).map(o => `• ${o.수령인} - ${o.옵션명}`).join('<br>')}
+                                ${noDateOrders.length > 3 ? `<br>• 외 ${noDateOrders.length - 3}건` : ''}
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        <!-- 미래 발송 -->
+                        ${futureOrders.length > 0 ? `
+                        <div class="order-group" style="background: #fef3c7; padding: 12px; border-radius: 8px;">
+                            <div class="group-header">
+                                <input type="checkbox" id="futureCheck" onchange="OrderInputHandler.toggleOrderGroup('future', this.checked)">
+                                <label for="futureCheck" class="group-title" style="color: #f59e0b;">
+                                    미래 발송예정
+                                </label>
+                                <span class="group-count">${futureOrders.length}건</span>
+                            </div>
+                            <div class="order-list" id="futureList" style="display: none;">
+                                ${futureOrders.slice(0, 5).map(o => 
+                                    `• ${o.발송요청일} - ${o.수령인} - ${o.옵션명}`
+                                ).join('<br>')}
+                                ${futureOrders.length > 5 ? `<br>• 외 ${futureOrders.length - 5}건` : ''}
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div style="margin-top: 16px; padding: 12px; background: #e7f3ff; border-radius: 8px;">
+                        <p style="margin: 0; font-size: 13px; color: #2563eb; line-height: 1.6;">
+                            • 기본적으로 오늘 발송 주문만 등록됩니다<br>
+                            • 미래 발송예정 주문도 포함하려면 체크하세요
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="padding: 16px 24px; background: #f9fafb; border-top: 1px solid #e5e7eb; 
+                            display: flex; justify-content: space-between; align-items: center;">
+                    <div id="selectedCount" style="font-size: 14px; color: #6b7280;">
+                        선택된 주문: <span style="color: #111827; font-weight: 600;">
+                            ${todayOrders.length + noDateOrders.length}건
+                        </span>
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <button onclick="document.getElementById('saveConfirmModal').remove(); OrderInputHandler.saveResolve(null);"
+                                style="padding: 10px 24px; background: white; color: #374151; border: 1px solid #d1d5db; 
+                                       border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer;">
+                            취소
+                        </button>
+                        <button onclick="OrderInputHandler.confirmSaveOrders();"
+                                style="padding: 10px 24px; background: #10b981; color: white; border: none; 
+                                       border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer;">
+                            주문확정등록
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // 저장할 데이터 임시 저장
+        this.tempSaveData = { todayOrders, futureOrders, noDateOrders };
+        this.saveResolve = resolve;
+    });
+},
+
+toggleOrderGroup(group, checked) {
+    const listElement = document.getElementById(group + 'List');
+    if (listElement) {
+        listElement.style.display = checked ? 'block' : 'none';
+    }
+    
+    // 선택 건수 업데이트
+    this.updateSelectedCount();
+},
+
+updateSelectedCount() {
+    let count = 0;
+    
+    if (document.getElementById('todayCheck')?.checked) {
+        count += this.tempSaveData.todayOrders.length;
+    }
+    if (document.getElementById('noDateCheck')?.checked) {
+        count += this.tempSaveData.noDateOrders.length;
+    }
+    if (document.getElementById('futureCheck')?.checked) {
+        count += this.tempSaveData.futureOrders.length;
+    }
+    
+    const countElement = document.getElementById('selectedCount');
+    if (countElement) {
+        countElement.innerHTML = `
+            선택된 주문: <span style="color: #111827; font-weight: 600;">${count}건</span>
+        `;
+    }
+},
+
+confirmSaveOrders() {
+    const ordersToSave = [];
+    
+    if (document.getElementById('todayCheck')?.checked) {
+        ordersToSave.push(...this.tempSaveData.todayOrders);
+    }
+    if (document.getElementById('noDateCheck')?.checked) {
+        ordersToSave.push(...this.tempSaveData.noDateOrders);
+    }
+    if (document.getElementById('futureCheck')?.checked) {
+        ordersToSave.push(...this.tempSaveData.futureOrders);
+    }
+    
+    document.getElementById('saveConfirmModal').remove();
+    this.saveResolve(ordersToSave);
+},
 
 
 
