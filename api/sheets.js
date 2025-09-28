@@ -1567,8 +1567,8 @@ case 'deleteTempOrders':
           const { userEmail, orderIds, transferFlag, transferTime } = req.body;
           const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
           
-          // 전체 데이터 가져오기
-          const allData = await getSheetData('임시저장', ordersSpreadsheetId);
+          // 전체 데이터 가져오기 - range를 명시적으로 지정
+          const allData = await getSheetData('임시저장!A:X', ordersSpreadsheetId);
           
           if (!allData || allData.length < 2) {
             throw new Error('임시저장 데이터가 없습니다');
@@ -1591,8 +1591,8 @@ case 'deleteTempOrders':
           
           if (updated) {
             // 전체 시트 다시 쓰기
-            await clearSheet('임시저장', ordersSpreadsheetId);
-            await updateSheetData('임시저장', allData, ordersSpreadsheetId);
+            await clearSheet('임시저장!A:X', ordersSpreadsheetId);
+            await updateSheetData('임시저장!A:X', allData, ordersSpreadsheetId);
           }
           
           return res.status(200).json({ 
