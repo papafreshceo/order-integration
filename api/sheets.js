@@ -15,7 +15,7 @@ const {
   getProductSheetData
 } = require('../lib/google-sheets');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // CORS 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -1562,6 +1562,48 @@ case 'deleteTempOrders':
           result: appendResult 
         });
 
+case 'updateTransferFlag':
+        try {
+          const { sheetName, userEmail, orderIds, transferFlag, transferTime } = req.body;
+          const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
+          
+          // 임시저장 시트의 모든 데이터 가져오기
+          const tempData = await getOrderData(`${sheetName}!A:X`, ordersSpreadsheetId);
+          
+          if (!tempData || tempData.length < 2) {
+            return res.status(200).json({ 
+              success: true, 
+              updatedCount: 0 
+            });
+          }
+          
+          let updateCount = 0;
+          
+          // 해당 사용자의 주문들 찾아서 업데이트
+          for (let i = 1; i < tempData.length; i++) {
+            if (tempData[i][0] === userEmail && orderIds.includes(tempData[i][1])) {
+              // W열(22): 이관 플래그, X열(23): 이관일시
+              await updateSheetData(
+                `${sheetName}!W${i + 1}:X${i + 1}`, 
+                [[transferFlag, transferTime]], 
+                ordersSpreadsheetId
+              );
+              updateCount++;
+            }
+          }
+          
+          return res.status(200).json({ 
+            success: true, 
+            updatedCount: updateCount 
+          });
+        } catch (error) {
+          console.error('updateTransferFlag 에러:', error);
+          return res.status(500).json({ 
+            error: 'Failed to update transfer flag', 
+            details: error.message 
+          });
+        }
+
       default:
         return res.status(400).json({ 
           error: '알 수 없는 액션입니다.' 
@@ -1602,55 +1644,3 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
-
-
-
-case 'updateTransferFlag':
-  try {
-    const { sheetName, userEmail, orderIds, transferFlag, transferTime } = body;
-    
-    // 임시저장 시트의 모든 데이터 가져오기
-    const range = `${sheetName}!A:X`;
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_IDS.orders,
-      range: range
-    });
-    
-    const rows = response.data.values || [];
-    const updates = [];
-    
-    // 해당 사용자의 주문들 찾아서 업데이트
-    rows.forEach((row, index) => {
-      if (index === 0) return; // 헤더 스킵
-      
-      if (row[0] === userEmail && orderIds.includes(row[1])) {
-        // W열(22): 이관 플래그, X열(23): 이관일시
-        updates.push({
-          range: `${sheetName}!W${index + 1}:X${index + 1}`,
-          values: [[transferFlag, transferTime]]
-        });
-      }
-    });
-    
-    // 배치 업데이트
-    if (updates.length > 0) {
-      await sheets.spreadsheets.values.batchUpdate({
-        spreadsheetId: SPREADSHEET_IDS.orders,
-        resource: {
-          data: updates,
-          valueInputOption: 'USER_ENTERED'
-        }
-      });
-    }
-    
-    return NextResponse.json({ 
-      success: true, 
-      updatedCount: updates.length 
-    });
-  } catch (error) {
-    console.error('updateTransferFlag 에러:', error);
-    return NextResponse.json({ 
-      error: 'Failed to update transfer flag', 
-      details: error.message 
-    }, { status: 500 });
-  }
