@@ -139,12 +139,24 @@ case 'saveCsRecord':
         second: '2-digit'
       });
       
+      // 임시저장 헤더 확인 (CS구분 칼럼 추가)
+      try {
+        const tempHeaders = await getOrderData('임시저장!1:1', ordersSpreadsheetId);
+        if (!tempHeaders || tempHeaders.length === 0) {
+          // 헤더가 없으면 생성
+          const newHeaders = [['사용자이메일', '접수번호', '저장시간', '마켓명', 'CS구분', '옵션명', '수량', '단가', '택배비', '상품금액', '주문자', '주문자 전화번호', '수령인', '수령인 전화번호', '주소', '배송메세지', '특이/요청사항', '발송요청일']];
+          await saveOrderData('임시저장!A1', newHeaders, ordersSpreadsheetId);
+        }
+      } catch (err) {
+        console.log('임시저장 헤더 확인 실패:', err);
+      }
+      
       const tempRowData = [[
         data['userEmail'] || 'CS',
         receiptNumber,
         koreaTime,
         'CS발송',
-        data['CS구분'] || '',  // CS구분 추가
+        data['CS구분'] || '',  // CS구분 추가 (5번째 칼럼)
         data['재발송상품'] || data['옵션명'] || '',
         data['재발송수량'] || data['수량'] || '1',
         '', '', '',
@@ -1031,7 +1043,7 @@ case 'checkCsDuplicate':
     const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
     
     const { getOrderData } = require('../lib/google-sheets');
-    const csData = await getOrderData('CS기록!A:V', ordersSpreadsheetId);
+    const csData = await getOrderData('CS기록!A:W', ordersSpreadsheetId);
     
     if (csData && csData.length > 1) {
       // 주문번호로 찾기 (K열 = 10번 인덱스)
@@ -1144,7 +1156,7 @@ case 'getCsRecords':
     // CS기록 시트의 모든 데이터 가져오기
     let csData;
     try {
-      csData = await getSheetData('CS기록!A:V', ordersSpreadsheetId);
+      csData = await getSheetData('CS기록!A:W', ordersSpreadsheetId);  // V를 W로 변경 (CS구분 칼럼 추가로 인해)
       console.log('CS기록 원본 데이터 길이:', csData?.length);
       console.log('첫 3행 데이터:', csData?.slice(0, 3));
     } catch (error) {
