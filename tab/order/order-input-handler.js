@@ -1176,19 +1176,7 @@ async addOrder() {
         비고: ''  // 건별입력은 비고 없음
     };
     
-    orderData['상품금액'] = (orderData.단가 * orderData.수량) + orderData.택배비;
-    
-    // 임시저장에 추가
-    const saved = await this.saveTempOrder(orderData, false);  // isUnshipped = false
-    
-    if (saved) {
-        this.manualOrders.push(orderData);
-        this.updateOrderList();
-        this.resetForm();
-        this.showMessage(`주문이 추가되었습니다. (총 ${this.manualOrders.length}건)`, 'success');
-    } else {
-        this.showMessage('주문 추가 중 오류가 발생했습니다.', 'error');
-    }
+   
 },
         
         orderData['상품금액'] = (orderData.단가 * orderData.수량) + orderData.택배비;
@@ -1230,99 +1218,99 @@ if (saved) {
     
   
     // 테이블 HTML 생성 (주문조회 스타일)
-    list.innerHTML = `
-        <table class="search-table" style="width: 100%; border-collapse: collapse; min-width: 1400px; table-layout: fixed;">
-                <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
-                    <tr>
-                        <th style="padding: 12px 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; white-space: nowrap; width: 30px;">번호</th>
-                        <th style="padding: 8px; text-align: center; width: 60px;">마켓명</th>
-                        <th style="padding: 8px; text-align: center; width: 150px;">접수자</th>
-                        <th style="padding: 8px; text-align: center; width: 140px;">접수일시</th>
-                        <th style="padding: 8px; text-align: center; width: 100px;">접수번호</th>
-                        <th style="padding: 8px; text-align: center; width: 60px;">주문자</th>
-                        <th style="padding: 8px; text-align: center; width: 100px;">주문자전화</th>
-                        <th style="padding: 8px; text-align: center; width: 60px;">수령인</th>
-                        <th style="padding: 8px; text-align: center; width: 100px;">수령인전화</th>
-                        <th style="padding: 8px; text-align: center; width: 200px;">주소</th>
-                        <th style="padding: 8px; text-align: center; width: 100px;">배송메세지</th>
-                        <th style="padding: 8px; text-align: center; width: 140px;">옵션명</th>
-                        <th style="padding: 8px; text-align: center; width: 50px;">수량</th>
-                        <th style="padding: 8px; text-align: center; width: 70px;">마켓</th>
-                        <th style="padding: 8px; text-align: center; width: 120px;">특이/요청</th>
-                        <th style="padding: 8px; text-align: center; width: 80px;">발송요청일</th>
-                        <th style="padding: 8px; text-align: center; width: 70px;">금액</th>
-                        <th style="padding: 8px; text-align: center; width: 100px;">확인</th>
-                        <th style="padding: 8px; text-align: center; width: 60px;">삭제</th>
-                        <th style="padding: 8px; text-align: center; width: 100px;">비고</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${this.manualOrders.map((order, index) => {
-                        const marketColor = getMarketColor(order.마켓명);
-                        const marketInitial = order.마켓명 === 'CS발송' ? 'C' : 
-                                            order.마켓명 === '전화주문' ? '전' : 
-                                            order.마켓명.charAt(0);
-                        const marketNumber = String(index + 1).padStart(3, '0');
-                        
-                       return `
-                        <tr style="border-bottom: 1px solid #f1f3f5; position: relative;" 
-                            onmouseover="this.style.background='#b7f7bd'; OrderInputHandler.showTooltip(event, ${index})" 
-                            onmouseout="this.style.background=''; OrderInputHandler.hideTooltip()"
-                            data-order='${JSON.stringify(order).replace(/'/g, "&apos;")}'>
-                           <td style="padding: 8px 6px; text-align: center; font-weight: 200; height: 44px;">${index + 1}</td>
-                            <td style="padding: 8px 6px; text-align: center; height: 44px;">
+list.innerHTML = `
+    <table class="search-table" style="width: 100%; border-collapse: collapse; min-width: 1500px; table-layout: fixed;">
+        <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
+            <tr>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 40px;">번호</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 80px;">마켓명</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 120px;">주문번호</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 140px;">주문일시</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 80px;">주문자</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 100px;">주문자전화</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 80px;">수령인</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 100px;">수령인전화</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 200px;">주소</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 120px;">배송메세지</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 180px;">옵션명</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 50px;">수량</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 90px;">발송요청일</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 80px;">금액</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 80px;">확인</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 60px;">삭제</th>
+                <th style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; width: 100px;">비고</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${this.manualOrders.map((order, index) => {
+                const marketColor = order.마켓명 === 'CS발송' ? 'rgb(255, 0, 0)' : 
+                                  order.마켓명 === '전화주문' ? 'rgb(0, 0, 255)' :
+                                  order.마켓명 === '기타' ? 'rgb(128, 128, 128)' :
+                                  'rgb(128, 128, 128)';
+                
+                return `
+                <tr style="border-bottom: 1px solid #f1f3f5; hover:background:#f0f8ff;">
+                    <td style="padding: 8px; text-align: center; font-size: 12px; font-weight: 300;">${index + 1}</td>
+                    <td style="padding: 8px; text-align: center;">
+                        <span style="display: inline-block; padding: 3px 8px; background: ${marketColor}; color: white; border-radius: 4px; font-size: 11px; font-weight: 500;">
+                            ${order.마켓명 || '-'}
+                        </span>
+                    </td>
+                    <td style="padding: 8px; text-align: center; font-size: 11px; font-weight: 300; font-family: monospace;">
+                        ${order.주문번호 || '-'}
+                    </td>
+                    <td style="padding: 8px; text-align: center; font-size: 11px; font-weight: 300;">
+                        ${order.저장시간 || order.주문일시 || '-'}
+                    </td>
+                    <td style="padding: 8px; font-size: 12px; font-weight: 300;">${order.주문자 || '-'}</td>
+                    <td style="padding: 8px; font-size: 11px; font-weight: 300;">${order['주문자 전화번호'] || '-'}</td>
+                    <td style="padding: 8px; font-size: 12px; font-weight: 300;">${order.수령인 || '-'}</td>
+                    <td style="padding: 8px; font-size: 11px; font-weight: 300;">${order['수령인 전화번호'] || '-'}</td>
+                    <td style="padding: 8px; font-size: 11px; font-weight: 300; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${order.주소 || ''}">
+                        ${order.주소 || '-'}
+                    </td>
+                    <td style="padding: 8px; font-size: 11px; font-weight: 300;">${order.배송메세지 || '-'}</td>
+                    <td style="padding: 8px; font-size: 11px; font-weight: 300;">${order.옵션명 || '-'}</td>
+                    <td style="padding: 8px; text-align: center; font-size: 12px; font-weight: 400;">
+                        ${order.수량 || 1}
+                    </td>
+                    <td style="padding: 8px; text-align: center; font-size: 11px;">
+                        ${order.발송요청일 ? 
+                            `<span style="background: #e9d5ff; padding: 3px 8px; border-radius: 4px; display: inline-block; font-weight: 400;">
+                                ${order.발송요청일}
+                            </span>` : '-'}
+                    </td>
+                    <td style="padding: 8px; text-align: right; font-size: 12px; font-weight: 400;">
+                        ${(order.상품금액 || 0).toLocaleString()}원
+                    </td>
+                    <td style="padding: 8px; text-align: center;">
+                        ${order.입금확인 ? 
+                            `<span style="padding: 3px 8px; background: #e0e7ff; color: #4f46e5; border-radius: 4px; font-size: 11px; font-weight: 500;">
+                                완료
+                            </span>` : 
+                            (order.상품금액 > 0 ? 
+                                `<button onclick="OrderInputHandler.confirmPayment(${index})" 
+                                    style="padding: 4px 10px; background: #10b981; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer; height: 24px;">
+                                    확인
+                                </button>` : '-')}
+                    </td>
+                    <td style="padding: 8px; text-align: center;">
+                        <button onclick="OrderInputHandler.removeOrder(${index})" 
+                            style="padding: 4px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer; height: 24px;">
+                            삭제
+                        </button>
+                    </td>
+                    <td style="padding: 8px; text-align: center; font-size: 11px; font-weight: 300;">
+                        ${order.비고 ? 
+                            `<span style="background: #fee2e2; color: #dc3545; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 400;">
+                                ${order.비고}
+                            </span>` : '-'}
+                    </td>
+                </tr>`;
+            }).join('')}
+        </tbody>
+    </table>
 
-                                <span style="display: inline-block; padding: 2px 6px; background: ${marketColor}; 
-                                     color: white; border-radius: 4px; font-size: 11px; font-weight: 600;">
-                                    ${order.마켓명 || ''}
-                                </span>
-                            </td>
-                            <td style="padding: 6px; font-size: 11px; font-weight: 200;">${order.사용자이메일 || order.userEmail || window.currentUser?.email || ''}</td>
-                            <td style="padding: 6px; text-align: center; font-size: 11px; font-weight: 200;">${order.저장시간 || order.timestamp || ''}</td>
-                            <td style="padding: 6px; text-align: center; font-family: monospace; font-size: 11px; font-weight: 200;">${order.접수번호 || ''}</td>
-                            <td style="padding: 6px; font-weight: 200;">${order.주문자 || ''}</td>
-                            <td style="padding: 6px; font-size: 11px; font-weight: 200;">${order['주문자 전화번호'] || ''}</td>
-                            <td style="padding: 6px; font-weight: 200;">${order.수령인 || ''}</td>
-                            <td style="padding: 6px; font-size: 11px; font-weight: 200;">${order['수령인 전화번호'] || ''}</td>
-                            <td style="padding: 6px; font-size: 11px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 200;" 
-                                title="${order.주소 || ''}">${order.주소 || ''}</td>
-                            <td style="padding: 6px; font-size: 11px; font-weight: 200;">${order.배송메세지 || ''}</td>
-                            <td style="padding: 6px; font-size: 11px; font-weight: 200;">${order.옵션명 || ''}</td>
-                            <td style="padding: 6px; text-align: center; font-weight: 200;">${order.수량 || 1}</td>
-                            <td style="padding: 6px; text-align: center; font-weight: 400;">${marketInitial}${marketNumber}</td>
-                            <td style="padding: 6px; font-size: 11px; font-weight: 200;">${order['특이/요청사항'] || ''}</td>
-                            <td style="padding: 6px; text-align: center; font-size: 11px; font-weight: 200;">
-                                ${order.발송요청일 ? 
-                                    `<span style="background: #e9d5ff; padding: 2px 6px; border-radius: 4px; display: inline-block;">
-                                        ${order.발송요청일}
-                                    </span>` : 
-                                    ''}
-                            </td>
-                            <td style="padding: 6px; text-align: right; font-weight: 300;">${(order.상품금액 || 0).toLocaleString()}원</td>
-                            <td style="padding: 6px; text-align: center;">
-                                ${order.입금확인 ? 
-                                    `<span style="padding: 2px 8px; background: #e0e7ff; color: #4f46e5; 
-                                           border-radius: 4px; font-size: 11px; font-weight: 500;">
-                                        입금확인완료
-                                    </span>` : 
-                                    (order.상품금액 > 0 ? 
-                                        `<button onclick="OrderInputHandler.confirmPayment(${index})" 
-                                            style="padding: 2px 8px; background: #10b981; color: white; border: none; 
-                                                   border-radius: 4px; font-size: 11px; cursor: pointer;">
-                                            입금확인
-                                        </button>` : '-')}
-                            </td>
-                            <td style="padding: 6px; text-align: center;">
-                                <button onclick="OrderInputHandler.removeOrder(${index})" 
-                                    style="padding: 2px 8px; background: #dc3545; color: white; border: none; 
-                                           border-radius: 4px; font-size: 11px; cursor: pointer;">
-                                    삭제
-                                </button>
-                            </td>
-                        </tr>`;
-                    }).join('')}
-                </tbody>
-            </table>
         
     `;
 },
