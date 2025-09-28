@@ -604,7 +604,7 @@ input[type="number"] {
                 <span>총 <span class="result-count" id="totalOrderCount" style="color: #2563eb; font-weight: 500;">0</span>건</span>
             </div>
             <button class="btn-action" onclick="OrderInputHandler.loadUnshippedOrders()" 
-                style="padding: 6px 12px; border: 1px solid #ffb3ba; border-radius: 6px; background: #ffffff; color: #042848; font-size: 12px; font-weight: 300; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
+                style="padding: 6px 12px; border: 1px solid #ffb3ba; border-radius: 6px; background: #ffe0e6; color: #042848; font-size: 12px; font-weight: 300; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.35-4.35"></path>
