@@ -1176,7 +1176,7 @@ if (saved) {
     
     // 테이블 HTML 생성 (주문조회 스타일)
     list.innerHTML = `
-        <table class="search-table" style="width: 100%; border-collapse: collapse; min-width: 1600px; table-layout: fixed;">
+        <table class="search-table" style="width: 100%; border-collapse: collapse; min-width: 1800px;">
                 <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
                     <tr>
                         <th style="padding: 12px 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; white-space: nowrap; width: 30px;">번호</th>
@@ -1196,7 +1196,7 @@ if (saved) {
                         <th style="padding: 8px; text-align: center; width: 120px; min-width: 120px;">특이/요청</th>
                         <th style="padding: 8px; text-align: center; width: 90px; min-width: 80px;">발송요청일</th>
                         <th style="padding: 8px; text-align: center; width: 80px; min-width: 80px;">금액</th>
-                        <th style="padding: 8px; text-align: center; width: 80px; min-width: 150px;">확인</th>
+                        <th style="padding: 8px; text-align: center; width: 80px; min-width: 120px;">확인</th>
                         <th style="padding: 8px; text-align: center; width: 60px; min-width: 60px;">삭제</th>
                     </tr>
                 </thead>
