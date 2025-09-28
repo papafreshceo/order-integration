@@ -1338,7 +1338,8 @@ case 'getCsRecords':
         console.log(`getTempOrders: 전체 ${tempData.length}행 중 ${userEmail} 검색`);
         
         for (let i = 1; i < tempData.length; i++) {
-            if (tempData[i][0] === userEmail) {
+            // 모든 임시저장 데이터 불러오기 (사용자 구분 없이)
+            if (tempData[i] && tempData[i][0]) {  // 데이터가 있으면
                 userOrders.push({
                     사용자이메일: tempData[i][0],
                     접수번호: tempData[i][1],
