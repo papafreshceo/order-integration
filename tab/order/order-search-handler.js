@@ -2325,7 +2325,7 @@ async checkDuplicateCs() {
                     <div style="background: #fee2e2; padding: 12px; border-radius: 6px; margin-bottom: 12px; border: 1px solid #fecaca;">
                         <div style="color: #dc3545; font-weight: 500; font-size: 13px; margin-bottom: 4px;">⚠️ 중복 경고</div>
                         <div style="color: #7f1d1d; font-size: 12px;">
-                            이 주문번호는 이미 CS기록과 임시저장에 등록되어 있습니다.<br>
+                            이 주문번호는 이미 CS기록과 주문접수에 등록되어 있습니다.<br>
                             중복 접수는 권장하지 않습니다. CS 접수를 취소하시겠습니까?
                         </div>
                     </div>
