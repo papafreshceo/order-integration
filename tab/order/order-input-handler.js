@@ -1784,13 +1784,6 @@ async saveOrders() {
             headerCount: headers.length,
             firstHeaders: headers.slice(0, 5)
         });
-        }
-        
-        const headers = window.mappingData.standardFields;
-        if (!headers) {
-            this.showMessage('표준 필드를 찾을 수 없습니다.', 'error');
-            return;
-        }
         
         // 제품 정보로 주문 데이터 보강 (선택된 주문만)
         const enrichedOrders = ordersToSave.map(order => {
