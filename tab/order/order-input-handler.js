@@ -1766,42 +1766,28 @@ async saveOrders() {
                          String(today.getDate()).padStart(2, '0');
         
 
-        // 매핑 데이터 확인 - parent window에서 가져오기
-        console.log('현재 window.mappingData 상태:', window.mappingData);
-        console.log('parent.window.mappingData 상태:', parent.window.mappingData);
+        // 매핑 데이터 로드 - loadMappingData 직접 호출
+        console.log('매핑 데이터 확인 중...');
         
-        // parent window에서 매핑 데이터 가져오기
-        if (!window.mappingData) {
-            if (parent.window && parent.window.mappingData) {
-                window.mappingData = parent.window.mappingData;
-                console.log('parent window에서 매핑 데이터 가져옴');
-            }
-        }
-        
-        // 그래도 없으면 API로 로드
         if (!window.mappingData || !window.mappingData.standardFields) {
-            console.log('매핑 데이터 없음, getMappingData API 호출');
+            console.log('매핑 데이터 없음, loadMappingData 호출');
+            
+            // script.js의 loadMappingData 함수와 동일한 방식
             try {
-                const mappingResponse = await fetch('/api/sheets', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        action: 'getMappingData',
-                        spreadsheetId: 'settings'  // 설정용 스프레드시트
-                    })
-                });
+                const response = await fetch('/api/mapping');
+                const data = await response.json();
                 
-                const mappingResult = await mappingResponse.json();
-                console.log('매핑 데이터 로드 응답:', mappingResult);
-                
-                if (mappingResult.standardFields) {
-                    window.mappingData = mappingResult;
-                    console.log('매핑 데이터 설정 완료');
+                if (!data.error) {
+                    window.mappingData = data;
+                    console.log('매핑 데이터 로드 성공:', {
+                        markets: Object.keys(data.markets || {}),
+                        standardFields: data.standardFields?.length || 0
+                    });
                 } else {
-                    throw new Error('매핑 데이터 형식 오류');
+                    throw new Error('매핑 데이터 API 오류: ' + data.error);
                 }
             } catch (error) {
-                console.error('매핑 데이터 로드 오류:', error);
+                console.error('매핑 데이터 로드 실패:', error);
                 this.showMessage('매핑 데이터를 불러올 수 없습니다.', 'error');
                 return;
             }
