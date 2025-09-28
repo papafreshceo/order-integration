@@ -1327,7 +1327,8 @@ case 'getCsRecords':
     try {
         const { userEmail } = req.body;
         const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
-        const tempData = await getOrderData('임시저장!A:O', ordersSpreadsheetId);
+        
+        const tempData = await getSheetData('임시저장', ordersSpreadsheetId);
         
         if (!tempData || tempData.length < 2) {
             return res.status(200).json({ success: true, orders: [] });
@@ -1337,27 +1338,32 @@ case 'getCsRecords':
         console.log(`getTempOrders: 전체 ${tempData.length}행 중 ${userEmail} 검색`);
         
         for (let i = 1; i < tempData.length; i++) {
-            console.log(`행 ${i}: 이메일="${tempData[i][0]}", 일치=${tempData[i][0] === userEmail}`);
             if (tempData[i][0] === userEmail) {
                 userOrders.push({
-                    마켓명: tempData[i][3],    // 4번째 칼럼
-                    옵션명: tempData[i][4],    // 5번째 칼럼  
-                    수량: parseInt(tempData[i][5]) || 1,  // 6번째 칼럼
-                    단가: parseFloat(tempData[i][5]) || 0,
-                    택배비: parseFloat(tempData[i][6]) || 0,
-                    상품금액: parseFloat(tempData[i][7]) || 0,
-                    주문자: tempData[i][8],
-                    '주문자 전화번호': tempData[i][9],
-                    수령인: tempData[i][10],
-                    '수령인 전화번호': tempData[i][11],
-                    주소: tempData[i][12],
-                    배송메세지: tempData[i][13],
-                    발송요청일: tempData[i][14] || ''
+                    사용자이메일: tempData[i][0],
+                    접수번호: tempData[i][1],
+                    저장시간: tempData[i][2],
+                    마켓명: tempData[i][3],
+                    옵션명: tempData[i][4],
+                    수량: parseInt(tempData[i][5]) || 1,
+                    단가: parseFloat(tempData[i][6]) || 0,
+                    택배비: parseFloat(tempData[i][7]) || 0,
+                    상품금액: parseFloat(tempData[i][8]) || 0,
+                    주문자: tempData[i][9],
+                    '주문자 전화번호': tempData[i][10],
+                    수령인: tempData[i][11],
+                    '수령인 전화번호': tempData[i][12],
+                    주소: tempData[i][13],
+                    배송메세지: tempData[i][14],
+                    '특이/요청사항': tempData[i][15],
+                    발송요청일: tempData[i][16] || ''
                 });
             }
         }
         
+        console.log(`임시저장 조회 결과: ${userOrders.length}건`);
         return res.status(200).json({ success: true, orders: userOrders });
+        
     } catch (error) {
         console.error('getTempOrders 오류:', error);
         return res.status(500).json({ success: false, error: error.message });
