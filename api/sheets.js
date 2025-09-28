@@ -141,7 +141,7 @@ case 'saveCsRecord':
   
     console.log('CS기록 저장 완료');
     
-    // 재발송/부분재발송인 경우 임시저장
+    // 재발송/부분재발송인 경우 주문접수
     if (data['해결방법'] === '재발송' || data['해결방법'] === '부분재발송') {
       const koreaTime = new Date().toLocaleString('ko-KR', {
         timeZone: 'Asia/Seoul',
@@ -163,7 +163,7 @@ case 'saveCsRecord':
         return phoneStr ? `'${phoneStr}` : '';
       };
       
-      // 임시저장 헤더는 이미 고정되어 있음
+      // 주문접수 헤더는 이미 고정되어 있음
       // 사용자이메일,접수번호,저장시간,마켓명,옵션명,수량,단가,택배비,상품금액,주문자,주문자 전화번호,수령인,수령인 전화번호,주소,배송메세지,특이/요청사항,발송요청일
       
       const tempRowData = [[
@@ -188,8 +188,8 @@ case 'saveCsRecord':
         ''                               // 입금확인
       ]];
       
-      await appendSheetData('임시저장!A:x', tempRowData, ordersSpreadsheetId);
-      console.log('임시저장 완료');
+      await appendSheetData('주문접수!A:x', tempRowData, ordersSpreadsheetId);
+      console.log('주문접수 완료');
     }
     
     return res.status(200).json({
@@ -210,23 +210,23 @@ case 'addCsOrder':
           const { data } = req.body;
           const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
           
-          console.log('CS 재발송 임시저장 시작:', data);
+          console.log('CS 재발송 주문접수 시작:', data);
           
-          // 임시저장 시트 확인 및 생성
+          // 주문접수 시트 확인 및 생성
           let tempHeaders = [];
           try {
-              const tempData = await getOrderData('임시저장!1:1', ordersSpreadsheetId);
+              const tempData = await getOrderData('주문접수!1:1', ordersSpreadsheetId);
               if (tempData && tempData.length > 0) {
                   tempHeaders = tempData[0];
               }
           } catch (err) {
               // 시트가 없으면 생성
-              console.log('임시저장 시트 생성 필요');
-              await createOrderSheet('임시저장', ordersSpreadsheetId);
+              console.log('주문접수 시트 생성 필요');
+              await createOrderSheet('주문접수', ordersSpreadsheetId);
               tempHeaders = ['사용자이메일', '접수번호', '저장시간', '마켓명', '옵션명', '수량', '단가', '택배비', 
                             '상품금액', '주문자', '주문자 전화번호', '수령인', '수령인 전화번호', 
                             '주소', '배송메세지', '특이/요청사항', '발송요청일'];
-              await saveOrderData('임시저장!A1', [tempHeaders], ordersSpreadsheetId);
+              await saveOrderData('주문접수!A1', [tempHeaders], ordersSpreadsheetId);
           }
           
           // CS번호 생성
@@ -237,7 +237,7 @@ case 'addCsOrder':
             
           let csNumber = 1;
           try {
-              const existingData = await getOrderData('임시저장!A:C', ordersSpreadsheetId);
+              const existingData = await getOrderData('주문접수!A:C', ordersSpreadsheetId);
               if (existingData && existingData.length > 1) {
                   for (let i = 1; i < existingData.length; i++) {
                       const email = existingData[i][0] || '';
@@ -258,7 +258,7 @@ case 'addCsOrder':
           
           const csOrderNumber = `${dateStr}CS${String(csNumber).padStart(3, '0')}`;
           
-          // 임시저장 데이터 추가
+          // 주문접수 데이터 추가
           // 한국 시간 생성
           const koreaTime = new Date().toLocaleString('ko-KR', {
               timeZone: 'Asia/Seoul',
@@ -300,13 +300,13 @@ case 'addCsOrder':
               data['발송요청일'] || ''                   // 발송요청일
           ]];
           
-          await appendSheetData('임시저장!A:x', tempRowData, ordersSpreadsheetId);
+          await appendSheetData('주문접수!A:x', tempRowData, ordersSpreadsheetId);
           
-          console.log('CS 재발송 임시저장 완료:', csOrderNumber);
+          console.log('CS 재발송 주문접수 완료:', csOrderNumber);
           
           return res.status(200).json({
             success: true,
-            message: 'CS 재발송이 임시저장되었습니다',
+            message: 'CS 재발송이 주문접수되었습니다',
             csOrderNumber: csOrderNumber
           });
           
@@ -1020,10 +1020,10 @@ case 'checkCsDuplicate':
       console.log('CS기록 체크 실패:', err.message);
     }
     
-    // 임시저장 시트 체크
+    // 주문접수 시트 체크
     try {
       const { getOrderData } = require('../lib/google-sheets');
-      const tempData = await getOrderData('임시저장!A:Q', ordersSpreadsheetId);
+      const tempData = await getOrderData('주문접수!A:Q', ordersSpreadsheetId);
       
       if (tempData && tempData.length > 1) {
         for (let i = 1; i < tempData.length; i++) {
@@ -1036,13 +1036,13 @@ case 'checkCsDuplicate':
           
           if (optionMatch && ordererMatch && receiverMatch) {
             tempSaveExists = true;
-            console.log('임시저장 중복 발견');
+            console.log('주문접수 중복 발견');
             break;
           }
         }
       }
     } catch (err) {
-      console.log('임시저장 체크 실패:', err.message);
+      console.log('주문접수 체크 실패:', err.message);
     }
     
     console.log('중복 체크 결과:', { csRecord: csRecordExists, tempSave: tempSaveExists });
@@ -1330,7 +1330,7 @@ case 'getCsRecords':
         const { userEmail } = req.body;
         const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
         
-        const tempData = await getSheetData('임시저장', ordersSpreadsheetId);
+        const tempData = await getSheetData('주문접수', ordersSpreadsheetId);
         
         if (!tempData || tempData.length < 2) {
             return res.status(200).json({ success: true, orders: [] });
@@ -1340,7 +1340,7 @@ case 'getCsRecords':
         console.log(`getTempOrders: 전체 ${tempData.length}행 중 ${userEmail} 검색`);
         
         for (let i = 1; i < tempData.length; i++) {
-            // 모든 임시저장 데이터 불러오기 (사용자 구분 없이)
+            // 모든 주문접수 데이터 불러오기 (사용자 구분 없이)
             if (tempData[i] && tempData[i][0]) {  // 데이터가 있으면
                 userOrders.push({
                     사용자이메일: tempData[i][0],
@@ -1366,7 +1366,7 @@ case 'getCsRecords':
             }
         }
         
-        console.log(`임시저장 조회 결과: ${userOrders.length}건`);
+        console.log(`주문접수 조회 결과: ${userOrders.length}건`);
         return res.status(200).json({ success: true, orders: userOrders });
         
     } catch (error) {
@@ -1383,7 +1383,7 @@ case 'getCsRecords':
     console.log('updatePaymentConfirmation 시작:', { userEmail, orderIndex, confirmTime });
     
     // 기존 getOrderData 함수 사용 (주문 시트 전용 함수)
-    const tempData = await getOrderData('임시저장!A:S', ordersSpreadsheetId);
+    const tempData = await getOrderData('주문접수!A:S', ordersSpreadsheetId);
     
     if (!tempData || tempData.length === 0) {
       return res.json({ success: false, error: '데이터 없음' });
@@ -1425,8 +1425,8 @@ case 'getCsRecords':
     allData[targetRowIndex][18] = confirmTime;
     
     // 전체 시트 덮어쓰기
-    await clearOrderSheet('임시저장!A:S', ordersSpreadsheetId);
-    await saveOrderData('임시저장!A1', allData, ordersSpreadsheetId);
+    await clearOrderSheet('주문접수!A:S', ordersSpreadsheetId);
+    await saveOrderData('주문접수!A1', allData, ordersSpreadsheetId);
     
     console.log('입금확인 업데이트 완료');
     
@@ -1486,7 +1486,7 @@ case 'getCsRecords':
             ''   // 입금확인
         ]];
         
-        await appendSheetData('임시저장!A:x', tempData, ordersSpreadsheetId);
+        await appendSheetData('주문접수!A:x', tempData, ordersSpreadsheetId);
         
         return res.status(200).json({ success: true });
     } catch (error) {
@@ -1501,7 +1501,7 @@ case 'deleteTempOrders':
     try {
         const { userEmail } = req.body;
         const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
-        const tempData = await getOrderData('임시저장!A:S', ordersSpreadsheetId);
+        const tempData = await getOrderData('주문접수!A:S', ordersSpreadsheetId);
         
         if (!tempData || tempData.length < 2) {
             return res.status(200).json({ success: true });
@@ -1515,9 +1515,9 @@ case 'deleteTempOrders':
             }
         }
         
-        await clearOrderSheet('임시저장!A:S');
+        await clearOrderSheet('주문접수!A:S');
         if (newData.length > 0) {
-            await saveOrderData('임시저장!A1', newData);
+            await saveOrderData('주문접수!A1', newData);
         }
         
         return res.status(200).json({ success: true });
@@ -1568,12 +1568,12 @@ case 'updateTransferFlag':
           const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
           
           // 전체 데이터 가져오기
-          const allData = await getSheetData('임시저장!A:X', ordersSpreadsheetId);
+          const allData = await getSheetData('주문접수!A:X', ordersSpreadsheetId);
           
           if (!allData || allData.length < 2) {
             return res.status(200).json({ 
               success: true, 
-              message: '임시저장 데이터가 없습니다'
+              message: '주문접수 데이터가 없습니다'
             });
           }
           
@@ -1596,7 +1596,7 @@ case 'updateTransferFlag':
               try {
                 // W열과 X열 업데이트 - 작은따옴표로 시트명 감싸기
                 await updateSheetData(
-                  `'임시저장'!W${rowNumber}:X${rowNumber}`, 
+                  `'주문접수'!W${rowNumber}:X${rowNumber}`, 
                   [['Y', transferTime]], 
                   ordersSpreadsheetId
                 );
