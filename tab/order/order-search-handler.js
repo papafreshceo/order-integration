@@ -104,11 +104,12 @@ window.OrderSearchHandler = {
                 }
 
                 .quick-filters {
-                    display: flex;
-                    gap: 8px;
-                    margin-bottom: 20px;
-                    flex-wrap: wrap;
-                }
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding-top: 16px;  // <- 상단 여백 추가
+    flex-wrap: wrap;
+}
 
                 .quick-filter-btn {
                     padding: 6px 14px;
