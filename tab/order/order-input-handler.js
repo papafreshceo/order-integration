@@ -354,6 +354,12 @@ input[type="number"] {
                     color: #84cc16;
                     border: 1px solid #bef264;
                 }
+                
+                .message-box.warning {
+                    background: #fef3c7;
+                    color: #f59e0b;
+                    border: 1px solid #fde68a;
+                }
 
                 .address-modal {
                     display: none;
@@ -757,7 +763,10 @@ async loadTempOrders() {
         if (result.success && result.orders && result.orders.length > 0) {
             // 필드 매핑 추가 및 삭제된 항목 필터링
             this.manualOrders = result.orders
-                .filter(order => order.삭제플래그 !== 'Y' && order.deleted !== 'Y')  // 삭제된 항목 제외
+                .filter(order => 
+                    order.삭제 !== 'Y' && 
+                    order.이관 !== 'Y'  // 삭제와 이관된 항목 모두 제외
+                )
                 .map(order => ({
                     ...order,
                     주문번호: order.접수번호 || order.주문번호 || '',
@@ -826,7 +835,11 @@ async saveTempOrder(orderData, isUnshipped = false) {
             orderData.발송요청일 || '',
             '',  // 상태
             '',  // 입금확인
-            isUnshipped ? '미발송주문' : ''  // 비고
+            isUnshipped ? '미발송주문' : '',  // T: 비고
+            '',  // U: 삭제
+            '',  // V: 삭제일시
+            '',  // W: 이관
+            ''   // X: 이관일시
         ]];
         
         const response = await fetch('/api/sheets', {
@@ -1216,12 +1229,19 @@ if (saved) {
     }
     
     // 마켓 색상 가져오기
+    // 마켓 색상 가져오기 (매핑 데이터에서)
     const getMarketColor = (market) => {
-        const colors = {
+        if (window.mappingData?.markets?.[market]?.color) {
+            const colorStr = window.mappingData.markets[market].color;
+            return `rgb(${colorStr})`;
+        }
+        // 매핑 데이터가 없으면 기본값
+        const fallbackColors = {
             'CS발송': 'rgb(255, 0, 0)',
-            '전화주문': 'rgb(0, 0, 255)'
+            '전화주문': 'rgb(0, 0, 255)',
+            '기타': 'rgb(128, 128, 128)'
         };
-        return colors[market] || 'rgb(128, 128, 128)';
+        return fallbackColors[market] || 'rgb(128, 128, 128)';
     };
     
   
@@ -1565,7 +1585,17 @@ async confirmDelete(index) {
         const order = this.manualOrders[index];
         const userEmail = window.currentUser?.email || localStorage.getItem('userEmail') || 'unknown';
         
-        // API 호출로 시트에 삭제 플래그 설정
+        // API 호출로 시트에 삭제 플래그와 일시 설정
+        const deleteTime = new Date().toLocaleString('ko-KR', {
+            timeZone: 'Asia/Seoul',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        
         const response = await fetch('/api/sheets', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1575,7 +1605,13 @@ async confirmDelete(index) {
                 sheetName: '임시저장',
                 userEmail: userEmail,
                 orderIndex: index,
-                orderId: order.주문번호
+                orderId: order.주문번호,
+                deleteFlag: 'Y',
+                deleteTime: deleteTime,
+                flagColumns: {
+                    삭제: 'U',
+                    삭제일시: 'V'
+                }
             })
         });
         
@@ -1743,10 +1779,8 @@ async saveOrders() {
                 if (header === '연번') return index + 1;
                 
                 if (header === '마켓') {
-                    let initial = marketName.charAt(0);
-                    if (window.mappingData?.markets?.[marketName]?.initial) {
-                        initial = window.mappingData.markets[marketName].initial;
-                    }
+                    // 매핑 데이터에서 이니셜 가져오기
+                    let initial = window.mappingData?.markets?.[marketName]?.initial || marketName.charAt(0);
                     return initial + String(marketCounters[marketName]).padStart(3, '0');
                 }
                 
@@ -1789,11 +1823,74 @@ async saveOrders() {
         const result = await response.json();
         
         if (result.success) {
-            await this.deleteTempOrders();
-            this.showMessage(`${this.manualOrders.length}건의 주문이 저장되었습니다.`, 'success');
-            this.manualOrders = [];
-            this.updateOrderList();
-            this.resetForm();
+            // 1차 확인: 저장 성공 응답
+            console.log('1차 확인: 저장 API 성공');
+            
+            // 2차 확인: 실제 저장 검증
+            const verifyResponse = await fetch('/api/sheets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'verifyOrdersSaved',
+                    sheetName: sheetName,
+                    spreadsheetId: 'orders',
+                    orderCount: this.manualOrders.length,
+                    firstOrderId: this.manualOrders[0]?.주문번호
+                })
+            });
+            
+            const verifyResult = await verifyResponse.json();
+            
+            if (verifyResult.success && verifyResult.verified) {
+                console.log('2차 확인: 실제 저장 확인됨');
+                
+                // 3차: 임시저장 시트에 이관플래그 업데이트
+                const userEmail = window.currentUser?.email || localStorage.getItem('userEmail') || 'unknown';
+                const transferTime = new Date().toLocaleString('ko-KR', {
+                    timeZone: 'Asia/Seoul',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                
+                const flagResult = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'updateTransferFlag',
+                        spreadsheetId: 'orders',
+                        sheetName: '임시저장',
+                        userEmail: userEmail,
+                        orderIds: this.manualOrders.map(o => o.주문번호),
+                        transferFlag: 'Y',
+                        transferTime: transferTime,
+                        targetSheet: sheetName,  // 어느 시트로 이관했는지 기록
+                        flagColumns: {
+                            이관: 'W',
+                            이관일시: 'X'
+                        }
+                    })
+                });
+                
+                const flagResponse = await flagResult.json();
+                
+                if (flagResponse.success) {
+                    console.log('3차 확인: 이관플래그 업데이트 완료');
+                    this.showMessage(`${this.manualOrders.length}건의 주문이 확정 등록되었습니다.`, 'success');
+                    this.manualOrders = [];
+                    this.updateOrderList();
+                    this.resetForm();
+                } else {
+                    // 이관플래그 업데이트 실패 시 경고
+                    this.showMessage(`주문은 저장되었지만 이관플래그 업데이트 실패. 수동으로 확인 필요.`, 'warning');
+                }
+            } else {
+                // 저장 검증 실패
+                throw new Error('주문 저장을 확인할 수 없습니다. 다시 시도해주세요.');
+            }
         } else {
             throw new Error(result.error || '저장 실패');
         }
