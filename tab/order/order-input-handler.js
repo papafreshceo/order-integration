@@ -1091,7 +1091,7 @@ if (saved) {
                                     ${order.마켓명}
                                 </span>
                             </td>
-                            <td style="padding: 6px; font-size: 11px;">${window.currentUser?.email?.split('@')[0] || 'user'}</td>
+                            <td style="padding: 6px; font-size: 11px;">${order.사용자이메일 || window.currentUser?.email || localStorage.getItem('userEmail') || 'unknown'}</td>
                             <td style="padding: 6px; text-align: center; font-size: 11px;">${order.저장시간 || new Date().toLocaleString('ko-KR')}</td>
                             <td style="padding: 6px; text-align: center; font-family: monospace; font-size: 11px;">${order.접수번호 || ''}</td>
                             <td style="padding: 6px;">${order.주문자}</td>
