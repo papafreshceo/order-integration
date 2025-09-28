@@ -1916,7 +1916,8 @@ async saveOrders() {
             // 임시저장에 이관 플래그 업데이트
             try {
                 const userEmail = window.currentUser?.email || localStorage.getItem('userEmail') || 'unknown';
-                const orderNumbers = ordersToSave.map(order => order.주문번호);
+                // 실제 임시저장에 있는 접수번호 사용
+                const orderNumbers = ordersToSave.map(order => order.접수번호 || order.주문번호);
                 const transferTime = new Date().toLocaleString('ko-KR', {
                     timeZone: 'Asia/Seoul',
                     year: 'numeric',
@@ -1926,6 +1927,8 @@ async saveOrders() {
                     minute: '2-digit',
                     second: '2-digit'
                 });
+                
+                console.log('이관할 주문번호들:', orderNumbers);
                 
                 const flagResponse = await fetch('/api/sheets', {
                     method: 'POST',
