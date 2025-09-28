@@ -1248,8 +1248,10 @@ list.innerHTML = `
                                   order.마켓명 === '기타' ? 'rgb(128, 128, 128)' :
                                   'rgb(128, 128, 128)';
                 
-                return `
-                <tr style="border-bottom: 1px solid #f1f3f5; hover:background:#f0f8ff;">
+                 return `
+                <tr style="border-bottom: 1px solid #f1f3f5;" 
+                    onmouseover="this.style.background='#f0f8ff'; OrderInputHandler.showTooltip(event, ${index})" 
+                    onmouseout="this.style.background=''; OrderInputHandler.hideTooltip()">
                     <td style="padding: 8px; text-align: center; font-size: 12px; font-weight: 300;">${index + 1}</td>
                     <td style="padding: 8px; text-align: center;">
                         <span style="display: inline-block; padding: 3px 8px; background: ${marketColor}; color: white; border-radius: 4px; font-size: 11px; font-weight: 500;">
