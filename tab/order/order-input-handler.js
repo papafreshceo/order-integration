@@ -687,32 +687,45 @@ async loadTempOrders() {
 
 async saveTempOrder(orderData) {
     try {
-        // 전화번호 앞 0 유지
-        const formatPhone = (phone) => {
-            if (!phone) return '';
-            let phoneStr = String(phone).replace(/[^0-9]/g, '');
-            if (phoneStr && !phoneStr.startsWith('0')) {
-                phoneStr = '0' + phoneStr;
-            }
-            return phoneStr;
-        };
+        const userEmail = window.currentUser?.email || localStorage.getItem('userEmail') || 'unknown';
+        console.log('saveTempOrder - 사용자:', userEmail);
+        
+        const tempData = [
+            userEmail,
+            '',  // 접수번호
+            new Date().toLocaleString('ko-KR'),  // 저장시간
+            orderData.마켓명,
+            orderData.옵션명,
+            orderData.수량,
+            orderData.단가,
+            orderData.택배비 || 0,
+            orderData.상품금액,
+            orderData.주문자,
+            orderData['주문자 전화번호'],
+            orderData.수령인,
+            orderData['수령인 전화번호'],
+            orderData.주소,
+            orderData.배송메세지 || '',
+            orderData['특이/요청사항'] || '',
+            orderData.발송요청일 || ''
+        ];
         
         const response = await fetch('/api/sheets', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                action: 'saveTempOrder',
-                userEmail: window.currentUser?.email || localStorage.getItem('userEmail') || 'unknown',
-                orderData: {
-                    ...orderData,
-                    '주문자 전화번호': formatPhone(orderData['주문자 전화번호']),
-                    '수령인 전화번호': formatPhone(orderData['수령인 전화번호'])
-                }
+                action: 'appendToSheet',
+                spreadsheetId: 'orders',
+                sheetName: '임시저장',
+                values: [tempData]
             })
         });
         
         const result = await response.json();
+        console.log('임시저장 결과:', result);
         return result.success;
+
+        
     } catch (error) {
         console.error('임시저장 실패:', error);
         return false;
