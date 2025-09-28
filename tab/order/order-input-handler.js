@@ -239,6 +239,12 @@ input[type="number"] {
                     padding: 20px;
                     max-height: 400px;
                     overflow-y: auto;
+                    overflow-x: auto;
+                }
+                
+                .order-table {
+                    width: 1800px !important;
+                    min-width: 1800px !important;
                 }
 
                 .order-item {
@@ -1050,28 +1056,28 @@ if (saved) {
     // 테이블 HTML 생성
     list.innerHTML = `
         <div style="overflow-x: auto; max-height: 350px; overflow-y: auto;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1400px;">
+            <table class="order-table" style="width: 1800px; border-collapse: collapse; font-size: 12px;">
                 <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
                     <tr style="border-bottom: 2px solid #dee2e6;">
-                        <th style="padding: 8px; text-align: center; width: 30px;">번호</th>
-                        <th style="padding: 8px; text-align: center; width: 70px;">마켓명</th>
-                        <th style="padding: 8px; text-align: left; width: 100px;">접수자</th>
-                        <th style="padding: 8px; text-align: center; width: 120px;">접수일시</th>
-                        <th style="padding: 8px; text-align: center; width: 80px;">접수번호</th>
-                        <th style="padding: 8px; text-align: left; width: 60px;">주문자</th>
-                        <th style="padding: 8px; text-align: left; width: 100px;">주문자전화</th>
-                        <th style="padding: 8px; text-align: left; width: 60px;">수령인</th>
-                        <th style="padding: 8px; text-align: left; width: 100px;">수령인전화</th>
-                        <th style="padding: 8px; text-align: left; width: 200px;">주소</th>
-                        <th style="padding: 8px; text-align: left; width: 100px;">배송메세지</th>
-                        <th style="padding: 8px; text-align: left; width: 150px;">옵션명</th>
-                        <th style="padding: 8px; text-align: center; width: 40px;">수량</th>
-                        <th style="padding: 8px; text-align: center; width: 60px;">마켓</th>
-                        <th style="padding: 8px; text-align: left; width: 100px;">특이/요청</th>
-                        <th style="padding: 8px; text-align: center; width: 80px;">발송요청일</th>
-                        <th style="padding: 8px; text-align: right; width: 80px;">금액</th>
-                        <th style="padding: 8px; text-align: center; width: 80px;">확인</th>
-                        <th style="padding: 8px; text-align: center; width: 50px;">삭제</th>
+                        <th style="padding: 8px; text-align: center; width: 40px; min-width: 40px;">번호</th>
+                        <th style="padding: 8px; text-align: center; width: 80px; min-width: 80px;">마켓명</th>
+                        <th style="padding: 8px; text-align: left; width: 150px; min-width: 150px;">접수자</th>
+                        <th style="padding: 8px; text-align: center; width: 140px; min-width: 140px;">접수일시</th>
+                        <th style="padding: 8px; text-align: center; width: 100px; min-width: 100px;">접수번호</th>
+                        <th style="padding: 8px; text-align: left; width: 70px; min-width: 70px;">주문자</th>
+                        <th style="padding: 8px; text-align: left; width: 110px; min-width: 110px;">주문자전화</th>
+                        <th style="padding: 8px; text-align: left; width: 70px; min-width: 70px;">수령인</th>
+                        <th style="padding: 8px; text-align: left; width: 110px; min-width: 110px;">수령인전화</th>
+                        <th style="padding: 8px; text-align: left; width: 250px; min-width: 250px;">주소</th>
+                        <th style="padding: 8px; text-align: left; width: 120px; min-width: 120px;">배송메세지</th>
+                        <th style="padding: 8px; text-align: left; width: 180px; min-width: 180px;">옵션명</th>
+                        <th style="padding: 8px; text-align: center; width: 50px; min-width: 50px;">수량</th>
+                        <th style="padding: 8px; text-align: center; width: 70px; min-width: 70px;">마켓</th>
+                        <th style="padding: 8px; text-align: left; width: 120px; min-width: 120px;">특이/요청</th>
+                        <th style="padding: 8px; text-align: center; width: 90px; min-width: 90px;">발송요청일</th>
+                        <th style="padding: 8px; text-align: right; width: 80px; min-width: 80px;">금액</th>
+                        <th style="padding: 8px; text-align: center; width: 80px; min-width: 80px;">확인</th>
+                        <th style="padding: 8px; text-align: center; width: 60px; min-width: 60px;">삭제</th>
                     </tr>
                 </thead>
                 <tbody>
