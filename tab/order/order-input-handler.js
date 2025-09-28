@@ -1174,52 +1174,31 @@ if (saved) {
         return colors[market] || 'rgb(128, 128, 128)';
     };
     
-    // 테이블 HTML 생성 (주문조회 스타일)
+  
     // 테이블 HTML 생성 (주문조회 스타일)
     list.innerHTML = `
-        <table class="search-table" style="width: 100%; border-collapse: collapse;">
-                <colgroup>
-                    <col style="width: 30px;">
-                    <col style="width: 80px;">
-                    <col style="width: 120px;">
-                    <col style="width: 140px;">
-                    <col style="width: 100px;">
-                    <col style="width: 70px;">
-                    <col style="width: 110px;">
-                    <col style="width: 70px;">
-                    <col style="width: 110px;">
-                    <col style="width: 2500px;">
-                    <col style="width: 80px;">
-                    <col style="width: 150px;">
-                    <col style="width: 40px;">
-                    <col style="width: 60px;">
-                    <col style="width: 100px;">
-                    <col style="width: 90px;">
-                    <col style="width: 80px;">
-                    <col style="width: 120px;">
-                    <col style="width: 60px;">
-                </colgroup>
+        <table class="search-table" style="width: 100%; border-collapse: collapse; min-width: 1600px; table-layout: fixed;">
                 <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
                     <tr>
-                        <th style="padding: 12px 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; white-space: nowrap;">번호</th>
-                        <th style="padding: 8px; text-align: center;">마켓명</th>
-                        <th style="padding: 8px; text-align: center; width: 150px; min-width: 150px;">접수자</th>
-                        <th style="padding: 8px; text-align: center; width: 140px; min-width: 140px;">접수일시</th>
-                        <th style="padding: 8px; text-align: center; width: 100px; min-width: 100px;">접수번호</th>
-                        <th style="padding: 8px; text-align: center; width: 70px; min-width: 60px;">주문자</th>
-                        <th style="padding: 8px; text-align: center; width: 110px; min-width: 110px;">주문자전화</th>
-                        <th style="padding: 8px; text-align: center; width: 70px; min-width: 60px;">수령인</th>
-                        <th style="padding: 8px; text-align: center; width: 110px; min-width: 110px;">수령인전화</th>
-                        <th style="padding: 8px; text-align: center; width: 250px; min-width: 160px;">주소</th>
-                        <th style="padding: 8px; text-align: center; width: 120px; min-width: 100px;">배송메세지</th>
-                        <th style="padding: 8px; text-align: center; width: 180px; min-width: 180px;">옵션명</th>
-                        <th style="padding: 8px; text-align: center; width: 50px; min-width: 20px;">수량</th>
-                        <th style="padding: 8px; text-align: center; width: 70px; min-width: 70px;">마켓</th>
-                        <th style="padding: 8px; text-align: center; width: 120px; min-width: 120px;">특이/요청</th>
-                        <th style="padding: 8px; text-align: center; width: 90px; min-width: 80px;">발송요청일</th>
-                        <th style="padding: 8px; text-align: center; width: 80px; min-width: 80px;">금액</th>
-                        <th style="padding: 8px; text-align: center; width: 80px; min-width: 120px;">확인</th>
-                        <th style="padding: 8px; text-align: center; width: 60px; min-width: 60px;">삭제</th>
+                        <th style="padding: 12px 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; white-space: nowrap; width: 50px;">번호</th>
+                        <th style="padding: 8px; text-align: center; width: 80px;">마켓명</th>
+                        <th style="padding: 8px; text-align: center; width: 150px;">접수자</th>
+                        <th style="padding: 8px; text-align: center; width: 140px;">접수일시</th>
+                        <th style="padding: 8px; text-align: center; width: 100px;">접수번호</th>
+                        <th style="padding: 8px; text-align: center; width: 70px;">주문자</th>
+                        <th style="padding: 8px; text-align: center; width: 110px;">주문자전화</th>
+                        <th style="padding: 8px; text-align: center; width: 70px;">수령인</th>
+                        <th style="padding: 8px; text-align: center; width: 110px;">수령인전화</th>
+                        <th style="padding: 8px; text-align: center; width: 250px;">주소</th>
+                        <th style="padding: 8px; text-align: center; width: 120px;">배송메세지</th>
+                        <th style="padding: 8px; text-align: center; width: 180px;">옵션명</th>
+                        <th style="padding: 8px; text-align: center; width: 50px;">수량</th>
+                        <th style="padding: 8px; text-align: center; width: 70px;">마켓</th>
+                        <th style="padding: 8px; text-align: center; width: 120px;">특이/요청</th>
+                        <th style="padding: 8px; text-align: center; width: 90px;">발송요청일</th>
+                        <th style="padding: 8px; text-align: center; width: 80px;">금액</th>
+                        <th style="padding: 8px; text-align: center; width: 100px;">확인</th>
+                        <th style="padding: 8px; text-align: center; width: 60px;">삭제</th>
                     </tr>
                 </thead>
                 <tbody>
