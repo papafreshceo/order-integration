@@ -1843,9 +1843,10 @@ async saveOrders() {
                     return initial + String(marketCounters[marketName]).padStart(3, '0');
                 }
                 
-                if (header === '결제일') return new Date().toISOString().split('T')[0] + ' 00:00:00';
-                if (header === '주문번호') return 'M' + Date.now() + index;
-                if (header === '상품주문번호') return 'M' + Date.now() + index;
+                if (header === '결제일') return order.저장시간 || order.주문일시 || new Date().toISOString().split('T')[0] + ' 00:00:00';
+                if (header === '주문번호') return order.주문번호 || '';
+                if (header === '상품주문번호') return order.주문번호 || '';
+                if (header === '정산예정금액') return order.상품금액 || 0;
                 
                 const value = order[header];
                 return value !== undefined && value !== null ? String(value) : '';
