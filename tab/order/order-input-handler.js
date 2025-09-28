@@ -1083,8 +1083,7 @@ if (saved) {
         return colors[market] || 'rgb(128, 128, 128)';
     };
     
-    // 테이블 HTML 생성
-    / 테이블 HTML 생성 (주문조회 스타일)
+    // 테이블 HTML 생성 (주문조회 스타일)
     list.innerHTML = `
         <table class="search-table" style="width: 100%; border-collapse: collapse; min-width: 1600px; table-layout: fixed;">
                 <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
