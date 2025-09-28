@@ -418,6 +418,72 @@ input[type="number"] {
                 .btn-modal:hover {
                     opacity: 0.9;
                 }
+
+
+                /* 커스텀 툴팁 스타일 */
+                .custom-tooltip {
+                    position: fixed;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 20px;
+                    border-radius: 12px;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+                    z-index: 10000;
+                    display: none;
+                    min-width: 320px;
+                    backdrop-filter: blur(10px);
+                    animation: tooltipFadeIn 0.3s ease;
+                }
+
+                @keyframes tooltipFadeIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(10px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                .custom-tooltip.show {
+                    display: block;
+                }
+
+                .tooltip-header {
+                    font-size: 16px;
+                    font-weight: 600;
+                    margin-bottom: 12px;
+                    padding-bottom: 8px;
+                    border-bottom: 1px solid rgba(255,255,255,0.2);
+                }
+
+                .tooltip-row {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 6px 0;
+                    font-size: 14px;
+                }
+
+                .tooltip-label {
+                    opacity: 0.9;
+                    font-weight: 300;
+                }
+
+                .tooltip-value {
+                    font-weight: 500;
+                    text-align: right;
+                }
+
+                .tooltip-amount {
+                    margin-top: 12px;
+                    padding-top: 12px;
+                    border-top: 1px solid rgba(255,255,255,0.2);
+                    font-size: 18px;
+                    font-weight: 600;
+                    text-align: right;
+                }
+
             </style>
             
             <div class="input-container">
@@ -590,6 +656,8 @@ input[type="number"] {
                     </div>
                 </div>
             </div>
+            <!-- 커스텀 툴팁 -->
+            <div id="customTooltip" class="custom-tooltip"></div>
         `;
         
         // Daum 우편번호 서비스 스크립트 추가
@@ -1135,13 +1203,12 @@ if (saved) {
                                             order.마켓명.charAt(0);
                         const marketNumber = String(index + 1).padStart(3, '0');
                         
-                       // 툴팁 텍스트 생성
-                        const tooltipText = `마켓: ${order.마켓명 || ''}\n옵션명: ${order.옵션명 || ''}\n주문자: ${order.주문자 || ''}\n금액: ${(order.상품금액 || 0).toLocaleString()}원`;
-                        
-                         return `
-                        <tr style="border-bottom: 1px solid #f1f3f5; cursor: pointer;" 
-                            onmouseover="this.style.background='#b7f7bd'" 
-                            onmouseout="this.style.background=''"
+                       return `
+                        <tr style="border-bottom: 1px solid #f1f3f5; position: relative;" 
+                            onmouseover="this.style.background='#b7f7bd'; OrderInputHandler.showTooltip(event, ${index})" 
+                            onmouseout="this.style.background=''; OrderInputHandler.hideTooltip()"
+                            data-order='${JSON.stringify(order).replace(/'/g, "&apos;")}'>
+// ===== 대체 끝 =====
                             title="${tooltipText}">
                             <td style="padding: 6px; text-align: center; font-weight: 200;">${index + 1}</td>
                             <td style="padding: 6px; text-align: center;">
@@ -1237,6 +1304,63 @@ confirmPayment(index) {
     }
 },
 
+showTooltip(event, index) {
+    const order = this.manualOrders[index];
+    const tooltip = document.getElementById('customTooltip');
+    
+    const tooltipHTML = `
+        <div class="tooltip-header">주문 상세 정보</div>
+        <div class="tooltip-row">
+            <span class="tooltip-label">마켓명</span>
+            <span class="tooltip-value">${order.마켓명 || '-'}</span>
+        </div>
+        <div class="tooltip-row">
+            <span class="tooltip-label">옵션명</span>
+            <span class="tooltip-value">${order.옵션명 || '-'}</span>
+        </div>
+        <div class="tooltip-row">
+            <span class="tooltip-label">주문자</span>
+            <span class="tooltip-value">${order.주문자 || '-'}</span>
+        </div>
+        <div class="tooltip-row">
+            <span class="tooltip-label">수령인</span>
+            <span class="tooltip-value">${order.수령인 || '-'}</span>
+        </div>
+        <div class="tooltip-row">
+            <span class="tooltip-label">수량</span>
+            <span class="tooltip-value">${order.수량 || 1}개</span>
+        </div>
+        <div class="tooltip-amount">
+            총 ${(order.상품금액 || 0).toLocaleString()}원
+        </div>
+    `;
+    
+    tooltip.innerHTML = tooltipHTML;
+    tooltip.classList.add('show');
+    
+    // 툴팁 위치 계산
+    const rect = event.target.closest('tr').getBoundingClientRect();
+    let left = event.clientX + 15;
+    let top = event.clientY - 100;
+    
+    // 화면 경계 체크
+    if (left + 320 > window.innerWidth) {
+        left = event.clientX - 335;
+    }
+    if (top < 10) {
+        top = 10;
+    }
+    
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
+},
+
+hideTooltip() {
+    const tooltip = document.getElementById('customTooltip');
+    if (tooltip) {
+        tooltip.classList.remove('show');
+    }
+},
 
 async saveOrders() {
     if (this.manualOrders.length === 0) {
