@@ -822,14 +822,28 @@ input[type="date"]::-webkit-datetime-edit-day-field {
                             <!-- 주문 정보가 여기 표시됩니다 -->
                         </div>
                         
-                        <div class="cs-form-row">
-                            <div class="cs-form-group">
-                                <label class="cs-form-label">CS 내용</label>
-                                <textarea class="cs-textarea" id="csCustomerRequest" placeholder="CS 내용을 입력하세요"></textarea>
+                        <div class="cs-form-row" style="display: flex; gap: 12px; align-items: flex-start;">
+                            <div class="cs-form-group" style="width: 120px;">
+                                <label class="cs-form-label">CS구분 <span style="color: #dc3545;">*</span></label>
+                                <select class="cs-select" id="csCategory" style="border: 1px solid #dc3545;">
+                                    <option value="">선택</option>
+                                    <option value="파손">파손</option>
+                                    <option value="썩음/상함">썩음/상함</option>
+                                    <option value="맛 불만족">맛 불만족</option>
+                                    <option value="분실">분실</option>
+                                    <option value="기타">기타</option>
+                                </select>
                             </div>
                             
-                            <div class="cs-form-group">
-                                <label class="cs-form-label">해결방법</label>
+                            <div class="cs-form-group" style="flex: 1;">
+                                <label class="cs-form-label">CS 내용 <span style="color: #dc3545;">*</span></label>
+                                <textarea class="cs-textarea" id="csCustomerRequest" 
+                                    placeholder="CS 내용을 입력하세요" 
+                                    style="border: 1px solid #dc3545; height: 60px;"></textarea>
+                            </div>
+                            
+                            <div class="cs-form-group" style="width: 140px;">
+                                <label class="cs-form-label">해결방법 <span style="color: #dc3545;">*</span></label>
                                 <select class="cs-select" id="csSolution" onchange="OrderSearchHandler.onSolutionChange()">
                                     <option value="">선택하세요</option>
                                     <option value="site-refund">사이트환불</option>
@@ -1662,18 +1676,20 @@ displayCsOrderInfo(order) {
     const orderInfo = document.getElementById('csOrderInfo');
     if (orderInfo) {
         orderInfo.innerHTML = `
-            <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
-                <h4 style="font-size: 13px; font-weight: 500; color: #495057; margin-bottom: 8px;">주문 정보</h4>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 12px;">
-                    <div><strong>주문번호:</strong> ${order['주문번호'] || '-'}</div>
-                    <div><strong>마켓:</strong> ${order['마켓명'] || '-'}</div>
-                    <div><strong>주문자:</strong> ${order['주문자'] || '-'}</div>
-                    <div><strong>수령인:</strong> ${order['수령인'] || order['수취인'] || '-'}</div>
-                    <div><strong>옵션명:</strong> ${order['옵션명'] || '-'}</div>
-                    <div><strong>수량:</strong> ${order['수량'] || '-'}</div>
+        <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; font-size: 13px;">
+                <div><strong>마켓:</strong> ${order['마켓명'] || '-'}</div>
+                <div><strong>주문번호:</strong> ${order['주문번호'] || '-'}</div>
+                <div><strong>주문자:</strong> <span style="color: #dc3545; font-weight: 600;">${order['주문자'] || '-'}</span></div>
+                <div><strong>수령인:</strong> <span style="color: #dc3545; font-weight: 600;">${order['수령인'] || order['수취인'] || '-'}</span></div>
+                <div style="grid-column: 1 / -1;">
+                    <strong>옵션명:</strong> <span style="color: #dc3545; font-weight: 600;">${order['옵션명'] || '-'}</span>
                 </div>
+                <div><strong>수량:</strong> ${order['수량'] || '-'}</div>
+                <div><strong>결제일:</strong> ${order['결제일'] || '-'}</div>
             </div>
-        `;
+        </div>
+    `;
     }
 },
 
@@ -1948,11 +1964,12 @@ onSolutionChange() {
 
 // CS 제출
 async submitCs() {
+    const csCategory = document.getElementById('csCategory').value;
     const customerRequest = document.getElementById('csCustomerRequest').value;
     const solution = document.getElementById('csSolution').value;
     
-    if (!customerRequest || !solution) {
-        this.showMessage('필수 항목을 모두 입력하세요.', 'error');
+    if (!csCategory || !customerRequest || !solution) {
+        this.showMessage('CS구분, CS 내용, 해결방법을 모두 입력하세요.', 'error');
         return;
     }
 
@@ -1962,12 +1979,11 @@ async submitCs() {
         this.showLoading();
         try {
             const csData = {
-                연번: this.editingCsRecord.연번,
-                접수번호: this.editingCsRecord.접수번호,
-                마켓명: this.currentCsOrder['마켓명'] || '',
-                접수일: this.editingCsRecord.접수일,
-                해결방법: this.getSolutionText(solution),
-                'CS 내용': customerRequest,
+            userEmail: userEmail,
+            마켓명: this.currentCsOrder['마켓명'] || '',
+            'CS구분': csCategory,
+            해결방법: this.getSolutionText(solution),
+            'CS 내용': customerRequest,
                 결제일: this.currentCsOrder['결제일'] || '',
                 주문번호: this.currentCsOrder['주문번호'] || '',
                 주문자: this.currentCsOrder['주문자'] || '',
