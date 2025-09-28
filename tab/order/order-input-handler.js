@@ -235,11 +235,10 @@ input[type="number"] {
                     color: #042848;
                 }
 
-                .list-body {
-                    padding: 20px;
-                    max-height: 400px;
-                    overflow-y: auto;
+                #inputOrderList {
                     overflow-x: auto;
+                    overflow-y: auto;
+                    max-height: 400px;
                 }
                 
                 .order-table {
@@ -1060,8 +1059,7 @@ if (saved) {
     
     // 테이블 HTML 생성
     list.innerHTML = `
-        <div style="overflow-x: auto; max-height: 350px; overflow-y: auto;">
-            <table class="order-table" style="width: 1800px; border-collapse: collapse; font-size: 12px;">
+        <table class="order-table" style="width: 1800px; border-collapse: collapse; font-size: 12px;">
                 <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
                     <tr style="border-bottom: 2px solid #dee2e6; text-align: center;">
                         <th style="padding: 8px; text-align: center; width: 40px; min-width: 40px;">번호</th>
@@ -1137,7 +1135,7 @@ if (saved) {
                     }).join('')}
                 </tbody>
             </table>
-        </div>
+        
     `;
 },
 
