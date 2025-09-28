@@ -2019,21 +2019,22 @@ async submitCs() {
             };
             
             // 해결방법별 추가 데이터
-            if (solution === 'partial-refund') {
-                const refundAmount = Math.round(
-                    (parseFloat(document.getElementById('csPaymentAmount').value) || 0) * 
-                    (parseFloat(document.getElementById('csRefundPercent').value) || 0) / 100
-                );
-                csData.부분환불금액 = refundAmount;
-            } else if (solution === 'resend' || solution === 'partial-resend') {
-                csData.재발송상품 = document.getElementById('csResendOption').value;
-                csData.재발송수량 = document.getElementById('csResendQty').value;
-                csData.수령인 = document.getElementById('csResendReceiver').value;
-                csData['수령인 전화번호'] = document.getElementById('csResendPhone').value;
-                csData.주소 = document.getElementById('csResendAddress').value;
-                csData['특이/요청사항'] = document.getElementById('csResendNote').value || '';
-                csData.발송요청일 = document.getElementById('csRequestDate').value || '';
-            }
+        if (solution === 'partial-refund') {
+            const refundAmount = Math.round(
+                (parseFloat(document.getElementById('csPaymentAmount').value) || 0) * 
+                (parseFloat(document.getElementById('csRefundPercent').value) || 0) / 100
+            );
+            csData.부분환불금액 = refundAmount;
+        } else if (solution === 'resend' || solution === 'partial-resend') {
+            csData.재발송상품 = document.getElementById('csResendOption').value;
+            csData.재발송수량 = document.getElementById('csResendQty').value;
+            csData.수령인 = document.getElementById('csResendReceiver').value;
+            csData['수령인 전화번호'] = document.getElementById('csResendPhone').value;
+            csData.주소 = document.getElementById('csResendAddress').value;
+            csData['특이/요청사항'] = document.getElementById('csResendNote').value || '';
+            csData.발송요청일 = document.getElementById('csRequestDate').value || '';
+            csData.상품금액 = parseFloat(document.getElementById('csAdditionalAmount').value) || 0;  // 추가금액
+        }
             
             const response = await fetch('/api/sheets', {
                 method: 'POST',
