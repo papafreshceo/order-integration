@@ -134,7 +134,7 @@ case 'saveCsRecord':
       data['특이/요청사항'] || '',
       data['발송요청일'] || '',
       '접수',
-      data['상품금액'] || data['추가금액'] || 0  // 24번째 칼럼: 상품금액
+      data['추가금액'] || data['상품금액'] || 0  // 24번째 칼럼: 추가금액 우선
     ]];
     
     await appendSheetData('CS기록!A:X', csRowData, ordersSpreadsheetId);  // X까지 확장
@@ -175,7 +175,7 @@ case 'saveCsRecord':
         data['재발송수량'] || data['수량'] || '1',   // 수량
         '',                                   // 단가
         '',                                   // 택배비
-        data['상품금액'] || 0,               // 상품금액 (추가금액)
+        data['추가금액'] || data['상품금액'] || 0,   // 추가금액 우선
         data['주문자'] || '',                // 주문자
         formatPhone(data['주문자 전화번호']), // 주문자 전화번호
         data['수령인'] || '',                // 수령인
