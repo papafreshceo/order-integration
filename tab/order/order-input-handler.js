@@ -1177,7 +1177,7 @@ if (saved) {
   
     // 테이블 HTML 생성 (주문조회 스타일)
     list.innerHTML = `
-        <table class="search-table" style="width: 100%; border-collapse: collapse; min-width: 1600px; table-layout: fixed;">
+        <table class="search-table" style="width: 100%; border-collapse: collapse; min-width: 1400px; table-layout: fixed;">
                 <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
                     <tr>
                         <th style="padding: 12px 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; white-space: nowrap; width: 30px;">번호</th>
