@@ -1620,14 +1620,6 @@ case 'deleteTempOrders':
       error: error.message || '서버 오류가 발생했습니다.'
     });
   }
-}1
-  } catch (error) {
-    console.error('Sheets API 오류:', error);
-    return res.status(500).json({ 
-      success: false,
-      error: error.message || '서버 오류가 발생했습니다.'
-    });
-  }
 }
 
 // 컬럼 번호를 알파벳으로 변환하는 헬퍼 함수
