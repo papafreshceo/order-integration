@@ -86,12 +86,19 @@ case 'saveCsRecord':
       console.log('CS기록 읽기 실패, 첫 데이터로 처리:', error.message);
     }
     
-    // 접수번호 생성
+    // 접수번호 생성 (시분초 포함으로 중복 방지)
     const today = new Date();
     const dateStr = today.getFullYear() + 
       String(today.getMonth() + 1).padStart(2, '0') + 
       String(today.getDate()).padStart(2, '0');
-    const receiptNumber = `CS${dateStr}${String(todayMax + 1).padStart(3, '0')}`;
+    const timeStr = String(today.getHours()).padStart(2, '0') + 
+      String(today.getMinutes()).padStart(2, '0') + 
+      String(today.getSeconds()).padStart(2, '0');
+    
+    // 동일 초에 여러 건이 들어올 경우를 위한 밀리초 추가
+    const millisStr = String(today.getMilliseconds()).padStart(3, '0');
+    
+    const receiptNumber = `CS${dateStr}${timeStr}${millisStr}`;
     
     console.log(`최종 - 연번: ${newRowNumber}, 접수번호: ${receiptNumber}`);
     
