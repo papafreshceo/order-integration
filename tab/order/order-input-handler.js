@@ -1760,27 +1760,30 @@ async saveOrders() {
                          String(today.getMonth() + 1).padStart(2, '0') + 
                          String(today.getDate()).padStart(2, '0');
         
-        // 매핑 데이터 확인 및 로드 대기
-        if (!window.mappingData?.standardFields) {
-            console.log('매핑 데이터 대기 중...');
-            // 매핑 데이터 로드 시도
-            try {
-                const mappingResponse = await fetch('/api/sheets', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'getMapping' })
-                });
-                const mappingResult = await mappingResponse.json();
-                if (mappingResult.success) {
-                    window.mappingData = mappingResult;
-                    console.log('매핑 데이터 로드 성공');
-                } else {
-                    throw new Error('매핑 데이터 로드 실패');
-                }
-            } catch (error) {
-                this.showMessage('매핑 데이터를 불러올 수 없습니다. 페이지를 새로고침해주세요.', 'error');
-                return;
+
+        // 매핑 데이터 확인 (주문통합과 동일한 방식)
+        if (!window.mappingData) {
+            console.log('window.mappingData 없음, script.js에서 로드 대기');
+            // 최대 3초 대기
+            let waitCount = 0;
+            while (!window.mappingData && waitCount < 30) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                waitCount++;
             }
+        }
+        
+        if (!window.mappingData || !window.mappingData.standardFields) {
+            console.error('매핑 데이터 로드 실패');
+            this.showMessage('매핑 데이터를 불러올 수 없습니다. 페이지를 새로고침하세요.', 'error');
+            return;
+        }
+        
+        const headers = window.mappingData.standardFields;
+        console.log('매핑 데이터 사용:', {
+            markets: Object.keys(window.mappingData.markets || {}),
+            headerCount: headers.length,
+            firstHeaders: headers.slice(0, 5)
+        });
         }
         
         const headers = window.mappingData.standardFields;
