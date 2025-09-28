@@ -267,24 +267,34 @@ case 'addCsOrder':
               second: '2-digit'
           });
           
+          // 전화번호 형식 유지
+          const formatPhone = (phone) => {
+            if (!phone) return '';
+            let phoneStr = String(phone).replace(/[^0-9]/g, '');
+            if (phoneStr && !phoneStr.startsWith('0')) {
+              phoneStr = '0' + phoneStr;
+            }
+            return phoneStr ? `'${phoneStr}` : '';
+          };
+          
           const tempRowData = [[
-              data['userEmail'] || '',  // 로그인한 사용자 이메일
-              data['receiptNumber'] || csOrderNumber,
-              koreaTime,  // 한국 시간으로 저장
-              data['마켓명'] || 'CS재발송',
-              data['옵션명'] || '',
-              data['수량'] || '1',
-              '',  // 단가
-              '',  // 택배비
-              '',  // 상품금액
-              data['주문자'] || '',
-              data['주문자 전화번호'] || '',
-              data['수령인'] || '',
-              data['수령인 전화번호'] || '',
-              data['주소'] || '',
-              data['배송메세지'] || '',
-              data['특이/요청사항'] || '',
-              data['발송요청일'] || ''
+              data['userEmail'] || '',                    // 사용자이메일
+              data['receiptNumber'] || csOrderNumber,     // 접수번호
+              koreaTime,                                  // 저장시간
+              data['마켓명'] || 'CS재발송',              // 마켓명
+              data['옵션명'] || '',                      // 옵션명
+              data['수량'] || '1',                       // 수량
+              '',                                         // 단가
+              '',                                         // 택배비
+              '',                                         // 상품금액
+              data['주문자'] || '',                      // 주문자
+              formatPhone(data['주문자 전화번호']),       // 주문자 전화번호
+              data['수령인'] || '',                      // 수령인
+              formatPhone(data['수령인 전화번호']),       // 수령인 전화번호
+              data['주소'] || '',                        // 주소
+              data['배송메세지'] || '',                  // 배송메세지
+              data['특이/요청사항'] || '',               // 특이/요청사항
+              data['발송요청일'] || ''                   // 발송요청일
           ]];
           
           await appendSheetData('임시저장!A:Q', tempRowData, ordersSpreadsheetId);
