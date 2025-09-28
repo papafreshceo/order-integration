@@ -1181,7 +1181,7 @@ if (saved) {
                 <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
                     <tr>
                         <th style="padding: 12px 8px; text-align: center; font-size: 12px; font-weight: 400; color: #042848; border-bottom: 2px solid #dee2e6; white-space: nowrap; width: 30px;">번호</th>
-                        <th style="padding: 8px; text-align: center; width: 50px;">마켓명</th>
+                        <th style="padding: 8px; text-align: center; width: 60px;">마켓명</th>
                         <th style="padding: 8px; text-align: center; width: 150px;">접수자</th>
                         <th style="padding: 8px; text-align: center; width: 140px;">접수일시</th>
                         <th style="padding: 8px; text-align: center; width: 100px;">접수번호</th>
