@@ -348,6 +348,12 @@ input[type="number"] {
                     color: #2563eb;
                     border: 1px solid #93c5fd;
                 }
+                
+                .message-box.lime {
+                    background: #ecfccb;
+                    color: #84cc16;
+                    border: 1px solid #bef264;
+                }
 
                 .address-modal {
                     display: none;
@@ -1298,8 +1304,8 @@ list.innerHTML = `
                     </td>
                     <td style="padding: 8px; text-align: center;">
                         <button onclick="OrderInputHandler.removeOrder(${index})" 
-                            style="padding: 4px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer; height: 24px;">
-                            삭제
+                            style="padding: 4px 10px; background: #84cc16; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer; height: 24px;">
+                            제외
                         </button>
                     </td>
                     <td style="padding: 8px; text-align: center; font-size: 11px; font-weight: 300;">
@@ -1378,7 +1384,7 @@ async confirmPayment(index) {
         await this.saveTempOrder(order);  // 남은 것만 다시 저장
     }
     
-    this.showMessage(`주문이 삭제되었습니다. (남은 주문: ${this.manualOrders.length}건)`, 'success');
+    this.showMessage(`주문이 제외되었습니다. (남은 주문: ${this.manualOrders.length}건)`, 'lime');
 },
     
     resetForm() {
