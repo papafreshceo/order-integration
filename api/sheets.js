@@ -63,11 +63,11 @@ case 'saveCsRecord':
           newRowNumber = allData.length;
         }
         
-        // 오늘 날짜 접수번호 최대값 찾기
-        const today = new Date();
-        const dateStr = today.getFullYear() + 
-          String(today.getMonth() + 1).padStart(2, '0') + 
-          String(today.getDate()).padStart(2, '0');
+// 오늘 날짜 접수번호 최대값 찾기 - 한국 시간
+const koreaToday = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Seoul"}));
+const dateStr = koreaToday.getFullYear() + 
+  String(koreaToday.getMonth() + 1).padStart(2, '0') + 
+  String(koreaToday.getDate()).padStart(2, '0');
         
         for (let i = 1; i < allData.length; i++) {
           if (allData[i] && allData[i][1]) {
@@ -86,19 +86,28 @@ case 'saveCsRecord':
       console.log('CS기록 읽기 실패, 첫 데이터로 처리:', error.message);
     }
     
-    // 접수번호 생성 (시분초 포함으로 중복 방지)
-    const today = new Date();
-    const dateStr = today.getFullYear() + 
-      String(today.getMonth() + 1).padStart(2, '0') + 
-      String(today.getDate()).padStart(2, '0');
-    const timeStr = String(today.getHours()).padStart(2, '0') + 
-      String(today.getMinutes()).padStart(2, '0') + 
-      String(today.getSeconds()).padStart(2, '0');
-    
-    // 동일 초에 여러 건이 들어올 경우를 위한 밀리초 추가
-    const millisStr = String(today.getMilliseconds()).padStart(3, '0');
-    
-    const receiptNumber = `CS${dateStr}${timeStr}${millisStr}`;
+// 접수번호 생성 - CS + 날짜 + 연번 (한국 시간)
+const koreaDate = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Seoul"}));
+const dateStr = koreaDate.getFullYear() + 
+  String(koreaDate.getMonth() + 1).padStart(2, '0') + 
+  String(koreaDate.getDate()).padStart(2, '0');
+
+// 오늘 날짜의 기존 CS 접수번호 확인하여 연번 생성
+let sequenceNumber = 1;
+for (let i = 1; i < allData.length; i++) {
+  if (allData[i] && allData[i][1]) {
+    const receiptNo = String(allData[i][1]);
+    if (receiptNo.startsWith(`CS${dateStr}`)) {
+      const seqStr = receiptNo.substring(10); // CS20250929XXX에서 XXX 추출
+      const seq = parseInt(seqStr);
+      if (!isNaN(seq) && seq >= sequenceNumber) {
+        sequenceNumber = seq + 1;
+      }
+    }
+  }
+}
+
+const receiptNumber = `CS${dateStr}${String(sequenceNumber).padStart(3, '0')}`;
     
     console.log(`최종 - 연번: ${newRowNumber}, 접수번호: ${receiptNumber}`);
     
@@ -237,11 +246,11 @@ case 'addCsOrder':
               await saveOrderData('주문접수!A1', [tempHeaders], ordersSpreadsheetId);
           }
           
-          // CS번호 생성
-          const today = new Date();
-          const dateStr = today.getFullYear() + 
-            String(today.getMonth() + 1).padStart(2, '0') + 
-            String(today.getDate()).padStart(2, '0');
+          // CS번호 생성 - 한국 시간
+const koreaDate = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Seoul"}));
+const dateStr = koreaDate.getFullYear() + 
+  String(koreaDate.getMonth() + 1).padStart(2, '0') + 
+  String(koreaDate.getDate()).padStart(2, '0');
             
           let csNumber = 1;
           try {
@@ -492,12 +501,7 @@ case 'addCsOrder':
           const targetSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
           
           if (!startDate || !endDate) {
-            const today = new Date().toLocaleDateString('ko-KR', {
-              timeZone: 'Asia/Seoul',
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit'
-            }).replace(/\. /g, '').replace(/\./g, '').replace(/-/g, '');
+            
             
             const orderData = await getOrderData(`${today}!A:ZZ`, targetSpreadsheetId);
             
@@ -1566,11 +1570,11 @@ case 'getCsRecords':
             second: '2-digit'
         });
         
-// 접수번호 생성 - PH + 날짜 + 연번
-const today = new Date();
-const dateStr = today.getFullYear() + 
-    String(today.getMonth() + 1).padStart(2, '0') + 
-    String(today.getDate()).padStart(2, '0');
+// 접수번호 생성 - PH + 날짜 + 연번 (한국 시간 기준)
+const koreaDate = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Seoul"}));
+const dateStr = koreaDate.getFullYear() + 
+    String(koreaDate.getMonth() + 1).padStart(2, '0') + 
+    String(koreaDate.getDate()).padStart(2, '0');
 
 // 오늘 날짜의 기존 PH 주문 확인하여 연번 생성
 let sequenceNumber = 1;
