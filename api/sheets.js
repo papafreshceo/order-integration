@@ -1789,13 +1789,18 @@ case 'saveMarketingCustomer':
     const { data } = req.body;
     console.log('받은 데이터:', JSON.stringify(data));
     
+    // 환경변수 확인
+    console.log('모든 환경변수 키:', Object.keys(process.env));
+    
     const spreadsheetId = process.env.SPREADSHEET_ID_CUSTOMER;
     const sheetName = '문자마케팅대상고객';
     
-    console.log('SPREADSHEET_ID_CUSTOMER:', spreadsheetId);
+    console.log('SPREADSHEET_ID_CUSTOMER 값:', spreadsheetId);
+    console.log('타입:', typeof spreadsheetId);
+    console.log('길이:', spreadsheetId ? spreadsheetId.length : 0);
     
-    if (!spreadsheetId) {
-      console.error('환경변수 SPREADSHEET_ID_CUSTOMER 없음');
+    if (!spreadsheetId || spreadsheetId === 'undefined') {
+      console.error('환경변수 SPREADSHEET_ID_CUSTOMER 없거나 잘못됨');
       return res.status(500).json({ 
         success: false, 
         error: '고객 관리 시트가 설정되지 않았습니다' 
