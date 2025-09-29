@@ -1636,6 +1636,9 @@ return res.status(200).json({
 
 
 
+
+
+
 case 'deleteTempOrders':
     try {
         const { userEmail } = req.body;
@@ -1819,3 +1822,63 @@ function parseNumber(value) {
   const num = parseFloat(strValue);
   return isNaN(num) ? 0 : num;
 }
+
+
+
+case 'saveMarketingCustomer':
+  try {
+    const { data } = req.body;
+    
+    const spreadsheetId = process.env.SPREADSHEET_ID_CUSTOMER;
+    const sheetName = '문자마케팅대상고객';
+    
+    if (!spreadsheetId) {
+      return res.status(500).json({ 
+        success: false, 
+        error: '고객 관리 시트가 설정되지 않았습니다' 
+      });
+    }
+    
+    // ✅ 기존 데이터 가져오기 추가
+    const existingData = await getSheetData(`${sheetName}!A:J`, spreadsheetId);
+    
+    let nextSerialNumber = 1;
+    
+    if (existingData && existingData.length > 1) {
+      for (let i = existingData.length - 1; i > 0; i--) {
+        const serialNum = parseInt(existingData[i][0]);
+        if (!isNaN(serialNum)) {
+          nextSerialNumber = serialNum + 1;
+          break;
+        }
+      }
+    }
+    
+    const newRow = [[
+      nextSerialNumber,
+      data.등록일 || '',
+      data.이름 || '',
+      data.전화번호 || '',
+      data.주소 || '',
+      data.이용마켓 || '',
+      data.구매상품 || '',
+      data.결제일 || '',
+      data.고객정보 || '',
+      data.비고 || ''
+    ]];
+    
+    await appendSheetData(`${sheetName}!A:J`, newRow, spreadsheetId);
+    
+    return res.status(200).json({ 
+      success: true, 
+      message: '마케팅 고객이 등록되었습니다.',
+      serialNumber: nextSerialNumber
+    });
+    
+  } catch (error) {
+    console.error('마케팅 고객 저장 오류:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message || '마케팅 고객 저장 실패'
+    });
+  }

@@ -2649,15 +2649,13 @@ async submitMarketingCustomer() {
         };
         
         const response = await fetch('/api/sheets', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'saveMarketingCustomer',
-                spreadsheetId: '1riZzgrjJ2HhZDv94d_SQMdk2L0ToDojjHPTMN8dKyXc',
-                sheetName: '문자마케팅대상고객',
-                data: customerData
-            })
-        });
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        action: 'saveMarketingCustomer',
+        data: customerData
+    })
+});
         
         const result = await response.json();
         
