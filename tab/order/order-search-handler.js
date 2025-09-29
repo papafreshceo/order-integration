@@ -1286,6 +1286,188 @@ fixDateInputDisplay() {
             const row = this.createTableRow(order, index + 1);
             tbody.appendChild(row);
         });
+        
+        // 우클릭 메뉴 이벤트 추가
+        this.setupContextMenu();
+    },
+    
+    setupContextMenu() {
+        // 기존 컨텍스트 메뉴 제거
+        const existingMenu = document.getElementById('tableContextMenu');
+        if (existingMenu) existingMenu.remove();
+        
+        // 컨텍스트 메뉴 HTML 생성
+        const contextMenuHtml = `
+            <div id="tableContextMenu" style="
+                display: none;
+                position: fixed;
+                background: #ffffff;
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                z-index: 1000;
+                padding: 4px 0;
+                min-width: 180px;
+            ">
+                <div class="context-menu-item" onclick="OrderSearchHandler.copyCell()" style="
+                    padding: 8px 16px;
+                    font-size: 13px;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    셀 복사
+                </div>
+                <div class="context-menu-item" onclick="OrderSearchHandler.copyRow()" style="
+                    padding: 8px 16px;
+                    font-size: 13px;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                    </svg>
+                    행 전체 복사
+                </div>
+                <div style="height: 1px; background: #dee2e6; margin: 4px 0;"></div>
+                <div class="context-menu-item" onclick="OrderSearchHandler.openCsModalFromContext()" style="
+                    padding: 8px 16px;
+                    font-size: 13px;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+                        <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
+                    </svg>
+                    CS 접수
+                </div>
+                <div class="context-menu-item" onclick="OrderSearchHandler.openAdditionalFromContext()" style="
+                    padding: 8px 16px;
+                    font-size: 13px;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="16"></line>
+                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                    추가주문 접수
+                </div>
+                <div class="context-menu-item" onclick="OrderSearchHandler.openMarketingFromContext()" style="
+                    padding: 8px 16px;
+                    font-size: 13px;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    마케팅고객 등록
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', contextMenuHtml);
+        
+        const table = document.getElementById('searchTable');
+        const contextMenu = document.getElementById('tableContextMenu');
+        
+        // 테이블 우클릭 이벤트
+        table.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            
+            const td = e.target.closest('td');
+            const tr = e.target.closest('tr');
+            
+            if (!td || !tr) return;
+            
+            // 현재 선택된 셀과 행 저장
+            this.contextMenuTarget = {
+                cell: td,
+                row: tr,
+                cellIndex: td.cellIndex,
+                rowIndex: tr.rowIndex
+            };
+            
+            // 메뉴 위치 설정
+            contextMenu.style.left = e.pageX + 'px';
+            contextMenu.style.top = e.pageY + 'px';
+            contextMenu.style.display = 'block';
+        });
+        
+        // 다른 곳 클릭시 메뉴 숨기기
+        document.addEventListener('click', () => {
+            contextMenu.style.display = 'none';
+        });
+    },
+    
+    copyCell() {
+        if (!this.contextMenuTarget) return;
+        const text = this.contextMenuTarget.cell.textContent;
+        navigator.clipboard.writeText(text);
+        this.showMessage('셀 내용이 복사되었습니다.', 'success');
+    },
+    
+    copyRow() {
+        if (!this.contextMenuTarget) return;
+        const cells = this.contextMenuTarget.row.querySelectorAll('td');
+        const rowData = Array.from(cells).map(cell => cell.textContent).join('\t');
+        navigator.clipboard.writeText(rowData);
+        this.showMessage('행 전체가 복사되었습니다.', 'success');
+    },
+    
+    openCsModalFromContext() {
+        if (!this.contextMenuTarget) return;
+        const rowIndex = this.contextMenuTarget.row.rowIndex - 1; // 헤더 제외
+        const order = this.getFilteredOrders()[rowIndex];
+        if (order) {
+            this.currentCsOrder = order;
+            this.displayCsOrderInfo(order);
+            document.getElementById('csModalOverlay').classList.add('show');
+        }
+    },
+    
+    openAdditionalFromContext() {
+        if (!this.contextMenuTarget) return;
+        const rowIndex = this.contextMenuTarget.row.rowIndex - 1;
+        const order = this.getFilteredOrders()[rowIndex];
+        if (order) {
+            this.currentAdditionalOrder = order;
+            this.showAdditionalOrderModal(order);
+        }
+    },
+    
+    openMarketingFromContext() {
+        if (!this.contextMenuTarget) return;
+        const rowIndex = this.contextMenuTarget.row.rowIndex - 1;
+        const order = this.getFilteredOrders()[rowIndex];
+        if (order) {
+            this.showMarketingCustomerModal(order);
+        }
     },
 
     createTableRow(order, serialNumber) {
