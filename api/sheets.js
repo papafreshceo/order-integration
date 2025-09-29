@@ -1566,31 +1566,47 @@ case 'getCsRecords':
             second: '2-digit'
         });
         
-        const tempData = [[
-            userEmail,
-            '',  // 접수번호
-            koreaTime,
-            orderData.마켓명,
-            orderData.옵션명,
-            orderData.수량,
-            orderData.단가,
-            orderData.택배비,
-            orderData.상품금액,
-            orderData.주문자,
-            formatPhone(orderData['주문자 전화번호']),
-            orderData.수령인,
-            formatPhone(orderData['수령인 전화번호']),
-            orderData.주소,
-             orderData.배송메세지,
-            '',  // 특이/요청사항
-            orderData.발송요청일 || '',
-            '',  // 상태
-            ''   // 입금확인
-        ]];
-        
-        await appendSheetData('주문접수!A:x', tempData, ordersSpreadsheetId);
-        
-        return res.status(200).json({ success: true });
+// 접수번호 생성
+const today = new Date();
+const dateStr = today.getFullYear() + 
+    String(today.getMonth() + 1).padStart(2, '0') + 
+    String(today.getDate()).padStart(2, '0');
+const timeStr = String(today.getHours()).padStart(2, '0') + 
+    String(today.getMinutes()).padStart(2, '0') + 
+    String(today.getSeconds()).padStart(2, '0');
+const millisStr = String(today.getMilliseconds()).padStart(3, '0');
+const receiptNumber = `ADD${dateStr}${timeStr}${millisStr}`;
+
+const tempData = [[
+    userEmail,
+    receiptNumber,  // 접수번호
+    koreaTime,      // 저장시간
+    orderData.마켓명,
+    orderData.옵션명,
+    orderData.수량,
+    orderData.단가,
+    orderData.택배비,
+    orderData.상품금액,
+    orderData.주문자,
+    formatPhone(orderData['주문자 전화번호']),
+    orderData.수령인,
+    formatPhone(orderData['수령인 전화번호']),
+    orderData.주소,
+    orderData.배송메세지,
+    orderData['특이/요청사항'] || '',
+    orderData.발송요청일 || '',
+    '',  // 상태
+    ''   // 입금확인
+]];
+
+await appendSheetData('주문접수!A:S', tempData, ordersSpreadsheetId);
+
+return res.status(200).json({ 
+    success: true,
+    receiptNumber: receiptNumber,
+    orderTime: koreaTime
+});
+
     } catch (error) {
         console.error('appendTempOrder 오류:', error);
         return res.status(500).json({ success: false, error: error.message });
