@@ -332,6 +332,18 @@ window.OrderSearchHandler = {
                 .search-table tbody tr.has-tracking {
                     background: #f0f3f7;
                 }
+                
+                .search-table td.selected {
+                    background: #e7f3ff !important;
+                    outline: 2px solid #2563eb;
+                    outline-offset: -2px;
+                }
+                
+                .search-table td.selecting {
+                    background: #f0f8ff !important;
+                    outline: 1px solid #93c5fd;
+                    outline-offset: -1px;
+                }
 
                 .checkbox-cell {
                     width: 50px;
@@ -1291,10 +1303,13 @@ fixDateInputDisplay() {
         this.setupContextMenu();
     },
     
-    setupContextMenu() {
+setupContextMenu() {
         // 기존 컨텍스트 메뉴 제거
         const existingMenu = document.getElementById('tableContextMenu');
         if (existingMenu) existingMenu.remove();
+        
+        // 셀 선택 이벤트 설정
+        this.setupCellSelection();
         
         // 컨텍스트 메뉴 HTML 생성
         const contextMenuHtml = `
@@ -1468,6 +1483,123 @@ fixDateInputDisplay() {
         if (order) {
             this.showMarketingCustomerModal(order);
         }
+    },
+    
+    setupCellSelection() {
+        const table = document.getElementById('searchTable');
+        if (!table) return;
+        
+        let isSelecting = false;
+        let startCell = null;
+        let endCell = null;
+        
+        // 기존 선택 해제
+        const clearSelection = () => {
+            document.querySelectorAll('.search-table td.selected, .search-table td.selecting').forEach(cell => {
+                cell.classList.remove('selected', 'selecting');
+            });
+        };
+        
+        // 범위 내 셀 선택
+        const selectRange = (start, end) => {
+            clearSelection();
+            
+            const startRow = Math.min(start.parentElement.rowIndex, end.parentElement.rowIndex);
+            const endRow = Math.max(start.parentElement.rowIndex, end.parentElement.rowIndex);
+            const startCol = Math.min(start.cellIndex, end.cellIndex);
+            const endCol = Math.max(start.cellIndex, end.cellIndex);
+            
+            const rows = table.querySelectorAll('tbody tr');
+            for (let r = startRow - 1; r <= endRow - 1; r++) {
+                if (rows[r]) {
+                    const cells = rows[r].querySelectorAll('td');
+                    for (let c = startCol; c <= endCol; c++) {
+                        if (cells[c] && !cells[c].classList.contains('checkbox-cell')) {
+                            cells[c].classList.add('selected');
+                        }
+                    }
+                }
+            }
+        };
+        
+        // 마우스 다운
+        table.addEventListener('mousedown', (e) => {
+            const td = e.target.closest('td');
+            if (!td || td.classList.contains('checkbox-cell')) return;
+            
+            // Ctrl/Cmd 키가 눌려있지 않으면 기존 선택 해제
+            if (!e.ctrlKey && !e.metaKey) {
+                clearSelection();
+            }
+            
+            isSelecting = true;
+            startCell = td;
+            endCell = td;
+            td.classList.add('selected');
+            
+            e.preventDefault();
+        });
+        
+        // 마우스 이동 (드래그)
+        table.addEventListener('mouseover', (e) => {
+            if (!isSelecting) return;
+            
+            const td = e.target.closest('td');
+            if (!td || td.classList.contains('checkbox-cell')) return;
+            
+            endCell = td;
+            selectRange(startCell, endCell);
+        });
+        
+        // 마우스 업
+        document.addEventListener('mouseup', () => {
+            isSelecting = false;
+        });
+        
+        // 단일 클릭으로 셀 선택/해제
+        table.addEventListener('click', (e) => {
+            const td = e.target.closest('td');
+            if (!td || td.classList.contains('checkbox-cell')) return;
+            
+            if (e.ctrlKey || e.metaKey) {
+                // Ctrl/Cmd + 클릭: 토글
+                td.classList.toggle('selected');
+            } else if (!isSelecting) {
+                // 일반 클릭: 단일 선택
+                clearSelection();
+                td.classList.add('selected');
+            }
+        });
+        
+        // Ctrl+C로 선택된 셀 복사
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+                const selectedCells = document.querySelectorAll('.search-table td.selected');
+                if (selectedCells.length > 0) {
+                    const rows = {};
+                    selectedCells.forEach(cell => {
+                        const rowIndex = cell.parentElement.rowIndex;
+                        if (!rows[rowIndex]) rows[rowIndex] = [];
+                        rows[rowIndex].push(cell.textContent);
+                    });
+                    
+                    const copyText = Object.values(rows).map(row => row.join('\t')).join('\n');
+                    navigator.clipboard.writeText(copyText);
+                    this.showMessage(`${selectedCells.length}개 셀이 복사되었습니다.`, 'success');
+                }
+            }
+            
+            // Ctrl+A로 전체 선택
+            if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+                const tableElement = document.getElementById('searchTable');
+                if (tableElement && document.activeElement.closest('#searchTable')) {
+                    e.preventDefault();
+                    const cells = tableElement.querySelectorAll('tbody td:not(.checkbox-cell)');
+                    cells.forEach(cell => cell.classList.add('selected'));
+                    this.showMessage('모든 셀이 선택되었습니다.', 'info');
+                }
+            }
+        });
     },
 
     createTableRow(order, serialNumber) {
