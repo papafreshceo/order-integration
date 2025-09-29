@@ -1783,12 +1783,12 @@ case 'updateTransferFlag':
         }
 
 
-       case 'saveMarketingCustomer':
+        case 'saveMarketingCustomer':
         try {
           const { data } = req.body;
           
           // 환경변수에서 고객관리 스프레드시트 ID 가져오기
-          const spreadsheetId = process.env.SPREADSHEET_ID;  // 설정용 구글시트 사용
+          const spreadsheetId = process.env.SPREADSHEET_ID_CUSTOMER;
           const sheetName = '문자마케팅대상고객';
     
     if (!spreadsheetId) {
