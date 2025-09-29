@@ -1783,13 +1783,13 @@ case 'updateTransferFlag':
         }
 
 
-        case 'saveMarketingCustomer':
-  try {
-    const { data } = req.body;
-    
-    // 환경변수에서 스프레드시트 ID 가져오기
-    const spreadsheetId = process.env.SPREADSHEET_ID_CUSTOMER;
-    const sheetName = '문자마케팅대상고객';
+       case 'saveMarketingCustomer':
+        try {
+          const { data } = req.body;
+          
+          // 환경변수에서 고객관리 스프레드시트 ID 가져오기
+          const spreadsheetId = process.env.SPREADSHEET_ID;  // 설정용 구글시트 사용
+          const sheetName = '문자마케팅대상고객';
     
     if (!spreadsheetId) {
       return res.status(500).json({ 
@@ -1844,7 +1844,7 @@ case 'updateTransferFlag':
       error: error.message || '마케팅 고객 저장 실패'
     });
   }
-  
+
       default:
         return res.status(400).json({ 
           error: '알 수 없는 액션입니다.' 
