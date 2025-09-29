@@ -670,6 +670,8 @@ input[type="date"]::-webkit-datetime-edit-day-field {
                     background: #1d4ed8;
                 }
 
+
+                
             </style>
 
             <div class="search-container">
@@ -2085,117 +2087,117 @@ showAdditionalOrderModal(order) {
                 </div>
                 
                 <div style="padding: 20px;">
-                    <!-- 기본 주문 정보 표시 -->
-                    <div style="background: #e7f3ff; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
-                        <div style="font-size: 12px; color: #2563eb; margin-bottom: 8px;">기존 주문 정보</div>
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 13px;">
-                            <div><strong>마켓:</strong> ${order['마켓명'] || ''}</div>
-                            <div><strong>주문번호:</strong> ${order['주문번호'] || ''}</div>
-                        </div>
-                    </div>
-                    
-                    <!-- 첫 번째 줄: 마켓명, 옵션명 -->
-                    <div style="display: grid; grid-template-columns: 150px 1fr; gap: 12px; margin-bottom: 12px;">
-                        <div>
-                            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
-                                마켓명 <span style="color: #dc3545;">*</span>
-                            </label>
-                            <input type="text" id="addOrderMarket" value="전화주문" readonly
-                                   style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
-                                          border-radius: 6px; font-size: 13px; background: #f8f9fa;">
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
-                                옵션명 <span style="color: #dc3545;">*</span>
-                            </label>
-                            <input type="text" id="addOrderOption" value="${order['옵션명'] || ''}" 
-                                   style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
-                                          border-radius: 6px; font-size: 13px;">
-                        </div>
-                    </div>
-                    
-                    <!-- 두 번째 줄: 수량, 단가, 택배비, 판매가 -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1.5fr; gap: 12px; margin-bottom: 12px;">
-                        <div>
-                            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
-                                수량 <span style="color: #dc3545;">*</span>
-                            </label>
-                            <input type="number" id="addOrderQty" value="1" min="1"
-                                   style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
-                                          border-radius: 6px; font-size: 13px;"
-                                   oninput="OrderSearchHandlerInstance.calculateTotalPrice()">
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
-                                단가
-                            </label>
-                            <input type="text" id="addOrderPrice" placeholder="0"
-                                   style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
-                                          border-radius: 6px; font-size: 13px; text-align: right;"
-                                   oninput="OrderSearchHandlerInstance.formatAmountInput(this); OrderSearchHandlerInstance.calculateTotalPrice();">
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
-                                택배비
-                            </label>
-                            <input type="text" id="addOrderShipping" placeholder="0"
-                                   style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
-                                          border-radius: 6px; font-size: 13px; text-align: right;"
-                                   oninput="OrderSearchHandlerInstance.formatAmountInput(this); OrderSearchHandlerInstance.calculateTotalPrice();">
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
-                                판매가 (단가×수량+택배비)
-                            </label>
-                            <div id="addOrderTotalPrice" 
-                                 style="width: 100%; padding: 8px; border: 1px solid #e7f3ff; 
-                                        border-radius: 6px; font-size: 13px; text-align: right;
-                                        background: #f0f8ff; color: #2563eb; font-weight: 500;">0</div>
-                        </div>
-                    </div>
-                    
-                    <!-- 세 번째 줄: 주문자 정보 -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-                        <div>
-                            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
-                                주문자 <span style="color: #dc3545;">*</span>
-                            </label>
-                            <input type="text" id="addOrderBuyer" value="${order['주문자'] || ''}"
-                                   style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
-                                          border-radius: 6px; font-size: 13px;">
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
-                                주문자 전화번호
-                            </label>
-                            <input type="text" id="addOrderBuyerPhone" 
-                                   value="${order['주문자전화번호'] || order['주문자 전화번호'] || ''}"
-                                   style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
-                                          border-radius: 6px; font-size: 13px;">
-                        </div>
-                    </div>
-                    
-                    <!-- 네 번째 줄: 수령인 정보 -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-                        <div>
-                            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
-                                수령인 <span style="color: #dc3545;">*</span>
-                            </label>
-                            <input type="text" id="addOrderReceiver" 
-                                   value="${order['수령인'] || order['수취인'] || ''}"
-                                   style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
-                                          border-radius: 6px; font-size: 13px;">
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
-                                수령인 전화번호
-                            </label>
-                            <input type="text" id="addOrderReceiverPhone" 
-                                   value="${order['수령인전화번호'] || order['수취인전화번호'] || order['수령인 전화번호'] || ''}"
-                                   style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
-                                          border-radius: 6px; font-size: 13px;">
-                        </div>
-                    </div>
+    <!-- 기본 주문 정보 표시 -->
+    <div style="background: #e7f3ff; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+        <div style="font-size: 12px; color: #2563eb; margin-bottom: 8px;">기존 주문 정보</div>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 13px;">
+            <div><strong>마켓:</strong> ${order['마켓명'] || ''}</div>
+            <div><strong>주문번호:</strong> ${order['주문번호'] || ''}</div>
+        </div>
+    </div>
+    
+    <!-- 첫 번째 줄: 마켓명, 옵션명 -->
+    <div style="display: grid; grid-template-columns: 150px 1fr; gap: 12px; margin-bottom: 12px;">
+        <div>
+            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                마켓명 <span style="color: #dc3545;">*</span>
+            </label>
+            <input type="text" id="addOrderMarket" value="전화주문" readonly
+                   style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                          border-radius: 6px; font-size: 13px; background: #f8f9fa;">
+        </div>
+        <div>
+            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                옵션명 <span style="color: #dc3545;">*</span>
+            </label>
+            <input type="text" id="addOrderOption" value="${order['옵션명'] || ''}" 
+                   style="width: 100%; padding: 8px; border: 2px solid #ec4899; 
+                          border-radius: 6px; font-size: 13px;">
+        </div>
+    </div>
+    
+    <!-- 두 번째 줄: 수량, 단가, 택배비, 판매가 -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1.5fr; gap: 12px; margin-bottom: 12px;">
+        <div>
+            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                수량 <span style="color: #dc3545;">*</span>
+            </label>
+            <input type="number" id="addOrderQty" value="1" min="1"
+                   style="width: 100%; padding: 8px; border: 2px solid #ec4899; 
+                          border-radius: 6px; font-size: 13px;"
+                   oninput="OrderSearchHandlerInstance.calculateTotalPrice()">
+        </div>
+        <div>
+            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                단가
+            </label>
+            <input type="text" id="addOrderPrice" placeholder="0"
+                   style="width: 100%; padding: 8px; border: 2px solid #ec4899; 
+                          border-radius: 6px; font-size: 13px; text-align: right;"
+                   oninput="OrderSearchHandlerInstance.formatAmountInput(this); OrderSearchHandlerInstance.calculateTotalPrice();">
+        </div>
+        <div>
+            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                택배비
+            </label>
+            <input type="text" id="addOrderShipping" placeholder="0"
+                   style="width: 100%; padding: 8px; border: 2px solid #ec4899; 
+                          border-radius: 6px; font-size: 13px; text-align: right;"
+                   oninput="OrderSearchHandlerInstance.formatAmountInput(this); OrderSearchHandlerInstance.calculateTotalPrice();">
+        </div>
+        <div>
+            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                판매가 (단가×수량+택배비)
+            </label>
+            <div id="addOrderTotalPrice" 
+                 style="width: 100%; padding: 8px; border: 2px solid #ec4899; 
+                        border-radius: 6px; font-size: 13px; text-align: right;
+                        background: #f0f8ff; color: #2563eb; font-weight: 500;">0</div>
+        </div>
+    </div>
+    
+    <!-- 세 번째 줄: 주문자 정보 -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+        <div>
+            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                주문자 <span style="color: #dc3545;">*</span>
+            </label>
+            <input type="text" id="addOrderBuyer" value="${order['주문자'] || ''}"
+                   style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                          border-radius: 6px; font-size: 13px; color: #1d4ed8; font-weight: 500;">
+        </div>
+        <div>
+            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                주문자 전화번호
+            </label>
+            <input type="text" id="addOrderBuyerPhone" 
+                   value="${order['주문자전화번호'] || order['주문자 전화번호'] || ''}"
+                   style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                          border-radius: 6px; font-size: 13px; color: #1d4ed8; font-weight: 500;">
+        </div>
+    </div>
+    
+    <!-- 네 번째 줄: 수령인 정보 -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+        <div>
+            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                수령인 <span style="color: #dc3545;">*</span>
+            </label>
+            <input type="text" id="addOrderReceiver" 
+                   value="${order['수령인'] || order['수취인'] || ''}"
+                   style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                          border-radius: 6px; font-size: 13px; color: #1d4ed8; font-weight: 500;">
+        </div>
+        <div>
+            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                수령인 전화번호
+            </label>
+            <input type="text" id="addOrderReceiverPhone" 
+                   value="${order['수령인전화번호'] || order['수취인전화번호'] || order['수령인 전화번호'] || ''}"
+                   style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                          border-radius: 6px; font-size: 13px; color: #1d4ed8; font-weight: 500;">
+        </div>
+    </div>
                     
                     <!-- 다섯 번째 줄: 주소 (전체 너비) -->
                     <div style="margin-bottom: 12px;">
