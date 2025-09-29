@@ -1344,12 +1344,33 @@ case 'getCsRecords':
             return res.status(200).json({ success: true, orders: [] });
         }
         
+        case 'getTempOrders':
+    try {
+        const { userEmail } = req.body;
+        const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
+        
+        const tempData = await getSheetData('주문접수', ordersSpreadsheetId);
+        
+        if (!tempData || tempData.length < 2) {
+            return res.status(200).json({ success: true, orders: [] });
+        }
+
+
         const userOrders = [];
         console.log(`getTempOrders: 전체 ${tempData.length}행 중 ${userEmail} 검색`);
         
         for (let i = 1; i < tempData.length; i++) {
-            // 모든 주문접수 데이터 불러오기 (사용자 구분 없이)
-            if (tempData[i] && tempData[i][0]) {  // 데이터가 있으면
+            if (tempData[i] && tempData[i][0]) {
+                // U열(20): 삭제, V열(21): 삭제일시, W열(22): 이관, X열(23): 이관일시
+                const isDeleted = tempData[i][20] === 'Y';  // U열: 삭제 플래그
+                const isTransferred = tempData[i][22] === 'Y';  // W열: 이관 플래그
+                
+                // 삭제되거나 이관된 주문은 제외
+                if (isDeleted || isTransferred) {
+                    console.log(`행 ${i} 제외 - 삭제: ${isDeleted}, 이관: ${isTransferred}`);
+                    continue;
+                }
+                
                 userOrders.push({
                     사용자이메일: tempData[i][0],
                     접수번호: tempData[i][1],
@@ -1369,7 +1390,11 @@ case 'getCsRecords':
                     '특이/요청사항': tempData[i][15],
                     발송요청일: tempData[i][16] || '',
                     상태: tempData[i][17] || '',
-                    입금확인: tempData[i][18] || ''
+                    입금확인: tempData[i][18] || '',
+                    삭제: tempData[i][20] || '',  // U열
+                    삭제일시: tempData[i][21] || '',  // V열
+                    이관: tempData[i][22] || '',  // W열
+                    이관일시: tempData[i][23] || ''  // X열
                 });
             }
         }
@@ -1450,7 +1475,7 @@ case 'getCsRecords':
             error: error.message || '삭제 플래그 설정 실패' 
         });
     }
-    
+
 
     case 'updatePaymentConfirmation':
   try {
