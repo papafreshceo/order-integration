@@ -1489,9 +1489,11 @@ setupContextMenu() {
         const table = document.getElementById('searchTable');
         if (!table) return;
         
-        let isSelecting = false;
-        let startCell = null;
-        let endCell = null;
+        // 전역 변수로 이동
+        window.OrderSearchHandler.isSelecting = false;
+        window.OrderSearchHandler.startCell = null;
+        window.OrderSearchHandler.endCell = null;
+        window.OrderSearchHandler.currentSelectedCell = null;
         
         // 기존 선택 해제
         const clearSelection = () => {
@@ -1499,6 +1501,9 @@ setupContextMenu() {
                 cell.classList.remove('selected', 'selecting');
             });
         };
+        
+        // 전역으로 접근 가능하게 설정
+        window.OrderSearchHandler.clearSelection = clearSelection;
         
         // 범위 내 셀 선택
         const selectRange = (start, end) => {
@@ -1571,11 +1576,15 @@ setupContextMenu() {
             }
         });
         
-        // 현재 선택된 셀 추적
-        this.currentSelectedCell = null;
+        // 키보드 이벤트 - 기존 리스너 제거 후 새로 등록
+        if (window.OrderSearchHandler.keyboardHandler) {
+            document.removeEventListener('keydown', window.OrderSearchHandler.keyboardHandler);
+        }
         
-        // 키보드 이벤트
-        document.addEventListener('keydown', (e) => {
+        window.OrderSearchHandler.keyboardHandler = (e) => {
+            // 테이블이 포커스되어 있는지 확인
+            const table = document.getElementById('searchTable');
+            if (!table) return;
             // Ctrl+C로 선택된 셀 복사
             if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
                 const selectedCells = document.querySelectorAll('.search-table td.selected');
@@ -1604,76 +1613,62 @@ setupContextMenu() {
                 }
             }
             
-            // 방향키로 셀 이동
+// 방향키로 셀 이동
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault();
                 const selectedCells = document.querySelectorAll('.search-table td.selected');
                 
-                // 선택된 셀이 하나일 때만 이동
-                if (selectedCells.length === 1) {
-                    e.preventDefault();
+                if (selectedCells.length >= 1) {
                     const currentCell = selectedCells[0];
                     const currentRow = currentCell.parentElement;
-                    const currentRowIndex = currentRow.rowIndex;
-                    const currentCellIndex = currentCell.cellIndex;
-                    const tbody = currentRow.parentElement;
-                    const rows = tbody.querySelectorAll('tr');
+                    const tbody = table.querySelector('tbody');
+                    const allRows = tbody.querySelectorAll('tr');
                     
+                    let rowIndex = Array.from(allRows).indexOf(currentRow);
+                    let cellIndex = currentCell.cellIndex;
                     let newCell = null;
                     
                     switch(e.key) {
                         case 'ArrowUp':
-                            if (currentRowIndex > 1) {
-                                const prevRow = rows[currentRowIndex - 2];
-                                newCell = prevRow.cells[currentCellIndex];
+                            if (rowIndex > 0) {
+                                newCell = allRows[rowIndex - 1].cells[cellIndex];
                             }
                             break;
-                            
                         case 'ArrowDown':
-                            if (currentRowIndex <= rows.length) {
-                                const nextRow = rows[currentRowIndex];
-                                if (nextRow) {
-                                    newCell = nextRow.cells[currentCellIndex];
-                                }
+                            if (rowIndex < allRows.length - 1) {
+                                newCell = allRows[rowIndex + 1].cells[cellIndex];
                             }
                             break;
-                            
                         case 'ArrowLeft':
-                            if (currentCellIndex > 1) {
-                                newCell = currentRow.cells[currentCellIndex - 1];
+                            if (cellIndex > 1) { // 체크박스 컬럼 제외
+                                newCell = currentRow.cells[cellIndex - 1];
                             }
                             break;
-                            
                         case 'ArrowRight':
-                            if (currentCellIndex < currentRow.cells.length - 1) {
-                                newCell = currentRow.cells[currentCellIndex + 1];
+                            if (cellIndex < currentRow.cells.length - 1) {
+                                newCell = currentRow.cells[cellIndex + 1];
                             }
                             break;
                     }
                     
-                    // 새 셀로 이동
                     if (newCell && !newCell.classList.contains('checkbox-cell')) {
-                        // Shift 키를 누르고 있으면 범위 선택
-                        if (e.shiftKey && startCell) {
-                            selectRange(startCell, newCell);
+                        if (e.shiftKey && window.OrderSearchHandler.startCell) {
+                            selectRange(window.OrderSearchHandler.startCell, newCell);
                         } else {
                             clearSelection();
                             newCell.classList.add('selected');
-                            this.currentSelectedCell = newCell;
-                            
-                            // 셀이 보이도록 스크롤
-                            newCell.scrollIntoView({ 
-                                behavior: 'auto', 
-                                block: 'nearest', 
-                                inline: 'nearest' 
-                            });
+                            window.OrderSearchHandler.currentSelectedCell = newCell;
+                            window.OrderSearchHandler.startCell = newCell;
+                            newCell.scrollIntoView({ block: 'nearest', inline: 'nearest' });
                         }
                     }
-                } else if (selectedCells.length === 0) {
-                    // 선택된 셀이 없으면 첫 번째 데이터 셀 선택
-                    const firstCell = document.querySelector('.search-table tbody td:not(.checkbox-cell)');
+                } else {
+                    // 선택된 셀이 없으면 첫 번째 셀 선택
+                    const firstCell = table.querySelector('tbody td:not(.checkbox-cell)');
                     if (firstCell) {
                         firstCell.classList.add('selected');
-                        this.currentSelectedCell = firstCell;
+                        window.OrderSearchHandler.currentSelectedCell = firstCell;
+                        window.OrderSearchHandler.startCell = firstCell;
                     }
                 }
             }
@@ -1691,9 +1686,12 @@ setupContextMenu() {
             // ESC 키로 선택 해제
             if (e.key === 'Escape') {
                 clearSelection();
-                this.currentSelectedCell = null;
+                window.OrderSearchHandler.currentSelectedCell = null;
             }
-        });
+        };
+        
+        // 이벤트 리스너 등록
+        document.addEventListener('keydown', window.OrderSearchHandler.keyboardHandler);
         
         // 테이블 클릭 시 현재 셀 업데이트
         table.addEventListener('click', (e) => {
