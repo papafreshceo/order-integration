@@ -44,7 +44,7 @@ case 'saveCsRecord':
     
     try {
       // getOrderData는 주문 시트를 읽는 전용 함수
-      const { getOrderData } = require('../lib/google-sheets');
+      
       allData = await getOrderData('CS기록!A:V', ordersSpreadsheetId);
       console.log('CS기록 데이터 행 수:', allData?.length);
       
@@ -386,7 +386,7 @@ case 'addCsOrder':
       case 'getOrdersByDate':
         try {
           const { sheetName, spreadsheetId } = req.body;
-          const { getOrderData } = require('../lib/google-sheets');
+          
           
           const orderData = await getOrderData(`${sheetName}!A:ZZ`, spreadsheetId || process.env.SPREADSHEET_ID_ORDERS);
           
@@ -420,7 +420,7 @@ case 'addCsOrder':
             day: '2-digit'
           }).replace(/\. /g, '').replace(/\./g, '').replace(/-/g, '');
           
-          const { getOrderData } = require('../lib/google-sheets');
+          
           const targetSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
           
           const orderData = await getOrderData(`${today}!A:ZZ`, targetSpreadsheetId);
@@ -488,7 +488,7 @@ case 'addCsOrder':
       case 'getOrdersByDateRange':
         try {
           const { startDate, endDate } = req.body;
-          const { getOrderData } = require('../lib/google-sheets');
+          
           const targetSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
           
           if (!startDate || !endDate) {
@@ -857,7 +857,7 @@ case 'addCsOrder':
               day: '2-digit'
             }).replace(/\. /g, '').replace(/\./g, '').replace(/-/g, '');
             
-            const { getOrderData } = require('../lib/google-sheets');
+            
             let orderData = [];
             
             try {
@@ -991,7 +991,7 @@ case 'checkCsDuplicate':
     
     // CS기록 시트 체크 - getOrderData 사용
     try {
-      const { getOrderData } = require('../lib/google-sheets');
+      
       const csData = await getOrderData('CS기록!A:V', ordersSpreadsheetId);
       
       if (csData && csData.length > 1) {
@@ -1030,7 +1030,7 @@ case 'checkCsDuplicate':
     
     // 주문접수 시트 체크
     try {
-      const { getOrderData } = require('../lib/google-sheets');
+      
       const tempData = await getOrderData('주문접수!A:Q', ordersSpreadsheetId);
       
       if (tempData && tempData.length > 1) {
@@ -1078,7 +1078,7 @@ case 'checkCsDuplicate':
     const { orderData } = req.body;
     const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
     
-    const { getOrderData } = require('../lib/google-sheets');
+    
     const csData = await getOrderData('CS기록!A:W', ordersSpreadsheetId);
     
     if (csData && csData.length > 1) {
@@ -1333,17 +1333,6 @@ case 'getCsRecords':
         }
 
 
-        case 'getTempOrders':
-    try {
-        const { userEmail } = req.body;
-        const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS;
-        
-        const tempData = await getSheetData('주문접수', ordersSpreadsheetId);
-        
-        if (!tempData || tempData.length < 2) {
-            return res.status(200).json({ success: true, orders: [] });
-        }
-        
         case 'getTempOrders':
     try {
         const { userEmail } = req.body;
