@@ -1140,34 +1140,45 @@ case 'updateCsRecord':
     const { data, rowIndex } = req.body;
     const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
     
-    // 업데이트할 데이터 준비 (접수번호는 유지)
+    // 전화번호 형식 유지 함수
+    const formatPhoneNumber = (phone) => {
+      if (!phone) return '';
+      let phoneStr = String(phone).replace(/[^0-9]/g, '');
+      if (phoneStr && !phoneStr.startsWith('0')) {
+        phoneStr = '0' + phoneStr;
+      }
+      return phoneStr ? `'${phoneStr}` : '';
+    };
+    
+    // 업데이트할 데이터 준비 (CS구분 포함)
     const updateData = [[
-      data.연번,
+      data.연번 || rowIndex - 1,
       data.접수번호,
       data['마켓명'] || '',
-      data.접수일,
+      data.접수일 || new Date().toLocaleDateString('ko-KR'),
       data['해결방법'] || '',
       data['재발송상품'] || '',
       data['재발송수량'] || '',
-      data['CS구분'] || '',  // CS구분 추가
-      data['CS 내용'] || '',
+      data['CS구분'] || '',  // H열: CS구분
+      data['CS 내용'] || '',  // I열: CS 내용
       data['부분환불금액'] || '',
       data['결제일'] || '',
       data['주문번호'] || '',
       data['주문자'] || '',
-      data['주문자 전화번호'] || '',
+      formatPhoneNumber(data['주문자 전화번호']),
       data['수령인'] || '',
-      data['수령인 전화번호'] || '',
+      formatPhoneNumber(data['수령인 전화번호']),
       data['주소'] || '',
       data['배송메세지'] || '',
       data['옵션명'] || '',
       data['수량'] || '',
       data['특이/요청사항'] || '',
       data['발송요청일'] || '',
-      '수정'
+      '수정',  // W열: 상태
+      parseFloat(String(data['추가금액'] || 0).replace(/,/g, '')) || 0  // X열: 추가금액
     ]];
     
-    await updateSheetData(`CS기록!A${rowIndex}:W${rowIndex}`, updateData, ordersSpreadsheetId);
+    await updateSheetData(`CS기록!A${rowIndex}:X${rowIndex}`, updateData, ordersSpreadsheetId);
     
     return res.status(200).json({
       success: true,
