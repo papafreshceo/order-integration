@@ -944,12 +944,15 @@ window.OrderShippingHandler = {
     async loadTodayOrders() {
         this.showLoading();
         try {
-            const today = new Date().toLocaleDateString('ko-KR', {
-                timeZone: 'Asia/Seoul',
-                year: 'numeric',
-                month: '2-digit', 
-                day: '2-digit'
-            }).replace(/\. /g, '').replace(/\./g, '').replace(/-/g, '');
+// 한국 시간 기준 (UTC+9 직접 계산)
+const now = new Date();
+const kstOffset = 9 * 60; // KST는 UTC+9
+const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+const koreaDate = new Date(utcTime + (kstOffset * 60000));
+
+const today = koreaDate.getFullYear() + 
+    String(koreaDate.getMonth() + 1).padStart(2, '0') + 
+    String(koreaDate.getDate()).padStart(2, '0');
 
             const response = await fetch('/api/sheets', {
                 method: 'POST',
@@ -1385,12 +1388,15 @@ window.OrderShippingHandler = {
         
         this.showLoading();
         try {
-            const today = new Date().toLocaleDateString('ko-KR', {
-                timeZone: 'Asia/Seoul',
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit'
-            }).replace(/\. /g, '').replace(/\./g, '').replace(/-/g, '');
+            // 한국 시간 기준 (UTC+9 직접 계산)
+const now = new Date();
+const kstOffset = 9 * 60; // KST는 UTC+9
+const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+const koreaDate = new Date(utcTime + (kstOffset * 60000));
+
+const today = koreaDate.getFullYear() + 
+    String(koreaDate.getMonth() + 1).padStart(2, '0') + 
+    String(koreaDate.getDate()).padStart(2, '0');
 
             const response = await fetch('/api/sheets', {
                 method: 'POST',
@@ -1651,12 +1657,15 @@ window.OrderShippingHandler = {
         
         this.showLoading();
         try {
-            const today = new Date().toLocaleDateString('ko-KR', {
-                timeZone: 'Asia/Seoul',
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit'
-            }).replace(/\. /g, '').replace(/\./g, '').replace(/-/g, '');
+            // 한국 시간 기준 (UTC+9 직접 계산)
+const now = new Date();
+const kstOffset = 9 * 60; // KST는 UTC+9
+const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+const koreaDate = new Date(utcTime + (kstOffset * 60000));
+
+const today = koreaDate.getFullYear() + 
+    String(koreaDate.getMonth() + 1).padStart(2, '0') + 
+    String(koreaDate.getDate()).padStart(2, '0');
 
             const response = await fetch('/api/sheets', {
                 method: 'POST',
