@@ -426,7 +426,8 @@ window.OrderSearchHandler = {
                     border-radius: 16px;
                     width: 90%;
                     max-width: 900px;
-                    max-height: 90vh;
+                    height: 90vh;
+                    max-height: 800px;
                     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
                     display: flex;
                     flex-direction: column;
@@ -651,6 +652,8 @@ input[type="date"]::-webkit-datetime-edit-day-field {
                     justify-content: flex-end;
                     gap: 10px;
                     background: #f8f9fa;
+                    flex-shrink: 0;
+                    min-height: 60px;
                 }
 
                 .cs-btn {
