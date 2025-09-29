@@ -1783,28 +1783,39 @@ case 'updateTransferFlag':
         }
 
 
-        case 'saveMarketingCustomer':
-        try {
-          const { data } = req.body;
-          
-          // 환경변수에서 고객관리 스프레드시트 ID 가져오기
-          const spreadsheetId = process.env.SPREADSHEET_ID_CUSTOMER;
-          const sheetName = '문자마케팅대상고객';
+case 'saveMarketingCustomer':
+  try {
+    console.log('=== saveMarketingCustomer 시작 ===');
+    const { data } = req.body;
+    console.log('받은 데이터:', JSON.stringify(data));
+    
+    const spreadsheetId = process.env.SPREADSHEET_ID_CUSTOMER;
+    const sheetName = '문자마케팅대상고객';
+    
+    console.log('SPREADSHEET_ID_CUSTOMER:', spreadsheetId);
     
     if (!spreadsheetId) {
+      console.error('환경변수 SPREADSHEET_ID_CUSTOMER 없음');
       return res.status(500).json({ 
         success: false, 
         error: '고객 관리 시트가 설정되지 않았습니다' 
       });
     }
     
-    // 기존 데이터 가져오기 (연번 계산용)
-    const existingData = await getSheetData(`${sheetName}!A:J`, spreadsheetId);
+    let existingData = [];
+    try {
+      console.log('기존 데이터 조회 시작');
+      existingData = await getSheetData(`${sheetName}!A:J`, spreadsheetId);
+      console.log('기존 데이터 행 수:', existingData?.length || 0);
+    } catch (readError) {
+      console.error('시트 읽기 실패:', readError.message);
+      console.error('상세 에러:', readError);
+      // 시트가 없을 수도 있으므로 계속 진행
+    }
     
     let nextSerialNumber = 1;
     
     if (existingData && existingData.length > 1) {
-      // 헤더를 제외한 마지막 행의 연번 가져오기
       for (let i = existingData.length - 1; i > 0; i--) {
         const serialNum = parseInt(existingData[i][0]);
         if (!isNaN(serialNum)) {
@@ -1814,22 +1825,33 @@ case 'updateTransferFlag':
       }
     }
     
-    // 새 행 데이터 준비
+    console.log('다음 연번:', nextSerialNumber);
+    
     const newRow = [[
-      nextSerialNumber,           // 연번
-      data.등록일 || '',         // 등록일
-      data.이름 || '',           // 이름
-      data.전화번호 || '',       // 전화번호
-      data.주소 || '',           // 주소
-      data.이용마켓 || '',       // 이용마켓
-      data.구매상품 || '',       // 구매상품
-      data.결제일 || '',         // 결제일
-      data.고객정보 || '',       // 고객정보
-      data.비고 || ''            // 비고
+      nextSerialNumber,
+      data.등록일 || '',
+      data.이름 || '',
+      data.전화번호 || '',
+      data.주소 || '',
+      data.이용마켓 || '',
+      data.구매상품 || '',
+      data.결제일 || '',
+      data.고객정보 || '',
+      data.비고 || ''
     ]];
     
-    // 데이터 추가
-    await appendSheetData(`${sheetName}!A:J`, newRow, spreadsheetId);
+    console.log('추가할 데이터:', JSON.stringify(newRow));
+    
+    try {
+      await appendSheetData(`${sheetName}!A:J`, newRow, spreadsheetId);
+      console.log('데이터 추가 성공');
+    } catch (appendError) {
+      console.error('데이터 추가 실패:', appendError.message);
+      console.error('상세 에러:', appendError);
+      throw appendError;
+    }
+    
+    console.log('=== saveMarketingCustomer 완료 ===');
     
     return res.status(200).json({ 
       success: true, 
@@ -1838,7 +1860,11 @@ case 'updateTransferFlag':
     });
     
   } catch (error) {
-    console.error('마케팅 고객 저장 오류:', error);
+    console.error('=== saveMarketingCustomer 오류 ===');
+    console.error('에러 메시지:', error.message);
+    console.error('전체 에러:', error);
+    console.error('스택 트레이스:', error.stack);
+    
     return res.status(500).json({ 
       success: false, 
       error: error.message || '마케팅 고객 저장 실패'
