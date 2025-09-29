@@ -1485,231 +1485,84 @@ setupContextMenu() {
         }
     },
     
-    setupCellSelection() {
+
+setupCellSelection() {
         const table = document.getElementById('searchTable');
         if (!table) return;
         
-        // 전역 변수로 이동
-        window.OrderSearchHandler.isSelecting = false;
-        window.OrderSearchHandler.startCell = null;
-        window.OrderSearchHandler.endCell = null;
-        window.OrderSearchHandler.currentSelectedCell = null;
+        // 테이블을 포커스 가능하게 만들기
+        table.setAttribute('tabindex', '0');
         
-        // 기존 선택 해제
-        const clearSelection = () => {
-            document.querySelectorAll('.search-table td.selected, .search-table td.selecting').forEach(cell => {
-                cell.classList.remove('selected', 'selecting');
+        let selectedCell = null;
+        
+        // 모든 선택 제거
+        const clearAllSelections = () => {
+            table.querySelectorAll('td.selected').forEach(td => {
+                td.classList.remove('selected');
             });
         };
         
-        // 전역으로 접근 가능하게 설정
-        window.OrderSearchHandler.clearSelection = clearSelection;
-        
-        // 범위 내 셀 선택
-        const selectRange = (start, end) => {
-            clearSelection();
-            
-            const startRow = Math.min(start.parentElement.rowIndex, end.parentElement.rowIndex);
-            const endRow = Math.max(start.parentElement.rowIndex, end.parentElement.rowIndex);
-            const startCol = Math.min(start.cellIndex, end.cellIndex);
-            const endCol = Math.max(start.cellIndex, end.cellIndex);
-            
-            const rows = table.querySelectorAll('tbody tr');
-            for (let r = startRow - 1; r <= endRow - 1; r++) {
-                if (rows[r]) {
-                    const cells = rows[r].querySelectorAll('td');
-                    for (let c = startCol; c <= endCol; c++) {
-                        if (cells[c] && !cells[c].classList.contains('checkbox-cell')) {
-                            cells[c].classList.add('selected');
-                        }
-                    }
-                }
-            }
-        };
-        
-        // 마우스 다운
-        table.addEventListener('mousedown', (e) => {
+        // 셀 클릭
+        table.addEventListener('click', (e) => {
             const td = e.target.closest('td');
             if (!td || td.classList.contains('checkbox-cell')) return;
             
-            // Ctrl/Cmd 키가 눌려있지 않으면 기존 선택 해제
-            if (!e.ctrlKey && !e.metaKey) {
-                clearSelection();
-            }
-            
-            isSelecting = true;
-            startCell = td;
-            endCell = td;
+            clearAllSelections();
             td.classList.add('selected');
-            
-            e.preventDefault();
+            selectedCell = td;
+            table.focus();
         });
         
-        // 마우스 이동 (드래그)
-        table.addEventListener('mouseover', (e) => {
-            if (!isSelecting) return;
-            
-            const td = e.target.closest('td');
-            if (!td || td.classList.contains('checkbox-cell')) return;
-            
-            endCell = td;
-            selectRange(startCell, endCell);
-        });
-        
-        // 마우스 업
-        document.addEventListener('mouseup', () => {
-            isSelecting = false;
-        });
-        
-        // 단일 클릭으로 셀 선택/해제
-        table.addEventListener('click', (e) => {
-            const td = e.target.closest('td');
-            if (!td || td.classList.contains('checkbox-cell')) return;
-            
-            if (e.ctrlKey || e.metaKey) {
-                // Ctrl/Cmd + 클릭: 토글
-                td.classList.toggle('selected');
-            } else if (!isSelecting) {
-                // 일반 클릭: 단일 선택
-                clearSelection();
-                td.classList.add('selected');
-            }
-        });
-        
-        // 키보드 이벤트 - 기존 리스너 제거 후 새로 등록
-        if (window.OrderSearchHandler.keyboardHandler) {
-            document.removeEventListener('keydown', window.OrderSearchHandler.keyboardHandler);
-        }
-        
-        window.OrderSearchHandler.keyboardHandler = (e) => {
-            // 테이블이 포커스되어 있는지 확인
-            const table = document.getElementById('searchTable');
-            if (!table) return;
-            // Ctrl+C로 선택된 셀 복사
-            if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
-                const selectedCells = document.querySelectorAll('.search-table td.selected');
-                if (selectedCells.length > 0) {
-                    const rows = {};
-                    selectedCells.forEach(cell => {
-                        const rowIndex = cell.parentElement.rowIndex;
-                        if (!rows[rowIndex]) rows[rowIndex] = [];
-                        rows[rowIndex].push(cell.textContent);
-                    });
-                    
-                    const copyText = Object.values(rows).map(row => row.join('\t')).join('\n');
-                    navigator.clipboard.writeText(copyText);
-                    this.showMessage(`${selectedCells.length}개 셀이 복사되었습니다.`, 'success');
+        // 키보드 이벤트
+        table.addEventListener('keydown', (e) => {
+            const selected = table.querySelector('td.selected');
+            if (!selected) {
+                // 선택된 셀이 없으면 첫 번째 셀 선택
+                const firstCell = table.querySelector('tbody td:nth-child(2)');
+                if (firstCell) {
+                    firstCell.classList.add('selected');
                 }
+                return;
             }
             
-            // Ctrl+A로 전체 선택
-            if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
-                const tableElement = document.getElementById('searchTable');
-                if (tableElement && document.activeElement.closest('#searchTable')) {
-                    e.preventDefault();
-                    const cells = tableElement.querySelectorAll('tbody td:not(.checkbox-cell)');
-                    cells.forEach(cell => cell.classList.add('selected'));
-                    this.showMessage('모든 셀이 선택되었습니다.', 'info');
+            let newCell = null;
+            const row = selected.parentElement;
+            const cellIndex = selected.cellIndex;
+            
+            if (e.key === 'ArrowRight' && selected.nextElementSibling) {
+                newCell = selected.nextElementSibling;
+            } else if (e.key === 'ArrowLeft' && cellIndex > 1) {
+                newCell = selected.previousElementSibling;
+            } else if (e.key === 'ArrowDown') {
+                const nextRow = row.nextElementSibling;
+                if (nextRow) newCell = nextRow.cells[cellIndex];
+            } else if (e.key === 'ArrowUp') {
+                const prevRow = row.previousElementSibling;
+                if (prevRow && prevRow.parentElement.tagName === 'TBODY') {
+                    newCell = prevRow.cells[cellIndex];
                 }
+            } else if (e.key === 'Enter' || (e.key === 'c' && (e.ctrlKey || e.metaKey))) {
+                // 복사
+                const text = selected.textContent;
+                navigator.clipboard.writeText(text);
+                this.showMessage('복사되었습니다', 'success');
+                return;
+            } else if (e.key === 'Escape') {
+                clearAllSelections();
+                return;
+            } else {
+                return;
             }
             
-// 방향키로 셀 이동
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            if (newCell && !newCell.classList.contains('checkbox-cell')) {
                 e.preventDefault();
-                const selectedCells = document.querySelectorAll('.search-table td.selected');
-                
-                if (selectedCells.length >= 1) {
-                    const currentCell = selectedCells[0];
-                    const currentRow = currentCell.parentElement;
-                    const tbody = table.querySelector('tbody');
-                    const allRows = tbody.querySelectorAll('tr');
-                    
-                    let rowIndex = Array.from(allRows).indexOf(currentRow);
-                    let cellIndex = currentCell.cellIndex;
-                    let newCell = null;
-                    
-                    switch(e.key) {
-                        case 'ArrowUp':
-                            if (rowIndex > 0) {
-                                newCell = allRows[rowIndex - 1].cells[cellIndex];
-                            }
-                            break;
-                        case 'ArrowDown':
-                            if (rowIndex < allRows.length - 1) {
-                                newCell = allRows[rowIndex + 1].cells[cellIndex];
-                            }
-                            break;
-                        case 'ArrowLeft':
-                            if (cellIndex > 1) { // 체크박스 컬럼 제외
-                                newCell = currentRow.cells[cellIndex - 1];
-                            }
-                            break;
-                        case 'ArrowRight':
-                            if (cellIndex < currentRow.cells.length - 1) {
-                                newCell = currentRow.cells[cellIndex + 1];
-                            }
-                            break;
-                    }
-                    
-                    if (newCell && !newCell.classList.contains('checkbox-cell')) {
-                        if (e.shiftKey && window.OrderSearchHandler.startCell) {
-                            selectRange(window.OrderSearchHandler.startCell, newCell);
-                        } else {
-                            clearSelection();
-                            newCell.classList.add('selected');
-                            window.OrderSearchHandler.currentSelectedCell = newCell;
-                            window.OrderSearchHandler.startCell = newCell;
-                            newCell.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-                        }
-                    }
-                } else {
-                    // 선택된 셀이 없으면 첫 번째 셀 선택
-                    const firstCell = table.querySelector('tbody td:not(.checkbox-cell)');
-                    if (firstCell) {
-                        firstCell.classList.add('selected');
-                        window.OrderSearchHandler.currentSelectedCell = firstCell;
-                        window.OrderSearchHandler.startCell = firstCell;
-                    }
-                }
-            }
-            
-            // Enter 키로 셀 내용 복사
-            if (e.key === 'Enter') {
-                const selectedCells = document.querySelectorAll('.search-table td.selected');
-                if (selectedCells.length === 1) {
-                    const text = selectedCells[0].textContent;
-                    navigator.clipboard.writeText(text);
-                    this.showMessage('셀 내용이 복사되었습니다.', 'success');
-                }
-            }
-            
-            // ESC 키로 선택 해제
-            if (e.key === 'Escape') {
-                clearSelection();
-                window.OrderSearchHandler.currentSelectedCell = null;
-            }
-        };
-        
-        // 이벤트 리스너 등록
-        document.addEventListener('keydown', window.OrderSearchHandler.keyboardHandler);
-        
-        // 테이블 클릭 시 현재 셀 업데이트
-        table.addEventListener('click', (e) => {
-            const td = e.target.closest('td');
-            if (!td || td.classList.contains('checkbox-cell')) return;
-            
-            if (e.ctrlKey || e.metaKey) {
-                // Ctrl/Cmd + 클릭: 토글
-                td.classList.toggle('selected');
-            } else if (!isSelecting) {
-                // 일반 클릭: 단일 선택
-                clearSelection();
-                td.classList.add('selected');
-                this.currentSelectedCell = td;
-                startCell = td; // Shift+방향키를 위한 시작점 설정
+                clearAllSelections();
+                newCell.classList.add('selected');
+                newCell.scrollIntoView({ block: 'nearest', inline: 'nearest' });
             }
         });
     },
+
 
     createTableRow(order, serialNumber) {
         const row = document.createElement('tr');
