@@ -1829,6 +1829,7 @@ case 'saveMarketingCustomer':
   try {
     const { data } = req.body;
     
+    // 환경변수에서 스프레드시트 ID 가져오기
     const spreadsheetId = process.env.SPREADSHEET_ID_CUSTOMER;
     const sheetName = '문자마케팅대상고객';
     
@@ -1839,12 +1840,13 @@ case 'saveMarketingCustomer':
       });
     }
     
-    // ✅ 기존 데이터 가져오기 추가
+    // 기존 데이터 가져오기 (연번 계산용)
     const existingData = await getSheetData(`${sheetName}!A:J`, spreadsheetId);
     
     let nextSerialNumber = 1;
     
     if (existingData && existingData.length > 1) {
+      // 헤더를 제외한 마지막 행의 연번 가져오기
       for (let i = existingData.length - 1; i > 0; i--) {
         const serialNum = parseInt(existingData[i][0]);
         if (!isNaN(serialNum)) {
@@ -1854,19 +1856,21 @@ case 'saveMarketingCustomer':
       }
     }
     
+    // 새 행 데이터 준비
     const newRow = [[
-      nextSerialNumber,
-      data.등록일 || '',
-      data.이름 || '',
-      data.전화번호 || '',
-      data.주소 || '',
-      data.이용마켓 || '',
-      data.구매상품 || '',
-      data.결제일 || '',
-      data.고객정보 || '',
-      data.비고 || ''
+      nextSerialNumber,           // 연번
+      data.등록일 || '',         // 등록일
+      data.이름 || '',           // 이름
+      data.전화번호 || '',       // 전화번호
+      data.주소 || '',           // 주소
+      data.이용마켓 || '',       // 이용마켓
+      data.구매상품 || '',       // 구매상품
+      data.결제일 || '',         // 결제일
+      data.고객정보 || '',       // 고객정보
+      data.비고 || ''            // 비고
     ]];
     
+    // 데이터 추가
     await appendSheetData(`${sheetName}!A:J`, newRow, spreadsheetId);
     
     return res.status(200).json({ 
