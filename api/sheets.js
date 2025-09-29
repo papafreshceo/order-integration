@@ -1383,6 +1383,75 @@ case 'getCsRecords':
     }
 
 
+    case 'markAsDeleted':
+    try {
+        const { userEmail, orderIndex, orderId, deleteFlag, deleteTime } = req.body;
+        const ordersSpreadsheetId = process.env.SPREADSHEET_ID_ORDERS || '1UsUMd_haNOsRm2Yn8sFpFc7HUlJ_CEQ-91QctlkSjJg';
+        
+        console.log('markAsDeleted 시작:', { userEmail, orderIndex, orderId, deleteFlag });
+        
+        // 주문접수 데이터 가져오기
+        const tempData = await getOrderData('주문접수!A:V', ordersSpreadsheetId);
+        
+        if (!tempData || tempData.length < 2) {
+            return res.status(200).json({ 
+                success: false, 
+                error: '주문접수 데이터가 없습니다' 
+            });
+        }
+        
+        // 사용자 이메일과 주문번호로 찾기
+        let targetRowIndex = -1;
+        let currentUserOrderIndex = 0;
+        
+        for (let i = 1; i < tempData.length; i++) {
+            if (tempData[i][0] === userEmail) {
+                // 접수번호(인덱스 1) 또는 주문번호로 매칭
+                if (tempData[i][1] === orderId || currentUserOrderIndex === orderIndex) {
+                    targetRowIndex = i;
+                    break;
+                }
+                currentUserOrderIndex++;
+            }
+        }
+        
+        if (targetRowIndex === -1) {
+            return res.status(200).json({ 
+                success: false, 
+                error: '주문을 찾을 수 없습니다' 
+            });
+        }
+        
+        const rowNumber = targetRowIndex + 1; // 시트는 1부터 시작
+        console.log(`삭제 플래그 설정: 행 ${rowNumber}`);
+        
+        // U열: 삭제 플래그, V열: 삭제일시
+        await updateOrderCell(
+            `주문접수!U${rowNumber}`, 
+            deleteFlag || 'Y', 
+            ordersSpreadsheetId
+        );
+        
+        await updateOrderCell(
+            `주문접수!V${rowNumber}`, 
+            deleteTime || new Date().toLocaleString('ko-KR'), 
+            ordersSpreadsheetId
+        );
+        
+        return res.status(200).json({ 
+            success: true, 
+            message: '주문이 삭제되었습니다' 
+        });
+        
+    } catch (error) {
+        console.error('markAsDeleted 오류:', error);
+        return res.status(500).json({ 
+            success: false, 
+            error: error.message || '삭제 플래그 설정 실패' 
+        });
+    }
+    
+
     case 'updatePaymentConfirmation':
   try {
     const { userEmail, orderIndex, confirmTime } = req.body;
