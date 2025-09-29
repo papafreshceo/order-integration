@@ -1062,49 +1062,39 @@
             });
         });
 
-        // 대시보드 데이터 로드 (서버 API 사용)
+// 대시보드 데이터 로드 (서버 API 사용)
         async function loadDashboardData() {
             console.log('대시보드 데이터 로딩 중...');
             showLoading();
             
             try {
+                // 최근 30일 데이터 가져오기
+                const today = new Date();
+                const thirtyDaysAgo = new Date(today);
+                thirtyDaysAgo.setDate(today.getDate() - 30);
+                
+                const startDate = formatDateForAPI(thirtyDaysAgo);
+                const endDate = formatDateForAPI(today);
+                
                 const response = await fetch('/api/sheets', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        action: 'getMarketData',
-                        useMainSpreadsheet: true
+                        action: 'getOrdersByDateRange',
+                        startDate: startDate,
+                        endDate: endDate
                     })
                 });
 
                 const result = await response.json();
-                console.log('API 전체 응답:', result);
+                console.log('API 응답:', result);
                 
                 if (result.success) {
-                    // 다양한 응답 구조 처리
-                    let orderData = [];
-                    
-                    if (Array.isArray(result.data)) {
-                        orderData = result.data;
-                    } else if (result.values && Array.isArray(result.values)) {
-                        if (result.values.length > 1) {
-                            const headers = result.values[0];
-                            orderData = result.values.slice(1).map(row => {
-                                const obj = {};
-                                headers.forEach((header, index) => {
-                                    obj[header] = row[index] || '';
-                                });
-                                return obj;
-                            });
-                        }
-                    } else if (result.orders && Array.isArray(result.orders)) {
-                        orderData = result.orders;
-                    }
-                    
-                    dashboardState.orderData = orderData;
+                    // getOrdersByDateRange는 orders 필드로 데이터 반환
+                    dashboardState.orderData = result.orders || [];
                     dashboardState.marketColors = result.colors || {};
                     
-                    console.log('처리된 주문 데이터:', orderData.length, '건');
+                    console.log('처리된 주문 데이터:', dashboardState.orderData.length, '건');
                     
                     // 통계 계산 및 업데이트
                     calculateStatistics();
@@ -1114,13 +1104,49 @@
                     updatePivotTable();
                 } else {
                     console.error('데이터 로드 실패:', result.error);
-                    loadOrdersDirectly();
+                    // 오늘 데이터만이라도 가져오기
+                    await loadTodayOrders();
                 }
             } catch (error) {
                 console.error('로드 오류:', error);
                 showMessage('데이터 로드 중 오류가 발생했습니다.', 'error');
             } finally {
                 hideLoading();
+            }
+        }
+        
+        // 날짜 포맷 함수 추가
+        function formatDateForAPI(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}${month}${day}`;
+        }
+        
+        // 오늘 주문만 가져오기
+        async function loadTodayOrders() {
+            try {
+                const response = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'getTodayOrders'
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success && result.data) {
+                    dashboardState.orderData = result.data;
+                    dashboardState.marketColors = result.colors || {};
+                    
+                    calculateStatistics();
+                    updateCharts();
+                    updateCalendarData();
+                    displayStatistics();
+                    updatePivotTable();
+                }
+            } catch (error) {
+                console.error('오늘 주문 로드 실패:', error);
             }
         }
 
@@ -1952,16 +1978,28 @@
         }
 
         // 유틸리티 함수들
-        function parseDate(dateStr) {
+function parseDate(dateStr) {
             if (!dateStr) return new Date(0);
             
             const str = String(dateStr).trim();
             
+            // YYYYMMDD 형식 (시트명)
             if (str.match(/^\d{8}$/)) {
-                const year = str.substring(0, 4);
-                const month = str.substring(4, 6);
-                const day = str.substring(6, 8);
-                return new Date(year, parseInt(month) - 1, parseInt(day));
+                const year = parseInt(str.substring(0, 4));
+                const month = parseInt(str.substring(4, 6)) - 1;
+                const day = parseInt(str.substring(6, 8));
+                return new Date(year, month, day);
+            }
+            
+            // YYYY-MM-DD 형식
+            if (str.match(/^\d{4}-\d{2}-\d{2}/)) {
+                return new Date(str.split(' ')[0] + 'T00:00:00');
+            }
+            
+            // YYYY/MM/DD HH:MM:SS 형식
+            if (str.match(/^\d{4}\/\d{1,2}\/\d{1,2}/)) {
+                const parts = str.split(' ')[0].split('/');
+                return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
             }
             
             if (!isNaN(str) && str.length <= 6) {
