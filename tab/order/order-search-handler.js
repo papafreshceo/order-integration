@@ -1571,8 +1571,12 @@ setupContextMenu() {
             }
         });
         
-        // Ctrl+C로 선택된 셀 복사
+        // 현재 선택된 셀 추적
+        this.currentSelectedCell = null;
+        
+        // 키보드 이벤트
         document.addEventListener('keydown', (e) => {
+            // Ctrl+C로 선택된 셀 복사
             if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
                 const selectedCells = document.querySelectorAll('.search-table td.selected');
                 if (selectedCells.length > 0) {
@@ -1598,6 +1602,113 @@ setupContextMenu() {
                     cells.forEach(cell => cell.classList.add('selected'));
                     this.showMessage('모든 셀이 선택되었습니다.', 'info');
                 }
+            }
+            
+            // 방향키로 셀 이동
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                const selectedCells = document.querySelectorAll('.search-table td.selected');
+                
+                // 선택된 셀이 하나일 때만 이동
+                if (selectedCells.length === 1) {
+                    e.preventDefault();
+                    const currentCell = selectedCells[0];
+                    const currentRow = currentCell.parentElement;
+                    const currentRowIndex = currentRow.rowIndex;
+                    const currentCellIndex = currentCell.cellIndex;
+                    const tbody = currentRow.parentElement;
+                    const rows = tbody.querySelectorAll('tr');
+                    
+                    let newCell = null;
+                    
+                    switch(e.key) {
+                        case 'ArrowUp':
+                            if (currentRowIndex > 1) {
+                                const prevRow = rows[currentRowIndex - 2];
+                                newCell = prevRow.cells[currentCellIndex];
+                            }
+                            break;
+                            
+                        case 'ArrowDown':
+                            if (currentRowIndex <= rows.length) {
+                                const nextRow = rows[currentRowIndex];
+                                if (nextRow) {
+                                    newCell = nextRow.cells[currentCellIndex];
+                                }
+                            }
+                            break;
+                            
+                        case 'ArrowLeft':
+                            if (currentCellIndex > 1) {
+                                newCell = currentRow.cells[currentCellIndex - 1];
+                            }
+                            break;
+                            
+                        case 'ArrowRight':
+                            if (currentCellIndex < currentRow.cells.length - 1) {
+                                newCell = currentRow.cells[currentCellIndex + 1];
+                            }
+                            break;
+                    }
+                    
+                    // 새 셀로 이동
+                    if (newCell && !newCell.classList.contains('checkbox-cell')) {
+                        // Shift 키를 누르고 있으면 범위 선택
+                        if (e.shiftKey && startCell) {
+                            selectRange(startCell, newCell);
+                        } else {
+                            clearSelection();
+                            newCell.classList.add('selected');
+                            this.currentSelectedCell = newCell;
+                            
+                            // 셀이 보이도록 스크롤
+                            newCell.scrollIntoView({ 
+                                behavior: 'auto', 
+                                block: 'nearest', 
+                                inline: 'nearest' 
+                            });
+                        }
+                    }
+                } else if (selectedCells.length === 0) {
+                    // 선택된 셀이 없으면 첫 번째 데이터 셀 선택
+                    const firstCell = document.querySelector('.search-table tbody td:not(.checkbox-cell)');
+                    if (firstCell) {
+                        firstCell.classList.add('selected');
+                        this.currentSelectedCell = firstCell;
+                    }
+                }
+            }
+            
+            // Enter 키로 셀 내용 복사
+            if (e.key === 'Enter') {
+                const selectedCells = document.querySelectorAll('.search-table td.selected');
+                if (selectedCells.length === 1) {
+                    const text = selectedCells[0].textContent;
+                    navigator.clipboard.writeText(text);
+                    this.showMessage('셀 내용이 복사되었습니다.', 'success');
+                }
+            }
+            
+            // ESC 키로 선택 해제
+            if (e.key === 'Escape') {
+                clearSelection();
+                this.currentSelectedCell = null;
+            }
+        });
+        
+        // 테이블 클릭 시 현재 셀 업데이트
+        table.addEventListener('click', (e) => {
+            const td = e.target.closest('td');
+            if (!td || td.classList.contains('checkbox-cell')) return;
+            
+            if (e.ctrlKey || e.metaKey) {
+                // Ctrl/Cmd + 클릭: 토글
+                td.classList.toggle('selected');
+            } else if (!isSelecting) {
+                // 일반 클릭: 단일 선택
+                clearSelection();
+                td.classList.add('selected');
+                this.currentSelectedCell = td;
+                startCell = td; // Shift+방향키를 위한 시작점 설정
             }
         });
     },
