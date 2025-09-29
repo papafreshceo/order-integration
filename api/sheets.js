@@ -1808,14 +1808,28 @@ case 'saveMarketingCustomer':
     }
     
     let existingData = [];
+    let hasHeaders = false;
+    
     try {
       console.log('기존 데이터 조회 시작');
       existingData = await getSheetData(`${sheetName}!A:J`, spreadsheetId);
       console.log('기존 데이터 행 수:', existingData?.length || 0);
+      
+      // 헤더 확인
+      if (existingData && existingData.length > 0) {
+        const firstRow = existingData[0];
+        hasHeaders = firstRow[0] === '연번' || firstRow[1] === '등록일';
+        console.log('헤더 존재:', hasHeaders);
+      }
     } catch (readError) {
       console.error('시트 읽기 실패:', readError.message);
-      console.error('상세 에러:', readError);
-      // 시트가 없을 수도 있으므로 계속 진행
+    }
+    
+    // 헤더가 없으면 먼저 추가
+    if (!hasHeaders) {
+      const headers = [['연번', '등록일', '이름', '전화번호', '주소', '이용마켓', '구매상품', '결제일', '고객정보', '비고']];
+      await appendSheetData(`${sheetName}!A1:J1`, headers, spreadsheetId);
+      console.log('헤더 추가 완료');
     }
     
     let nextSerialNumber = 1;
