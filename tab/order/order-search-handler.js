@@ -426,12 +426,12 @@ window.OrderSearchHandler = {
                     border-radius: 16px;
                     width: 90%;
                     max-width: 900px;
-                    height: 90vh;
-                    max-height: 800px;
+                    height: 85vh;
+                    max-height: 700px;
                     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
                     display: flex;
                     flex-direction: column;
-                    overflow: hidden;
+                    position: relative;
                 }
 
                 .cs-modal-header {
@@ -441,6 +441,7 @@ window.OrderSearchHandler = {
                     justify-content: space-between;
                     align-items: center;
                     background: #f8f9fa;
+                    flex-shrink: 0;
                 }
 
                 .cs-modal-title {
@@ -466,10 +467,12 @@ window.OrderSearchHandler = {
                     background: #ffffff;
                 }
 
-                .cs-modal-body {
+                cs-modal-body {
                     padding: 20px;
-                    flex: 1;
+                    flex: 1 1 auto;
                     overflow-y: auto;
+                    overflow-x: hidden;
+                    min-height: 0;
                 }
 
                 .cs-order-info {
