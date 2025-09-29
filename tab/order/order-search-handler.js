@@ -2046,10 +2046,290 @@ async submitCs() {
         };
         return solutionMap[value] || value;
     },
-    // 추가주문접수 모달 (추후 구현)
-    openAdditionalOrderModal() {
-        this.showMessage('추가주문접수 기능은 준비 중입니다.', 'info');
-    },
+    // 추가주문접수 모달
+async openAdditionalOrderModal() {
+    const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
+    if (checkedBoxes.length === 0) {
+        this.showMessage('추가주문을 접수할 주문을 선택하세요.', 'error');
+        return;
+    }
+    if (checkedBoxes.length > 1) {
+        this.showMessage('추가주문 접수는 한 번에 하나의 주문만 처리할 수 있습니다.', 'error');
+        return;
+    }
+
+    const index = checkedBoxes[0].dataset.index;
+    const order = this.getFilteredOrders()[index];
+    
+    if (!order) {
+        this.showMessage('주문 정보를 찾을 수 없습니다.', 'error');
+        return;
+    }
+
+    this.currentAdditionalOrder = order;
+    this.showAdditionalOrderModal(order);
+},
+
+showAdditionalOrderModal(order) {
+    // 기존 모달 제거
+    const existingModal = document.getElementById('additionalOrderModal');
+    if (existingModal) existingModal.remove();
+    
+    // 오늘 날짜를 발송요청일 기본값으로
+    const today = new Date().toISOString().split('T')[0];
+    
+    const modalHtml = `
+        <div id="additionalOrderModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+             background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+            <div style="background: white; border-radius: 16px; max-width: 900px; width: 90%; 
+                 max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                <div style="padding: 20px; border-bottom: 1px solid #dee2e6; background: #f8f9fa;">
+                    <h3 style="font-size: 18px; font-weight: 500; color: #042848; margin: 0;">추가주문 접수</h3>
+                </div>
+                
+                <div style="padding: 20px;">
+                    <!-- 기본 주문 정보 표시 -->
+                    <div style="background: #e7f3ff; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+                        <div style="font-size: 12px; color: #2563eb; margin-bottom: 8px;">기존 주문 정보</div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 13px;">
+                            <div><strong>마켓:</strong> ${order['마켓명'] || ''}</div>
+                            <div><strong>주문번호:</strong> ${order['주문번호'] || ''}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 입력 필드들 -->
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                        <!-- 왼쪽 컬럼 -->
+                        <div>
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                                    마켓 <span style="color: #dc3545;">*</span>
+                                </label>
+                                <select id="addOrderMarket" style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                        border-radius: 6px; font-size: 13px;">
+                                    <option value="추가주문">추가주문</option>
+                                    <option value="CS발송">CS발송</option>
+                                    <option value="전화주문">전화주문</option>
+                                    ${Object.keys(this.marketColors).map(market => 
+                                        `<option value="${market}">${market}</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                                    옵션명 <span style="color: #dc3545;">*</span>
+                                </label>
+                                <input type="text" id="addOrderOption" value="${order['옵션명'] || ''}" 
+                                       style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                              border-radius: 6px; font-size: 13px;">
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                                <div>
+                                    <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                                        수량 <span style="color: #dc3545;">*</span>
+                                    </label>
+                                    <input type="number" id="addOrderQty" value="1" min="1"
+                                           style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                                  border-radius: 6px; font-size: 13px;">
+                                </div>
+                                <div>
+                                    <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                                        단가
+                                    </label>
+                                    <input type="text" id="addOrderPrice" placeholder="0"
+                                           style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                                  border-radius: 6px; font-size: 13px; text-align: right;"
+                                           oninput="OrderSearchHandlerInstance.formatAmountInput(this)">
+                                </div>
+                                <div>
+                                    <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                                        택배비
+                                    </label>
+                                    <input type="text" id="addOrderShipping" placeholder="0"
+                                           style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                                  border-radius: 6px; font-size: 13px; text-align: right;"
+                                           oninput="OrderSearchHandlerInstance.formatAmountInput(this)">
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                                    주문자 <span style="color: #dc3545;">*</span>
+                                </label>
+                                <input type="text" id="addOrderBuyer" value="${order['주문자'] || ''}"
+                                       style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                              border-radius: 6px; font-size: 13px;">
+                            </div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                                    주문자 전화번호
+                                </label>
+                                <input type="text" id="addOrderBuyerPhone" 
+                                       value="${order['주문자전화번호'] || order['주문자 전화번호'] || ''}"
+                                       style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                              border-radius: 6px; font-size: 13px;">
+                            </div>
+                        </div>
+                        
+                        <!-- 오른쪽 컬럼 -->
+                        <div>
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                                    수령인 <span style="color: #dc3545;">*</span>
+                                </label>
+                                <input type="text" id="addOrderReceiver" 
+                                       value="${order['수령인'] || order['수취인'] || ''}"
+                                       style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                              border-radius: 6px; font-size: 13px;">
+                            </div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                                    수령인 전화번호
+                                </label>
+                                <input type="text" id="addOrderReceiverPhone" 
+                                       value="${order['수령인전화번호'] || order['수취인전화번호'] || order['수령인 전화번호'] || ''}"
+                                       style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                              border-radius: 6px; font-size: 13px;">
+                            </div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                                    배송 주소 <span style="color: #dc3545;">*</span>
+                                </label>
+                                <input type="text" id="addOrderAddress" 
+                                       value="${order['주소'] || order['수령인주소'] || ''}"
+                                       style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                              border-radius: 6px; font-size: 13px;">
+                            </div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                                    배송 메세지
+                                </label>
+                                <input type="text" id="addOrderMessage" value="${order['배송메세지'] || ''}"
+                                       style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                              border-radius: 6px; font-size: 13px;">
+                            </div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                                    특이/요청사항
+                                </label>
+                                <textarea id="addOrderNote" rows="2"
+                                          style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                                 border-radius: 6px; font-size: 13px; resize: vertical;">추가주문</textarea>
+                            </div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                                    발송요청일
+                                </label>
+                                <input type="date" id="addOrderRequestDate" value="${today}"
+                                       style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                              border-radius: 6px; font-size: 13px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="padding: 16px 20px; border-top: 1px solid #dee2e6; display: flex; 
+                     justify-content: flex-end; gap: 10px; background: #f8f9fa;">
+                    <button onclick="document.getElementById('additionalOrderModal').remove();"
+                            style="padding: 8px 20px; border: 1px solid #dee2e6; background: white; 
+                                   color: #042848; border-radius: 6px; font-size: 13px; cursor: pointer;">
+                        취소
+                    </button>
+                    <button onclick="OrderSearchHandlerInstance.submitAdditionalOrder();"
+                            style="padding: 8px 20px; border: none; background: #2563eb; 
+                                   color: white; border-radius: 6px; font-size: 13px; cursor: pointer;">
+                        주문접수
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+},
+
+async submitAdditionalOrder() {
+    // 필수 필드 검증
+    const market = document.getElementById('addOrderMarket').value;
+    const option = document.getElementById('addOrderOption').value;
+    const qty = document.getElementById('addOrderQty').value;
+    const buyer = document.getElementById('addOrderBuyer').value;
+    const receiver = document.getElementById('addOrderReceiver').value;
+    const address = document.getElementById('addOrderAddress').value;
+    
+    if (!market || !option || !qty || !buyer || !receiver || !address) {
+        this.showMessage('필수 항목을 모두 입력하세요.', 'error');
+        return;
+    }
+    
+    this.showLoading();
+    
+    try {
+        const userEmail = localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail') || '';
+        
+        // 금액 필드 파싱 (천단위 쉼표 제거)
+        const price = parseFloat(String(document.getElementById('addOrderPrice').value || 0).replace(/,/g, '')) || 0;
+        const shipping = parseFloat(String(document.getElementById('addOrderShipping').value || 0).replace(/,/g, '')) || 0;
+        const totalAmount = (price * parseInt(qty)) + shipping;
+        
+        const orderData = {
+            userEmail: userEmail,
+            orderData: {
+                마켓명: market,
+                옵션명: option,
+                수량: qty,
+                단가: price,
+                택배비: shipping,
+                상품금액: totalAmount,
+                주문자: buyer,
+                '주문자 전화번호': document.getElementById('addOrderBuyerPhone').value,
+                수령인: receiver,
+                '수령인 전화번호': document.getElementById('addOrderReceiverPhone').value,
+                주소: address,
+                배송메세지: document.getElementById('addOrderMessage').value,
+                '특이/요청사항': document.getElementById('addOrderNote').value,
+                발송요청일: document.getElementById('addOrderRequestDate').value
+            }
+        };
+        
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'appendTempOrder',
+                ...orderData
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            this.showMessage('추가주문이 접수되었습니다.', 'success');
+            document.getElementById('additionalOrderModal').remove();
+            
+            // OrderInputHandler의 loadTempOrders 호출하여 화면 갱신
+            if (window.OrderInputHandler) {
+                window.OrderInputHandler.loadTempOrders();
+            }
+        } else {
+            throw new Error('추가주문 접수 실패');
+        }
+        
+    } catch (error) {
+        console.error('추가주문 접수 오류:', error);
+        this.showMessage('추가주문 접수 중 오류가 발생했습니다.', 'error');
+    } finally {
+        this.hideLoading();
+    }
+},
 
     // 마케팅고객등록 모달 (추후 구현)
     openMarketingModal() {
