@@ -701,18 +701,19 @@ input[type="number"] {
     
 
     generateOrderNumber() {
-        const today = new Date();
-        const dateStr = today.getFullYear() + 
-            String(today.getMonth() + 1).padStart(2, '0') + 
-            String(today.getDate()).padStart(2, '0');
-        
-        // 로컬스토리지에서 오늘 날짜의 카운터 가져오기
-        const counterKey = `orderCounter_${dateStr}`;
-        let counter = parseInt(localStorage.getItem(counterKey) || '0') + 1;
-        localStorage.setItem(counterKey, counter.toString());
-        
-        return `PH${dateStr}${String(counter).padStart(3, '0')}`;
-    },
+    // 한국 시간 기준
+    const koreaDate = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Seoul"}));
+    const dateStr = koreaDate.getFullYear() + 
+        String(koreaDate.getMonth() + 1).padStart(2, '0') + 
+        String(koreaDate.getDate()).padStart(2, '0');
+    
+    // 로컬스토리지에서 오늘 날짜의 카운터 가져오기
+    const counterKey = `orderCounter_${dateStr}`;
+    let counter = parseInt(localStorage.getItem(counterKey) || '0') + 1;
+    localStorage.setItem(counterKey, counter.toString());
+    
+    return `PH${dateStr}${String(counter).padStart(3, '0')}`;
+},
 
 
 
@@ -1768,11 +1769,12 @@ async saveOrders() {
         saveButton.disabled = true;
     }
     
-    try {
-        const today = new Date();
-        const sheetName = today.getFullYear() + 
-                         String(today.getMonth() + 1).padStart(2, '0') + 
-                         String(today.getDate()).padStart(2, '0');
+try {
+    // 한국 시간 기준
+    const koreaDate = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Seoul"}));
+    const sheetName = koreaDate.getFullYear() + 
+                     String(koreaDate.getMonth() + 1).padStart(2, '0') + 
+                     String(koreaDate.getDate()).padStart(2, '0');
         
 
         // 매핑 데이터 로드 - loadMappingData 직접 호출
@@ -2201,11 +2203,12 @@ async loadUnshippedOrders() {
         const maxDaysToCheck = 10;
         
         while (foundSheets.length < 3 && daysBack < maxDaysToCheck) {
-            const targetDate = new Date();
-            targetDate.setDate(targetDate.getDate() - daysBack);
-            const sheetName = targetDate.getFullYear() + 
-                             String(targetDate.getMonth() + 1).padStart(2, '0') + 
-                             String(targetDate.getDate()).padStart(2, '0');
+            // 한국 시간 기준
+const koreaDate = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Seoul"}));
+koreaDate.setDate(koreaDate.getDate() - daysBack);
+const sheetName = koreaDate.getFullYear() + 
+                 String(koreaDate.getMonth() + 1).padStart(2, '0') + 
+                 String(koreaDate.getDate()).padStart(2, '0');
             
             console.log(`[${daysBack}일 전] 시트 확인: ${sheetName}`);
             
