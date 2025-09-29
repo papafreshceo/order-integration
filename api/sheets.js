@@ -1566,16 +1566,33 @@ case 'getCsRecords':
             second: '2-digit'
         });
         
-// 접수번호 생성
+// 접수번호 생성 - PH + 날짜 + 연번
 const today = new Date();
 const dateStr = today.getFullYear() + 
     String(today.getMonth() + 1).padStart(2, '0') + 
     String(today.getDate()).padStart(2, '0');
-const timeStr = String(today.getHours()).padStart(2, '0') + 
-    String(today.getMinutes()).padStart(2, '0') + 
-    String(today.getSeconds()).padStart(2, '0');
-const millisStr = String(today.getMilliseconds()).padStart(3, '0');
-const receiptNumber = `ADD${dateStr}${timeStr}${millisStr}`;
+
+// 오늘 날짜의 기존 PH 주문 확인하여 연번 생성
+let sequenceNumber = 1;
+try {
+    const existingData = await getOrderData('주문접수!A:C', ordersSpreadsheetId);
+    if (existingData && existingData.length > 1) {
+        for (let i = 1; i < existingData.length; i++) {
+            const receiptNo = existingData[i][1] || '';
+            if (receiptNo.startsWith(`PH${dateStr}`)) {
+                const seqStr = receiptNo.substring(10); // PH20250929XXX에서 XXX 추출
+                const seq = parseInt(seqStr);
+                if (!isNaN(seq) && seq >= sequenceNumber) {
+                    sequenceNumber = seq + 1;
+                }
+            }
+        }
+    }
+} catch (err) {
+    console.log('연번 확인 실패, 기본값 사용');
+}
+
+const receiptNumber = `PH${dateStr}${String(sequenceNumber).padStart(3, '0')}`;
 
 const tempData = [[
     userEmail,
