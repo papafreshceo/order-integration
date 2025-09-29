@@ -2459,10 +2459,265 @@ showOrderConfirmModal(receiptNumber, orderTime, orderData) {
 
 
 
-    // 마케팅고객등록 모달 (추후 구현)
-    openMarketingModal() {
-        this.showMessage('마케팅고객등록 기능은 준비 중입니다.', 'info');
-    },
+// 마케팅고객등록 모달
+async openMarketingModal() {
+    const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
+    if (checkedBoxes.length === 0) {
+        this.showMessage('마케팅 고객으로 등록할 주문을 선택하세요.', 'error');
+        return;
+    }
+    if (checkedBoxes.length > 1) {
+        this.showMessage('마케팅 고객 등록은 한 번에 하나의 주문만 처리할 수 있습니다.', 'error');
+        return;
+    }
+
+    const index = checkedBoxes[0].dataset.index;
+    const order = this.getFilteredOrders()[index];
+    
+    if (!order) {
+        this.showMessage('주문 정보를 찾을 수 없습니다.', 'error');
+        return;
+    }
+
+    this.showMarketingCustomerModal(order);
+},
+
+showMarketingCustomerModal(order) {
+    // 기존 모달 제거
+    const existingModal = document.getElementById('marketingModal');
+    if (existingModal) existingModal.remove();
+    
+    // 결제일 처리 - 다양한 필드명 체크
+    const paymentDate = order['결제일'] || order['주문일시'] || order['주문일'] || '';
+    
+    const modalHtml = `
+        <div id="marketingModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+             background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+            <div style="background: white; border-radius: 16px; max-width: 700px; width: 90%; 
+                 max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                <div style="padding: 20px; border-bottom: 1px solid #dee2e6; background: #f8f9fa;">
+                    <h3 style="font-size: 18px; font-weight: 500; color: #042848; margin: 0;">마케팅 고객 등록</h3>
+                </div>
+                
+                <div style="padding: 20px;">
+                    <!-- 안내 메시지 -->
+                    <div style="background: #e7f3ff; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+                        <div style="font-size: 13px; color: #2563eb;">
+                            주문 정보를 기반으로 문자 마케팅 대상 고객으로 등록합니다.<br>
+                            모든 항목은 수정 가능합니다.
+                        </div>
+                    </div>
+                    
+                    <!-- 첫 번째 줄: 이름, 전화번호 -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                                이름 <span style="color: #dc3545;">*</span>
+                            </label>
+                            <input type="text" id="marketingName" value="${order['주문자'] || ''}"
+                                   style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                          border-radius: 6px; font-size: 13px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                                전화번호 <span style="color: #dc3545;">*</span>
+                            </label>
+                            <input type="text" id="marketingPhone" 
+                                   value="${order['주문자전화번호'] || order['주문자 전화번호'] || ''}"
+                                   style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                          border-radius: 6px; font-size: 13px;">
+                        </div>
+                    </div>
+                    
+                    <!-- 두 번째 줄: 주소 -->
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                            주소
+                        </label>
+                        <input type="text" id="marketingAddress" 
+                               value="${order['주소'] || order['수령인주소'] || ''}"
+                               style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                      border-radius: 6px; font-size: 13px;">
+                    </div>
+                    
+                    <!-- 세 번째 줄: 이용마켓, 구매상품 -->
+                    <div style="display: grid; grid-template-columns: 150px 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                                이용마켓
+                            </label>
+                            <input type="text" id="marketingMarket" value="${order['마켓명'] || ''}"
+                                   style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                          border-radius: 6px; font-size: 13px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                                구매상품
+                            </label>
+                            <input type="text" id="marketingProduct" value="${order['옵션명'] || ''}"
+                                   style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                          border-radius: 6px; font-size: 13px;">
+                        </div>
+                    </div>
+                    
+                    <!-- 네 번째 줄: 결제일 -->
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                            결제일
+                        </label>
+                        <input type="text" id="marketingPaymentDate" value="${paymentDate}"
+                               style="width: 200px; padding: 8px; border: 1px solid #dee2e6; 
+                                      border-radius: 6px; font-size: 13px;">
+                    </div>
+                    
+                    <!-- 다섯 번째 줄: 고객정보 -->
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                            고객정보 (특이사항, 관심사, 구매패턴 등)
+                        </label>
+                        <textarea id="marketingCustomerInfo" 
+                                  placeholder="예: VIP 고객, 정기구매, 선물용 구매 등"
+                                  style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                         border-radius: 6px; font-size: 13px; min-height: 80px; resize: vertical;"></textarea>
+                    </div>
+                    
+                    <!-- 여섯 번째 줄: 비고 -->
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; font-size: 13px; font-weight: 400; color: #042848; margin-bottom: 4px;">
+                            비고
+                        </label>
+                        <textarea id="marketingNote" 
+                                  placeholder="추가 메모사항"
+                                  style="width: 100%; padding: 8px; border: 1px solid #dee2e6; 
+                                         border-radius: 6px; font-size: 13px; min-height: 60px; resize: vertical;"></textarea>
+                    </div>
+                </div>
+                
+                <div style="padding: 16px 20px; border-top: 1px solid #dee2e6; display: flex; 
+                     justify-content: flex-end; gap: 10px; background: #f8f9fa;">
+                    <button onclick="document.getElementById('marketingModal').remove();"
+                            style="padding: 8px 20px; border: 1px solid #dee2e6; background: white; 
+                                   color: #042848; border-radius: 6px; font-size: 13px; cursor: pointer;">
+                        취소
+                    </button>
+                    <button onclick="OrderSearchHandlerInstance.submitMarketingCustomer();"
+                            style="padding: 8px 20px; border: none; background: #2563eb; 
+                                   color: white; border-radius: 6px; font-size: 13px; cursor: pointer;">
+                        고객 등록
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+},
+
+async submitMarketingCustomer() {
+    // 필수 필드 검증
+    const name = document.getElementById('marketingName').value.trim();
+    const phone = document.getElementById('marketingPhone').value.trim();
+    
+    if (!name || !phone) {
+        this.showMessage('이름과 전화번호는 필수 입력 항목입니다.', 'error');
+        return;
+    }
+    
+    this.showLoading();
+    
+    try {
+        // 한국 시간 기준 날짜
+        const now = new Date();
+        const kstOffset = 9 * 60;
+        const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const koreaDate = new Date(utcTime + (kstOffset * 60000));
+        
+        const registerDate = koreaDate.getFullYear() + '-' + 
+                           String(koreaDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                           String(koreaDate.getDate()).padStart(2, '0');
+        
+        const customerData = {
+            등록일: registerDate,
+            이름: name,
+            전화번호: phone,
+            주소: document.getElementById('marketingAddress').value.trim(),
+            이용마켓: document.getElementById('marketingMarket').value.trim(),
+            구매상품: document.getElementById('marketingProduct').value.trim(),
+            결제일: document.getElementById('marketingPaymentDate').value.trim(),
+            고객정보: document.getElementById('marketingCustomerInfo').value.trim(),
+            비고: document.getElementById('marketingNote').value.trim()
+        };
+        
+        const response = await fetch('/api/sheets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'saveMarketingCustomer',
+                spreadsheetId: '1riZzgrjJ2HhZDv94d_SQMdk2L0ToDojjHPTMN8dKyXc',
+                sheetName: '문자마케팅대상고객',
+                data: customerData
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            document.getElementById('marketingModal').remove();
+            
+            // 성공 메시지 모달
+            this.showMarketingSuccessModal(name, result.serialNumber);
+        } else {
+            throw new Error('고객 등록 실패');
+        }
+        
+    } catch (error) {
+        console.error('마케팅 고객 등록 오류:', error);
+        this.showMessage('고객 등록 중 오류가 발생했습니다.', 'error');
+    } finally {
+        this.hideLoading();
+    }
+},
+
+showMarketingSuccessModal(customerName, serialNumber) {
+    const modalHtml = `
+        <div id="marketingSuccessModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+             background: rgba(0,0,0,0.5); z-index: 1001; display: flex; align-items: center; justify-content: center;">
+            <div style="background: white; border-radius: 16px; max-width: 400px; width: 90%; 
+                 box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                <div style="padding: 30px; text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
+                    <h3 style="font-size: 18px; font-weight: 500; color: #042848; margin-bottom: 12px;">
+                        마케팅 고객 등록 완료
+                    </h3>
+                    <p style="font-size: 14px; color: #6c757d; margin-bottom: 20px;">
+                        <strong style="color: #2563eb;">${customerName}</strong>님이<br>
+                        문자 마케팅 대상 고객으로 등록되었습니다.<br>
+                        <span style="font-size: 12px;">(등록번호: ${serialNumber || '자동생성'})</span>
+                    </p>
+                    <button onclick="document.getElementById('marketingSuccessModal').remove();"
+                            style="padding: 10px 32px; border: none; background: #2563eb; 
+                                   color: white; border-radius: 6px; font-size: 14px; cursor: pointer;">
+                        확인
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // 3초 후 자동 닫기
+    setTimeout(() => {
+        const modal = document.getElementById('marketingSuccessModal');
+        if (modal) modal.remove();
+    }, 3000);
+},
+
+
+
+
+
+
     // fullReset 추가
 fullReset() {
     // 모든 데이터 초기화
