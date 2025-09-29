@@ -1782,50 +1782,8 @@ case 'updateTransferFlag':
           });
         }
 
-      default:
-        return res.status(400).json({ 
-          error: '알 수 없는 액션입니다.' 
-        });
-    }
-  } catch (error) {
-    console.error('Sheets API 오류:', error);
-    return res.status(500).json({ 
-      success: false,
-      error: error.message || '서버 오류가 발생했습니다.'
-    });
-  }
-}
 
-// 컬럼 번호를 알파벳으로 변환하는 헬퍼 함수
-function columnToLetter(column) {
-  let temp, letter = '';
-  while (column > 0) {
-    temp = (column - 1) % 26;
-    letter = String.fromCharCode(temp + 65) + letter;
-    column = (column - temp - 1) / 26;
-  }
-  return letter;
-}
-
-function parseNumber(value) {
-  if (value === null || value === undefined || value === '') {
-    return 0;
-  }
-  if (typeof value === 'number') {
-    return value;
-  }
-  let strValue = String(value).trim();
-  strValue = strValue.replace(/[,₩￦$¥£€\s]/g, '');
-  if (strValue.startsWith('(') && strValue.endsWith(')')) {
-    strValue = '-' + strValue.substring(1, strValue.length - 1);
-  }
-  const num = parseFloat(strValue);
-  return isNaN(num) ? 0 : num;
-}
-
-
-
-case 'saveMarketingCustomer':
+        case 'saveMarketingCustomer':
   try {
     const { data } = req.body;
     
@@ -1886,3 +1844,47 @@ case 'saveMarketingCustomer':
       error: error.message || '마케팅 고객 저장 실패'
     });
   }
+  
+      default:
+        return res.status(400).json({ 
+          error: '알 수 없는 액션입니다.' 
+        });
+    }
+  } catch (error) {
+    console.error('Sheets API 오류:', error);
+    return res.status(500).json({ 
+      success: false,
+      error: error.message || '서버 오류가 발생했습니다.'
+    });
+  }
+}
+
+// 컬럼 번호를 알파벳으로 변환하는 헬퍼 함수
+function columnToLetter(column) {
+  let temp, letter = '';
+  while (column > 0) {
+    temp = (column - 1) % 26;
+    letter = String.fromCharCode(temp + 65) + letter;
+    column = (column - temp - 1) / 26;
+  }
+  return letter;
+}
+
+function parseNumber(value) {
+  if (value === null || value === undefined || value === '') {
+    return 0;
+  }
+  if (typeof value === 'number') {
+    return value;
+  }
+  let strValue = String(value).trim();
+  strValue = strValue.replace(/[,₩￦$¥£€\s]/g, '');
+  if (strValue.startsWith('(') && strValue.endsWith(')')) {
+    strValue = '-' + strValue.substring(1, strValue.length - 1);
+  }
+  const num = parseFloat(strValue);
+  return isNaN(num) ? 0 : num;
+}
+
+
+
