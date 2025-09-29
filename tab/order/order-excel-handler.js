@@ -2349,13 +2349,17 @@ async saveToSheets() {
     window.isSaving = true;
     this.showLoading();
     
-    try {
-        // 한국 시간 기준 날짜 생성
-        const koreaTime = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Seoul"}));
-        const year = koreaTime.getFullYear();
-        const month = String(koreaTime.getMonth() + 1).padStart(2, '0');
-        const day = String(koreaTime.getDate()).padStart(2, '0');
-        const sheetName = `${year}${month}${day}`;
+try {
+    // 한국 시간 기준 날짜 생성 (UTC+9 직접 계산)
+    const now = new Date();
+    const kstOffset = 9 * 60; // KST는 UTC+9
+    const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const koreaTime = new Date(utcTime + (kstOffset * 60000));
+    
+    const year = koreaTime.getFullYear();
+    const month = String(koreaTime.getMonth() + 1).padStart(2, '0');
+    const day = String(koreaTime.getDate()).padStart(2, '0');
+    const sheetName = `${year}${month}${day}`;
         
         console.log('저장할 시트명:', sheetName);
         
