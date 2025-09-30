@@ -844,7 +844,7 @@
         <!-- 마켓별 분석 섹션 -->
         <div class="analysis-section" style="margin-bottom: 32px;">
             <h2 style="font-size: 20px; font-weight: 500; color: #212529; margin: 32px 0 24px 0;">마켓별 분석</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 24px; margin-bottom: 24px;">
                 <div class="chart-card">
                     <div class="card-header">
                         <h3 class="card-title">마켓별 주문 비율</h3>
@@ -869,6 +869,16 @@
                         <div id="marketTop5Stats" style="padding: 10px;">
                             <!-- 동적으로 생성될 내용 -->
                         </div>
+                    </div>
+                </div>
+                
+                <!-- 마켓별 30일 추이 차트 -->
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3 class="card-title">마켓별 30일 추이</h3>
+                    </div>
+                    <div class="chart-content">
+                        <canvas id="marketTrendChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -937,7 +947,7 @@
         <!-- 옵션별 분석 섹션 -->
         <div class="analysis-section" style="margin-bottom: 32px;">
             <h2 style="font-size: 20px; font-weight: 500; color: #212529; margin: 32px 0 24px 0;">옵션별 분석</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 24px; margin-bottom: 24px;">
                 <div class="chart-card">
                     <div class="card-header">
                         <h3 class="card-title">옵션별 주문 비율</h3>
@@ -962,6 +972,16 @@
                         <div id="optionTop5Stats" style="padding: 10px;">
                             <!-- 동적으로 생성될 내용 -->
                         </div>
+                    </div>
+                </div>
+                
+                <!-- 옵션별 30일 추이 차트 -->
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3 class="card-title">옵션별 30일 추이</h3>
+                    </div>
+                    <div class="chart-content">
+                        <canvas id="optionTrendChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -1738,6 +1758,246 @@
             updateMarketChart();
             updateOptionChart();
             updateTop5Stats();
+            updateMarketTrendChart();
+            updateOptionTrendChart();
+        }
+        
+        // 마켓별 30일 추이 차트
+        function updateMarketTrendChart() {
+            const canvas = document.getElementById('marketTrendChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const monthlyData = dashboardState.monthlyData || [];
+            const today = new Date();
+            
+            // 마켓별 데이터 집계
+            const marketDailyData = {};
+            const dates = [];
+            
+            // 최근 30일 날짜 생성
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                const dateStr = formatDateForAPI(date);
+                dates.push(`${date.getMonth() + 1}/${date.getDate()}`);
+                
+                // 해당 날짜의 주문 데이터 집계
+                const dayOrders = monthlyData.filter(order => order.sheetDate === dateStr);
+                dayOrders.forEach(order => {
+                    const market = order['마켓명'] || '기타';
+                    if (!marketDailyData[market]) {
+                        marketDailyData[market] = new Array(30).fill(0);
+                    }
+                    marketDailyData[market][29 - i]++;
+                });
+            }
+            
+            // 상위 5개 마켓만 표시
+            const marketTotals = {};
+            Object.keys(marketDailyData).forEach(market => {
+                marketTotals[market] = marketDailyData[market].reduce((a, b) => a + b, 0);
+            });
+            
+            const topMarkets = Object.entries(marketTotals)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .map(([market]) => market);
+            
+            // 캔버스 설정
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = 200;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const colors = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+            const padding = { left: 30, right: 10, top: 20, bottom: 30 };
+            const graphWidth = canvas.width - padding.left - padding.right;
+            const graphHeight = canvas.height - padding.top - padding.bottom;
+            
+            // Y축 최대값 계산
+            let maxValue = 0;
+            topMarkets.forEach(market => {
+                const max = Math.max(...(marketDailyData[market] || []));
+                if (max > maxValue) maxValue = max;
+            });
+            maxValue = Math.max(maxValue, 5);
+            
+            // 격자선 그리기
+            ctx.strokeStyle = '#f1f3f5';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                const y = padding.top + (graphHeight * i / 5);
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(canvas.width - padding.right, y);
+                ctx.stroke();
+                
+                // Y축 레이블
+                ctx.fillStyle = '#6c757d';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(Math.round(maxValue * (5 - i) / 5), padding.left - 5, y + 3);
+            }
+            
+            // 각 마켓별 선 그리기
+            topMarkets.forEach((market, marketIndex) => {
+                const data = marketDailyData[market] || [];
+                ctx.strokeStyle = colors[marketIndex];
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                data.forEach((value, index) => {
+                    const x = padding.left + (graphWidth * index / 29);
+                    const y = padding.top + graphHeight * (1 - value / maxValue);
+                    
+                    if (index === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+                
+                ctx.stroke();
+                
+                // 범례
+                const legendX = 10 + marketIndex * 100;
+                const legendY = 10;
+                ctx.fillStyle = colors[marketIndex];
+                ctx.fillRect(legendX, legendY, 15, 3);
+                ctx.fillStyle = '#495057';
+                ctx.font = '11px sans-serif';
+                ctx.textAlign = 'left';
+                const marketDisplay = market.length > 8 ? market.substring(0, 8) + '..' : market;
+                ctx.fillText(marketDisplay, legendX + 20, legendY + 5);
+            });
+            
+            // X축 레이블 (5일 간격)
+            ctx.fillStyle = '#6c757d';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            for (let i = 0; i < dates.length; i += 5) {
+                const x = padding.left + (graphWidth * i / 29);
+                ctx.fillText(dates[i], x, canvas.height - 10);
+            }
+        }
+        
+        // 옵션별 30일 추이 차트
+        function updateOptionTrendChart() {
+            const canvas = document.getElementById('optionTrendChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const monthlyData = dashboardState.monthlyData || [];
+            const today = new Date();
+            
+            // 옵션별 데이터 집계
+            const optionDailyData = {};
+            const dates = [];
+            
+            // 최근 30일 날짜 생성
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                const dateStr = formatDateForAPI(date);
+                dates.push(`${date.getMonth() + 1}/${date.getDate()}`);
+                
+                // 해당 날짜의 주문 데이터 집계
+                const dayOrders = monthlyData.filter(order => order.sheetDate === dateStr);
+                dayOrders.forEach(order => {
+                    const option = order['옵션명'] || '기타';
+                    if (!optionDailyData[option]) {
+                        optionDailyData[option] = new Array(30).fill(0);
+                    }
+                    optionDailyData[option][29 - i]++;
+                });
+            }
+            
+            // 상위 5개 옵션만 표시
+            const optionTotals = {};
+            Object.keys(optionDailyData).forEach(option => {
+                optionTotals[option] = optionDailyData[option].reduce((a, b) => a + b, 0);
+            });
+            
+            const topOptions = Object.entries(optionTotals)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .map(([option]) => option);
+            
+            // 캔버스 설정
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = 200;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const colors = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#2563eb'];
+            const padding = { left: 30, right: 10, top: 20, bottom: 30 };
+            const graphWidth = canvas.width - padding.left - padding.right;
+            const graphHeight = canvas.height - padding.top - padding.bottom;
+            
+            // Y축 최대값 계산
+            let maxValue = 0;
+            topOptions.forEach(option => {
+                const max = Math.max(...(optionDailyData[option] || []));
+                if (max > maxValue) maxValue = max;
+            });
+            maxValue = Math.max(maxValue, 5);
+            
+            // 격자선 그리기
+            ctx.strokeStyle = '#f1f3f5';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                const y = padding.top + (graphHeight * i / 5);
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(canvas.width - padding.right, y);
+                ctx.stroke();
+                
+                // Y축 레이블
+                ctx.fillStyle = '#6c757d';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(Math.round(maxValue * (5 - i) / 5), padding.left - 5, y + 3);
+            }
+            
+            // 각 옵션별 선 그리기
+            topOptions.forEach((option, optionIndex) => {
+                const data = optionDailyData[option] || [];
+                ctx.strokeStyle = colors[optionIndex];
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                data.forEach((value, index) => {
+                    const x = padding.left + (graphWidth * index / 29);
+                    const y = padding.top + graphHeight * (1 - value / maxValue);
+                    
+                    if (index === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+                
+                ctx.stroke();
+                
+                // 범례
+                const legendX = 10 + optionIndex * 100;
+                const legendY = 10;
+                ctx.fillStyle = colors[optionIndex];
+                ctx.fillRect(legendX, legendY, 15, 3);
+                ctx.fillStyle = '#495057';
+                ctx.font = '11px sans-serif';
+                ctx.textAlign = 'left';
+                const optionDisplay = option.length > 8 ? option.substring(0, 8) + '..' : option;
+                ctx.fillText(optionDisplay, legendX + 20, legendY + 5);
+            });
+            
+            // X축 레이블 (5일 간격)
+            ctx.fillStyle = '#6c757d';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'center';
+            for (let i = 0; i < dates.length; i += 5) {
+                const x = padding.left + (graphWidth * i / 29);
+                ctx.fillText(dates[i], x, canvas.height - 10);
+            }
         }
         
         // 옵션별 차트 업데이트
