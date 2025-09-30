@@ -1427,8 +1427,7 @@
                     <td>${stat.unsentVendor.count || ''}</td>
                     <td>${stat.unsentVendor.quantity || ''}</td>
                     <td style="text-align: right;">${stat.unsentVendor.amount ? stat.unsentVendor.amount.toLocaleString() : ''}</td>
-                `;  <td>${stat.unsentVendor.amount.toLocaleString()}</td>
-             
+                `;
                 
                 tbody.appendChild(tr);
                 
@@ -1447,31 +1446,31 @@
                 <td>합계</td>
                 <td>${totals.overall.count}</td>
                 <td>${totals.overall.quantity}</td>
-                <td>${totals.overall.amount.toLocaleString()}</td>
+                <td style="text-align: right;">${totals.overall.amount.toLocaleString()}</td>
                 <td>${totals.companyProduct.count}</td>
                 <td>${totals.companyProduct.quantity}</td>
-                <td>${totals.companyProduct.amount.toLocaleString()}</td>
+                <td style="text-align: right;">${totals.companyProduct.amount.toLocaleString()}</td>
                 <td>${totals.vendorProduct.count}</td>
                 <td>${totals.vendorProduct.quantity}</td>
-                <td>${totals.vendorProduct.amount.toLocaleString()}</td>
+                <td style="text-align: right;">${totals.vendorProduct.amount.toLocaleString()}</td>
                 <td>${totals.companySales.count}</td>
                 <td>${totals.companySales.quantity}</td>
-                <td>${totals.companySales.amount.toLocaleString()}</td>
+                <td style="text-align: right;">${totals.companySales.amount.toLocaleString()}</td>
                 <td>${totals.sellerSales.count}</td>
                 <td>${totals.sellerSales.quantity}</td>
-                <td>${totals.sellerSales.amount.toLocaleString()}</td>
+                <td style="text-align: right;">${totals.sellerSales.amount.toLocaleString()}</td>
                 <td>${totals.sentCompany.count}</td>
                 <td>${totals.sentCompany.quantity}</td>
-                <td>${totals.sentCompany.amount.toLocaleString()}</td>
+                <td style="text-align: right;">${totals.sentCompany.amount.toLocaleString()}</td>
                 <td>${totals.sentVendor.count}</td>
                 <td>${totals.sentVendor.quantity}</td>
-                <td>${totals.sentVendor.amount.toLocaleString()}</td>
+                <td style="text-align: right;">${totals.sentVendor.amount.toLocaleString()}</td>
                 <td>${totals.unsentCompany.count}</td>
                 <td>${totals.unsentCompany.quantity}</td>
-                <td>${totals.unsentCompany.amount.toLocaleString()}</td>
+                <td style="text-align: right;">${totals.unsentCompany.amount.toLocaleString()}</td>
                 <td>${totals.unsentVendor.count}</td>
                 <td>${totals.unsentVendor.quantity}</td>
-                <td>${totals.unsentVendor.amount.toLocaleString()}</td>
+                <td style="text-align: right;">${totals.unsentVendor.amount.toLocaleString()}</td>
             `;
             tbody.appendChild(totalRow);
         }
