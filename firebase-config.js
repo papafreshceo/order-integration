@@ -22,4 +22,4 @@ const db = firebase.firestore();
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 
 // 관리자 이메일 설정 (실제 관리자 이메일로 변경 필요)
-const ADMIN_EMAIL = 'admin@dallaemarket.com'; // 여기에 실제 관리자 이메일 입력
+const ADMIN_EMAIL = 'papafresh.ceo@gmail.com'; // 여기에 실제 관리자 이메일 입력
