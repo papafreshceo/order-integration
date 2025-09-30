@@ -1848,32 +1848,27 @@
             
             const total = orders.length;
             const marketTop5Html = `
-                <div style="padding: 10px;">
+                <div style="display: flex; flex-direction: column; gap: 12px; padding: 5px;">
                     ${marketTop5.map(([market, stats], index) => {
                         const percentage = ((stats.count / total) * 100).toFixed(1);
-                        const barWidth = (stats.count / marketTop5[0][1].count) * 100;
                         return `
-                            <div style="margin-bottom: 16px;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                    <span style="font-size: 13px; font-weight: 500; color: #212529;">
-                                        ${index + 1}. ${market}
-                                    </span>
-                                    <span style="font-size: 12px; color: #6c757d;">
-                                        ${percentage}%
-                                    </span>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="flex-shrink: 0; width: 25px; height: 25px; 
+                                            background: ${['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][index]}; 
+                                            color: white; border-radius: 50%; 
+                                            display: flex; align-items: center; justify-content: center;
+                                            font-size: 11px; font-weight: 600;">
+                                    ${index + 1}
                                 </div>
-                                <div style="background: #f1f3f5; height: 20px; border-radius: 4px; overflow: hidden;">
-                                    <div style="background: ${['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][index]}; 
-                                                height: 100%; width: ${barWidth}%; transition: width 0.3s;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-size: 12px; font-weight: 500; color: #212529; 
+                                                white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        ${market}
                                     </div>
                                 </div>
-                                <div style="display: flex; justify-content: space-between; margin-top: 4px;">
-                                    <span style="font-size: 11px; color: #6c757d;">
-                                        ${stats.count}건 (수량 ${stats.quantity})
-                                    </span>
-                                    <span style="font-size: 11px; font-weight: 500; color: #495057;">
-                                        ${stats.amount.toLocaleString()}원
-                                    </span>
+                                <div style="flex-shrink: 0; text-align: right; font-size: 11px;">
+                                    <div style="color: #212529; font-weight: 500;">${stats.count}건</div>
+                                    <div style="color: #6c757d;">${percentage}%</div>
                                 </div>
                             </div>
                         `;
@@ -1899,32 +1894,29 @@
                 .slice(0, 5);
             
             const optionTop5Html = `
-                <div style="padding: 10px;">
+                <div style="display: flex; flex-direction: column; gap: 12px; padding: 5px;">
                     ${optionTop5.map(([option, stats], index) => {
                         const percentage = ((stats.count / total) * 100).toFixed(1);
-                        const barWidth = (stats.count / optionTop5[0][1].count) * 100;
-                        const displayOption = option.length > 20 ? option.substring(0, 20) + '...' : option;
+                        const displayOption = option.length > 25 ? option.substring(0, 25) + '...' : option;
                         return `
-                            <div style="margin-bottom: 16px;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                    <span style="font-size: 13px; font-weight: 500; color: #212529; 
-                                                 max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" 
-                                          title="${option}">
-                                        ${index + 1}. ${displayOption}
-                                    </span>
-                                    <span style="font-size: 12px; color: #6c757d;">
-                                        ${percentage}%
-                                    </span>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="flex-shrink: 0; width: 25px; height: 25px; 
+                                            background: ${['#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#2563eb'][index]}; 
+                                            color: white; border-radius: 50%; 
+                                            display: flex; align-items: center; justify-content: center;
+                                            font-size: 11px; font-weight: 600;">
+                                    ${index + 1}
                                 </div>
-                                <div style="background: #f1f3f5; height: 20px; border-radius: 4px; overflow: hidden;">
-                                    <div style="background: ${['#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#2563eb'][index]}; 
-                                                height: 100%; width: ${barWidth}%; transition: width 0.3s;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-size: 12px; font-weight: 500; color: #212529; 
+                                                white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                                         title="${option}">
+                                        ${displayOption}
                                     </div>
                                 </div>
-                                <div style="display: flex; justify-content: space-between; margin-top: 4px;">
-                                    <span style="font-size: 11px; color: #6c757d;">
-                                        ${stats.count}건 (수량 ${stats.quantity})
-                                    </span>
+                                <div style="flex-shrink: 0; text-align: right; font-size: 11px;">
+                                    <div style="color: #212529; font-weight: 500;">${stats.count}건</div>
+                                    <div style="color: #6c757d;">수량 ${stats.quantity}</div>
                                 </div>
                             </div>
                         `;
