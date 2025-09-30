@@ -127,10 +127,10 @@ async function signInWithEmail() {
             const userData = userDoc.data();
             
             // 승인 확인
-            if (!userData.approved && email !== ADMIN_EMAIL) {
+            if (!userData.approved && user.email !== ADMIN_EMAIL) {
                 await auth.signOut();
                 hideLoading();
-                alert('계정이 아직 승인되지 않았습니다. 관리자에게 문의하세요.');
+                alert('계정이 승인 대기 중입니다. 관리자에게 문의하세요.');
                 return;
             }
             
@@ -317,17 +317,56 @@ async function checkUserRole(user) {
             if (roleElement) {
                 if (userData.role === 'admin') {
                     roleElement.style.display = 'inline-block';
-                    roleElement.textContent = '관리자';
+                    roleElement.textContent = 'ADMIN';
                 } else {
                     roleElement.style.display = 'none';
                 }
             }
             
+            // 관리자 전용 탭에 아이콘 추가
+            const adminOnlyTabs = ['dashboard', 'products', 'inventory', 'documents', 'settings'];
+            
+            if (userData.role === 'admin') {
+                // 관리자인 경우 - 자물쇠 아이콘 추가
+                adminOnlyTabs.forEach(tabName => {
+                    const tab = document.querySelector(`[data-tab="${tabName}"]`);
+                    if (tab && !tab.querySelector('.admin-lock')) {
+                        const lockIcon = document.createElement('span');
+                        lockIcon.className = 'admin-lock';
+                        lockIcon.innerHTML = '🔓';
+                        lockIcon.style.cssText = 'margin-left: 4px; font-size: 12px; opacity: 0.6;';
+                        tab.appendChild(lockIcon);
+                    }
+                });
+            }
+            
             // 관리자가 아닌 경우 일부 기능 숨기기
             if (userData.role !== 'admin') {
-                // 설정 탭 숨기기 (옵션)
-                // const settingsTab = document.querySelector('[data-tab="settings"]');
-                // if (settingsTab) settingsTab.style.display = 'none';
+                // 직원이 접근 못하는 탭 숨기기
+                const hiddenTabs = ['dashboard', 'products', 'inventory', 'documents', 'settings'];
+                
+                hiddenTabs.forEach(tabName => {
+                    const tab = document.querySelector(`[data-tab="${tabName}"]`);
+                    if (tab) tab.style.display = 'none';
+                });
+                
+                // 첫 번째 보이는 탭을 활성화
+                const visibleTabs = document.querySelectorAll('.tab-button:not([style*="display: none"])');
+                if (visibleTabs.length > 0) {
+                    // 기존 active 제거
+                    document.querySelectorAll('.tab-button.active').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    document.querySelectorAll('.tab-content.active').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // 첫 번째 보이는 탭 활성화 (주문통합관리)
+                    visibleTabs[0].classList.add('active');
+                    const firstTabName = visibleTabs[0].getAttribute('data-tab');
+                    const firstTabContent = document.getElementById(`${firstTabName}-tab`);
+                    if (firstTabContent) firstTabContent.classList.add('active');
+                }
             }
             
             console.log('사용자 권한:', userData.role);
