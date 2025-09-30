@@ -15,5 +15,11 @@ firebase.initializeApp(firebaseConfig);
 // Auth 인스턴스
 const auth = firebase.auth();
 
+// Firestore 인스턴스
+const db = firebase.firestore();
+
 // Google Provider
 const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+// 관리자 이메일 설정 (실제 관리자 이메일로 변경 필요)
+const ADMIN_EMAIL = 'admin@dallaemarket.com'; // 여기에 실제 관리자 이메일 입력

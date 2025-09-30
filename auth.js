@@ -1,181 +1,35 @@
-// ===========================
-// 사용자 권한 관련 변수
-// ===========================
-let currentUser = {
-    email: '',
-    name: '',
-    role: 'staff',  // 기본값 staff
-    status: 'active'
-};
+// ========== 인증 관련 함수 ==========
 
-window.currentUser = currentUser;  // 다른 모듈에서 접근 가능하도록
-
-// ===========================
-// 인증 관련 함수들
-// ===========================
-
-// 로그인 상태 확인
-auth.onAuthStateChanged(async (user) => {
-    // 초기 로딩 숨기기
-    document.getElementById('initialLoading').style.display = 'none';
-    
-    if (user) {
-        // 미사용 시간 기반 자동 로그아웃 설정
-        initIdleLogout();
-        
-        // 사용자 권한 확인
-        try {
-            const response = await fetch('/api/users', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-        action: 'checkUser',
-        email: user.email,
-        userData: {
-            name: user.displayName || user.email.split('@')[0]
-        }
-    })
-});
-
-const result = await response.json();
-console.log('API 응답 result:', result);  // 추가
-console.log('API 응답 user:', result.user);  // 추가
-
-if (result.user) {
-    currentUser = result.user;
-    window.currentUser = currentUser;
-    
-    // localStorage에 사용자 이메일 저장
-    localStorage.setItem('userEmail', currentUser.email);
-    sessionStorage.setItem('userEmail', currentUser.email);
-    
-    console.log('설정된 currentUser:', currentUser);
-    console.log('역할:', currentUser.role);
-    console.log('localStorage에 저장된 이메일:', localStorage.getItem('userEmail'));
-                
-    // 역할별 UI 조정
-    adjustUIByRole();
-}
-        } catch (error) {
-            console.error('사용자 권한 확인 오류:', error);
-            // 오류 시 기본값 staff
-            currentUser.email = user.email;
-            currentUser.name = user.displayName || user.email.split('@')[0];
-            currentUser.role = 'staff';
-            window.currentUser = currentUser;
-        }
-        
-        // 로그인된 상태
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('mainSystem').style.display = 'block';
-        document.getElementById('userEmail').textContent = user.email;
-        
-        // 역할 표시 추가/업데이트
-const userInfo = document.querySelector('.user-info');
-if (userInfo) {
-    let roleSpan = document.getElementById('userRole');
-    if (!roleSpan) {
-        roleSpan = document.createElement('span');
-        roleSpan.id = 'userRole';
-        userInfo.insertBefore(roleSpan, userInfo.firstChild);
-    }
-    roleSpan.style.cssText = 'padding: 4px 8px; background: ' + 
-        (currentUser.role === 'admin' ? '#dc3545' : '#6c757d') + 
-        '; color: white; border-radius: 4px; font-size: 12px;';
-    roleSpan.textContent = currentUser.role === 'admin' ? '관리자' : '스탭';
-}
-        
-        // 메인 시스템 초기화는 script.js에서 처리
-    } else {
-        // 로그아웃 상태
-        document.getElementById('loginScreen').style.display = 'flex';
-        document.getElementById('mainSystem').style.display = 'none';
-        currentUser = { email: '', name: '', role: 'staff', status: 'active' };
-        window.currentUser = currentUser;
-    }
-});
-
-
-
-// 이메일 로그인
-function signInWithEmail() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    
-    if (!email || !password) {
-        showAuthError('이메일과 비밀번호를 입력해주세요.');
-        return;
-    }
-    
-    auth.signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-            console.log('로그인 성공:', userCredential.user.email);
-            hideAuthError();
-        })
-        .catch((error) => {
-            console.error('로그인 오류:', error);
-            showAuthError(getErrorMessage(error.code));
-        });
+// 로그인 화면 표시
+function showLogin() {
+    document.getElementById('loginCard').style.display = 'block';
+    document.getElementById('signupCard').style.display = 'none';
 }
 
-// Google 로그인
-function signInWithGoogle() {
-    auth.signInWithPopup(googleProvider)
-        .then((result) => {
-            console.log('Google 로그인 성공:', result.user.email);
-            hideAuthError();
-        })
-        .catch((error) => {
-            console.error('Google 로그인 오류:', error);
-            showAuthError(getErrorMessage(error.code));
-        });
+// 회원가입 화면 표시
+function showSignUp() {
+    document.getElementById('loginCard').style.display = 'none';
+    document.getElementById('signupCard').style.display = 'block';
 }
 
-// 회원가입
-function signUp() {
-    const name = document.getElementById('signupName').value;
-    const email = document.getElementById('signupEmail').value;
-    const password = document.getElementById('signupPassword').value;
-    
-    if (!name || !email || !password) {
-        showSignupError('모든 필드를 입력해주세요.');
-        return;
-    }
-    
-    if (password.length < 6) {
-        showSignupError('비밀번호는 6자 이상이어야 합니다.');
-        return;
-    }
-    
-    auth.createUserWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-            // 사용자 프로필 업데이트
-            return userCredential.user.updateProfile({
-                displayName: name
-            });
-        })
-        .then(() => {
-            console.log('회원가입 성공');
-            hideSignupError();
-            showLogin();
-        })
-        .catch((error) => {
-            console.error('회원가입 오류:', error);
-            showSignupError(getErrorMessage(error.code));
-        });
+// 에러 메시지 표시
+function showError(message, type = 'login') {
+    const errorEl = type === 'signup' ? document.getElementById('signupErrorMsg') : document.getElementById('errorMsg');
+    errorEl.textContent = message;
+    errorEl.style.display = 'block';
+    setTimeout(() => {
+        errorEl.style.display = 'none';
+    }, 5000);
 }
 
-// 로그아웃
-function signOut() {
-    auth.signOut()
-        .then(() => {
-            console.log('로그아웃 성공');
-        })
-        .catch((error) => {
-            console.error('로그아웃 오류:', error);
-        });
+// 로딩 표시
+function showLoading() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
+}
+
+// 로딩 숨기기
+function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
 }
 
 // 엔터키 처리
@@ -185,87 +39,292 @@ function handleEnter(event) {
     }
 }
 
-// 로그인/회원가입 전환
-function showLogin() {
-    document.getElementById('loginCard').style.display = 'block';
-    document.getElementById('signupCard').style.display = 'none';
-    hideAuthError();
-    hideSignupError();
-}
+// ========== 사용자 승인 관리 시스템 ==========
 
-function showSignUp() {
-    document.getElementById('loginCard').style.display = 'none';
-    document.getElementById('signupCard').style.display = 'block';
-    hideAuthError();
-    hideSignupError();
-}
+// 회원가입 함수
+async function signUp() {
+    const email = document.getElementById('signupEmail').value;
+    const password = document.getElementById('signupPassword').value;
+    const name = document.getElementById('signupName').value;
 
-// 에러 메시지 표시
-function showAuthError(message) {
-    const errorElement = document.getElementById('errorMsg');
-    errorElement.textContent = message;
-    errorElement.style.display = 'block';
-}
+    if (!email || !password || !name) {
+        showError('모든 필드를 입력해주세요', 'signup');
+        return;
+    }
 
-function hideAuthError() {
-    document.getElementById('errorMsg').style.display = 'none';
-}
-
-function showSignupError(message) {
-    const errorElement = document.getElementById('signupErrorMsg');
-    errorElement.textContent = message;
-    errorElement.style.display = 'block';
-}
-
-function hideSignupError() {
-    document.getElementById('signupErrorMsg').style.display = 'none';
-}
-
-// Firebase 에러 메시지 변환
-function getErrorMessage(errorCode) {
-    const errorMessages = {
-        'auth/invalid-email': '유효하지 않은 이메일 형식입니다.',
-        'auth/user-disabled': '비활성화된 계정입니다.',
-        'auth/user-not-found': '존재하지 않는 계정입니다.',
-        'auth/wrong-password': '잘못된 비밀번호입니다.',
-        'auth/email-already-in-use': '이미 사용 중인 이메일입니다.',
-        'auth/weak-password': '비밀번호가 너무 약합니다.',
-        'auth/operation-not-allowed': '이 작업은 허용되지 않습니다.',
-        'auth/popup-closed-by-user': '로그인 창이 닫혔습니다.',
-        'auth/network-request-failed': '네트워크 오류가 발생했습니다.',
-        'auth/too-many-requests': '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.',
-        'auth/invalid-credential': '이메일 또는 비밀번호가 잘못되었습니다.',
-        'auth/account-exists-with-different-credential': '다른 로그인 방법으로 이미 가입된 이메일입니다.'
-    };
+    showLoading();
     
-    return errorMessages[errorCode] || '로그인 중 오류가 발생했습니다.';
-}
-
-function getErrorMessage(errorCode) {
-    const errorMessages = {
-        'auth/invalid-email': '유효하지 않은 이메일 형식입니다.',
-        // ... 생략 ...
-    };
-    
-    return errorMessages[errorCode] || '로그인 중 오류가 발생했습니다.';
-}
-
-// 역할별 UI 조정 함수
-function adjustUIByRole() {
-    if (currentUser.role !== 'admin') {
-        // 직원인 경우 탭 숨기기
-        const settingsTab = document.querySelector('[data-tab="settings"]');
-        const dashboardTab = document.querySelector('[data-tab="dashboard"]');
-        const expenseTab = document.querySelector('[data-tab="expense"]');
+    try {
+        // Firebase Auth로 계정 생성
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
         
-        if (settingsTab) settingsTab.style.display = 'none';
-        if (dashboardTab) dashboardTab.style.display = 'none';
-        if (expenseTab) expenseTab.style.display = 'none';
+        // 프로필 업데이트
+        await user.updateProfile({
+            displayName: name
+        });
         
-        // 구글 시트 저장 버튼은 유지 (직원도 저장 가능)
+        // Firestore에 사용자 정보 저장 (미승인 상태)
+        await db.collection('users').doc(user.uid).set({
+            email: email,
+            name: name,
+            approved: false, // 기본값은 미승인
+            role: 'user', // 기본 역할
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            lastLogin: null
+        });
+        
+        // 자동 로그아웃
+        await auth.signOut();
+        
+        hideLoading();
+        alert('회원가입이 완료되었습니다. 관리자 승인 후 로그인 가능합니다.');
+        showLogin();
+    } catch (error) {
+        hideLoading();
+        handleAuthError(error, 'signup');
     }
 }
 
+// 이메일 로그인 함수
+async function signInWithEmail() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    if (!email || !password) {
+        showError('이메일과 비밀번호를 입력해주세요');
+        return;
+    }
+    
+    showLoading();
+    
+    try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        // Firestore에서 사용자 승인 상태 확인
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        
+        if (!userDoc.exists) {
+            // 사용자 문서가 없는 경우 (기존 사용자)
+            await db.collection('users').doc(user.uid).set({
+                email: user.email,
+                name: user.displayName || email.split('@')[0],
+                approved: email === ADMIN_EMAIL, // 관리자는 자동 승인
+                role: email === ADMIN_EMAIL ? 'admin' : 'user',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            // 관리자가 아닌 경우 승인 대기
+            if (email !== ADMIN_EMAIL) {
+                await auth.signOut();
+                hideLoading();
+                alert('계정이 아직 승인되지 않았습니다. 관리자에게 문의하세요.');
+                return;
+            }
+        } else {
+            const userData = userDoc.data();
+            
+            // 승인 확인
+            if (!userData.approved && email !== ADMIN_EMAIL) {
+                await auth.signOut();
+                hideLoading();
+                alert('계정이 아직 승인되지 않았습니다. 관리자에게 문의하세요.');
+                return;
+            }
+            
+            // 마지막 로그인 시간 업데이트
+            await db.collection('users').doc(user.uid).update({
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+        
+        hideLoading();
+    } catch (error) {
+        hideLoading();
+        handleAuthError(error);
+    }
+}
+
+// Google 로그인 함수
+async function signInWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    showLoading();
+    
+    try {
+        const result = await auth.signInWithPopup(provider);
+        const user = result.user;
+        
+        // Firestore에서 사용자 정보 확인
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        
+        if (!userDoc.exists) {
+            // 신규 사용자
+            await db.collection('users').doc(user.uid).set({
+                email: user.email,
+                name: user.displayName,
+                approved: user.email === ADMIN_EMAIL, // 관리자는 자동 승인
+                role: user.email === ADMIN_EMAIL ? 'admin' : 'user',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            if (user.email !== ADMIN_EMAIL) {
+                await auth.signOut();
+                hideLoading();
+                alert('회원가입이 완료되었습니다. 관리자 승인 후 로그인 가능합니다.');
+                return;
+            }
+        } else {
+            const userData = userDoc.data();
+            
+            // 승인 확인
+            if (!userData.approved && user.email !== ADMIN_EMAIL) {
+                await auth.signOut();
+                hideLoading();
+                alert('계정이 아직 승인되지 않았습니다. 관리자에게 문의하세요.');
+                return;
+            }
+            
+            // 마지막 로그인 시간 업데이트
+            await db.collection('users').doc(user.uid).update({
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+        
+        hideLoading();
+    } catch (error) {
+        hideLoading();
+        handleAuthError(error);
+    }
+}
+
+// 로그아웃
+function signOut() {
+    auth.signOut().then(() => {
+        console.log('로그아웃 성공');
+        location.reload();
+    }).catch((error) => {
+        console.error('로그아웃 오류:', error);
+    });
+}
+
+// Auth 에러 처리
+function handleAuthError(error, type = 'login') {
+    console.error('Auth error:', error);
+    let message = '오류가 발생했습니다.';
+    
+    switch (error.code) {
+        case 'auth/invalid-email':
+            message = '잘못된 이메일 형식입니다.';
+            break;
+        case 'auth/user-disabled':
+            message = '비활성화된 계정입니다.';
+            break;
+        case 'auth/user-not-found':
+            message = '존재하지 않는 계정입니다.';
+            break;
+        case 'auth/wrong-password':
+            message = '잘못된 비밀번호입니다.';
+            break;
+        case 'auth/email-already-in-use':
+            message = '이미 사용 중인 이메일입니다.';
+            break;
+        case 'auth/weak-password':
+            message = '비밀번호는 6자 이상이어야 합니다.';
+            break;
+        case 'auth/popup-closed-by-user':
+            message = '로그인이 취소되었습니다.';
+            break;
+    }
+    
+    showError(message, type);
+}
+
+// 실시간 승인 상태 감시 (로그인한 사용자가 승인 취소되면 자동 로그아웃)
+function watchApprovalStatus(user) {
+    if (!user) return;
+    
+    const unsubscribe = db.collection('users').doc(user.uid)
+        .onSnapshot((doc) => {
+            if (doc.exists) {
+                const userData = doc.data();
+                if (!userData.approved && user.email !== ADMIN_EMAIL) {
+                    // 승인이 취소된 경우
+                    auth.signOut().then(() => {
+                        alert('관리자에 의해 접근 권한이 취소되었습니다.');
+                        location.reload();
+                    });
+                }
+            }
+        });
+    
+    return unsubscribe;
+}
+
+// Auth 상태 변경 감지
+auth.onAuthStateChanged((user) => {
+    const initialLoading = document.getElementById('initialLoading');
+    const loginScreen = document.getElementById('loginScreen');
+    const mainSystem = document.getElementById('mainSystem');
+    
+    if (user) {
+        // 로그인된 상태
+        console.log('로그인됨:', user.email);
+        
+        // 실시간 승인 상태 감시 시작
+        watchApprovalStatus(user);
+        
+        // UI 업데이트
+        initialLoading.style.display = 'none';
+        loginScreen.style.display = 'none';
+        mainSystem.style.display = 'block';
+        
+        // 사용자 정보 표시
+        const userEmailEl = document.getElementById('userEmail');
+        if (userEmailEl) {
+            userEmailEl.textContent = user.email;
+        }
+        
+        // 자동 로그아웃 초기화
+        initIdleLogout();
+        
+        // 권한별 UI 조정
+        checkUserRole(user);
+    } else {
+        // 로그아웃된 상태
+        console.log('로그아웃됨');
+        initialLoading.style.display = 'none';
+        loginScreen.style.display = 'flex';
+        mainSystem.style.display = 'none';
+        
+        // 자동 로그아웃 중지
+        stopIdleLogout();
+    }
+});
+
+// 사용자 권한 확인 및 UI 조정
+async function checkUserRole(user) {
+    try {
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        if (userDoc.exists) {
+            const userData = userDoc.data();
+            window.currentUserRole = userData.role; // 전역 변수로 저장
+            
+            // 관리자가 아닌 경우 일부 기능 숨기기
+            if (userData.role !== 'admin') {
+                // 설정 탭 숨기기 (옵션)
+                // const settingsTab = document.querySelector('[data-tab="settings"]');
+                // if (settingsTab) settingsTab.style.display = 'none';
+            }
+            
+            console.log('사용자 권한:', userData.role);
+        }
+    } catch (error) {
+        console.error('권한 확인 오류:', error);
+    }
+}
 
 // ========== 미사용 시간 기반 자동 로그아웃 ==========
 let lastActivityTime = Date.now();
@@ -552,13 +611,6 @@ function stopIdleLogout() {
     document.removeEventListener('visibilitychange', handleVisibilityChange);
 }
 
-// auth 상태 변경 시 자동 로그아웃 관리
-auth.onAuthStateChanged((user) => {
-    if (!user) {
-        stopIdleLogout();
-    }
-});
-
 // 디버깅용 전역 객체
 window.idleDebug = {
     getLastActivity: () => {
@@ -578,4 +630,3 @@ window.idleDebug = {
     reset: resetIdleTimer,
     isActive: () => !!idleTimer
 };
-
