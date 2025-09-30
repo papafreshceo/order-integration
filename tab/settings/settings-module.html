@@ -519,8 +519,7 @@
                         <path d="M4 21v-7m0-4V3m8 18v-9m0-4V3m8 18v-5m0-4V3M2 14h4m6-8h4m6 12h4"></path>
                     </svg>
                     <span>고급 설정</span>
-                </div>
-                <div class="menu-item" onclick="showSection('users')" id="userManageMenu" style="display:none;">
+<div class="menu-item" onclick="showSection('users')" id="userManageMenu" style="display:none;">
                     <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                         <circle cx="9" cy="7" r="4"></circle>
@@ -528,72 +527,6 @@
                         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                     </svg>
                     <span>사용자 관리</span>
-                </div>
-
-                <!-- 사용자 관리 섹션 -->
-                <div class="settings-section" id="users-section">
-                    <div class="section-header">
-                        <h2 class="section-title">사용자 관리</h2>
-                        <p class="section-description">시스템 사용자 승인 및 권한을 관리합니다.</p>
-                    </div>
-
-                    <div class="form-section">
-                        <h3 class="form-section-title">승인 대기 사용자</h3>
-                        <div id="pendingUsersContainer">
-                            <table class="settings-table" id="pendingUsersTable">
-                                <thead>
-                                    <tr>
-                                        <th>가입일시</th>
-                                        <th>이름</th>
-                                        <th>이메일</th>
-                                        <th>관리</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="pendingUsersList">
-                                    <tr>
-                                        <td colspan="4" style="text-align: center; color: #6c757d;">
-                                            승인 대기 중인 사용자가 없습니다.
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="form-section">
-                        <h3 class="form-section-title">승인된 사용자</h3>
-                        <div id="approvedUsersContainer">
-                            <table class="settings-table" id="approvedUsersTable">
-                                <thead>
-                                    <tr>
-                                        <th>승인일시</th>
-                                        <th>이름</th>
-                                        <th>이메일</th>
-                                        <th>역할</th>
-                                        <th>마지막 로그인</th>
-                                        <th>관리</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="approvedUsersList">
-                                    <tr>
-                                        <td colspan="6" style="text-align: center; color: #6c757d;">
-                                            사용자 목록을 불러오는 중...
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="action-buttons">
-                        <button class="btn-primary" onclick="refreshUserList()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="23 4 23 10 17 10"></polyline>
-                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                            </svg>
-                            새로고침
-                        </button>
-                    </div>
                 </div>
             </div>
 
@@ -1202,6 +1135,72 @@
                                 <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"></path>
                             </svg>
                             저장
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 사용자 관리 -->
+                <div class="settings-section" id="users-section">
+                    <div class="section-header">
+                        <h2 class="section-title">사용자 관리</h2>
+                        <p class="section-description">시스템 사용자 승인 및 권한을 관리합니다.</p>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">승인 대기 사용자</h3>
+                        <div id="pendingUsersContainer">
+                            <table class="settings-table" id="pendingUsersTable">
+                                <thead>
+                                    <tr>
+                                        <th>가입일시</th>
+                                        <th>이름</th>
+                                        <th>이메일</th>
+                                        <th>관리</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pendingUsersList">
+                                    <tr>
+                                        <td colspan="4" style="text-align: center; color: #6c757d;">
+                                            승인 대기 중인 사용자가 없습니다.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">승인된 사용자</h3>
+                        <div id="approvedUsersContainer">
+                            <table class="settings-table" id="approvedUsersTable">
+                                <thead>
+                                    <tr>
+                                        <th>승인일시</th>
+                                        <th>이름</th>
+                                        <th>이메일</th>
+                                        <th>역할</th>
+                                        <th>마지막 로그인</th>
+                                        <th>관리</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="approvedUsersList">
+                                    <tr>
+                                        <td colspan="6" style="text-align: center; color: #6c757d;">
+                                            사용자 목록을 불러오는 중...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn-primary" onclick="refreshUserList()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            </svg>
+                            새로고침
                         </button>
                     </div>
                 </div>
