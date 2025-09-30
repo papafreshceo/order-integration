@@ -312,6 +312,17 @@ async function checkUserRole(user) {
             const userData = userDoc.data();
             window.currentUserRole = userData.role; // 전역 변수로 저장
             
+            // 관리자 배지 표시
+            const roleElement = document.getElementById('userRole');
+            if (roleElement) {
+                if (userData.role === 'admin') {
+                    roleElement.style.display = 'inline-block';
+                    roleElement.textContent = '관리자';
+                } else {
+                    roleElement.style.display = 'none';
+                }
+            }
+            
             // 관리자가 아닌 경우 일부 기능 숨기기
             if (userData.role !== 'admin') {
                 // 설정 탭 숨기기 (옵션)
