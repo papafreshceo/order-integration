@@ -246,12 +246,22 @@ function handleAuthError(error, type = 'login') {
 function watchApprovalStatus(user) {
     if (!user) return;
     
+    // 신규 가입자는 감시하지 않음 (초기 승인 대기 상태 유지)
+    let isFirstCheck = true;
+    
     const unsubscribe = db.collection('users').doc(user.uid)
         .onSnapshot((doc) => {
             if (doc.exists) {
                 const userData = doc.data();
+                
+                // 첫 번째 체크는 무시 (신규 가입자일 수 있음)
+                if (isFirstCheck) {
+                    isFirstCheck = false;
+                    return;
+                }
+                
                 if (!userData.approved && user.email !== ADMIN_EMAIL) {
-                    // 승인이 취소된 경우
+                    // 승인이 취소된 경우 (기존에 승인되었다가 취소된 경우만)
                     auth.signOut().then(() => {
                         alert('관리자에 의해 접근 권한이 취소되었습니다.');
                         location.reload();
