@@ -1767,7 +1767,17 @@
             const canvas = document.getElementById('marketTrendChart');
             if (!canvas) return;
             
+            // 고해상도 설정
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = 200 * dpr;
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = '200px';
+            
             const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            
             const monthlyData = dashboardState.monthlyData || [];
             const today = new Date();
             
@@ -1805,14 +1815,14 @@
                 .map(([market]) => market);
             
             // 캔버스 설정
-            canvas.width = canvas.parentElement.offsetWidth;
-            canvas.height = 200;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const canvasWidth = rect.width;
+            const canvasHeight = 200;
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
             
             const colors = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
-            const padding = { left: 30, right: 10, top: 20, bottom: 30 };
-            const graphWidth = canvas.width - padding.left - padding.right;
-            const graphHeight = canvas.height - padding.top - padding.bottom;
+            const padding = { left: 35, right: 15, top: 25, bottom: 30 };
+            const graphWidth = canvasWidth - padding.left - padding.right;
+            const graphHeight = canvasHeight - padding.top - padding.bottom;
             
             // Y축 최대값 계산
             let maxValue = 0;
@@ -1823,18 +1833,18 @@
             maxValue = Math.max(maxValue, 5);
             
             // 격자선 그리기
-            ctx.strokeStyle = '#f1f3f5';
-            ctx.lineWidth = 1;
+            ctx.strokeStyle = '#e5e7eb';
+            ctx.lineWidth = 0.5;
             for (let i = 0; i <= 5; i++) {
                 const y = padding.top + (graphHeight * i / 5);
                 ctx.beginPath();
                 ctx.moveTo(padding.left, y);
-                ctx.lineTo(canvas.width - padding.right, y);
+                ctx.lineTo(canvasWidth - padding.right, y);
                 ctx.stroke();
                 
-                // Y축 레이블
-                ctx.fillStyle = '#6c757d';
-                ctx.font = '10px sans-serif';
+                // Y축 레이블 (검정색, 선명하게)
+                ctx.fillStyle = '#000000';
+                ctx.font = 'bold 11px sans-serif';
                 ctx.textAlign = 'right';
                 ctx.fillText(Math.round(maxValue * (5 - i) / 5), padding.left - 5, y + 3);
             }
@@ -1843,7 +1853,9 @@
             topMarkets.forEach((market, marketIndex) => {
                 const data = marketDailyData[market] || [];
                 ctx.strokeStyle = colors[marketIndex];
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 2.5;  // 더 굵게
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
                 ctx.beginPath();
                 
                 data.forEach((value, index) => {
@@ -1863,23 +1875,22 @@
                 const legendX = 10 + marketIndex * 100;
                 const legendY = 10;
                 ctx.fillStyle = colors[marketIndex];
-                ctx.fillRect(legendX, legendY, 15, 3);
-                ctx.fillStyle = '#495057';
-                ctx.font = '11px sans-serif';
+                ctx.fillRect(legendX, legendY, 20, 4);  // 더 크게
+                ctx.fillStyle = '#000000';  // 검정색
+                ctx.font = 'bold 11px sans-serif';  // 굵게
                 ctx.textAlign = 'left';
                 const marketDisplay = market.length > 8 ? market.substring(0, 8) + '..' : market;
-                ctx.fillText(marketDisplay, legendX + 20, legendY + 5);
+                ctx.fillText(marketDisplay, legendX + 25, legendY + 5);
             });
             
-            // X축 레이블 (5일 간격)
-            ctx.fillStyle = '#6c757d';
-            ctx.font = '10px sans-serif';
+            // X축 레이블 (5일 간격) - 검정색으로
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 11px sans-serif';
             ctx.textAlign = 'center';
             for (let i = 0; i < dates.length; i += 5) {
                 const x = padding.left + (graphWidth * i / 29);
-                ctx.fillText(dates[i], x, canvas.height - 10);
+                ctx.fillText(dates[i], x, canvasHeight - 10);
             }
-        }
         
         // 옵션별 30일 추이 차트
         function updateOptionTrendChart() {
@@ -1924,9 +1935,9 @@
                 .map(([option]) => option);
             
             // 캔버스 설정
-            canvas.width = canvas.parentElement.offsetWidth;
-            canvas.height = 200;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const canvasWidth = rect.width;
+            const canvasHeight = 200;
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
             
             const colors = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#2563eb'];
             const padding = { left: 30, right: 10, top: 20, bottom: 30 };
