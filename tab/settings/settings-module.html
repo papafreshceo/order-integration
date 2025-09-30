@@ -1408,9 +1408,14 @@
         
         // 페이지 로드 시 관리자 확인
         window.addEventListener('load', function() {
-            checkAdminAccess();
-        });
-
+    // Firebase 초기화 확인
+    if (!window.parent || !window.parent.firebase) {
+        console.error('Firebase가 초기화되지 않았습니다');
+        setTimeout(() => checkAdminAccess(), 1000); // 1초 후 재시도
+        return;
+    }
+    checkAdminAccess();
+});
         // 관리자 권한 확인
         async function checkAdminAccess() {
             if (window.parent && window.parent.firebase && window.parent.firebase.auth) {
@@ -1511,9 +1516,9 @@
             
             try {
                 await db.collection('users').doc(userId).update({
-                    approved: true,
-                    approvedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+    approved: true,
+    approvedAt: window.parent.firebase.firestore.FieldValue.serverTimestamp()
+});
                 alert('사용자가 승인되었습니다.');
                 loadUserList();
             } catch (error) {
@@ -1546,9 +1551,9 @@
             
             try {
                 await db.collection('users').doc(userId).update({
-                    approved: false,
-                    revokedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+    approved: false,
+    revokedAt: window.parent.firebase.firestore.FieldValue.serverTimestamp()
+});
                 alert('사용자 승인이 취소되었습니다.');
                 loadUserList();
             } catch (error) {
