@@ -824,9 +824,9 @@
             </div>
         </div>
         
-        <!-- 하단 차트 섹션 -->
+<!-- 주간 주문 추이 섹션 -->
         <div class="dashboard-charts-container">
-            <div class="chart-card">
+            <div class="chart-card" style="grid-column: 1 / -1;">
                 <div class="card-header">
                     <h3 class="card-title">주간 주문 추이</h3>
                     <select class="chart-filter" id="weeklyChartFilter">
@@ -839,26 +839,41 @@
                     <canvas id="weeklyOrderChart"></canvas>
                 </div>
             </div>
-            
-            <div class="chart-card">
-                <div class="card-header">
-                    <h3 class="card-title">마켓별 주문 비율</h3>
-                    <button class="btn-icon" onclick="refreshMarketChart()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="23 4 23 10 17 10"></polyline>
-                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                        </svg>
-                    </button>
-                </div>
-                <div class="chart-content">
-                    <canvas id="marketShareChart"></canvas>
-                </div>
-            </div>
         </div>
         
-        <!-- 통계 테이블 섹션 -->
-        <div class="statistics-section">
-            <!-- 마켓별 통계 -->
+        <!-- 마켓별 분석 섹션 -->
+        <div class="analysis-section" style="margin-bottom: 32px;">
+            <h2 style="font-size: 20px; font-weight: 500; color: #212529; margin: 32px 0 24px 0;">마켓별 분석</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3 class="card-title">마켓별 주문 비율</h3>
+                        <button class="btn-icon" onclick="refreshMarketChart()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="chart-content">
+                        <canvas id="marketShareChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- 마켓별 상위 5개 간단 통계 -->
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3 class="card-title">마켓별 TOP 5</h3>
+                    </div>
+                    <div class="chart-content">
+                        <div id="marketTop5Stats" style="padding: 10px;">
+                            <!-- 동적으로 생성될 내용 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 마켓별 상세 통계 테이블 -->
             <div class="stat-table-card">
                 <div class="card-header">
                     <h3 class="card-title">마켓별 통계</h3>
@@ -917,10 +932,44 @@
                 </table>
             </div>
             
-            <!-- 옵션별 통계 -->
+            </div>
+        
+        <!-- 옵션별 분석 섹션 -->
+        <div class="analysis-section" style="margin-bottom: 32px;">
+            <h2 style="font-size: 20px; font-weight: 500; color: #212529; margin: 32px 0 24px 0;">옵션별 분석</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3 class="card-title">옵션별 주문 비율</h3>
+                        <button class="btn-icon" onclick="refreshOptionChart()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="chart-content">
+                        <canvas id="optionShareChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- 옵션별 상위 5개 간단 통계 -->
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3 class="card-title">옵션별 TOP 5</h3>
+                    </div>
+                    <div class="chart-content">
+                        <div id="optionTop5Stats" style="padding: 10px;">
+                            <!-- 동적으로 생성될 내용 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 옵션별 상세 통계 테이블 -->
             <div class="stat-table-card">
                 <div class="card-header">
-                    <h3 class="card-title">옵션별 통계</h3>
+                    <h3 class="card-title">옵션별 상세 통계</h3>
                 </div>
                 <table class="stat-table" id="optionStats">
                     <thead>
@@ -1687,6 +1736,149 @@
         function updateCharts() {
             updateWeeklyChart(7);
             updateMarketChart();
+            updateOptionChart();
+            updateTop5Stats();
+        }
+        
+        // 옵션별 차트 업데이트
+        function updateOptionChart() {
+            const canvas = document.getElementById('optionShareChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const orders = dashboardState.monthlyData.length > 0 ? 
+                          dashboardState.monthlyData : dashboardState.orderData;
+            
+            const optionStats = {};
+            orders.forEach(order => {
+                const option = order['옵션명'] || '기타';
+                optionStats[option] = (optionStats[option] || 0) + 1;
+            });
+            
+            const total = Object.values(optionStats).reduce((a, b) => a + b, 0);
+            if (total === 0) {
+                canvas.width = canvas.parentElement.offsetWidth;
+                canvas.height = 200;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#6c757d';
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('데이터 없음', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+            
+            const sortedOptions = Object.entries(optionStats)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            
+            const colors = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#2563eb'];
+            
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = 200;
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 60;
+            const innerRadius = 35;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            let currentAngle = -Math.PI / 2;
+            
+            sortedOptions.forEach(([option, count], index) => {
+                const percentage = (count / total) * 100;
+                const angle = (percentage / 100) * Math.PI * 2;
+                
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + angle);
+                ctx.arc(centerX, centerY, innerRadius, currentAngle + angle, currentAngle, true);
+                ctx.closePath();
+                ctx.fillStyle = colors[index];
+                ctx.fill();
+                
+                currentAngle += angle;
+            });
+            
+            let legendY = 20;
+            sortedOptions.forEach(([option, count], index) => {
+                const percentage = ((count / total) * 100).toFixed(1);
+                
+                ctx.fillStyle = colors[index];
+                ctx.fillRect(10, legendY - 8, 12, 12);
+                
+                ctx.fillStyle = '#495057';
+                ctx.font = '12px sans-serif';
+                const optionDisplay = option.length > 15 ? option.substring(0, 15) + '...' : option;
+                ctx.fillText(`${optionDisplay} ${percentage}%`, 30, legendY);
+                
+                legendY += 20;
+            });
+        }
+        
+        // TOP5 통계 업데이트
+        function updateTop5Stats() {
+            const orders = dashboardState.monthlyData.length > 0 ? 
+                          dashboardState.monthlyData : dashboardState.orderData;
+            
+            // 마켓별 TOP5
+            const marketStats = {};
+            orders.forEach(order => {
+                const market = order['마켓명'] || '기타';
+                if (!marketStats[market]) {
+                    marketStats[market] = { count: 0, amount: 0 };
+                }
+                marketStats[market].count++;
+                marketStats[market].amount += parseFloat(order['정산예정금액']) || 0;
+            });
+            
+            const marketTop5 = Object.entries(marketStats)
+                .sort((a, b) => b[1].count - a[1].count)
+                .slice(0, 5);
+            
+            const marketTop5Html = marketTop5.map(([market, stats], index) => `
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f3f5;">
+                    <span style="font-size: 13px; color: #495057;">${index + 1}. ${market}</span>
+                    <div style="text-align: right;">
+                        <span style="font-size: 13px; font-weight: 500; color: #212529;">${stats.count}건</span>
+                        <span style="font-size: 11px; color: #6c757d; margin-left: 8px;">${stats.amount.toLocaleString()}원</span>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('marketTop5Stats').innerHTML = marketTop5Html;
+            
+            // 옵션별 TOP5
+            const optionStats = {};
+            orders.forEach(order => {
+                const option = order['옵션명'] || '기타';
+                if (!optionStats[option]) {
+                    optionStats[option] = { count: 0, quantity: 0 };
+                }
+                optionStats[option].count++;
+                optionStats[option].quantity += parseInt(order['수량']) || 1;
+            });
+            
+            const optionTop5 = Object.entries(optionStats)
+                .sort((a, b) => b[1].count - a[1].count)
+                .slice(0, 5);
+            
+            const optionTop5Html = optionTop5.map(([option, stats], index) => `
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f3f5;">
+                    <span style="font-size: 13px; color: #495057; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        ${index + 1}. ${option}
+                    </span>
+                    <div style="text-align: right;">
+                        <span style="font-size: 13px; font-weight: 500; color: #212529;">${stats.count}건</span>
+                        <span style="font-size: 11px; color: #6c757d; margin-left: 8px;">수량 ${stats.quantity}</span>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('optionTop5Stats').innerHTML = optionTop5Html;
+        }
+        
+        function refreshOptionChart() {
+            updateOptionChart();
         }
 
         // 주간 차트 업데이트
