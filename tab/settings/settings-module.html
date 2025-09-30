@@ -1408,14 +1408,26 @@
         
         // 페이지 로드 시 관리자 확인
         window.addEventListener('load', function() {
-    // Firebase 초기화 확인
-    if (!window.parent || !window.parent.firebase) {
-        console.error('Firebase가 초기화되지 않았습니다');
-        setTimeout(() => checkAdminAccess(), 1000); // 1초 후 재시도
-        return;
-    }
-    checkAdminAccess();
-});
+            // Firebase 초기화 확인 및 재시도
+            let retryCount = 0;
+            const maxRetries = 10;
+            
+            function tryCheckAdmin() {
+                if (!window.parent || !window.parent.firebase || !window.parent.firebase.auth) {
+                    if (retryCount < maxRetries) {
+                        retryCount++;
+                        console.log(`Firebase 초기화 대기 중... (${retryCount}/${maxRetries})`);
+                        setTimeout(tryCheckAdmin, 500);
+                    } else {
+                        console.error('Firebase 초기화 실패');
+                    }
+                    return;
+                }
+                checkAdminAccess();
+            }
+            
+            tryCheckAdmin();
+        });
         // 관리자 권한 확인
         async function checkAdminAccess() {
             if (window.parent && window.parent.firebase && window.parent.firebase.auth) {
@@ -1427,7 +1439,7 @@
                         const userDoc = await db.collection('users').doc(user.uid).get();
                         if (userDoc.exists) {
                             const userData = userDoc.data();
-                            if (userData.role === 'admin' || user.email === window.parent.ADMIN_EMAIL) {
+                            if (userData.role === 'admin' || user.email === 'papafresh.ceo@gmail.com') {
                                 // 관리자인 경우 사용자 관리 메뉴 표시
                                 document.getElementById('userManageMenu').style.display = 'block';
                                 loadUserList();
