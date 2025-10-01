@@ -1406,48 +1406,64 @@
 
         // ========== 사용자 관리 기능 ==========
         
-        // 페이지 로드 시 관리자 확인
+// 페이지 로드 시 관리자 확인
         window.addEventListener('load', function() {
-            // Firebase 초기화 확인 및 재시도
+            checkAdminAccess();
+        });
+
+        // 관리자 권한 확인
+        async function checkAdminAccess() {
             let retryCount = 0;
-            const maxRetries = 10;
+            const maxRetries = 20;
             
-            function tryCheckAdmin() {
-                if (!window.parent || !window.parent.firebase || !window.parent.firebase.auth) {
+            function tryCheck() {
+                if (!window.parent || !window.parent.auth || !window.parent.auth.currentUser) {
                     if (retryCount < maxRetries) {
                         retryCount++;
-                        console.log(`Firebase 초기화 대기 중... (${retryCount}/${maxRetries})`);
-                        setTimeout(tryCheckAdmin, 500);
+                        console.log(`사용자 정보 대기 중... (${retryCount}/${maxRetries})`);
+                        setTimeout(tryCheck, 500);
                     } else {
-                        console.error('Firebase 초기화 실패');
+                        console.error('사용자 정보를 불러올 수 없습니다');
                     }
                     return;
                 }
-                checkAdminAccess();
+                
+                performAdminCheck();
             }
             
-            tryCheckAdmin();
-        });
-        // 관리자 권한 확인
-        async function checkAdminAccess() {
-            if (window.parent && window.parent.firebase && window.parent.firebase.auth) {
-                const auth = window.parent.firebase.auth();
-                const db = window.parent.firebase.firestore();
-                
-                auth.onAuthStateChanged(async (user) => {
-                    if (user) {
-                        const userDoc = await db.collection('users').doc(user.uid).get();
-                        if (userDoc.exists) {
-                            const userData = userDoc.data();
-                            if (userData.role === 'admin' || user.email === 'papafresh.ceo@gmail.com') {
-                                // 관리자인 경우 사용자 관리 메뉴 표시
-                                document.getElementById('userManageMenu').style.display = 'block';
-                                loadUserList();
-                            }
-                        }
+            async function performAdminCheck() {
+                try {
+                    const user = window.parent.auth.currentUser;
+                    if (!user) {
+                        console.log('로그인된 사용자 없음');
+                        return;
                     }
-                });
+                    
+                    console.log('현재 사용자:', user.email);
+                    
+                    const db = window.parent.db;
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    
+                    if (userDoc.exists) {
+                        const userData = userDoc.data();
+                        console.log('사용자 역할:', userData.role);
+                        
+                        if (userData.role === 'admin' || user.email === 'papafresh.ceo@gmail.com') {
+                            console.log('관리자 권한 확인됨');
+                            document.getElementById('userManageMenu').style.display = 'block';
+                            loadUserList();
+                        } else {
+                            console.log('관리자 권한 없음');
+                        }
+                    } else {
+                        console.log('사용자 문서 없음');
+                    }
+                } catch (error) {
+                    console.error('관리자 권한 확인 오류:', error);
+                }
             }
+            
+            tryCheck();
         }
 
         // 사용자 목록 불러오기
