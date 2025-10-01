@@ -127,10 +127,10 @@ async function signInWithEmail() {
             const userData = userDoc.data();
             
             // 승인 확인
-            if (!userData.approved && user.email !== ADMIN_EMAIL) {
+            if (!userData.approved && email !== ADMIN_EMAIL) {
                 await auth.signOut();
                 hideLoading();
-                alert('계정이 승인 대기 중입니다. 관리자에게 문의하세요.');
+                alert('계정이 아직 승인되지 않았습니다. 관리자에게 문의하세요.');
                 return;
             }
             
@@ -246,22 +246,12 @@ function handleAuthError(error, type = 'login') {
 function watchApprovalStatus(user) {
     if (!user) return;
     
-    // 신규 가입자는 감시하지 않음 (초기 승인 대기 상태 유지)
-    let isFirstCheck = true;
-    
     const unsubscribe = db.collection('users').doc(user.uid)
         .onSnapshot((doc) => {
             if (doc.exists) {
                 const userData = doc.data();
-                
-                // 첫 번째 체크는 무시 (신규 가입자일 수 있음)
-                if (isFirstCheck) {
-                    isFirstCheck = false;
-                    return;
-                }
-                
                 if (!userData.approved && user.email !== ADMIN_EMAIL) {
-                    // 승인이 취소된 경우 (기존에 승인되었다가 취소된 경우만)
+                    // 승인이 취소된 경우
                     auth.signOut().then(() => {
                         alert('관리자에 의해 접근 권한이 취소되었습니다.');
                         location.reload();
