@@ -84,11 +84,19 @@ function switchTab(tabName) {
 }
 
 // 설정 탭 로드
-async function loadSettingsTab() {
-    const container = document.getElementById('settings-container');
-    if (!container) {
-        console.error('settings-container를 찾을 수 없습니다');
+function loadSettingsTab() {
+    const settingsTab = document.getElementById('settings-tab');
+    if (!settingsTab) {
+        console.error('settings-tab을 찾을 수 없습니다');
         return;
+    }
+    
+    // iframe이 이미 있는지 확인
+    let settingsContainer = settingsTab.querySelector('.settings-container');
+    if (!settingsContainer) {
+        settingsContainer = document.createElement('div');
+        settingsContainer.className = 'settings-container';
+        settingsTab.appendChild(settingsContainer);
     }
     
     try {
