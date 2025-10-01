@@ -1425,80 +1425,79 @@
             }, 1000);
         });
 
-        // 관리자 권한 확인
+// 관리자 권한 확인
         async function checkAdminAccess() {
-            let retryCount = 0;
-            const maxRetries = 20;
+            console.log('checkAdminAccess 함수 시작');
             
-            function tryCheck() {
-                // iframe 내부인지 독립 페이지인지 확인
-                const isInIframe = window.parent !== window;
-                const authRef = isInIframe ? window.parent.auth : (typeof auth !== 'undefined' ? auth : null);
-                const firebaseRef = isInIframe ? window.parent.firebase : (typeof firebase !== 'undefined' ? firebase : null);
+            // iframe에서 실행 중이므로 parent의 Firebase 사용
+            if (window.parent && window.parent !== window) {
+                // parent에서 Firebase 객체 찾기
+                const parentAuth = window.parent.auth;
+                const parentFirebase = window.parent.firebase;
+                const parentDb = window.parent.db;
                 
-                if (!authRef || !firebaseRef || !authRef.currentUser) {
-                    if (retryCount < maxRetries) {
-                        retryCount++;
-                        console.log(`사용자 정보 대기 중... (${retryCount}/${maxRetries})`);
-                        setTimeout(tryCheck, 500);
-                    } else {
-                        console.error('사용자 정보를 불러올 수 없습니다');
-                    }
+                if (!parentAuth || !parentFirebase) {
+                    console.error('Parent Firebase를 찾을 수 없습니다');
+                    setTimeout(() => checkAdminAccess(), 1000);
                     return;
                 }
                 
-                performAdminCheck(authRef, firebaseRef);
-            }
-            
-            async function performAdminCheck(authRef, firebaseRef) {
-                try {
-                    const user = authRef.currentUser;
-                    if (!user) {
-                        console.log('로그인된 사용자 없음');
-                        return;
-                    }
-                    
-                    console.log('현재 사용자:', user.email);
-                    
-                    const db = firebaseRef.firestore();
-                    const userDoc = await db.collection('users').doc(user.uid).get();
-                    
-                    if (userDoc.exists) {
-                        const userData = userDoc.data();
-                        console.log('사용자 역할:', userData.role);
+                // Auth 상태 변경 감지
+                parentAuth.onAuthStateChanged(async (user) => {
+                    if (user) {
+                        console.log('로그인 사용자 확인:', user.email);
                         
-                        if (userData.role === 'admin' || user.email === 'papafresh.ceo@gmail.com') {
-                            console.log('관리자 권한 확인됨 - 사용자 관리 메뉴 표시');
-                            document.getElementById('userManageMenu').style.display = 'block';
+                        try {
+                            // Firestore에서 사용자 정보 확인
+                            const userDoc = await parentDb.collection('users').doc(user.uid).get();
                             
-                            // 전역 참조 저장
-                            window.currentAuth = authRef;
-                            window.currentFirebase = firebaseRef;
-                            
-                            loadUserList();
-                        } else {
-                            console.log('관리자 권한 없음');
+                            if (userDoc.exists) {
+                                const userData = userDoc.data();
+                                console.log('사용자 데이터:', userData);
+                                
+                                // 관리자 확인
+                                if (userData.role === 'admin' || user.email === 'papafresh.ceo@gmail.com') {
+                                    console.log('관리자 권한 확인됨');
+                                    
+                                    // 사용자 관리 메뉴 표시
+                                    const userMenu = document.getElementById('userManageMenu');
+                                    if (userMenu) {
+                                        userMenu.style.display = 'block';
+                                        console.log('사용자 관리 메뉴 표시됨');
+                                    }
+                                    
+                                    // 전역 참조 저장
+                                    window.currentAuth = parentAuth;
+                                    window.currentFirebase = parentFirebase;
+                                    window.currentDb = parentDb;
+                                    
+                                    // 사용자 목록 로드
+                                    loadUserList();
+                                } else {
+                                    console.log('일반 사용자 - 관리자 권한 없음');
+                                }
+                            } else {
+                                console.log('사용자 문서를 찾을 수 없음');
+                            }
+                        } catch (error) {
+                            console.error('사용자 정보 확인 오류:', error);
                         }
                     } else {
-                        console.log('사용자 문서 없음');
+                        console.log('로그인된 사용자 없음');
                     }
-                } catch (error) {
-                    console.error('관리자 권한 확인 오류:', error);
-                }
+                });
+            } else {
+                console.error('iframe 환경이 아님');
             }
-            
-            tryCheck();
         }
 
         // 사용자 목록 불러오기
         async function loadUserList() {
-            const firebaseRef = window.currentFirebase || (window.parent !== window ? window.parent.firebase : firebase);
-            if (!firebaseRef) {
-                console.error('Firebase 참조를 찾을 수 없습니다');
+            const db = window.currentDb || window.parent.db;
+            if (!db) {
+                console.error('Firestore 참조를 찾을 수 없습니다');
                 return;
             }
-            
-            const db = firebaseRef.firestore();
             
             try {
                 // 승인 대기 사용자
