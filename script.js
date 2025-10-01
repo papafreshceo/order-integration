@@ -56,9 +56,12 @@ function setupEventListeners() {
     });
     
     // 헤더 타이틀 클릭시 대시보드로 이동
-    document.getElementById('headerTitle').addEventListener('click', function() {
-        switchTab('dashboard');
-    });
+    const headerTitle = document.getElementById('headerTitle');
+    if (headerTitle) {
+        headerTitle.addEventListener('click', function() {
+            switchTab('dashboard');
+        });
+    }
 }
 
 function switchTab(tabName) {
@@ -84,7 +87,7 @@ function switchTab(tabName) {
 }
 
 // 설정 탭 로드
-function loadSettingsTab() {
+async function loadSettingsTab() {
     const settingsTab = document.getElementById('settings-tab');
     if (!settingsTab) {
         console.error('settings-tab을 찾을 수 없습니다');
@@ -92,33 +95,32 @@ function loadSettingsTab() {
     }
     
     // iframe이 이미 있는지 확인
-    let settingsContainer = settingsTab.querySelector('.settings-container');
-    if (!settingsContainer) {
-        settingsContainer = document.createElement('div');
-        settingsContainer.className = 'settings-container';
-        settingsTab.appendChild(settingsContainer);
+    if (settingsTab.querySelector('iframe')) {
+        console.log('설정 iframe이 이미 로드되어 있습니다');
+        return;
     }
     
-    try {
-        const response = await fetch('tab/settings/settings-module.html');
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+    // iframe 생성
+    const iframe = document.createElement('iframe');
+    iframe.src = 'tab/settings/settings-module.html';
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    
+    // iframe 로드 완료 후 관리자 권한 확인
+    iframe.onload = function() {
+        console.log('설정 iframe 로드 완료');
         
-        const html = await response.text();
-        container.innerHTML = html;
-        
-        console.log('설정 탭 로드 완료');
-        
-    } catch (error) {
-        console.error('설정 탭 로드 오류:', error);
-        container.innerHTML = `
-            <div style="padding: 40px; text-align: center;">
-                <h3>설정 모듈을 로드할 수 없습니다</h3>
-                <p style="color: #6c757d;">tabs/settings/settings-module.html 파일을 확인해주세요</p>
-            </div>
-        `;
-    }
+        // iframe 내부의 checkAdminAccess 함수 실행
+        setTimeout(() => {
+            if (iframe.contentWindow && iframe.contentWindow.checkAdminAccess) {
+                iframe.contentWindow.checkAdminAccess();
+            }
+        }, 500);
+    };
+    
+    settingsTab.innerHTML = '';
+    settingsTab.appendChild(iframe);
 }
 
 // ===========================
